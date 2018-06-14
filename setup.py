@@ -6,6 +6,10 @@ import subprocess
 from setuptools import setup, find_packages
 
 
+is_released = False
+version = '0.1.0'
+
+
 def git_version():
     def _minimal_ext_cmd(cmd):
         # construct minimal environment
@@ -78,8 +82,6 @@ Programming Language :: Python :: 3.6
 Operating System :: Unix
 
 """
-is_released = False
-version = '0.1.0'
 
 fullversion = write_version_py(version, is_released)
 
