@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse.linalg import spsolve
 
 from .logger import msg
+from .sparseutils import remove_null_cols
 
 
 def solve(a, b, silent=False, **kwargs):

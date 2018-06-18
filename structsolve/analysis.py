@@ -6,7 +6,8 @@ from numpy import dot
 from .static import solve
 from .logger import msg
 from .newton_raphson import _solver_NR
-from .arc_length import _solver_arc_length
+from .arc_length_riks import _solver_arc_length_riks
+from .arc_length_crisfield import _solver_arc_length_crisfield
 
 
 class Analysis(object):
@@ -43,6 +44,7 @@ class Analysis(object):
                        this parameter to terminate when the minimum
                        arc-length increment is smaller than ``minInc``
     ``maxInc``         maximum increment size
+    ``maxArcLength``   maximum length covered by the arc-length  search
     ==============     =================================================
 
     ====================    ============================================
@@ -61,14 +63,14 @@ class Analysis(object):
     calc_fext : callable, optional
         Must return a 1-D array containing the external forces. Required for
         linear/non-linear static analysis.
-    calc_k0 : callable, optional
-        Must return a sparse matrix containing the linear stiffness matrix.
-        Required for linear/non-linear static analysis.
     calc_fint : callable, optional
         Must return a 1-D array containing the internal forces. Required for
         non-linear analysis.
-    calc_kT : callable, optional
-        Must return a sparse matrix containing the tangent stiffness matrix.
+    calc_kC : callable, optional
+        Must return a sparse matrix containing the constitutive stiffness matrix.
+        Required for linear/non-linear static analysis.
+    calc_kG : callable, optional
+        Must return a sparse matrix containing the geometric stiffness matrix.
         Required for non-linear analysis.
 
     Returns
@@ -81,13 +83,14 @@ class Analysis(object):
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'modified_NR', 'compute_every_n',
-            'kT_initial_state', 'initialInc', 'minInc', 'maxInc', 'absTOL',
-            'relTOL', 'maxNumIter', 'too_slow_TOL', 'increments', 'cs',
-            'last_analysis', 'calc_fext', 'calc_k0', 'calc_fint', 'calc_kT']
+            'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
+            'maxArcLength', 'absTOL', 'relTOL', 'maxNumIter', 'too_slow_TOL',
+            'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
+            'calc_fint', 'calc_kG']
 
 
-    def __init__(self, calc_fext=None, calc_k0=None, calc_fint=None,
-            calc_kT=None):
+    def __init__(self, calc_fext=None, calc_fint=None, calc_kC=None,
+            calc_kG=None):
         # non-linear algorithm
         self.NL_method = 'NR'
         self.line_search = True
@@ -99,6 +102,7 @@ class Analysis(object):
         self.initialInc = 0.3
         self.minInc = 1.e-3
         self.maxInc = 1.
+        self.maxArcLength = 18
         # convergence criteria
         self.absTOL = 1.e-3
         self.relTOL = 1.e-3
@@ -107,9 +111,9 @@ class Analysis(object):
 
         # required methods
         self.calc_fext = calc_fext
-        self.calc_k0 = calc_k0
         self.calc_fint = calc_fint
-        self.calc_kT = calc_kT
+        self.calc_kC = calc_kC
+        self.calc_kG = calc_kG
 
         # outputs to be filled
         self.increments = None
@@ -142,15 +146,17 @@ class Analysis(object):
             msg('Started Non-Linear Static Analysis', silent=silent)
             if self.NL_method is 'NR':
                 _solver_NR(self, silent=silent)
-            elif self.NL_method is 'arc_length':
-                _solver_arc_length(self)
+            elif self.NL_method is 'arc_length_riks':
+                _solver_arc_length_riks(self, silent=silent)
+            elif self.NL_method is 'arc_length_crisfield':
+                _solver_arc_length_crisfield(self, silent=silent)
             else:
                 raise ValueError('{0} is an invalid NL_method')
 
         else:
             msg('Started Linear Static Analysis', silent=silent)
             fext = self.calc_fext(silent=silent)
-            k0 = self.calc_k0(silent=silent)
+            k0 = self.calc_kC(silent=silent)
 
             c = solve(k0, fext, silent=silent)
 

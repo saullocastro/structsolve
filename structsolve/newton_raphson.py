@@ -17,9 +17,9 @@ def _solver_NR(run, silent=False):
     max_total = 0.
 
     fext = run.calc_fext(inc=inc, silent=silent)
-    k0 = run.calc_k0(silent=silent)
-    c = solve(k0, fext, silent=silent)
-    kT_last = k0
+    kC = run.calc_kC(silent=silent)
+    c = solve(kC, fext, silent=silent)
+    kT_last = kC
 
     if modified_NR:
         compute_kT = False
@@ -55,15 +55,17 @@ def _solver_NR(run, silent=False):
                 break
 
             if compute_kT or (run.kT_initial_state and step_num == 1 and
-                    iteration == 1) or iter_NR==(run.compute_every_n-1):
+                    iteration == 1) or iter_NR == (run.compute_every_n - 1):
                 iter_NR = 0
-                kT = run.calc_kT(c=c, inc=total, silent=silent)
+                kC = run.calc_kC(c=c*0, silent=silent, NLgeom=True)
+                kG = run.calc_kG(c=c*0, silent=silent, NLgeom=True)
+                kT = kC + kG
             else:
                 iter_NR += 1
                 if not modified_NR:
                     compute_kT = True
 
-            fint = run.calc_fint(c=c, inc=total, silent=silent)
+            fint = run.calc_fint(c=c, silent=silent)
 
             R = fext - fint
 
@@ -98,8 +100,8 @@ def _solver_NR(run, silent=False):
                 while True:
                     c1 = c + eta1*delta_c
                     c2 = c + eta2*delta_c
-                    fint1 = run.calc_fint(c=c1, inc=total, silent=silent)
-                    fint2 = run.calc_fint(c=c2, inc=total, silent=silent)
+                    fint1 = run.calc_fint(c=c1, silent=silent)
+                    fint2 = run.calc_fint(c=c2, silent=silent)
                     R1 = fext - fint1
                     R2 = fext - fint2
                     s1 = delta_c.dot(R1)
@@ -142,7 +144,9 @@ def _solver_NR(run, silent=False):
                 break
             if modified_NR:
                 msg('Updating kT...', level=1, silent=silent)
-                kT = run.calc_kT(c=c, inc=total, silent=silent)
+                kC = run.calc_kC(c=c, silent=silent, NLgeom=True)
+                kG = run.calc_kG(c=c, silent=silent, NLgeom=True)
+                kT = kC + kG
                 msg('kT updated!', level=1, silent=silent)
             compute_kT = False
             kT_last = kT
@@ -152,7 +156,7 @@ def _solver_NR(run, silent=False):
                 factor = 0.3
                 msg('Bisecting time increment from {0} to {1}'.format(
                     inc, inc*factor), level=1, silent=silent)
-                if abs(total -1) < 1e-3:
+                if abs(total - 1) < 1e-3:
                     once_at_total = True
                 total -= inc
                 inc *= factor
@@ -174,7 +178,7 @@ def _solver_NR(run, silent=False):
         else:
             # means that run bisection must be done in initialInc
             fext = run.calc_fext(inc=inc, silent=silent)
-            c = solve(k0, fext, silent=silent)
+            c = solve(kC, fext, silent=silent)
 
     msg('Finished Non-Linear Static Analysis', silent=silent)
     msg('at time {0}'.format(total), level=1, silent=silent)

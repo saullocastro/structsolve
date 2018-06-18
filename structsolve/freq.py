@@ -2,8 +2,8 @@ import numpy as np
 from scipy.sparse.linalg import eigs
 from scipy.linalg import eig
 
-from compmech.logger import msg, warn
-from compmech.sparse import remove_null_cols
+from .logger import msg, warn
+from .sparseutils import remove_null_cols
 
 
 def freq(K, M, tol=0, sparse_solver=True, silent=False,
@@ -57,7 +57,7 @@ def freq(K, M, tol=0, sparse_solver=True, silent=False,
         K, M, used_cols = remove_null_cols(K, M, silent=silent,
                 level=3)
         #NOTE Looking for better performance with symmetric matrices, I tried
-        #     using compmech.sparse.is_symmetric and eigsh, but it seems not
+        #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
         #     to improve speed (I did not try passing only half of the sparse
         #     matrices to the solver)
         eigvals, peigvecs = eigs(A=K, k=k, which='LM', M=M, tol=tol,
