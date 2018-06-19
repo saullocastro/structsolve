@@ -12,6 +12,14 @@ Structural Analysis Solvers
 - Nonlinear statics using Newton-Raphson
 
 
+ROADMAP
+=======
+
+Currently these solvers are pretty much compatible with the compmech/panels
+module, such that future work should focus on generalizing this module to work
+with other applications.
+
+
 License
 -------
 Distrubuted in the 3-Clause BSD license (https://raw.github.com/compmech/structsolve/master/LICENSE).
