@@ -99,15 +99,15 @@ class Analysis(object):
         self.compute_every_n = 6
         self.kT_initial_state = True
         # incrementation
-        self.initialInc = 0.3
-        self.minInc = 1.e-3
+        self.initialInc = 0.1
+        self.minInc = 1.e-4
         self.maxInc = 1.
         self.maxArcLength = 18
         # convergence criteria
         self.absTOL = 1.e-3
         self.relTOL = 1.e-3
         self.maxNumIter = 30
-        self.too_slow_TOL = 0.01
+        self.too_slow_TOL = 0.005
 
         # required methods
         self.calc_fext = calc_fext
