@@ -10,6 +10,7 @@ Structural Analysis Solvers
 - Linear buckling
 - Free vibration
 - Nonlinear statics using Newton-Raphson
+- Nonlinear statics using the Arc-Length method
 
 
 ROADMAP
