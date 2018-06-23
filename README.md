@@ -22,7 +22,7 @@ with other applications.
 
 License
 -------
-Distrubuted in the 3-Clause BSD license (https://raw.github.com/compmech/structsolve/master/LICENSE).
+Distrubuted in the 2-Clause BSD license (https://raw.github.com/compmech/structsolve/master/LICENSE).
 
 Contact: castrosaullo@gmail.com
 

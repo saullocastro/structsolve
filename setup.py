@@ -6,7 +6,7 @@ import subprocess
 from setuptools import setup, find_packages
 
 
-is_released = False
+is_released = True
 version = '0.1.0'
 
 
@@ -69,7 +69,7 @@ install_requires = [
 
 CLASSIFIERS = """\
 
-Development Status :: 1 - Alpha
+Development Status :: 3 - Alpha
 Intended Audience :: Science/Research
 Intended Audience :: Developers
 Intended Audience :: Education

@@ -1,2 +1,2 @@
-py.test
+py.test --cache-clear
 coverage report
