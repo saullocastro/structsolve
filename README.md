@@ -16,9 +16,9 @@ Structural Analysis Solvers
 ROADMAP
 =======
 
-Currently these solvers are pretty much compatible with the compmech/panels
-module, such that future work should focus on generalizing this module to work
-with other applications.
+Currently these solvers are pretty much compatible with my other repository
+"panels", such that future work should focus on generalizing this module to
+work with other applications.
 
 
 License
