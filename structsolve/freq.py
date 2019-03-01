@@ -6,10 +6,15 @@ from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
 
-def freq(K, M, tol=0, sparse_solver=True, silent=False,
-         sort=True, reduced_dof=False,
-         num_eigvalues=25, num_eigvalues_print=5):
+def freq(K, M, tol=0, sparse_solver=True,
+        silent=False, sort=True, num_eigvalues=25,
+        num_eigvalues_print=5):
     """Frequency Analysis
+
+    Calculate the eigenvalues (`\lambda^2`) and mass-normalized eigenvectors
+    solving the following eigenvalue problem::
+
+        [K] + lambda**2 * [M] = 0
 
     Parameters
     ----------
@@ -31,10 +36,6 @@ def freq(K, M, tol=0, sparse_solver=True, silent=False,
         A boolean to tell whether the log messages should be printed.
     sort : bool, optional
         Sort the output eigenvalues and eigenmodes.
-    reduced_dof : bool, optional
-        Considers only the contributions of `v` and `w` to the stiffness
-        matrix and accelerates the run. Only effective when
-        ``sparse_solver=False``.
     num_eigvalues : int, optional
         Number of calculated eigenvalues.
     num_eigvalues_print : int, optional
@@ -43,7 +44,9 @@ def freq(K, M, tol=0, sparse_solver=True, silent=False,
     Returns
     -------
     The extracted eigenvalues are stored in the ``eigvals`` parameter and
-    the `i^{th}` eigenvector in the ``eigvecs[:, i-1]`` parameter.
+    the `i^{th}` eigenvector in the ``eigvecs[:, i-1]`` parameter. The
+    eigenvectors are mass-normalized.
+
 
     """
     msg('Running frequency analysis...', silent=silent)
@@ -54,69 +57,60 @@ def freq(K, M, tol=0, sparse_solver=True, silent=False,
     if sparse_solver:
         msg('eigs() solver...', level=3, silent=silent)
         sizebkp = M.shape[0]
-        K, M, used_cols = remove_null_cols(K, M, silent=silent,
+        Keff, Meff, used_cols = remove_null_cols(K, M, silent=silent,
                 level=3)
         #NOTE Looking for better performance with symmetric matrices, I tried
         #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
         #     to improve speed (I did not try passing only half of the sparse
         #     matrices to the solver)
-        eigvals, peigvecs = eigs(A=K, k=k, which='LM', M=M, tol=tol,
+        eigvals, peigvecs = eigs(A=Keff, k=k, which='LM', M=Meff, tol=tol,
                                  sigma=-1.)
-        eigvecs = np.zeros((sizebkp, num_eigvalues), dtype=peigvecs.dtype)
+        #NOTE eigs solves: [K] {u} = eigval [M] {u}
+        #     therefore we must correct he sign of lambda^2 here:
+        lambda2 = -eigvals
+        eigvecs = np.zeros((sizebkp, k), dtype=peigvecs.dtype)
         eigvecs[used_cols, :] = peigvecs
-
-        eigvals = np.sqrt(eigvals) # omega^2 to omega, in rad/s
-
     else:
         msg('eig() solver...', level=3, silent=silent)
-        M = M.toarray()
-        K = K.toarray()
-        sizebkp = M.shape[0]
-        col_sum = M.sum(axis=0)
+        Meff = M.toarray()
+        Keff = K.toarray()
+        sizebkp = Meff.shape[0]
+        col_sum = Meff.sum(axis=0)
         check = col_sum != 0
-        used_cols = np.arange(M.shape[0])[check]
-        M = M[:, check][check, :]
-        K = K[:, check][check, :]
+        used_cols = np.arange(Meff.shape[0])[check]
+        Meff = Meff[:, check][check, :]
+        Keff = Keff[:, check][check, :]
 
-        if reduced_dof:
-            i = np.arange(M.shape[0])
-            take = np.column_stack((i[1::3], i[2::3])).flatten()
-            M = M[:, take][take, :]
-            K = K[:, take][take, :]
         #TODO did not try using eigh when input is symmetric to see if there
         #     will be speed improvements
-        eigvals, peigvecs = eig(a=-M, b=K)
-        eigvecs = np.zeros((sizebkp, K.shape[0]),
+        # for effiency reasons, solving:
+        #    [M]{u} = (-1/lambda2)[K]{u}
+        #    [M]{u} = eigval [K]{u}
+        eigvals, peigvecs = eig(a=-Meff, b=Keff)
+        lambda2 = -1./eigvals
+        eigvecs = np.zeros((sizebkp, Keff.shape[0]),
                            dtype=peigvecs.dtype)
         eigvecs[check, :] = peigvecs
-        eigvals = np.sqrt(-1./eigvals) # -1/omega^2 to omega, in rad/s
-        eigvals = eigvals
 
     msg('finished!', level=3, silent=silent)
 
     if sort:
-        sort_ind = np.lexsort((np.round(eigvals.imag, 1),
-                               np.round(eigvals.real, 1)))
-        eigvals = eigvals[sort_ind]
+        omegan = np.sqrt(-lambda2)
+        sort_ind = np.lexsort((np.round(omegan.imag, 1),
+                               np.round(omegan.real, 1)))
+        omegan = omegan[sort_ind]
         eigvecs = eigvecs[:, sort_ind]
 
-        higher_zero = eigvals.real > 1e-6
+        higher_zero = omegan.real > 1e-6
 
-        eigvals = eigvals[higher_zero]
+        omegan = omegan[higher_zero]
         eigvecs = eigvecs[:, higher_zero]
-
-    if not sparse_solver and reduced_dof:
-        new_eigvecs = np.zeros((3*eigvecs.shape[0]//2, eigvecs.shape[1]),
-                dtype=eigvecs.dtype)
-        new_eigvecs[take, :] = eigvecs
-        eigvecs = new_eigvecs
-
 
     msg('finished!', level=2, silent=silent)
 
     msg('first {0} eigenvalues:'.format(num_eigvalues_print), level=1,
         silent=silent)
-    for eigval in eigvals[:num_eigvalues_print]:
-        msg('{0} rad/s'.format(eigval), level=2, silent=silent)
+    for lambda2i in lambda2[:num_eigvalues_print]:
+        msg('lambda**2: %1.5f, natural frequency: %1.5f rad/s' % (lambda2i, (-lambda2i)**0.5), level=2, silent=silent)
 
-    return eigvals, eigvecs
+    return lambda2, eigvecs
