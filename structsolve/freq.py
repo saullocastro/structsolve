@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 from scipy.sparse.linalg import eigs
 from scipy.linalg import eig
 
@@ -29,7 +30,7 @@ def freq(K, M, tol=0, sparse_solver=True,
         Tells if solver :func:`scipy.linalg.eig` or
         :func:`scipy.sparse.linalg.eigs` should be used.
 
-        .. note:: It is recommended ``sparse_solver=False``, because it
+        .. note:: It is recommended ``nparse_solver=False``, because it
                   was verified that the sparse solver becomes unstable
                   for some cases, though the sparse solver is faster.
     silent : bool, optional
@@ -63,7 +64,7 @@ def freq(K, M, tol=0, sparse_solver=True,
         #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
         #     to improve speed (I did not try passing only half of the sparse
         #     matrices to the solver)
-        eigvals, peigvecs = eigs(A=Keff, k=k, which='LM', M=Meff, tol=tol,
+        eigvals, peigvecs = eigs(A=Keff, M=Meff, k=k, which='LM', tol=tol,
                                  sigma=-1.)
         #NOTE eigs solves: [K] {u} = eigval [M] {u}
         #     therefore we must correct he sign of lambda^2 here:
@@ -72,8 +73,14 @@ def freq(K, M, tol=0, sparse_solver=True,
         eigvecs[used_cols, :] = peigvecs
     else:
         msg('eig() solver...', level=3, silent=silent)
-        Meff = M.toarray()
-        Keff = K.toarray()
+        if isinstance(M, scipy.sparse.spmatrix):
+            Meff = M.toarray()
+        else:
+            Meff = np.asarray(M)
+        if isinstance(K, scipy.sparse.spmatrix):
+            Keff = K.toarray()
+        else:
+            Keff = np.asarray(K)
         sizebkp = Meff.shape[0]
         col_sum = Meff.sum(axis=0)
         check = col_sum != 0
@@ -86,7 +93,7 @@ def freq(K, M, tol=0, sparse_solver=True,
         # for effiency reasons, solving:
         #    [M]{u} = (-1/lambda2)[K]{u}
         #    [M]{u} = eigval [K]{u}
-        eigvals, peigvecs = eig(a=-Meff, b=Keff)
+        eigvals, peigvecs = eig(a=Meff, b=Keff)
         lambda2 = -1./eigvals
         eigvecs = np.zeros((sizebkp, Keff.shape[0]),
                            dtype=peigvecs.dtype)
