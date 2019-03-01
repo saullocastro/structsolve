@@ -6,10 +6,10 @@
 Structural Analysis Solvers
 ===========================
 
-- Linear statics
-- Linear buckling
-- Free vibration
-- Nonlinear statics using Newton-Raphson
+- Linear statics: [K]{u} = {f}
+- Eigensolver for Linear buckling: ([K] + lambda[KG]){u} = 0
+- Eigensolver for dynamics: ([K] + lambda^2[M]){u} = 0
+- Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
 
 
