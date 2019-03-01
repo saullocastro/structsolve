@@ -1,2 +1,2 @@
-py.test --cache-clear
+coverage run --source structsolve -m py.test
 coverage report
