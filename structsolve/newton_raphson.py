@@ -8,6 +8,10 @@ def _solver_NR(an, silent=False, initialInc=None):
     """Newton-Raphson solver
 
     """
+    msg('___________________________________________', level=1, silent=silent)
+    msg('                                           ', level=1, silent=silent)
+    msg('Newton-Raphson solver', level=1, silent=silent)
+    msg('___________________________________________', level=1, silent=silent)
     msg('Initializing...', level=1, silent=silent)
 
     modified_NR = an.modified_NR

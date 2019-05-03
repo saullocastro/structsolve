@@ -12,7 +12,7 @@ def _solver_arc_length_riks(an, silent=False):
     """
     msg('___________________________________________', level=1, silent=silent)
     msg('                                           ', level=1, silent=silent)
-    msg('ARC-LENGTH SOLVER using RIKS implementation', level=1, silent=silent)
+    msg('Arc-Length solver using Riks implementation', level=1, silent=silent)
     msg('___________________________________________', level=1, silent=silent)
     msg('Initializing...', level=1, silent=silent)
     lbd = 0.
@@ -22,8 +22,8 @@ def _solver_arc_length_riks(an, silent=False):
     max_arc_length = an.maxArcLength
 
     modified_NR = an.modified_NR
-    fext = an.calc_fext(inc=1., silent=True)
     kC = an.calc_kC(silent=True)
+    fext = an.calc_fext(inc=1., silent=True)
     kT = kC
     c = solve(kC, arc_length*fext, silent=True)
     fint = kC*c
