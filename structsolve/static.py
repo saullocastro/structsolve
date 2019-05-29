@@ -6,7 +6,7 @@ from .sparseutils import remove_null_cols
 
 
 def solve(a, b, silent=False, **kwargs):
-    """Wrapper for spsolve removing null columns
+    """Wrapper for scipy.sparse.linalg.spsolve removing null columns
 
     The null columns of matrix ``a`` is removed such and the linear system of
     equations is solved. The corresponding values of the solution ``x`` where
