@@ -44,7 +44,6 @@ test = [
     "flake8",
     "coverage",
     "composites",
-    "buckling",
 ]
 
 [project.urls]
