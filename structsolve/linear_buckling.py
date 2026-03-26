@@ -1,9 +1,21 @@
 import numpy as np
-from scipy.sparse.linalg import eigsh
+from scipy.sparse.linalg import eigsh, spsolve
 from scipy.linalg import eigh
 
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
+
+
+def _estimate_sigma(K, KG):
+    try:
+        x = np.random.RandomState(42).randn(K.shape[0])
+        y = spsolve(K, KG @ x)
+        sigma = abs((y @ KG @ y) / (y @ K @ y))
+        if not np.isfinite(sigma) or sigma == 0:
+            return 1.
+        return sigma
+    except Exception:
+        return 1.
 
 def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        num_eigvalues=25, num_eigvalues_print=5):
@@ -48,18 +60,20 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     if sparse_solver:
         mode = 'cayley'
         try:
-            msg('eigsh() solver...', level=3, silent=silent)
+            sigma = _estimate_sigma(K, KG)
+            msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
             eigvals, eigvecs = eigsh(A=KG, k=k,
-                    which='SM', M=K, tol=tol, sigma=1., mode=mode)
+                    which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
             msg('finished!', level=3, silent=silent)
         except Exception as e:
             warn(str(e), level=4, silent=silent)
             msg('aborted!', level=3, silent=silent)
             sizebkp = KG.shape[0]
             K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
-            msg('eigsh() solver...', level=3, silent=silent)
+            sigma = _estimate_sigma(K, KG)
+            msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
             eigvals, peigvecs = eigsh(A=KG, k=k,
-                    which='SM', M=K, tol=tol, sigma=1., mode=mode)
+                    which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
             msg('finished!', level=3, silent=silent)
             eigvecs = np.zeros((sizebkp, num_eigvalues),
                                dtype=peigvecs.dtype)

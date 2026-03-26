@@ -1,10 +1,22 @@
 import numpy as np
 import scipy
-from scipy.sparse.linalg import eigs
+from scipy.sparse.linalg import eigs, spsolve
 from scipy.linalg import eig
 
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
+
+
+def _estimate_sigma(K, M):
+    try:
+        x = np.random.RandomState(42).randn(K.shape[0])
+        y = spsolve(K, M @ x)
+        sigma = -abs((y @ K @ y) / (y @ M @ y))
+        if not np.isfinite(sigma) or sigma == 0:
+            return -1.
+        return sigma
+    except Exception:
+        return -1.
 
 
 def freq(K, M, tol=0, sparse_solver=True,
@@ -56,7 +68,6 @@ def freq(K, M, tol=0, sparse_solver=True,
 
     k = min(num_eigvalues, M.shape[0]-2)
     if sparse_solver:
-        msg('eigs() solver...', level=3, silent=silent)
         sizebkp = M.shape[0]
         Keff, Meff, used_cols = remove_null_cols(K, M, silent=silent,
                 level=3)
@@ -64,8 +75,10 @@ def freq(K, M, tol=0, sparse_solver=True,
         #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
         #     to improve speed (I did not try passing only half of the sparse
         #     matrices to the solver)
+        sigma = _estimate_sigma(Keff, Meff)
+        msg('eigs() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
         eigvals, peigvecs = eigs(A=Keff, M=Meff, k=k, which='LM', tol=tol,
-                                 sigma=-1.)
+                                 sigma=sigma)
         #NOTE eigs solves: [K] {u} = eigval [M] {u}
         #     therefore we must correct he sign of lambda^2 here:
         lambda2 = -eigvals
