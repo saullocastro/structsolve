@@ -1,10 +1,14 @@
-|  Version	| Download | Travis CI | Test Coverage |
-| :-------:	| :--- 	   | :---      | :---          |
-|   Master	|          | [![Linux Status](https://img.shields.io/travis/compmech/structsolve/master.svg)](https://travis-ci.org/compmech/structsolve) | [![Coverage Status](https://coveralls.io/repos/github/compmech/structsolve/badge.svg?branch=master)](https://coveralls.io/github/compmech/structsolve?branch=master) |
+Github Actions status:
+[![pytest](https://github.com/compmech/structsolve/actions/workflows/pytest.yml/badge.svg)](https://github.com/compmech/structsolve/actions/workflows/pytest.yml)
+[![Deploy](https://github.com/compmech/structsolve/actions/workflows/pythonpublish.yml/badge.svg)](https://github.com/compmech/structsolve/actions/workflows/pythonpublish.yml)
+
+Coverage status:
+[![codecov](https://github.com/compmech/structsolve/actions/workflows/coverage.yml/badge.svg)](https://github.com/compmech/structsolve/actions/workflows/coverage.yml)
+[![Codecov Status](https://codecov.io/gh/compmech/structsolve/branch/master/graph/badge.svg)](https://codecov.io/gh/compmech/structsolve)
 
 
-Structural Analysis Solvers
-===========================
+Structural analysis solvers tailored for semi-analytical models
+===============================================================
 
 - Linear statics: [K]{u} = {f}
 - Eigensolver for Linear buckling: ([K] + lambda[KG]){u} = 0
@@ -12,18 +16,14 @@ Structural Analysis Solvers
 - Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
 
-
-ROADMAP
-=======
-
-Currently these solvers are pretty much compatible with my other repository
-"panels", such that future work should focus on generalizing this module to
-work with other applications.
+Currently these solvers are pretty much compatible with my other repositories
+[panels](https://github.com/saullocastro/panels), 
+[buckling](https://github.com/saullocastro/buckling).
 
 
 License
 -------
-Distrubuted in the 2-Clause BSD license (https://raw.github.com/compmech/structsolve/master/LICENSE).
+Distrubuted in the 3-Clause BSD license (https://raw.github.com/compmech/structsolve/master/LICENSE).
 
-Contact: castrosaullo@gmail.com
+Contact: S.G.P.Castro@tudelft.nl
 

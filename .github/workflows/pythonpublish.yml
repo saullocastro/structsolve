@@ -1,0 +1,30 @@
+name: Upload Python Package
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install build tools
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade build twine
+    - name: Build sdist and wheel
+      run: |
+        python3 -m build
+    - name: Publish to PyPI
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        python3 -m twine upload dist/*
