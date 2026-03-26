@@ -144,11 +144,11 @@ class Analysis(object):
         if NLgeom:
             self.maxInc = max(self.initialInc, self.maxInc)
             msg('Started Non-Linear Static Analysis', silent=silent)
-            if self.NL_method is 'NR':
+            if self.NL_method == 'NR':
                 _solver_NR(self, silent=silent)
-            elif self.NL_method is 'arc_length_riks':
+            elif self.NL_method == 'arc_length_riks':
                 _solver_arc_length_riks(self, silent=silent)
-            elif self.NL_method is 'arc_length_crisfield':
+            elif self.NL_method == 'arc_length_crisfield':
                 _solver_arc_length_crisfield(self, silent=silent)
             else:
                 raise ValueError('{0} is an invalid NL_method')
