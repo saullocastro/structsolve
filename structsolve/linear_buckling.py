@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.sparse.linalg import eigsh, spsolve
 from scipy.linalg import eigh
@@ -8,8 +10,16 @@ from .sparseutils import remove_null_cols
 
 def _estimate_sigma(K, KG):
     try:
-        x = np.random.RandomState(42).randn(K.shape[0])
-        y = spsolve(K, KG @ x)
+        rhs = KG @ np.random.RandomState(42).randn(K.shape[0])
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            y = spsolve(K, rhs)
+        if any(issubclass(w.category, (RuntimeWarning, Warning))
+               and "singular" in str(w.message).lower() for w in caught):
+            return 1.
+        residual = np.linalg.norm(K @ y - rhs)
+        if residual > 1e-6 * np.linalg.norm(rhs):
+            return 1.
         sigma = abs((y @ KG @ y) / (y @ K @ y))
         if not np.isfinite(sigma) or sigma == 0:
             return 1.
@@ -18,7 +28,8 @@ def _estimate_sigma(K, KG):
         return 1.
 
 def lb(K, KG, tol=0, sparse_solver=True, silent=False,
-       num_eigvalues=25, num_eigvalues_print=5):
+       num_eigvalues=25, num_eigvalues_print=5,
+       skip_null_cols=False):
     """Linear Buckling Analysis
 
     It can also be used for more general eigenvalue analyzes if `K` is the
@@ -44,6 +55,9 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         Number of calculated eigenvalues.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
+    skip_null_cols : bool, optional
+        If True, skip the removal of null columns from the matrices.
+        Use only when K is known to be non-singular.
 
     Notes
     -----
@@ -57,38 +71,31 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     msg('Eigenvalue solver... ', level=2, silent=silent)
 
     k = min(num_eigvalues, KG.shape[0]-2)
+    size = KG.shape[0]
+    if skip_null_cols:
+        used_cols = None
+    else:
+        K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
     if sparse_solver:
         mode = 'cayley'
-        try:
-            sigma = _estimate_sigma(K, KG)
-            msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
-            eigvals, eigvecs = eigsh(A=KG, k=k,
-                    which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
-            msg('finished!', level=3, silent=silent)
-        except Exception as e:
-            warn(str(e), level=4, silent=silent)
-            msg('aborted!', level=3, silent=silent)
-            sizebkp = KG.shape[0]
-            K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
-            sigma = _estimate_sigma(K, KG)
-            msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
-            eigvals, peigvecs = eigsh(A=KG, k=k,
-                    which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
-            msg('finished!', level=3, silent=silent)
-            eigvecs = np.zeros((sizebkp, num_eigvalues),
-                               dtype=peigvecs.dtype)
-            eigvecs[used_cols, :] = peigvecs
+        sigma = _estimate_sigma(K, KG)
+        msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
+        eigvals, peigvecs = eigsh(A=KG, k=k,
+                which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
+        msg('finished!', level=3, silent=silent)
 
     else:
-        size = KG.shape[0]
-        K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
         K = K.toarray()
         KG = KG.toarray()
         msg('eigh() solver...', level=3, silent=silent)
         eigvals, peigvecs = eigh(a=KG, b=K)
         msg('finished!', level=3, silent=silent)
+
+    if used_cols is not None:
         eigvecs = np.zeros((size, num_eigvalues), dtype=peigvecs.dtype)
         eigvecs[used_cols, :] = peigvecs[:, :num_eigvalues]
+    else:
+        eigvecs = peigvecs[:, :num_eigvalues]
 
     eigvals = -1./eigvals
 

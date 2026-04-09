@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy
 from scipy.sparse.linalg import eigs, spsolve
@@ -9,8 +11,16 @@ from .sparseutils import remove_null_cols
 
 def _estimate_sigma(K, M):
     try:
-        x = np.random.RandomState(42).randn(K.shape[0])
-        y = spsolve(K, M @ x)
+        rhs = M @ np.random.RandomState(42).randn(K.shape[0])
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            y = spsolve(K, rhs)
+        if any(issubclass(w.category, (RuntimeWarning, Warning))
+               and "singular" in str(w.message).lower() for w in caught):
+            return -1.
+        residual = np.linalg.norm(K @ y - rhs)
+        if residual > 1e-6 * np.linalg.norm(rhs):
+            return -1.
         sigma = -abs((y @ K @ y) / (y @ M @ y))
         if not np.isfinite(sigma) or sigma == 0:
             return -1.
@@ -21,7 +31,7 @@ def _estimate_sigma(K, M):
 
 def freq(K, M, tol=0, sparse_solver=True,
         silent=False, sort=True, num_eigvalues=25,
-        num_eigvalues_print=5):
+        num_eigvalues_print=5, skip_null_cols=False):
     """Frequency Analysis
 
     Calculate the eigenvalues (`\lambda^2`) and mass-normalized eigenvectors
@@ -53,6 +63,9 @@ def freq(K, M, tol=0, sparse_solver=True,
         Number of calculated eigenvalues.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
+    skip_null_cols : bool, optional
+        If True, skip the removal of null columns from the matrices.
+        Use only when K is known to be non-singular.
 
     Returns
     -------
@@ -67,10 +80,14 @@ def freq(K, M, tol=0, sparse_solver=True,
     msg('Eigenvalue solver... ', level=2, silent=silent)
 
     k = min(num_eigvalues, M.shape[0]-2)
-    if sparse_solver:
-        sizebkp = M.shape[0]
+    size = M.shape[0]
+    if skip_null_cols:
+        used_cols = None
+        Keff, Meff = K, M
+    else:
         Keff, Meff, used_cols = remove_null_cols(K, M, silent=silent,
                 level=3)
+    if sparse_solver:
         #NOTE Looking for better performance with symmetric matrices, I tried
         #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
         #     to improve speed (I did not try passing only half of the sparse
@@ -82,35 +99,30 @@ def freq(K, M, tol=0, sparse_solver=True,
         #NOTE eigs solves: [K] {u} = eigval [M] {u}
         #     therefore we must correct he sign of lambda^2 here:
         lambda2 = -eigvals
-        eigvecs = np.zeros((sizebkp, k), dtype=peigvecs.dtype)
-        eigvecs[used_cols, :] = peigvecs
     else:
-        msg('eig() solver...', level=3, silent=silent)
-        if isinstance(M, scipy.sparse.spmatrix):
-            Meff = M.toarray()
+        if isinstance(Meff, scipy.sparse.spmatrix):
+            Meff = Meff.toarray()
         else:
-            Meff = np.asarray(M)
-        if isinstance(K, scipy.sparse.spmatrix):
-            Keff = K.toarray()
+            Meff = np.asarray(Meff)
+        if isinstance(Keff, scipy.sparse.spmatrix):
+            Keff = Keff.toarray()
         else:
-            Keff = np.asarray(K)
-        sizebkp = Meff.shape[0]
-        col_sum = Meff.sum(axis=0)
-        check = col_sum != 0
-        used_cols = np.arange(Meff.shape[0])[check]
-        Meff = Meff[:, check][check, :]
-        Keff = Keff[:, check][check, :]
+            Keff = np.asarray(Keff)
 
         #TODO did not try using eigh when input is symmetric to see if there
         #     will be speed improvements
         # for effiency reasons, solving:
         #    [M]{u} = (-1/lambda2)[K]{u}
         #    [M]{u} = eigval [K]{u}
+        msg('eig() solver...', level=3, silent=silent)
         eigvals, peigvecs = eig(a=Meff, b=Keff)
         lambda2 = -1./eigvals
-        eigvecs = np.zeros((sizebkp, Keff.shape[0]),
-                           dtype=peigvecs.dtype)
-        eigvecs[check, :] = peigvecs
+
+    if used_cols is not None:
+        eigvecs = np.zeros((size, peigvecs.shape[1]), dtype=peigvecs.dtype)
+        eigvecs[used_cols, :] = peigvecs
+    else:
+        eigvecs = peigvecs
 
     msg('finished!', level=3, silent=silent)
 
