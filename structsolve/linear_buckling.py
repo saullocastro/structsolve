@@ -8,7 +8,30 @@ from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
 
-def _estimate_sigma(K, KG):
+def estimate_cayley_sigma(K, KG):
+    """Estimate the Cayley shift sigma for the generalized eigenvalue problem Kx = lambda KG x.
+    
+    The shift sigma is estimated by solving the linear system K y = KG r, where r is a random vector,
+    and computing the Rayleigh quotient `sigma = (y^T KG y) / (y^T K y)`.
+    If the system is singular or the solution is not finite, return 1.0 as a fallback value for sigma.
+    This function is used to improve the convergence of the eigenvalue solver by providing a 
+    good initial guess for the shift sigma.
+
+    Parameters
+    ----------
+    K : sparse_matrix
+        Stiffness matrix. Should include all constant terms of the initial
+        stress stiffness matrix, aerodynamic matrix and so forth when
+        applicable.
+    KG : sparse_matrix
+        Initial stress stiffness matrix that multiplies the load multiplcator
+        `\lambda` of the eigenvalue problem.
+        
+    Returns
+    -------
+    sigma : float
+
+    """
     try:
         rhs = KG @ np.random.RandomState(42).randn(K.shape[0])
         with warnings.catch_warnings(record=True) as caught:
@@ -78,7 +101,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
     if sparse_solver:
         mode = 'cayley'
-        sigma = _estimate_sigma(K, KG)
+        sigma = estimate_cayley_sigma(K, KG)
         msg('eigsh() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
         eigvals, peigvecs = eigsh(A=KG, k=k,
                 which='SM', M=K, tol=tol, sigma=sigma, mode=mode)
