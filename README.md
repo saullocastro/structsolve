@@ -21,9 +21,43 @@ Currently these solvers are pretty much compatible with my other repositories
 [buckling](https://github.com/saullocastro/buckling).
 
 
+Documentation
+=============
+
+The documentation is available on: https://saullocastro.github.io/structsolve.
+
+
+History
+=======
+
+See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
+
+* version 0.4.0 (2026-09-17)
+    - Newton-Raphson with full Newton iterations and a relative convergence
+      criterion by default, reaching quadratic convergence with exact tangent
+      stiffness matrices
+    - Fixed the load-factor bookkeeping of Newton-Raphson, which could finish
+      before reaching the full load
+    - Arc-length methods (Riks and Crisfield) rewritten, able to trace limit
+      points, snap-through and snap-back until a load factor of exactly 1.0
+    - Sphinx documentation
+* version 0.3.1 (2026-04-09)
+    - Robust estimation of the eigenvalue shift for singular matrices in
+      `freq` and `lb`, and new `skip_null_cols` argument
+    - Python 3.14 support
+    - Estimation of the eigenvalue shift in `freq` and `lb`
+    - Packaging with `pyproject.toml`, GitHub Actions and a test suite
+* version 0.2.2 (2019-03-02)
+    - Release of 0.2.1 with an updated distribution
+    - Fixed the dense solver of `freq`
+    - `freq` returns the eigenvalues `lambda**2` instead of the natural
+      frequencies
+* version 0.1.0 (2018-06-23)
+    - First release, with the solvers from `compmech`
+
 License
 -------
-Distrubuted in the 3-Clause BSD license (https://raw.github.com/saullocastro/structsolve/master/LICENSE).
+Distributed in the 3-Clause BSD license (https://raw.github.com/saullocastro/structsolve/master/LICENSE).
 
 Contact: S.G.P.Castro@tudelft.nl
 
