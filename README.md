@@ -38,7 +38,8 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.4.0 (2026-09-17)
+* version 0.4.1 (2026-09-17)
+    - Fixed the eigenvalue shift of the sparse solver of `lb`, which could return buckling loads higher than the critical ones
     - Newton-Raphson with full Newton iterations and a relative convergence
       criterion by default, reaching quadratic convergence with exact tangent
       stiffness matrices

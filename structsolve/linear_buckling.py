@@ -1,29 +1,60 @@
 import warnings
 
 import numpy as np
-from scipy.sparse.linalg import eigsh, spsolve
+from scipy.sparse import csc_matrix
+from scipy.sparse.linalg import eigsh, splu
 from scipy.linalg import eigh
 
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
 
-def _estimate_sigma(K, KG):
+def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3):
+    r"""Shift of the Cayley mode used by :func:`lb`
+
+    With ``sigma > 0``, ``eigsh(A=KG, M=K, sigma=sigma, mode='cayley',
+    which='SM')`` returns the eigenvalues `\mu` of ``KG u = mu K u`` with the
+    smallest `|(\mu + \sigma)/(\mu - \sigma)|`. This ordering selects the most
+    negative `\mu`, i.e. the lowest positive load multipliers `-1/\mu`, only
+    when `\sigma` is larger than `|\mu|` of these critical eigenvalues.
+    Otherwise the eigenvalues closest to `-\sigma` are returned.
+
+    The largest `|\mu|` is estimated with power iterations on
+    `[K]^{-1}[K_G]`, whose norm ratio in the `[K]`-norm increases towards the
+    largest `|\mu|`, and multiplied by ``safety``. The default shift ``1.`` is
+    returned when ``K`` is singular, not positive definite, or the linear
+    solution is inaccurate.
+
+    """
     try:
-        rhs = KG @ np.random.RandomState(42).randn(K.shape[0])
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            y = spsolve(K, rhs)
-        if any(issubclass(w.category, (RuntimeWarning, Warning))
-               and "singular" in str(w.message).lower() for w in caught):
-            return 1.
-        residual = np.linalg.norm(K @ y - rhs)
-        if residual > 1e-6 * np.linalg.norm(rhs):
-            return 1.
-        sigma = abs((y @ KG @ y) / (y @ K @ y))
-        if not np.isfinite(sigma) or sigma == 0:
-            return 1.
-        return sigma
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lu = splu(csc_matrix(K))
+        x = np.random.RandomState(42).randn(K.shape[0])
+        Kx = K @ x
+        mu_max = 0.
+        for i in range(max_iter):
+            xKx = x @ Kx
+            if not np.isfinite(xKx) or xKx <= 0:
+                return 1.
+            x = x / np.sqrt(xKx)
+            rhs = KG @ x
+            y = lu.solve(rhs)
+            Ky = K @ y
+            if i == 0:
+                residual = np.linalg.norm(Ky - rhs)
+                if not residual <= 1e-6 * np.linalg.norm(rhs):
+                    return 1.
+            # ||y||_K / ||x||_K, with ||x||_K = 1
+            ratio = np.sqrt(abs(y @ Ky))
+            if not np.isfinite(ratio) or ratio == 0:
+                return 1.
+            converged = i > 0 and ratio - mu_max <= rel_tol * ratio
+            mu_max = max(mu_max, ratio)
+            if converged:
+                break
+            x, Kx = y, Ky
+        return safety * mu_max
     except Exception:
         return 1.
 

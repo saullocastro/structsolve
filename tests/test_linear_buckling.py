@@ -41,6 +41,46 @@ def test_lb_dense_solver():
     np.testing.assert_allclose(eigvals[:5], -2.0, rtol=1e-6)
 
 
+def test_lb_sparse_shift_mixed_spectrum():
+    """Sparse and dense lb agree when the load multipliers have mixed signs
+
+    Regression test: the shift of the sparse solver was a single Rayleigh
+    quotient, in which the positive and negative eigenvalues of
+    ``KG u = mu K u`` cancel. The shift landed below the critical ``|mu|``
+    and eigsh returned the load multipliers near ``1/sigma`` instead of the
+    lowest ones.
+    """
+    from scipy.sparse import diags
+    from structsolve.linear_buckling import _estimate_sigma
+
+    n = 80
+    k = np.linspace(1e6, 5e6, n)
+    lambdas = np.concatenate([[1.0, 1.0, 1.1, 1.2],
+                              np.linspace(1.5, 4., 36),
+                              -np.linspace(1.5, 4., 40)])
+    mu = -1. / lambdas
+    K = diags(k).tocsc()
+    KG = diags(mu * k).tocsc()
+
+    # the shift must bound the largest |mu| of the critical eigenvalues
+    assert _estimate_sigma(K, KG) >= np.abs(mu).max()
+
+    eig_sparse, _ = lb(K, KG, silent=True, num_eigvalues=10)
+    eig_dense, _ = lb(K, KG, silent=True, sparse_solver=False)
+    np.testing.assert_allclose(eig_sparse[:4], [1.0, 1.0, 1.1, 1.2],
+                               rtol=1e-8)
+    np.testing.assert_allclose(eig_sparse[:4], eig_dense[:4], rtol=1e-8)
+
+
+def test_lb_sparse_singular_K():
+    """The shift falls back to 1 when K is singular"""
+    from structsolve.linear_buckling import _estimate_sigma
+
+    K = csc_matrix(np.diag([1., 2., 0., 4., 5.]))
+    KG = csc_matrix(np.eye(5))
+    assert _estimate_sigma(K, KG) == 1.
+
+
 def test_lb_plate_buckling_fsdt():
     """Test plate buckling (FSDT) based on semi-analytical Ritz method.
 
