@@ -4,8 +4,7 @@ Github Actions status:
 
 Coverage status:
 [![codecov](https://github.com/saullocastro/structsolve/actions/workflows/coverage.yml/badge.svg)](https://github.com/saullocastro/structsolve/actions/workflows/coverage.yml)
-[![Codecov Status](https://codecov.io/gh/saullocastro/structsolve/branch/master/graph/badge.svg)](https://codecov.io/gh/saullocastro/structsolve)
-
+[![Codecov Status](https://codecov.io/gh/saullocastro/structsolve/graph/badge.svg?token=NNHK0SFZNH)](https://codecov.io/gh/saullocastro/structsolve)
 
 Structural analysis solvers tailored for semi-analytical models
 ===============================================================
