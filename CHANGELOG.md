@@ -1,28 +1,6 @@
 # Changelog
 
-## 0.4.1 (2026-09-17)
-
-### Fixed
-
-- The sparse solver of `lb` could return load multipliers higher than the
-  critical ones, without any warning. The shift `sigma` of the Cayley mode was
-  a single Rayleigh quotient, in which positive and negative eigenvalues cancel,
-  and could land below the largest `|mu|` of `KG u = mu K u`. The eigenvalue
-  solver then returned the eigenvalues nearest to the shift. The shift is now
-  estimated with power iterations on `K^-1 KG`, giving the largest `|mu|`,
-  multiplied by a safety factor of 10. When `K` is singular, not positive
-  definite, or the linear solution is inaccurate, the shift falls back to `1.`
-  as before.
-- `freq` was verified not to be affected: with a negative shift, the ordering
-  of the shift-invert mode selects the lowest natural frequencies for any shift.
-
-### Tests
-
-- Regression test comparing the sparse and dense solvers of `lb` for a spectrum
-  with load multipliers of mixed signs, and a test of the fallback shift for a
-  singular `K`.
-
-## 0.4.0 (2026-09-17)
+## 0.4.2 (2026-09-17)
 
 ### Breaking: new defaults of the non-linear solvers
 
@@ -78,6 +56,50 @@ did not converge in practice. They now share one implementation,
   matrix is updated, as in the Newton-Raphson solver, so the new default
   `modified_NR=False` also applies here.
 
+### Linear buckling: sparse solver of `lb`
+
+The sparse solver of `lb` could return wrong load multipliers without any
+warning, for two independent reasons, both fixed:
+
+- **Wrong shift.** The shift `sigma` of the Cayley mode was a single Rayleigh
+  quotient, in which positive and negative eigenvalues cancel, and could land
+  below the largest `|mu|` of `KG u = mu K u`. The eigenvalue solver then
+  returned the eigenvalues nearest to the shift, i.e. load multipliers higher
+  than the critical ones, e.g. for a cylinder model from panels. The shift is
+  now estimated with power iterations on `K^-1 KG`, giving the largest `|mu|`,
+  multiplied by a safety factor of 10. When `K` is singular, not positive
+  definite, or the linear solution is inaccurate, the shift falls back to `1.`.
+- **Intel MKL bug.** When SciPy is linked against Intel MKL 2024.2.0 to
+  2025.0.0, e.g. the current Anaconda builds of SciPy on Windows, ARPACK
+  returned wrong load multipliers at random, some of them far below the
+  critical load, or raised `ArpackError -8`. The `dsteqr` routine of these MKL
+  versions returns wrong eigenvectors for matrices larger than 32 x 32, which
+  ARPACK uses for the Ritz vectors when `ncv > 32`, e.g. `num_eigvalues=25`
+  gives `ncv=51`. SciPy itself is not affected: the PyPI wheels of SciPy 1.16
+  and 1.17 give correct results, and so does the same Anaconda SciPy binary
+  with MKL 2025.0.1 or newer.
+
+The sparse solver was changed accordingly:
+
+- The dofs where `KG` has null rows, typically the in-plane dofs, are condensed
+  out with a sparse factorization of `K`. When at most `max_dense_size` (new
+  argument, default `2000`) dofs remain, the condensed problem is solved with
+  the dense `scipy.linalg.eigh`, otherwise with `eigsh` in Cayley mode.
+- The eigenpairs are verified: the relative residual
+  `||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)` must not exceed
+  `check_rtol` (new argument, default `1e-3`), and, when `K` is positive
+  definite, `K + s KG` must also be positive definite for `s` slightly below
+  the lowest positive load multiplier found, i.e. no lower load multiplier
+  was missed. When the condensed solution fails, `eigsh` is tried, and a
+  `RuntimeError` is raised when no solution passes the verification.
+- The load multipliers are returned sorted as by the dense solver: the
+  positive ones first in increasing order, followed by the negative ones.
+
+`freq` was verified not to be affected by either problem: with a negative
+shift, the ordering of the shift-invert mode selects the lowest natural
+frequencies for any shift, and the non-symmetric ARPACK routines do not call
+`dsteqr`.
+
 ### Fixed
 
 - Newton-Raphson advanced the load factor twice after each converged step and
@@ -119,6 +141,13 @@ did not converge in practice. They now share one implementation,
 - Arc-length (`tests/test_arc_length.py`): snap-through, snap-back, quadratic
   convergence, step cutting, `maxArcLength`, `silent` and independence of the
   units of the model.
+- Linear buckling (`tests/test_linear_buckling.py`): sparse and dense solvers
+  for a spectrum with load multipliers of mixed signs, fallback shift for a
+  singular `K`, and regression tests with `K` and `KG` matrices of a plate and
+  a cylinder from panels, saved in `tests/data/`, for the condensed solution,
+  for `eigsh` alone (correct results or `RuntimeError`), for the verification
+  of the eigenpairs, for the order of the load multipliers, and for null rows
+  of `KG` and `K`.
 
 ## 0.3.1 (2026-04-09)
 
