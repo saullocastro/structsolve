@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.4.1 documentation</title>
+    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.4.2 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="_static/documentation_options.js?v=c87aa342"></script>
+    <script src="_static/documentation_options.js?v=ff822928"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Linear static analysis (structsolve.static)" href="static.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.4.1" />
+  <meta name="docsearch:version" content="0.4.2" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.4.1 documentation</p>
+    <p class="title logo__title">structsolve 0.4.2 documentation</p>
   
 </a></div>
     
@@ -409,7 +409,7 @@
 <h1>Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)<a class="headerlink" href="#linear-buckling-analysis-structsolve-linear-buckling" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.lb">
-<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">lb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.lb" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">lb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.lb" title="Link to this definition">#</a></dt>
 <dd><p>Linear buckling analysis</p>
 <p>Calculates the eigenvalues <span class="math notranslate nohighlight">\(\lambda\)</span> and eigenvectors <span class="math notranslate nohighlight">\(\{u\}\)</span> of the
 eigenvalue problem:</p>
@@ -430,39 +430,77 @@ applicable.</p>
 <dt><strong>KG</strong><span class="classifier">sparse_matrix</span></dt><dd><p>Initial stress stiffness matrix that multiplies the load multiplier
 <span class="math notranslate nohighlight">\(\lambda\)</span> of the eigenvalue problem.</p>
 </dd>
-<dt><strong>tol</strong><span class="classifier">float, optional</span></dt><dd><p>A float tolerance passed to the eigenvalue solver.</p>
+<dt><strong>tol</strong><span class="classifier">float, optional</span></dt><dd><p>A float tolerance passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>.</p>
 </dd>
-<dt><strong>sparse_solver</strong><span class="classifier">bool, optional</span></dt><dd><p>Tells if solver <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or
-<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> (<code class="docutils literal notranslate"><span class="pre">False</span></code>) should be used. The sparse
-solver uses the Cayley mode with a shift estimated from the matrices
-and calculates <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues. The dense solver
-calculates all eigenvalues and requires a positive definite <code class="docutils literal notranslate"><span class="pre">K</span></code>.</p>
+<dt><strong>sparse_solver</strong><span class="classifier">bool, optional</span></dt><dd><p>With <code class="docutils literal notranslate"><span class="pre">True</span></code>, when <code class="docutils literal notranslate"><span class="pre">KG</span></code> has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> non-null
+rows, the other dofs (typically the in-plane dofs) are condensed out
+with a sparse factorization of <code class="docutils literal notranslate"><span class="pre">K</span></code> and the condensed problem is
+solved with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>. Otherwise, or when this
+solution fails, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> solves the full
+problem in Cayley mode, with a shift estimated from the matrices.
+The eigenpairs are verified as described in the Notes, and
+<code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> load multipliers are returned.
+With <code class="docutils literal notranslate"><span class="pre">False</span></code>, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> solves the full problem,
+returning all load multipliers, and requires a positive definite
+<code class="docutils literal notranslate"><span class="pre">K</span></code>.</p>
 </dd>
 <dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
 </dd>
-<dt><strong>num_eigvalues</strong><span class="classifier">int, optional</span></dt><dd><p>Number of calculated eigenvalues with the sparse solver, limited to
-the size of <code class="docutils literal notranslate"><span class="pre">KG</span></code> minus 2, and number of returned eigenvectors.</p>
+<dt><strong>num_eigvalues</strong><span class="classifier">int, optional</span></dt><dd><p>Number of load multipliers calculated with the sparse solver, and
+number of returned eigenvectors.</p>
 </dd>
 <dt><strong>num_eigvalues_print</strong><span class="classifier">int, optional</span></dt><dd><p>Number of eigenvalues to print.</p>
 </dd>
 <dt><strong>skip_null_cols</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, skip the removal of null columns from the matrices.
 Use only when K is known to be non-singular.</p>
 </dd>
+<dt><strong>max_dense_size</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum number of non-null rows of <code class="docutils literal notranslate"><span class="pre">KG</span></code> for which the sparse solver
+solves the condensed problem with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>. Use
+<code class="docutils literal notranslate"><span class="pre">0</span></code> to always use <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>.</p>
+</dd>
+<dt><strong>check_rtol</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum relative residual of the eigenpairs of the sparse solver,
+see the Notes.</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt><strong>eigvals</strong><span class="classifier">ndarray</span></dt><dd><p>The load multipliers <span class="math notranslate nohighlight">\(\lambda\)</span>, calculated as <code class="docutils literal notranslate"><span class="pre">-1/eigval</span></code> from the
-eigenvalues <code class="docutils literal notranslate"><span class="pre">eigval</span></code> of <code class="docutils literal notranslate"><span class="pre">KG</span> <span class="pre">u</span> <span class="pre">=</span> <span class="pre">eigval</span> <span class="pre">K</span> <span class="pre">u</span></code>. The dense solver
-returns all load multipliers, the positive ones first in increasing
-order.</p>
+eigenvalues <code class="docutils literal notranslate"><span class="pre">eigval</span></code> of <code class="docutils literal notranslate"><span class="pre">KG</span> <span class="pre">u</span> <span class="pre">=</span> <span class="pre">eigval</span> <span class="pre">K</span> <span class="pre">u</span></code>. The positive load
+multipliers come first in increasing order, followed by the negative
+ones, for both solvers.</p>
 </dd>
 <dt><strong>eigvecs</strong><span class="classifier">ndarray</span></dt><dd><p>The <span class="math notranslate nohighlight">\(i^{th}\)</span> eigenvector is <code class="docutils literal notranslate"><span class="pre">eigvecs[:,</span> <span class="pre">i]</span></code>, with the size of the
 original matrices. Only <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvectors are returned.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>RuntimeError</dt><dd><p>When no eigenpairs of the sparse solver pass the verification.</p>
+</dd>
 </dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The eigenpairs of the sparse solver are verified as follows:</p>
+<ul class="simple">
+<li><p>the relative residual
+<span class="math notranslate nohighlight">\(||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)\)</span> of each
+eigenpair must not be larger than <code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
+<li><p>when <code class="docutils literal notranslate"><span class="pre">K</span></code> is positive definite, <span class="math notranslate nohighlight">\([K] + s [K_G]\)</span> must also be positive
+definite for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than the lowest positive load
+multiplier found, i.e. no lower load multiplier was missed. The
+factorization is done with SuperLU, without row interchanges.</p></li>
+</ul>
+<p>When the condensed dense solution fails the verification,
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> is tried, and a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> is
+raised when it also fails.</p>
+<p>ARPACK, used by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>, returns wrong
+eigenpairs at random, without any error, when linked against Intel MKL
+2024.2.0 to 2025.0.0, e.g. in some Anaconda builds of SciPy: the
+<code class="docutils literal notranslate"><span class="pre">dsteqr</span></code> routine of these MKL versions returns wrong eigenvectors for
+matrices larger than 32 x 32. MKL 2025.0.1 or newer is not affected.</p>
 </dd></dl>
 
 </section>
