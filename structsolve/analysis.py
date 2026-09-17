@@ -20,17 +20,21 @@ class Analysis(object):
     ========================  ==================================================
     ``NL_method``             ``str``, ``'NR'`` for the Newton-Raphson
                               ``'arc_length'`` for the Arc-Length method
-    ``line_search``           ``bool``, activate line_search (for
-                              Newton-Raphson methods only)
+    ``line_search``           ``bool``, activate a safeguarding line-search
+                              (for Newton-Raphson methods only). The full
+                              step is tried first and only reduced when it
+                              fails a sufficient-decrease test on the
+                              residual norm
     ``max_iter_line_search``  ``int``, maximum number of iteration attempts
                               for the line-search algorithm
     ``modified_NR``           ``bool``, activates the modified Newton-Raphson
     ``compute_every_n``       ``int``, if ``modified_NR=True``, the non-linear
                               matrices will be updated at every `n` iterations
-    ``kT_initial_state``      ``bool``, tells if the tangent stiffness matrix
-                              should be calculated already at the initial
-                              state, which is required for example when
-                              initial imperfections take place
+    ``kT_initial_state``      ``bool``, if ``modified_NR=True``, tells if the
+                              tangent stiffness matrix should be calculated
+                              already at the first iteration of the analysis,
+                              which is required for example when initial
+                              imperfections take place
     ========================  ==================================================
 
     ==============     =================================================
@@ -50,10 +54,19 @@ class Analysis(object):
     ====================    ============================================
     Convergence Criteria    Description
     ====================    ============================================
-    ``absTOL``              the convergence is achieved when the maximum
-                            residual force is smaller than this value
-    ``maxNumIter``          maximum number of iteration; if achieved the
-                            load increment is bisected
+    ``relTOL``              the convergence is achieved when the norm of
+                            the residual force vector is smaller than
+                            ``relTOL`` times the largest norm between the
+                            external and internal force vectors. Not used
+                            if ``None``
+    ``absTOL``              the convergence is also achieved when the
+                            maximum residual force is smaller than this
+                            value, which depends on the units of the
+                            model. If ``None``, it is not used by the
+                            Newton-Raphson solver and the arc-length
+                            solvers use ``1.e-3``
+    ``maxNumIter``          maximum number of iterations; if achieved the
+                            load increment is reduced
     ``too_slow_TOL``        tolerance that tells if the convergence is too
                             slow
     ====================    ============================================
@@ -93,9 +106,9 @@ class Analysis(object):
             calc_kG=None):
         # non-linear algorithm
         self.NL_method = 'NR'
-        self.line_search = True
+        self.line_search = False
         self.max_iter_line_search = 20
-        self.modified_NR = True
+        self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
         # incrementation
@@ -104,8 +117,8 @@ class Analysis(object):
         self.maxInc = 1.
         self.maxArcLength = 18
         # convergence criteria
-        self.absTOL = 1.e-3
-        self.relTOL = 1.e-3
+        self.absTOL = None
+        self.relTOL = 1.e-6
         self.maxNumIter = 30
         self.too_slow_TOL = 0.005
 
