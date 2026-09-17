@@ -21,10 +21,17 @@ Currently these solvers are pretty much compatible with my other repositories
 [buckling](https://github.com/saullocastro/buckling).
 
 
+Citing this library
+===================
+
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+
+
 Documentation
 =============
 
 The documentation is available on: https://saullocastro.github.io/structsolve.
+
 
 
 History
