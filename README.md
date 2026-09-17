@@ -23,7 +23,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
