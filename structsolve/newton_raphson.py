@@ -1,3 +1,10 @@
+"""Newton-Raphson solver for non-linear static analyses
+
+The module-level constants control the step size and the divergence checks,
+and they are shared with the arc-length solvers of
+:mod:`structsolve.arc_length`.
+
+"""
 import numpy as np
 
 from .logger import msg, warn
@@ -211,12 +218,19 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
 
 
 def _solver_NR(an, silent=False, initialInc=None):
-    """Newton-Raphson solver with load control
+    r"""Newton-Raphson solver with load control
 
-    The load factor goes from zero to one in increments. Each increment starts
-    from a predictor that extrapolates the previous converged increment of the
-    solution, scaled by the ratio between the new and the previous load
-    increments. The first increment uses the linear solution as predictor.
+    Used by :meth:`.Analysis.static` when ``NL_method='NR'``. The load factor
+    `\lambda` goes from zero to one in increments, solving at each increment
+
+    .. math::
+
+        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
+
+    Each increment starts from a predictor that extrapolates the previous
+    converged increment of the solution, scaled by the ratio between the new
+    and the previous load increments. The first increment uses the linear
+    solution as predictor.
 
     By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
     ``kT = kC + kG`` is rebuilt at every iteration, which gives quadratic
@@ -231,9 +245,16 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     See :func:`._check_convergence` for the convergence criteria. A step that
     does not converge within ``an.maxNumIter`` iterations, that diverges or
-    that converges too slowly is repeated with a smaller load increment. The
-    divergence and too-slow checks are only activated after
-    ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations.
+    that converges too slowly is repeated with the load increment multiplied
+    by ``INC_CUT_FACTOR``. The divergence and too-slow checks are only
+    activated after ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations, see
+    :func:`._check_divergence`.
+
+    After a step that converged without being cut, the load increment is
+    multiplied by ``INC_GROWTH_FACTOR``, limited by ``an.maxInc``. The last
+    step is adjusted such that the analysis finishes at a load factor of
+    exactly ``1.0``. The analysis stops earlier, keeping the converged
+    increments, when the load increment becomes smaller than ``an.minInc``.
 
     Parameters
     ----------

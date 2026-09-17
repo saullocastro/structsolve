@@ -1,3 +1,4 @@
+"""Utilities for sparse matrices"""
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix, csc_matrix
 
@@ -13,12 +14,15 @@ def remove_null_cols(*args, **kwargs):
         The first matrix in this list will be used to extract the columns
         to be removed from all the other matrices. Use :class:`csr_matrix` to
         obtain a better performance.
+    silent : bool, optional
+        Keyword argument telling whether the log messages should be printed.
 
     Returns
     -------
-    out : list of sparse matrices and removed columns
-        A list with the reduced matrices in the same order of ``args`` plus
-        an array containing the removed columns at the last position.
+    out : list of sparse matrices and used columns
+        A list with the reduced matrices, in CSR format and in the same order
+        of ``args``, plus an array containing the indices of the columns that
+        were kept at the last position.
 
     """
     silent = kwargs.get('silent', False)
@@ -186,7 +190,19 @@ def is_symmetric(m):
 
 
 def finalize_symmetric_matrix(M):
-    """ Check for nan and inf valus and makes M symmetric
+    """Check for nan and inf values and make a matrix symmetric
+
+    Parameters
+    ----------
+    M : sparse matrix
+        A square matrix with the upper triangle defined, see
+        :func:`.make_symmetric`.
+
+    Returns
+    -------
+    M_sym : csr_matrix
+        The symmetric sparse matrix.
+
     """
     assert np.any(np.isnan(M.data)) == False
     assert np.any(np.isinf(M.data)) == False
