@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 (2026-09-17)
+## 0.4.3 (2026-09-17)
 
 ### Breaking: new defaults of the non-linear solvers
 

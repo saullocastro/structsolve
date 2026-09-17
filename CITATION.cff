@@ -17,7 +17,7 @@ abstract: >-
     arc-length methods of Riks and Crisfield
 message: >-
   Please, cite this software using:
-  Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+  Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 authors:
   - family-names: Castro
     given-names: Saullo G. P.
@@ -37,5 +37,5 @@ keywords:
   - vibration
   - newton raphson
   - arc length
-version: 0.4.2
+version: 0.4.3
 date-released: '2026-09-17'
