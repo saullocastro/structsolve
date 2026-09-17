@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Non-linear static analysis with the arc-length methods &#8212; structsolve 0.3.1 documentation</title>
+    <title>Non-linear static analysis with the arc-length methods &#8212; structsolve 0.4.0 documentation</title>
   
   
   
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="_static/documentation_options.js?v=4621528c"></script>
+    <script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'ex_arc_length';</script>
@@ -49,7 +49,7 @@
     <link rel="prev" title="Non-linear static analysis with the Newton-Raphson method" href="ex_newton_raphson.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.3.1" />
+  <meta name="docsearch:version" content="0.4.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.3.1 documentation</p>
+    <p class="title logo__title">structsolve 0.4.0 documentation</p>
   
 </a></div>
     
@@ -399,14 +399,14 @@ method with load control fails. The shallow von Mises truss below, loaded
 through a linear spring, softens until a limit point, snaps through to an
 inverted configuration, and stiffens again:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">von_mises_truss</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.99</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="mf">10.</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shallow von Mises truss (height h=1) loaded through a linear spring</span>
+<span class="w">    </span><span class="sd">"""Shallow von Mises truss (height h=1) loaded through a linear spring</span>
 
 <span class="sd">    DOF 0 is the apex deflection, DOF 1 the loaded point, connected to the</span>
 <span class="sd">    apex through a spring of stiffness ``ks``. The truss softens and reaches</span>
 <span class="sd">    a limit point at ``w = 1 - 1/sqrt(3)``; the load is ``frac`` of the</span>
 <span class="sd">    limit load.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">Flim</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
     <span class="n">fext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="n">frac</span><span class="o">*</span><span class="n">Flim</span><span class="p">])</span>
     <span class="n">kC</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">2.</span> <span class="o">+</span> <span class="n">ks</span><span class="p">,</span> <span class="o">-</span><span class="n">ks</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">ks</span><span class="p">,</span> <span class="n">ks</span><span class="p">]])</span>
@@ -429,15 +429,15 @@ arc-length methods, selected with <code class="docutils literal notranslate"><sp
 where the load factor decreases and becomes negative, until the load factor
 reaches exactly 1.0 on the inverted configuration. The code is extracted from
 one of the <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> unit tests:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">&#39;method&#39;</span><span class="p">,</span> <span class="n">METHODS</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">'method'</span><span class="p">,</span> <span class="n">METHODS</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">test_arc_length_snap_through</span><span class="p">(</span><span class="n">method</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load of 1.5 times the limit load of the von Mises truss</span>
+<span class="w">    </span><span class="sd">"""Load of 1.5 times the limit load of the von Mises truss</span>
 
 <span class="sd">    The path goes through the limit point, the load factor becomes negative</span>
 <span class="sd">    during the snap-through, and it increases again until the load factor</span>
 <span class="sd">    reaches 1.0 on the inverted configuration.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">von_mises_truss</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">NL_method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -522,8 +522,8 @@ one of the <code class="docutils literal notranslate"><span class="pre">structso
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -543,7 +543,7 @@ one of the <code class="docutils literal notranslate"><span class="pre">structso
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
     <br/>
   </p>
 </div>
@@ -557,7 +557,7 @@ one of the <code class="docutils literal notranslate"><span class="pre">structso
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>

@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis &#8212; structsolve 0.3.1 documentation</title>
+    <title>Linear buckling analysis &#8212; structsolve 0.4.0 documentation</title>
   
   
   
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="_static/documentation_options.js?v=4621528c"></script>
+    <script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Linear static analysis" href="ex_linear_static.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.3.1" />
+  <meta name="docsearch:version" content="0.4.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.3.1 documentation</p>
+    <p class="title logo__title">structsolve 0.4.0 documentation</p>
   
 </a></div>
     
@@ -407,11 +407,11 @@ matrices are integrated numerically and the critical load is compared with
 the analytical solution. The code is extracted from one of the
 <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> unit tests:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_lb_plate_buckling_fsdt</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Test plate buckling (FSDT) based on semi-analytical Ritz method.</span>
+<span class="w">    </span><span class="sd">"""Test plate buckling (FSDT) based on semi-analytical Ritz method.</span>
 
 <span class="sd">    Reference: notebook BucklingPlates-FSDT.ipynb from the buckling repository.</span>
 <span class="sd">    Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">roots_legendre</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">composites</span><span class="w"> </span><span class="kn">import</span> <span class="n">isotropic_plate</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">buckling.legendre</span><span class="w"> </span><span class="kn">import</span> <span class="n">vecf</span><span class="p">,</span> <span class="n">vecfxi</span>
@@ -468,21 +468,21 @@ the analytical solution. The code is extracted from one of the
 
             <span class="n">weight</span> <span class="o">=</span> <span class="n">wxi</span> <span class="o">*</span> <span class="n">weta</span>
 
-            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">P_xi</span><span class="p">,</span> <span class="n">P_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">P_xi</span><span class="p">,</span> <span class="n">P_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
             <span class="n">Sphix</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">Pj</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
             <span class="n">Sphiy</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">Pj</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-            <span class="n">Pxi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wPx_xi</span><span class="p">,</span> <span class="n">wP_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+            <span class="n">Pxi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wPx_xi</span><span class="p">,</span> <span class="n">wP_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
             <span class="n">Swx</span><span class="p">[:</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pxi</span> <span class="o">*</span> <span class="n">Pj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-            <span class="n">Pxi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">Px_xi</span><span class="p">,</span> <span class="n">P_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+            <span class="n">Pxi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">Px_xi</span><span class="p">,</span> <span class="n">P_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
             <span class="n">Sphixx</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pxi</span> <span class="o">*</span> <span class="n">Pj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
             <span class="n">Sphiyx</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pxi</span> <span class="o">*</span> <span class="n">Pj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pxj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wP_xi</span><span class="p">,</span> <span class="n">wPx_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pxj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wP_xi</span><span class="p">,</span> <span class="n">wPx_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
             <span class="n">Swy</span><span class="p">[:</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">Pxj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pxj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">P_xi</span><span class="p">,</span> <span class="n">Px_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;ij&#39;</span><span class="p">)</span>
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pxj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">P_xi</span><span class="p">,</span> <span class="n">Px_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
             <span class="n">Sphixy</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">Pxj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
             <span class="n">Sphiyy</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span> <span class="o">*</span> <span class="n">Pxj</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
@@ -583,8 +583,8 @@ the analytical solution. The code is extracted from one of the
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -604,7 +604,7 @@ the analytical solution. The code is extracted from one of the
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
     <br/>
   </p>
 </div>
@@ -618,7 +618,7 @@ the analytical solution. The code is extracted from one of the
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>

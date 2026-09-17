@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Non-linear static analysis with the Newton-Raphson method &#8212; structsolve 0.3.1 documentation</title>
+    <title>Non-linear static analysis with the Newton-Raphson method &#8212; structsolve 0.4.0 documentation</title>
   
   
   
@@ -27,18 +27,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=90905a2f556bf617f1a9" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=cb8930eaaf36d9849b67" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=cb8930eaaf36d9849b67"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67" />
 
-    <script src="_static/documentation_options.js?v=4621528c"></script>
+    <script src="_static/documentation_options.js?v=6c02275b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -50,7 +50,7 @@
     <link rel="prev" title="Frequency analysis" href="ex_frequency.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.3.1" />
+  <meta name="docsearch:version" content="0.4.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.3.1 documentation</p>
+    <p class="title logo__title">structsolve 0.4.0 documentation</p>
   
 </a></div>
     
@@ -403,12 +403,12 @@ method, described in <a class="reference internal" href="newton_raphson.html#str
 <p>The class below, used in the <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> unit tests, wraps analytic
 problems into these callables:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Problem</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap analytic callbacks and record every call to ``calc_fint``</span>
+<span class="w">    </span><span class="sd">"""Wrap analytic callbacks and record every call to ``calc_fint``</span>
 
 <span class="sd">    Each recorded call stores the number of increments already accepted by</span>
 <span class="sd">    the solver, allowing the iterations of each step to be counted.</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fext</span><span class="p">,</span> <span class="n">fint</span><span class="p">,</span> <span class="n">kC</span><span class="p">,</span> <span class="n">kG</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fext</span> <span class="o">=</span> <span class="n">fext</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">fint</span> <span class="o">=</span> <span class="n">fint</span>
@@ -439,25 +439,25 @@ problems into these callables:</p>
         <span class="k">return</span> <span class="n">an</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">calls_per_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of ``calc_fint`` calls spent to reach each accepted step&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Number of ``calc_fint`` calls spent to reach each accepted step"""</span>
         <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint_calls</span><span class="p">]</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">steps</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">))]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">solve_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lbd</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">c0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-15</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plain dense Newton-Raphson to obtain a reference solution&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Plain dense Newton-Raphson to obtain a reference solution"""</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kC</span><span class="p">,</span> <span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span><span class="p">)</span> <span class="k">if</span> <span class="n">c0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">c0</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
             <span class="n">R</span> <span class="o">=</span> <span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">c</span>
             <span class="n">c</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kC</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kG</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">R</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;reference solution did not converge&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">'reference solution did not converge'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>One of these problems is a chain of springs with a cubic hardening, where
 <span class="math notranslate nohighlight">\(\{F_{int}\} = [K]\{u\} + a \{u\}^3\)</span>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hardening_springs</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="mf">50.</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Chain of 4 springs with cubic hardening: ``fint = K u + a u**3``&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Chain of 4 springs with cubic hardening: ``fint = K u + a u**3``"""</span>
     <span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>
     <span class="n">K</span> <span class="o">=</span> <span class="mf">100.</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
     <span class="n">K</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">100.</span>
@@ -562,8 +562,8 @@ the size of the first load increment:</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=cb8930eaaf36d9849b67"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=cb8930eaaf36d9849b67"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -583,7 +583,7 @@ the size of the first load increment:</p>
         <div class="footer-item">
 
   <p class="sphinx-version">
-    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
     <br/>
   </p>
 </div>
@@ -597,7 +597,7 @@ the size of the first load increment:</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.20.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.21.0.
 </p></div>
       
     </div>
