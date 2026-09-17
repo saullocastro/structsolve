@@ -18,8 +18,10 @@ class Analysis(object):
     ========================  ==================================================
     Non-Linear Algorithm      Description
     ========================  ==================================================
-    ``NL_method``             ``str``, ``'NR'`` for the Newton-Raphson
-                              ``'arc_length'`` for the Arc-Length method
+    ``NL_method``             ``str``, ``'NR'`` for the Newton-Raphson,
+                              ``'arc_length_riks'`` or
+                              ``'arc_length_crisfield'`` for the Arc-Length
+                              methods
     ``line_search``           ``bool``, activate a safeguarding line-search
                               (for Newton-Raphson methods only). The full
                               step is tried first and only reduced when it
@@ -41,14 +43,23 @@ class Analysis(object):
     Incrementation     Description
     ==============     =================================================
     ``initialInc``     initial load increment size. In the arc-length
-                       method it will be the initial value for
-                       `\lambda`
+                       methods it defines the initial arc-length
+                       increment, corresponding to a load factor
+                       increment of ``initialInc`` along the initial
+                       tangent
     ``minInc``         minimum increment size; if achieved the analysis
-                       is terminated. The arc-length method will use
-                       this parameter to terminate when the minimum
+                       is terminated. The arc-length methods will use
+                       this parameter to terminate when the
                        arc-length increment is smaller than ``minInc``
-    ``maxInc``         maximum increment size
-    ``maxArcLength``   maximum length covered by the arc-length  search
+    ``maxInc``         maximum increment size, for the arc-length methods
+                       the maximum arc-length increment
+    ``maxArcLength``   maximum cumulative arc length covered by the
+                       arc-length methods. The arc length is
+                       dimensionless, with displacements scaled by the
+                       linear solution for a load factor of 1, such
+                       that in the linear regime an arc length of
+                       about ``sqrt(2)`` corresponds to a load factor
+                       increment of 1
     ==============     =================================================
 
     ====================    ============================================
@@ -62,9 +73,7 @@ class Analysis(object):
     ``absTOL``              the convergence is also achieved when the
                             maximum residual force is smaller than this
                             value, which depends on the units of the
-                            model. If ``None``, it is not used by the
-                            Newton-Raphson solver and the arc-length
-                            solvers use ``1.e-3``
+                            model. Not used if ``None``
     ``maxNumIter``          maximum number of iterations; if achieved the
                             load increment is reduced
     ``too_slow_TOL``        tolerance that tells if the convergence is too
