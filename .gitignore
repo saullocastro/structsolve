@@ -18,3 +18,5 @@ temp*.*
 *.pyo
 *.pyd
 
+# Documentation
+doc/build

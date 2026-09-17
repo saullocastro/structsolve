@@ -32,12 +32,19 @@ def _estimate_sigma(K, M):
 def freq(K, M, tol=0, sparse_solver=True,
         silent=False, sort=True, num_eigvalues=25,
         num_eigvalues_print=5, skip_null_cols=False):
-    """Frequency Analysis
+    r"""Frequency analysis
 
-    Calculate the eigenvalues (`\lambda^2`) and mass-normalized eigenvectors
-    solving the following eigenvalue problem::
+    Calculates the eigenvalues `\lambda^2` and eigenvectors `\{u\}` of the
+    free-vibration eigenvalue problem:
 
-        [K] + lambda**2 * [M] = 0
+    .. math::
+
+        ([K] + \lambda^2 [M])\{u\} = \{0\}
+
+    where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
+    in rad/s. The null rows and columns of ``K`` are removed from both
+    matrices before solving the eigenvalue problem, unless
+    ``skip_null_cols=True``.
 
     Parameters
     ----------
@@ -47,32 +54,46 @@ def freq(K, M, tol=0, sparse_solver=True,
     M : sparse_matrix
         Mass matrix.
     tol : float, optional
-        A tolerance value passed to ``scipy.sparse.linalg.eigs``.
+        A tolerance value passed to :func:`scipy.sparse.linalg.eigs`.
     sparse_solver : bool, optional
-        Tells if solver :func:`scipy.linalg.eig` or
-        :func:`scipy.sparse.linalg.eigs` should be used.
+        Tells if solver :func:`scipy.sparse.linalg.eigs` (``True``) or
+        :func:`scipy.linalg.eig` (``False``) should be used. The sparse
+        solver uses the shift-invert mode, with a negative shift estimated
+        from the matrices, and calculates the ``num_eigvalues`` eigenvalues
+        closest to the shift. The dense solver calculates all eigenvalues.
 
-        .. note:: It is recommended ``nparse_solver=False``, because it
-                  was verified that the sparse solver becomes unstable
-                  for some cases, though the sparse solver is faster.
+        .. note:: The sparse solver is faster, but it was verified to become
+                  unstable for some cases, where ``sparse_solver=False`` is
+                  recommended.
+
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
     sort : bool, optional
-        Sort the output eigenvalues and eigenmodes.
+        Sort the eigenvectors by increasing natural frequency, keeping only
+        those with a natural frequency larger than ``1e-6`` rad/s. The
+        returned eigenvalues are not affected by this option.
     num_eigvalues : int, optional
-        Number of calculated eigenvalues.
+        Number of calculated eigenvalues with the sparse solver, limited to
+        the size of ``M`` minus 2.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
     skip_null_cols : bool, optional
         If True, skip the removal of null columns from the matrices.
-        Use only when K is known to be non-singular.
+        Use only when ``K`` and ``M`` are known to be non-singular.
 
     Returns
     -------
-    The extracted eigenvalues are stored in the ``eigvals`` parameter and
-    the `i^{th}` eigenvector in the ``eigvecs[:, i-1]`` parameter. The
-    eigenvectors are mass-normalized.
-
+    lambda2 : ndarray
+        Complex array with the eigenvalues `\lambda^2 = -\omega_n^2`, in the
+        order returned by the eigenvalue solver.
+    eigvecs : ndarray
+        The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
+        original matrices. The sparse solver returns eigenvectors normalized
+        with respect to ``M``, the dense solver returns eigenvectors with
+        unit Euclidean norm. If ``sort=True`` the columns are sorted and
+        filtered as described above, in which case they correspond to the
+        eigenvalues in ``lambda2`` only if the solver already returned them
+        in the order of increasing natural frequency.
 
     """
     msg('Running frequency analysis...', silent=silent)
