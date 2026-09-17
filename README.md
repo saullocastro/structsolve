@@ -23,7 +23,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -38,8 +38,18 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.4.1 (2026-09-17)
-    - Fixed the eigenvalue shift of the sparse solver of `lb`, which could return buckling loads higher than the critical ones
+* version 0.4.2 (2026-09-17)
+    - Fixed the eigenvalue shift of the sparse solver of `lb`, which could
+      return buckling loads higher than the critical ones
+    - Fixed wrong buckling loads of the sparse solver of `lb` when SciPy is
+      linked against Intel MKL 2024.2.0 to 2025.0.0 (e.g. Anaconda on
+      Windows), whose `dsteqr` routine breaks ARPACK
+    - `lb` condenses out the dofs where `KG` is null and solves small
+      condensed problems with a dense solver
+    - `lb` verifies the eigenpairs of the sparse solver, raising an error
+      instead of returning wrong results
+    - The sparse solver of `lb` returns the load multipliers sorted as the
+      dense solver
     - Newton-Raphson with full Newton iterations and a relative convergence
       criterion by default, reaching quadratic convergence with exact tangent
       stiffness matrices
