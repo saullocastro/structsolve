@@ -30,10 +30,20 @@ def _estimate_sigma(K, KG):
 def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        num_eigvalues=25, num_eigvalues_print=5,
        skip_null_cols=False):
-    """Linear Buckling Analysis
+    r"""Linear buckling analysis
 
-    It can also be used for more general eigenvalue analyzes if `K` is the
-    tangent stiffness matrix of a given load state.
+    Calculates the eigenvalues `\lambda` and eigenvectors `\{u\}` of the
+    eigenvalue problem:
+
+    .. math::
+
+        ([K] + \lambda [K_G])\{u\} = \{0\}
+
+    where `\lambda` is the load multiplier of the load state that generated
+    `[K_G]`. It can also be used for more general eigenvalue analyses, e.g.
+    if ``K`` is the tangent stiffness matrix of a given load state. The null
+    rows and columns of ``K`` are removed from both matrices before solving
+    the eigenvalue problem, unless ``skip_null_cols=True``.
 
     Parameters
     ----------
@@ -42,28 +52,37 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         stress stiffness matrix, aerodynamic matrix and so forth when
         applicable.
     KG : sparse_matrix
-        Initial stress stiffness matrix that multiplies the load multiplcator
+        Initial stress stiffness matrix that multiplies the load multiplier
         `\lambda` of the eigenvalue problem.
     tol : float, optional
-        A float tolerance passsed to the eigenvalue solver.
+        A float tolerance passed to the eigenvalue solver.
     sparse_solver : bool, optional
-        Tells if solver :func:`scipy.linalg.eigh` or
-        :func:`scipy.sparse.linalg.eigsh` should be used.
+        Tells if solver :func:`scipy.sparse.linalg.eigsh` (``True``) or
+        :func:`scipy.linalg.eigh` (``False``) should be used. The sparse
+        solver uses the Cayley mode with a shift estimated from the matrices
+        and calculates ``num_eigvalues`` eigenvalues. The dense solver
+        calculates all eigenvalues and requires a positive definite ``K``.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
     num_eigvalues : int, optional
-        Number of calculated eigenvalues.
+        Number of calculated eigenvalues with the sparse solver, limited to
+        the size of ``KG`` minus 2, and number of returned eigenvectors.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
     skip_null_cols : bool, optional
         If True, skip the removal of null columns from the matrices.
         Use only when K is known to be non-singular.
 
-    Notes
-    -----
-    The extracted eigenvalues are stored in the ``eigvals`` parameter
-    of the ``Panel`` object and the `i^{th}` eigenvector in the
-    ``eigvecs[:, i-1]`` parameter.
+    Returns
+    -------
+    eigvals : ndarray
+        The load multipliers `\lambda`, calculated as ``-1/eigval`` from the
+        eigenvalues ``eigval`` of ``KG u = eigval K u``. The dense solver
+        returns all load multipliers, the positive ones first in increasing
+        order.
+    eigvecs : ndarray
+        The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
+        original matrices. Only ``num_eigvalues`` eigenvectors are returned.
 
     """
     msg('Running linear buckling analysis...', silent=silent)

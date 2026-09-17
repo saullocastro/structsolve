@@ -6,30 +6,31 @@ from .sparseutils import remove_null_cols
 
 
 def solve(a, b, silent=False, **kwargs):
-    """Wrapper for scipy.sparse.linalg.spsolve removing null columns
+    """Solve a linear system of equations removing null rows and columns
 
-    The null columns of matrix ``a`` is removed such and the linear system of
-    equations is solved. The corresponding values of the solution ``x`` where
-    the columns are null will also be null values.
+    Wrapper for :func:`scipy.sparse.linalg.spsolve`. The rows and columns of
+    ``a`` without any non-zero term, typically the constrained degrees of
+    freedom of a Ritz or finite element model, are removed before solving
+    the linear system of equations. The corresponding values of the solution
+    ``x`` are zero.
 
     Parameters
     ----------
     a : ndarray or sparse matrix
-        A square matrix that will be converted to CSR form in the solution.
-    b : scipy sparse matrix
-        The matrix or vector representing the right hand side of the equation.
+        A square matrix with a symmetric pattern of null rows and columns,
+        converted to CSR form in the solution.
+    b : ndarray
+        1-D array representing the right-hand side of the system of equations.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
     kwargs : keyword arguments, optional
-        Other arguments directly passed to :func:`spsolve`.
+        Other arguments directly passed to :func:`scipy.sparse.linalg.spsolve`.
 
     Returns
     -------
-    x : ndarray or sparse matrix
-        The solution of the sparse linear equation.
-        If ``b`` is a vector, then ``x`` is a vector of size ``a.shape[1]``.
-        If ``b`` is a sparse matrix, then ``x`` is a matrix of size
-        ``(a.shape[1], b.shape[1])``.
+    x : ndarray
+        The solution of the system of equations, a 1-D array of size
+        ``a.shape[1]`` with the same ``dtype`` as ``b``.
 
     """
     a, used_cols = remove_null_cols(a, silent=silent)
@@ -41,11 +42,14 @@ def solve(a, b, silent=False, **kwargs):
 
 
 def static(K, fext, silent=False):
-    """Static Analyses
+    r"""Linear static analysis
+
+    Solves `[K]\{u\} = \{F_{ext}\}` using :func:`.solve`. For linear and
+    non-linear static analyses based on callables that calculate the force
+    vectors and stiffness matrices, see :class:`.Analysis`.
 
     Parameters
     ----------
-
     K : sparse_matrix
         Stiffness matrix. Should include initial stress stiffness matrix,
         aerodynamic matrix and so forth when applicable.
@@ -53,6 +57,13 @@ def static(K, fext, silent=False):
         Vector of external loads.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
+
+    Returns
+    -------
+    increments : list
+        ``[1.]``, the load factor of the solution.
+    cs : list
+        List with the solution vector.
 
     """
     increments = []

@@ -1,3 +1,12 @@
+"""Arc-length solvers for non-linear static analyses
+
+The Riks and Crisfield methods share the implementation of
+:func:`._solver_arc_length`, and are selected with
+``Analysis.NL_method = 'arc_length_riks'`` or
+``Analysis.NL_method = 'arc_length_crisfield'``. The module-level constants
+control the arc-length scaling and adaptation.
+
+"""
 import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import splu
@@ -26,6 +35,11 @@ def _factorize(kT):
 
     Null rows and columns are removed, the corresponding values of the
     solution are zero.
+
+    Parameters
+    ----------
+    kT : sparse matrix
+        Tangent stiffness matrix.
 
     Returns
     -------
@@ -75,17 +89,26 @@ def _solver_arc_length(an, method, silent=False):
       increment. When the roots are complex, the linearized constraint is
       used.
 
-    The arc length of each step is adapted according to the number of
-    iterations of the previous step, limited by ``an.maxInc``. When a step
-    fails, the arc length is reduced. The analysis stops when:
+    After each converged step, the arc length is multiplied by
+    ``sqrt(DESIRED_NUM_ITER/num_iter)``, bounded by ``MIN_GROWTH_FACTOR`` and
+    ``MAX_GROWTH_FACTOR`` and limited by ``an.maxInc``, where ``num_iter`` is
+    the number of corrections of the step. When a step fails, the arc length
+    is multiplied by ``INC_CUT_FACTOR``. The analysis stops when:
 
     - the load factor reaches 1.0, the step where it is exceeded is replaced
       by Newton-Raphson iterations at exactly `\lambda = 1`
     - the cumulative arc length reaches ``an.maxArcLength``
     - the arc length becomes smaller than ``an.minInc``
+    - ``MAX_NUM_STEPS`` steps converged
 
     The initial arc length corresponds to a load factor increment of
-    ``an.initialInc`` along the initial tangent.
+    ``an.initialInc`` along the initial tangent. The convergence and
+    divergence checks are the same as in the Newton-Raphson solver, see
+    :func:`.newton_raphson._check_convergence` and
+    :func:`.newton_raphson._check_divergence`, where the relative criterion
+    also considers the external force vector of the current increment, and
+    ``an.modified_NR`` and ``an.compute_every_n`` control how often the
+    tangent stiffness matrix is updated.
 
     Parameters
     ----------

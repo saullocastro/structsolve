@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 
-import numpy as np
-from numpy import dot
-
 from .static import solve
 from .logger import msg
 from .newton_raphson import _solver_NR
@@ -13,54 +10,83 @@ from .arc_length_crisfield import _solver_arc_length_crisfield
 class Analysis(object):
     r"""Class that embodies all data required for linear/non-linear analysis
 
-    The parameters are described in the following tables:
+    The structural model is defined by the callables passed to the
+    constructor, which return the force vectors and stiffness matrices. The
+    static analysis, linear or non-linear, is run with :meth:`.static`, whose
+    solution is stored in the attributes ``increments`` and ``cs``.
+
+    For non-linear analyses, the internal force vector
+    `\{F_{int}(c)\}` must be in equilibrium with the external force
+    vector scaled by the load factor `\lambda`:
+
+    .. math::
+
+        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
+
+    and the tangent stiffness matrix `[K_T] = [K_C] + [K_G]`, given by the
+    callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
+    `\{F_{int}\}` with respect to `\{c\}`, such that the Newton-Raphson
+    iterations converge quadratically.
+
+    The analysis parameters are attributes of this class, described in the
+    following tables together with their default values:
 
     ========================  ==================================================
     Non-Linear Algorithm      Description
     ========================  ==================================================
-    ``NL_method``             ``str``, ``'NR'`` for the Newton-Raphson,
-                              ``'arc_length_riks'`` or
-                              ``'arc_length_crisfield'`` for the Arc-Length
-                              methods
-    ``line_search``           ``bool``, activate a safeguarding line-search
-                              (for Newton-Raphson methods only). The full
+    ``NL_method``             ``str``, ``'NR'`` (default) for the
+                              Newton-Raphson method, see
+                              :func:`.newton_raphson._solver_NR`, or
+                              ``'arc_length_riks'`` and
+                              ``'arc_length_crisfield'`` for the arc-length
+                              methods, see
+                              :func:`.arc_length._solver_arc_length`
+    ``line_search``           ``bool``, activates a safeguarding line-search,
+                              for the Newton-Raphson method only. The full
                               step is tried first and only reduced when it
                               fails a sufficient-decrease test on the
-                              residual norm
-    ``max_iter_line_search``  ``int``, maximum number of iteration attempts
-                              for the line-search algorithm
+                              residual norm. Default is ``False``
+    ``max_iter_line_search``  ``int``, maximum number of iterations of the
+                              line-search. Default is ``20``
     ``modified_NR``           ``bool``, activates the modified Newton-Raphson
-    ``compute_every_n``       ``int``, if ``modified_NR=True``, the non-linear
-                              matrices will be updated at every `n` iterations
+                              method, where the tangent stiffness matrix is
+                              not updated at every iteration. Default is
+                              ``False``, i.e. full Newton-Raphson
+    ``compute_every_n``       ``int``, if ``modified_NR=True``, the tangent
+                              stiffness matrix is updated at every `n`
+                              iterations. Default is ``6``
     ``kT_initial_state``      ``bool``, if ``modified_NR=True``, tells if the
                               tangent stiffness matrix should be calculated
                               already at the first iteration of the analysis,
                               which is required for example when initial
-                              imperfections take place
+                              imperfections take place. Otherwise the linear
+                              constitutive stiffness matrix is used. Default
+                              is ``True``
     ========================  ==================================================
 
-    ==============     =================================================
+    ================   =================================================
     Incrementation     Description
-    ==============     =================================================
-    ``initialInc``     initial load increment size. In the arc-length
+    ================   =================================================
+    ``initialInc``     initial load increment. In the arc-length
                        methods it defines the initial arc-length
                        increment, corresponding to a load factor
                        increment of ``initialInc`` along the initial
-                       tangent
-    ``minInc``         minimum increment size; if achieved the analysis
-                       is terminated. The arc-length methods will use
-                       this parameter to terminate when the
-                       arc-length increment is smaller than ``minInc``
-    ``maxInc``         maximum increment size, for the arc-length methods
-                       the maximum arc-length increment
+                       tangent. Default is ``0.1``
+    ``minInc``         minimum increment; the analysis stops when the
+                       load increment (Newton-Raphson) or the arc-length
+                       increment (arc-length methods) becomes smaller
+                       than ``minInc``. Default is ``1.e-4``
+    ``maxInc``         maximum load increment, or maximum arc-length
+                       increment for the arc-length methods. Default is
+                       ``1.``
     ``maxArcLength``   maximum cumulative arc length covered by the
                        arc-length methods. The arc length is
                        dimensionless, with displacements scaled by the
                        linear solution for a load factor of 1, such
                        that in the linear regime an arc length of
                        about ``sqrt(2)`` corresponds to a load factor
-                       increment of 1
-    ==============     =================================================
+                       increment of 1. Default is ``18``
+    ================   =================================================
 
     ====================    ============================================
     Convergence Criteria    Description
@@ -69,38 +95,52 @@ class Analysis(object):
                             the residual force vector is smaller than
                             ``relTOL`` times the largest norm between the
                             external and internal force vectors. Not used
-                            if ``None``
+                            if ``None``. Default is ``1.e-6``
     ``absTOL``              the convergence is also achieved when the
-                            maximum residual force is smaller than this
-                            value, which depends on the units of the
-                            model. Not used if ``None``
-    ``maxNumIter``          maximum number of iterations; if achieved the
-                            load increment is reduced
-    ``too_slow_TOL``        tolerance that tells if the convergence is too
-                            slow
+                            maximum absolute residual force is smaller
+                            than this value, which depends on the units of
+                            the model. Not used if ``None``. Default is
+                            ``None``
+    ``maxNumIter``          maximum number of iterations (corrections) of a
+                            step; if achieved the increment is reduced.
+                            Default is ``30``
+    ``too_slow_TOL``        a step is considered too slow when the smallest
+                            residual norm is not reduced by this fraction
+                            over the last iterations; the increment is then
+                            reduced. Default is ``0.005``
     ====================    ============================================
 
     Parameters
     ----------
     calc_fext : callable, optional
-        Must return a 1-D array containing the external forces. Required for
-        linear/non-linear static analysis.
+        ``calc_fext(inc=1., silent=False)``, must return a 1-D array with the
+        external force vector. Required for linear and non-linear static
+        analyses. The non-linear solvers call it with ``inc=1.`` and scale the
+        returned vector by the load factor.
     calc_fint : callable, optional
-        Must return a 1-D array containing the internal forces. Required for
-        non-linear analysis.
+        ``calc_fint(c, silent=False)``, must return a 1-D array with the
+        internal force vector for the solution vector ``c``. Required for
+        non-linear analyses.
     calc_kC : callable, optional
-        Must return a sparse matrix containing the constitutive stiffness matrix.
-        Required for linear/non-linear static analysis.
+        ``calc_kC(c=None, NLgeom=False, silent=False)``, must return a sparse
+        matrix with the constitutive stiffness matrix. With ``c=None`` and
+        ``NLgeom=False`` it must return the linear stiffness matrix, and with
+        ``NLgeom=True`` the constitutive part of the tangent stiffness matrix
+        at ``c``. Required for linear and non-linear static analyses.
     calc_kG : callable, optional
-        Must return a sparse matrix containing the geometric stiffness matrix.
-        Required for non-linear analysis.
+        ``calc_kG(c=None, NLgeom=False, silent=False)``, must return a sparse
+        matrix with the geometric stiffness matrix at ``c``. It is called
+        with ``NLgeom=True``. Required for non-linear analyses.
 
-    Returns
-    -------
+    Attributes
+    ----------
     increments : list
-        Each time increment that achieved convergence.
+        Load factors of the converged increments, filled by :meth:`.static`.
     cs : list
-        The solution for each increment.
+        Solution vectors of the converged increments, filled by
+        :meth:`.static`.
+    last_analysis : str
+        Type of the last analysis run, ``'static'`` after :meth:`.static`.
 
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
@@ -146,18 +186,29 @@ class Analysis(object):
 
 
     def static(self, NLgeom=False, silent=False):
-        """General solver for static analyses
+        r"""General solver for static analyses
 
-        Selects the specific solver based on the ``NL_method`` parameter.
+        The linear analysis solves `[K_C]\{c\} = \{F_{ext}\}` using
+        :func:`.solve`. The non-linear analysis uses the solver selected by
+        the ``NL_method`` attribute.
 
         Parameters
         ----------
-
-        NLgeom : bool
+        NLgeom : bool, optional
             Flag to indicate whether a linear or a non-linear analysis is to
             be performed.
         silent : bool, optional
             A boolean to tell whether the log messages should be printed.
+
+        Returns
+        -------
+        increments : list
+            Load factors of the converged increments. A linear analysis
+            returns ``[1.]``. Non-linear analyses finish at a load factor of
+            exactly ``1.`` unless they are stopped earlier, see the
+            documentation of each solver.
+        cs : list
+            Solution vectors of the converged increments.
 
         """
         self.increments = []
@@ -173,7 +224,7 @@ class Analysis(object):
             elif self.NL_method == 'arc_length_crisfield':
                 _solver_arc_length_crisfield(self, silent=silent)
             else:
-                raise ValueError('{0} is an invalid NL_method')
+                raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
 
         else:
             msg('Started Linear Static Analysis', silent=silent)
