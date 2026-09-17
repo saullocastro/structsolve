@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+title: >-
+  Structural analysis solvers tailored for semi-analytical models
+type: software
+abstract: >-
+  The `structsolve` module provides structural analysis solvers based on
+  SciPy sparse matrices, tailored for semi-analytical models, such as the
+  Ritz models of plates and shells. Usually, this module is used for:
+
+  * Linear static analyses
+
+  * Linear buckling analyses
+
+  * Frequency analyses
+
+  * Non-linear static analyses, using the Newton-Raphson method or the
+    arc-length methods of Riks and Crisfield
+message: >-
+  Please, cite this software using:
+  Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+authors:
+  - family-names: Castro
+    given-names: Saullo G. P.
+    email: S.G.P.Castro@tudelft.nl
+    affiliation: Delft University of Technology
+    orcid: 'https://orcid.org/0000-0001-9711-0991'
+identifiers:
+  - description: This DOI represents all versions, and will always resolve to the latest one
+    type: doi
+    value: 10.5281/zenodo.2581212
+repository-code: 'https://github.com/saullocastro/structsolve'
+url: 'https://saullocastro.github.io/structsolve/'
+license: BSD-3-Clause
+keywords:
+  - structural analysis
+  - linear buckling
+  - vibration
+  - newton raphson
+  - arc length
+version: 0.4.0
+date-released: '2026-04-09'
