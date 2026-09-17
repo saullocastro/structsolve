@@ -6,6 +6,10 @@ from .static import solve
 from .logger import msg, warn
 
 
+#: absolute tolerance used when ``absTOL`` is ``None``
+ABSTOL = 1.e-3
+
+
 def _solver_arc_length_riks(an, silent=False):
     r"""Arc-Length solver using the Riks method
 
@@ -20,6 +24,7 @@ def _solver_arc_length_riks(an, silent=False):
     length = arc_length
     dlbd = arc_length
     max_arc_length = an.maxArcLength
+    absTOL = ABSTOL if an.absTOL is None else an.absTOL
 
     modified_NR = an.modified_NR
     kC = an.calc_kC(silent=True)
@@ -87,7 +92,7 @@ def _solver_arc_length_riks(an, silent=False):
             # calculating the residual
             fint = an.calc_fint(c + dc, silent=True)
             Rmax = np.abs((lbd + dlbd)*fext - fint).max()
-            if iteration >=2 and Rmax <= an.absTOL:
+            if iteration >=2 and Rmax <= absTOL:
                 converged = True
                 break
             if (Rmax > min_Rmax and Rmax > prev_Rmax and iteration > 3):

@@ -6,12 +6,15 @@ from .logger import msg, warn
 
 
 TOO_SLOW = 0.01
+#: absolute tolerance used when ``absTOL`` is ``None``
+ABSTOL = 1.e-3
 
 def _solver_arc_length_crisfield(run, silent=False):
     r"""Arc-Length solver using Crisfield`s method
 
     """
     msg('Initialization...', level=1)
+    absTOL = ABSTOL if run.absTOL is None else run.absTOL
     lbd = run.initialInc
     last_lbd = 0.
 
@@ -82,15 +85,11 @@ def _solver_arc_length_crisfield(run, silent=False):
             dc = dc_dlbd[:-1]
             dlbd = dc_dlbd[-1]
 
-            print('DEBUG lbd', lbd)
-            print('DEBUG dlbd', dlbd)
-            print('DEBUG compute_NL_matrices', compute_NL_matrices)
             lbd = lbd + dlbd
             c = c + dc
 
             # computing the Non-Linear matrices
             if compute_NL_matrices:
-                print('HERE')
                 kC = run.calc_kC(c=c, silent=silent, NLgeom=True)
                 kG = run.calc_kG(c=c, silent=silent, NLgeom=True)
                 kT = kC + kG
@@ -105,7 +104,7 @@ def _solver_arc_length_crisfield(run, silent=False):
             Rmax = np.abs(lbd*fext - fint).max()
             msg('Rmax = %1.5f' % Rmax, level=3)
             msg('lbd = %1.5f' % lbd, level=3)
-            if Rmax <= run.absTOL:
+            if Rmax <= absTOL:
                 converged = True
                 break
             if (Rmax > min_Rmax and Rmax > prev_Rmax and iteration > 2):
@@ -161,6 +160,5 @@ def _solver_arc_length_crisfield(run, silent=False):
                 msg('Minimum arc-length achieved!', level=1)
                 break
 
-    print('DEBUG arc_length", step_num', step_num)
     msg('Finished Non-Linear Static Analysis')
     msg('with a total arc-length %1.5f' % length, level=1)
