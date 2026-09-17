@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.1 (2026-09-17)
+
+### Fixed
+
+- The sparse solver of `lb` could return load multipliers higher than the
+  critical ones, without any warning. The shift `sigma` of the Cayley mode was
+  a single Rayleigh quotient, in which positive and negative eigenvalues cancel,
+  and could land below the largest `|mu|` of `KG u = mu K u`. The eigenvalue
+  solver then returned the eigenvalues nearest to the shift. The shift is now
+  estimated with power iterations on `K^-1 KG`, giving the largest `|mu|`,
+  multiplied by a safety factor of 10. When `K` is singular, not positive
+  definite, or the linear solution is inaccurate, the shift falls back to `1.`
+  as before.
+- `freq` was verified not to be affected: with a negative shift, the ordering
+  of the shift-invert mode selects the lowest natural frequencies for any shift.
+
+### Tests
+
+- Regression test comparing the sparse and dense solvers of `lb` for a spectrum
+  with load multipliers of mixed signs, and a test of the fallback shift for a
+  singular `K`.
+
 ## 0.4.0 (2026-09-17)
 
 ### Breaking: new defaults of the non-linear solvers
