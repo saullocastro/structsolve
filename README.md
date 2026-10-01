@@ -14,7 +14,7 @@ Structural analysis solvers tailored for semi-analytical models
 - Eigensolver for dynamics: ([K] + lambda^2[M]){u} = 0
 - Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
-- Support fo unsymmetric problems, such as those involving follower forces
+- Support for unsymmetric problems, such as those involving follower forces
 
 Currently these solvers are pretty much compatible with my other repositories
 [panels](https://github.com/saullocastro/panels), 
