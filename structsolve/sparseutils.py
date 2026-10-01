@@ -6,14 +6,20 @@ from .logger import msg
 
 
 def remove_null_cols(*args, **kwargs):
-    """Remove null rows and cols of a symmetric, square sparse matrix.
+    """Remove null rows and cols of a square sparse matrix.
+
+    A degree of freedom is removed when both its row and its column of the
+    first matrix are null, such that an unsymmetric matrix, e.g. with the
+    load stiffness of a follower load, never loses an equation whose row is
+    not null. For a matrix with a symmetric pattern of null rows and columns
+    this is the same as removing the null columns.
 
     Parameters
     ----------
     args : list of sparse matrices
-        The first matrix in this list will be used to extract the columns
-        to be removed from all the other matrices. Use :class:`csr_matrix` to
-        obtain a better performance.
+        The first matrix in this list will be used to extract the rows and
+        columns to be removed from all the other matrices. Use
+        :class:`csr_matrix` to obtain a better performance.
     silent : bool, optional
         Keyword argument telling whether the log messages should be printed.
 
@@ -35,7 +41,10 @@ def remove_null_cols(*args, **kwargs):
     else:
         m = csr_matrix(args[0])
     rows, cols = m.nonzero()
-    used_cols = np.unique(cols)
+    if m.shape[0] == m.shape[1]:
+        used_cols = np.unique(np.concatenate((rows, cols)))
+    else:
+        used_cols = np.unique(cols)
 
     for i, arg in enumerate(args):
         if isinstance(arg, csr_matrix):

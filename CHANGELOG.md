@@ -27,6 +27,26 @@
   complex ones come last.
 - The Newton-Raphson and arc-length solvers already used LU factorizations
   (`spsolve`, `splu`), valid for unsymmetric tangent stiffness matrices.
+- `Analysis.static(NLgeom=False)`: when `calc_fext` declares `c`, the
+  geometrically linear problem with the load in the current configuration,
+  `K0 c = F(c)`, is solved by load correction iterations, `c += K0^-1 (F(c) -
+  K0 c)`, up to `relTOL`; for a follower load affine in `c` this is `(K0 +
+  Kf) c = F0`. A warning is issued when they do not converge, beyond the
+  critical load of the linearized problem. Callables without `c` are solved
+  as before.
+- `solve`, `remove_null_cols`: a degree of freedom is removed only when both
+  its row and its column of the first matrix are null, such that an
+  unsymmetric matrix never loses an equation with a non-null row; unchanged
+  for matrices with a symmetric pattern. `static(K, fext)` documents
+  unsymmetric `K`, e.g. `K0 + kCfollower`.
+- `freq(..., symmetric=False, check_rtol=1e-6)`: the default keeps the
+  general solvers (`eigs`, `eig`), valid for unsymmetric `K`, e.g. with the
+  load stiffness of follower loads or aerodynamic matrices; `symmetric=True`
+  uses `eigsh` (shift-invert) or `eigh`, with real results, and `None`
+  selects them with `is_symmetric`. The relative residual of the eigenpairs
+  is checked, with a warning above `check_rtol`. The Notes document the
+  kinetic criterion (flutter: complex `lambda**2`). The printed eigenvalues
+  are formatted as complex numbers when complex.
 
 ## 0.4.3 (2026-09-17)
 

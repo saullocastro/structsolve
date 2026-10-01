@@ -17,8 +17,10 @@ def solve(a, b, silent=False, **kwargs):
     Parameters
     ----------
     a : ndarray or sparse matrix
-        A square matrix with a symmetric pattern of null rows and columns,
-        converted to CSR form in the solution.
+        A square matrix, converted to CSR form in the solution. It may be
+        unsymmetric, e.g. with the load stiffness of follower loads, since
+        :func:`scipy.sparse.linalg.spsolve` uses an LU factorization. The
+        degrees of freedom whose row and column are both null are removed.
     b : ndarray
         1-D array representing the right-hand side of the system of equations.
     silent : bool, optional
@@ -52,7 +54,10 @@ def static(K, fext, silent=False):
     ----------
     K : sparse_matrix
         Stiffness matrix. Should include initial stress stiffness matrix,
-        aerodynamic matrix and so forth when applicable.
+        aerodynamic matrix and so forth when applicable. It may be
+        unsymmetric, e.g. ``K0 + kCfollower`` for a follower load on a
+        geometrically linear structure, whose load stiffness is ``kCfollower
+        = -dF/dc``.
     fext : array-like
         Vector of external loads.
     silent : bool, optional
