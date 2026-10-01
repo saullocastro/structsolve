@@ -14,6 +14,7 @@ Structural analysis solvers tailored for semi-analytical models
 - Eigensolver for dynamics: ([K] + lambda^2[M]){u} = 0
 - Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
+- Support fo unsymmetric problems, such as those involving follower forces
 
 Currently these solvers are pretty much compatible with my other repositories
 [panels](https://github.com/saullocastro/panels), 
@@ -23,7 +24,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -38,6 +39,8 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
+* version 0.5.0 (2026-10-01)
+    - Configuration-dependent loads and unsymmetric eigenproblems
 * version 0.4.3 (2026-09-17)
     - Fixed the eigenvalue shift of the sparse solver of `lb`, which could
       return buckling loads higher than the critical ones
