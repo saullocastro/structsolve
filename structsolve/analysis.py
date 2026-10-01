@@ -132,6 +132,24 @@ class Analysis(object):
         matrix with the geometric stiffness matrix at ``c``. It is called
         with ``NLgeom=True``. Required for non-linear analyses.
 
+    Notes
+    -----
+    Configuration-dependent loads, e.g. follower pressures, are supported
+    through optional keyword arguments, passed only to the callables that
+    declare them explicitly, see :mod:`.callbacks`:
+
+    - ``calc_fint(c, inc=lbd)``, ``calc_kC(c, NLgeom=True, inc=lbd)`` and
+      ``calc_kG(c, NLgeom=True, inc=lbd)`` receive the current load factor,
+      such that ``calc_fint`` may contain the configuration-dependent part of
+      the load, scaled by ``inc``, and ``calc_kC + calc_kG`` its derivative.
+    - ``calc_fext(inc=1., c=c)`` must return the load vector of the
+      configuration ``c`` for a unit load factor, the derivative of the
+      residual with respect to the load factor, used by the arc-length
+      solvers.
+
+    The tangent stiffness matrix may then be unsymmetric, which the solvers
+    support, since they use LU factorizations.
+
     Attributes
     ----------
     increments : list

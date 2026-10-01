@@ -2,8 +2,8 @@ import warnings
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix
-from scipy.sparse.linalg import eigsh, splu
-from scipy.linalg import eigh, LinAlgError
+from scipy.sparse.linalg import eigsh, eigs, splu, LinearOperator
+from scipy.linalg import eigh, eig, LinAlgError
 
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
@@ -82,7 +82,8 @@ def _is_positive_definite(A):
     return bool(np.all(lu.U.diagonal() > 0))
 
 
-def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4):
+def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
+                      check_inertia=True):
     r"""Verify the eigenpairs of `([K] + \lambda [K_G])\{u\} = \{0\}`
 
     - The relative residual
@@ -91,6 +92,7 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4):
     - No load multiplier is missing below the lowest positive `\lambda_1`
       of ``eigvals``: when ``K`` is positive definite, `[K] + s [K_G]` with
       `s = \lambda_1 (1 - min\_rel\_gap)` must also be positive definite.
+      Only for symmetric matrices, ``check_inertia=True``.
 
     Returns
     -------
@@ -113,6 +115,8 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4):
         i = np.argmax(np.nan_to_num(residual, nan=np.inf))
         return ('relative residual {0:.2e} > {1:.1e} for the load multiplier '
                 '{2}'.format(residual[i], rtol, lam[i]))
+    if not check_inertia:
+        return None
     positive = lam[lam > 0]
     if positive.size and _is_positive_definite(K):
         s = positive.min()*(1 - min_rel_gap)
@@ -176,6 +180,120 @@ def _eigh_condensed(K, KG, k):
     return mu[:k], eigvecs
 
 
+def is_symmetric(A, rtol=1e-10):
+    r"""Tell whether ``||A - A^T|| <= rtol ||A||``, in the Frobenius norm
+
+    A cheap check, of the order of the number of non-zero entries of ``A``,
+    used by :func:`lb` to select the solvers of symmetric or unsymmetric
+    matrices.
+
+    """
+    A = csr_matrix(A)
+    normA = np.sqrt(np.sum(np.abs(A.data)**2))
+    D = (A - A.T).tocsr()
+    normD = np.sqrt(np.sum(np.abs(D.data)**2))
+    return bool(normD <= rtol*normA)
+
+
+def _real_if_close(mu, eigvecs, rtol=1e-8):
+    r"""Real eigenpairs when the imaginary parts are negligible
+
+    Each eigenvector of an eigenvalue whose imaginary part is below ``rtol``
+    of its modulus is rotated in the complex plane to make its largest
+    component real. When all eigenpairs are real, real arrays are returned.
+
+    """
+    mu = np.asarray(mu, dtype=complex)
+    eigvecs = np.asarray(eigvecs, dtype=complex)
+    real = np.abs(mu.imag) <= rtol*np.abs(mu)
+    mu = np.where(real, mu.real, mu)
+    for i in np.flatnonzero(real):
+        v = eigvecs[:, i]
+        j = np.argmax(np.abs(v))
+        if v[j] != 0:
+            eigvecs[:, i] = v*(abs(v[j])/v[j])
+    if np.all(real):
+        return mu.real, eigvecs.real
+    return mu, eigvecs
+
+
+def _sort_eigenpairs_general(mu, eigvecs):
+    r"""As :func:`_sort_eigenpairs` for the real `\mu`, with the complex
+    ones at the end, by increasing `|\lambda| = 1/|\mu|`"""
+    mu = np.asarray(mu)
+    real = np.isreal(mu)
+    ireal = np.flatnonzero(real)
+    icplx = np.flatnonzero(~real)
+    ireal = ireal[np.argsort(mu[ireal].real, kind='stable')]
+    icplx = icplx[np.argsort(-np.abs(mu[icplx]), kind='stable')]
+    order = np.concatenate((ireal, icplx))
+    return mu[order], eigvecs[:, order]
+
+
+def _eig_condensed(K, KG, k):
+    r"""As :func:`_eigh_condensed`, for unsymmetric matrices
+
+    The dofs where both the row and the column of ``KG`` are null are
+    condensed out with an LU factorization of ``K``, and the condensed
+    problem is solved with :func:`scipy.linalg.eig`.
+
+    """
+    KG = csr_matrix(KG)
+    active = ((np.asarray(abs(KG).sum(axis=1)).ravel() > 0)
+              | (np.asarray(abs(KG).sum(axis=0)).ravel() > 0))
+    b = np.flatnonzero(active)
+    a = np.flatnonzero(~active)
+    if b.size == 0:
+        raise ValueError('KG is a null matrix')
+    K = csr_matrix(K)
+    KGbb = KG[b, :][:, b].toarray()
+    S = K[b, :][:, b].toarray()
+    if a.size:
+        Kab = csc_matrix(K[a, :][:, b])
+        Kba = K[b, :][:, a]
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lu = splu(csc_matrix(K[a, :][:, a]))
+        chunk = max(1, int(1e7) // a.size)
+        for j0 in range(0, b.size, chunk):
+            j1 = min(j0 + chunk, b.size)
+            X = lu.solve(Kab[:, j0:j1].toarray())
+            S[:, j0:j1] -= Kba @ X
+    mu, ub = eig(a=KGbb, b=S)
+    finite = np.isfinite(mu)
+    mu, ub = _real_if_close(mu[finite], ub[:, finite])
+    mu, ub = _sort_eigenpairs_general(mu, ub)
+    k = min(k, mu.shape[0])
+    mu = mu[:k]
+    ub = ub[:, :k]
+    eigvecs = np.zeros((K.shape[0], k), dtype=ub.dtype)
+    eigvecs[b, :] = ub
+    if a.size:
+        eigvecs[a, :] = -lu.solve(np.asarray(Kab @ ub))
+    return mu, eigvecs
+
+
+def _eigs_inverse(K, KG, k, tol):
+    r"""Solution with :func:`scipy.sparse.linalg.eigs` of `[K]^{-1}[K_G]`
+
+    The largest `|\mu|` of `[K]^{-1}[K_G] u = \mu u` are the load
+    multipliers `\lambda = -1/\mu` of smallest modulus. ``K`` may be
+    unsymmetric, it is factorized once with SuperLU.
+
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        lu = splu(csc_matrix(K))
+    KG = csr_matrix(KG)
+    n = K.shape[0]
+    OP = LinearOperator((n, n), matvec=lambda x: lu.solve(KG @ x),
+                        dtype=np.result_type(lu.U.dtype, KG.dtype))
+    k = min(k, n - 2)
+    mu, eigvecs = eigs(OP, k=k, which='LM', tol=tol)
+    mu, eigvecs = _real_if_close(mu, eigvecs)
+    return _sort_eigenpairs_general(mu, eigvecs)
+
+
 def _eigsh_cayley(K, KG, k, tol, silent):
     """Solution with :func:`scipy.sparse.linalg.eigsh` in Cayley mode"""
     sigma = _estimate_sigma(K, KG)
@@ -188,7 +306,8 @@ def _eigsh_cayley(K, KG, k, tol, silent):
 
 def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        num_eigvalues=25, num_eigvalues_print=5,
-       skip_null_cols=False, max_dense_size=2000, check_rtol=1e-3):
+       skip_null_cols=False, max_dense_size=2000, check_rtol=1e-3,
+       symmetric=None):
     r"""Linear buckling analysis
 
     Calculates the eigenvalues `\lambda` and eigenvectors `\{u\}` of the
@@ -244,6 +363,12 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     check_rtol : float, optional
         Maximum relative residual of the eigenpairs of the sparse solver,
         see the Notes.
+    symmetric : bool or None, optional
+        Whether ``K`` and ``KG`` are symmetric. ``None`` checks it with
+        :func:`is_symmetric`, ``True`` skips the check and uses the solvers
+        of symmetric matrices, ``False`` forces the solvers of unsymmetric
+        matrices, required e.g. when ``KG`` includes the load stiffness of
+        follower loads, see the Notes.
 
     Returns
     -------
@@ -251,7 +376,8 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         The load multipliers `\lambda`, calculated as ``-1/eigval`` from the
         eigenvalues ``eigval`` of ``KG u = eigval K u``. The positive load
         multipliers come first in increasing order, followed by the negative
-        ones, for both solvers.
+        ones, for both solvers. For unsymmetric matrices the array is
+        complex when some eigenvalues are complex, which come last.
     eigvecs : ndarray
         The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
         original matrices. Only ``num_eigvalues`` eigenvectors are returned.
@@ -277,6 +403,23 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     :func:`scipy.sparse.linalg.eigsh` is tried, and a ``RuntimeError`` is
     raised when it also fails.
 
+    For unsymmetric matrices, e.g. ``KG`` with the load stiffness of a
+    follower pressure that is not conservative, the eigenvalues may be
+    complex. The symmetric solvers are then replaced by:
+
+    - ``sparse_solver=True``: :func:`scipy.linalg.eig` on the problem
+      condensed as for the symmetric case, but keeping the dofs where either
+      the row or the column of ``KG`` is not null, when there are at most
+      ``max_dense_size`` of them, otherwise or when this solution fails
+      :func:`scipy.sparse.linalg.eigs` on `[K]^{-1}[K_G]`, returning the
+      ``num_eigvalues`` load multipliers of smallest modulus;
+    - ``sparse_solver=False``: :func:`scipy.linalg.eig` on the full problem.
+
+    The relative residual of each eigenpair is verified as above, but not
+    the inertia, which requires symmetric matrices. Eigenvalues whose
+    imaginary part is below ``1e-8`` of their modulus are returned as real,
+    with real eigenvectors.
+
     ARPACK, used by :func:`scipy.sparse.linalg.eigsh`, returns wrong
     eigenpairs at random, without any error, when linked against Intel MKL
     2024.2.0 to 2025.0.0, e.g. in some Anaconda builds of SciPy: the
@@ -293,7 +436,15 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         used_cols = None
     else:
         K, KG, used_cols = remove_null_cols(K, KG, silent=silent)
-    if sparse_solver:
+    if symmetric is None:
+        symmetric = is_symmetric(K) and is_symmetric(KG)
+        if not symmetric:
+            msg('Unsymmetric K or KG, using the general eigenvalue solvers',
+                level=2, silent=silent)
+    if not symmetric:
+        eigvals, peigvecs = _lb_unsymmetric(K, KG, tol, sparse_solver,
+                silent, num_eigvalues, max_dense_size, check_rtol)
+    elif sparse_solver:
         K = csr_matrix(K)
         KG = csr_matrix(KG)
         num_active = int(np.count_nonzero(abs(KG).sum(axis=1)))
@@ -330,8 +481,8 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
                 'max_dense_size.'.format('; '.join(errors)))
 
     else:
-        K = K.toarray()
-        KG = KG.toarray()
+        K = csr_matrix(K).toarray()
+        KG = csr_matrix(KG).toarray()
         msg('eigh() solver...', level=3, silent=silent)
         eigvals, peigvecs = eigh(a=KG, b=K)
         msg('finished!', level=3, silent=silent)
@@ -351,7 +502,51 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     msg('first {0} eigenvalues:'.format(num_eigvalues_print), level=1,
         silent=silent)
 
-    for eig in eigvals[:num_eigvalues_print]:
-        msg('{0}'.format(eig), level=2, silent=silent)
+    for eigval in eigvals[:num_eigvalues_print]:
+        msg('{0}'.format(eigval), level=2, silent=silent)
 
     return eigvals, eigvecs
+
+
+def _lb_unsymmetric(K, KG, tol, sparse_solver, silent, num_eigvalues,
+                    max_dense_size, check_rtol):
+    r"""Eigenvalues `\mu` of ``KG u = mu K u`` for unsymmetric matrices, see
+    the Notes of :func:`lb`"""
+    if not sparse_solver:
+        msg('eig() solver...', level=3, silent=silent)
+        mu, eigvecs = eig(a=csr_matrix(KG).toarray(), b=csr_matrix(K).toarray())
+        finite = np.isfinite(mu)
+        mu, eigvecs = _real_if_close(mu[finite], eigvecs[:, finite])
+        mu, eigvecs = _sort_eigenpairs_general(mu, eigvecs)
+        msg('finished!', level=3, silent=silent)
+        return mu, eigvecs
+    K = csr_matrix(K)
+    KG = csr_matrix(KG)
+    num_active = int(np.count_nonzero(
+        (np.asarray(abs(KG).sum(axis=1)).ravel() > 0)
+        | (np.asarray(abs(KG).sum(axis=0)).ravel() > 0)))
+    solvers = []
+    if num_active <= max_dense_size:
+        solvers.append(('eig() with condensed dofs',
+                        lambda: _eig_condensed(K, KG, num_eigvalues)))
+    solvers.append(('eigs()', lambda: _eigs_inverse(K, KG, num_eigvalues, tol)))
+    errors = []
+    for name, solver in solvers:
+        msg('{0} solver ({1} of {2} rows or columns of KG are non-null)...'
+            .format(name, num_active, K.shape[0]), level=3, silent=silent)
+        try:
+            mu, eigvecs = solver()
+            with np.errstate(divide='ignore'):
+                error = _check_eigenpairs(K, KG, -1./mu, eigvecs, check_rtol,
+                                          check_inertia=False)
+        except (LinAlgError, RuntimeError, ValueError) as e:
+            error = '{0}: {1}'.format(type(e).__name__, e)
+        if error is None:
+            msg('finished!', level=3, silent=silent)
+            return mu, eigvecs
+        warn('{0} solver failed: {1}'.format(name, error), level=3,
+             silent=silent)
+        errors.append('{0} solver: {1}'.format(name, error))
+    raise RuntimeError('Linear buckling analysis failed, no eigenvalue solver '
+                       'of unsymmetric matrices passed the verification ({0})'
+                       .format('; '.join(errors)))

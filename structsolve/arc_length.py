@@ -14,6 +14,7 @@ from scipy.sparse.linalg import splu
 from .logger import msg, warn
 from .static import solve
 from .sparseutils import remove_null_cols
+from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, INC_CUT_FACTOR)
 
@@ -101,6 +102,14 @@ def _solver_arc_length(an, method, silent=False):
     - the arc length becomes smaller than ``an.minInc``
     - ``MAX_NUM_STEPS`` steps converged
 
+    When the load depends on the configuration, i.e. ``calc_fext`` accepts
+    the keyword argument ``c``, `\{F_{ext}\}` in `\{\delta c_q\}` and in the
+    tangent predictor is the load vector of the current configuration
+    ``calc_fext(inc=1., c=c)``, the derivative `\partial R/\partial
+    \lambda` of the residual, whereas `\{u_{ref}\}` remains the linear
+    solution of the reference vector. The callables that accept ``inc``
+    receive the current load factor, see :mod:`.callbacks`.
+
     The initial arc length corresponds to a load factor increment of
     ``an.initialInc`` along the initial tangent. The convergence and
     divergence checks are the same as in the Newton-Raphson solver, see
@@ -158,16 +167,15 @@ def _solver_arc_length(an, method, silent=False):
             if step_num == 1 and modified_NR and not an.kT_initial_state:
                 kT = kC0
             else:
-                kC = an.calc_kC(c=c, NLgeom=True, silent=True)
-                kG = an.calc_kG(c=c, NLgeom=True, silent=True)
-                kT = kC + kG
+                kT = callbacks.calc_kT(an, c, lbd)
             try:
                 solve_kT_conv = _factorize(kT)
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
                 break
-        dc_q_conv = solve_kT_conv(fext)
+        # load vector of the converged configuration, dR/dlbd
+        dc_q_conv = solve_kT_conv(callbacks.calc_load_vector(an, c, fext))
         norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
         if arc_length is None:
             arc_length = an.initialInc*norm_q
@@ -193,7 +201,7 @@ def _solver_arc_length(an, method, silent=False):
         iteration = 0
         while True:
             iteration += 1
-            fint = an.calc_fint(c=(c + dc), silent=True)
+            fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
             R = fext_total - fint
             conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
@@ -211,14 +219,13 @@ def _solver_arc_length(an, method, silent=False):
             if modified_NR and iter_kT < an.compute_every_n:
                 iter_kT += 1
             else:
-                kC = an.calc_kC(c=(c + dc), NLgeom=True, silent=True)
-                kG = an.calc_kG(c=(c + dc), NLgeom=True, silent=True)
                 try:
-                    solve_kT = _factorize(kC + kG)
+                    solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
+                                                            lbd + dlbd))
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
-                dc_q = solve_kT(fext)
+                dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc, fext))
                 iter_kT = 1
             dc_R = solve_kT(R)
 
