@@ -165,13 +165,30 @@
   </a>
 </li>
 
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="api.html">
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
   </a>
 </li>
 
+                </ul>
+            </li>
+            
   </ul>
 </nav></div>
       
@@ -287,6 +304,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
@@ -342,6 +366,7 @@
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logger.html">Logging (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.logger</span></code>)</a></li>
 </ul>
@@ -461,7 +486,7 @@ solvers of symmetric matrices, <code class="xref py py-func docutils literal not
 shift-invert mode or <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>, which require
 symmetric <code class="docutils literal notranslate"><span class="pre">K</span></code> and <code class="docutils literal notranslate"><span class="pre">M</span></code> and a positive definite <code class="docutils literal notranslate"><span class="pre">M</span></code>, and return
 real eigenvalues and eigenvectors normalized with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>.
-<code class="docutils literal notranslate"><span class="pre">None</span></code> selects them when <code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling.is_symmetric()</span></code> is
+<code class="docutils literal notranslate"><span class="pre">None</span></code> selects them when <a class="reference internal" href="linear_buckling.html#structsolve.linear_buckling.is_symmetric" title="structsolve.linear_buckling.is_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling.is_symmetric()</span></code></a> is
 true for both matrices.</p>
 </dd>
 <dt><strong>check_rtol</strong><span class="classifier">float or None, optional</span></dt><dd><p>A warning is issued when the relative residual of an eigenpair,

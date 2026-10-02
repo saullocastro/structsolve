@@ -15,5 +15,6 @@ The main classes and functions are available directly from the
     freq.rst
     newton_raphson.rst
     arc_length.rst
+    callbacks.rst
     sparseutils.rst
     logger.rst

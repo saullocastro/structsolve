@@ -161,13 +161,30 @@
   </a>
 </li>
 
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="api.html">
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
   </a>
 </li>
 
+                </ul>
+            </li>
+            
   </ul>
 </nav></div>
       
@@ -282,6 +299,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="api.html">
     API reference
   </a>
@@ -350,6 +374,7 @@
 <div class="genindex-jumpbox">
  <a href="#_"><strong>_</strong></a>
  | <a href="#A"><strong>A</strong></a>
+ | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
@@ -389,7 +414,25 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="callbacks.html#structsolve.callbacks.accepts_kwarg">accepts_kwarg() (in module structsolve.callbacks)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="analysis.html#structsolve.Analysis">Analysis (class in structsolve)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="callbacks.html#structsolve.callbacks.calc_fint">calc_fint() (in module structsolve.callbacks)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="callbacks.html#structsolve.callbacks.calc_kT">calc_kT() (in module structsolve.callbacks)</a>
+</li>
+      <li><a href="callbacks.html#structsolve.callbacks.calc_load_vector">calc_load_vector() (in module structsolve.callbacks)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -431,12 +474,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="newton_raphson.html#structsolve.newton_raphson.INC_CUT_FACTOR">INC_CUT_FACTOR (in module structsolve.newton_raphson)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="newton_raphson.html#structsolve.newton_raphson.INC_GROWTH_FACTOR">INC_GROWTH_FACTOR (in module structsolve.newton_raphson)</a>
 </li>
-      <li><a href="sparseutils.html#structsolve.sparseutils.is_symmetric">is_symmetric() (in module structsolve.sparseutils)</a>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="callbacks.html#structsolve.callbacks.is_load_configuration_dependent">is_load_configuration_dependent() (in module structsolve.callbacks)</a>
 </li>
+      <li><a href="linear_buckling.html#structsolve.linear_buckling.is_symmetric">is_symmetric() (in module structsolve.linear_buckling)</a>
+
+      <ul>
+        <li><a href="sparseutils.html#structsolve.sparseutils.is_symmetric">(in module structsolve.sparseutils)</a>
+</li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -472,6 +521,8 @@
         <li><a href="api.html#module-structsolve">structsolve</a>
 </li>
         <li><a href="arc_length.html#module-structsolve.arc_length">structsolve.arc_length</a>
+</li>
+        <li><a href="callbacks.html#module-structsolve.callbacks">structsolve.callbacks</a>
 </li>
         <li><a href="logger.html#module-structsolve.logger">structsolve.logger</a>
 </li>
@@ -538,6 +589,13 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    structsolve.callbacks
+
+      <ul>
+        <li><a href="callbacks.html#module-structsolve.callbacks">module</a>
+</li>
+      </ul></li>
       <li>
     structsolve.logger
 

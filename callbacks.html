@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.5.0 documentation</title>
+    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.5.0 documentation</title>
   
   
   
@@ -41,12 +41,12 @@
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'linear_buckling';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'callbacks';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Frequency analysis (structsolve.freq)" href="freq.html" />
-    <link rel="prev" title="Linear static analysis (structsolve.static)" href="static.html" />
+    <link rel="next" title="Sparse matrix utilities (structsolve.sparseutils)" href="sparseutils.html" />
+    <link rel="prev" title="Arc-length solvers (structsolve.arc_length)" href="arc_length.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.5.0" />
@@ -362,11 +362,11 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Static analyses (<code class="docutils literal notranslate"><span class="pre">structsolve.analysis</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="static.html">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</a></li>
-<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="linear_buckling.html">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logger.html">Logging (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.logger</span></code>)</a></li>
 </ul>
@@ -412,7 +412,7 @@
     
     <li class="breadcrumb-item"><a href="api.html" class="nav-link">API reference</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</span></li>
   </ul>
 </nav>
 </div>
@@ -429,134 +429,60 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="linear-buckling-analysis-structsolve-linear-buckling">
-<h1>Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)<a class="headerlink" href="#linear-buckling-analysis-structsolve-linear-buckling" title="Link to this heading">#</a></h1>
-<dl class="py function">
-<dt class="sig sig-object py" id="structsolve.lb">
-<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">lb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.lb" title="Link to this definition">#</a></dt>
-<dd><p>Linear buckling analysis</p>
-<p>Calculates the eigenvalues <span class="math notranslate nohighlight">\(\lambda\)</span> and eigenvectors <span class="math notranslate nohighlight">\(\{u\}\)</span> of the
-eigenvalue problem:</p>
+  <section id="module-structsolve.callbacks">
+<span id="configuration-dependent-loads-structsolve-callbacks"></span><h1>Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)<a class="headerlink" href="#module-structsolve.callbacks" title="Link to this heading">#</a></h1>
+<p>Calls to the callables of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> used by the non-linear solvers</p>
+<p>The callables may depend on the load factor <span class="math notranslate nohighlight">\(\lambda\)</span> and on the
+configuration through their optional keyword arguments, which are passed only
+when the callable declares them explicitly in its signature (a <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>
+does not count), such that the callables written for the previous versions
+are called exactly as before:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">inc</span></code>: the current load factor <span class="math notranslate nohighlight">\(\lambda\)</span>, passed to <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>,
+<code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>. It allows configuration-dependent loads, e.g.
+follower pressures, whose configuration-dependent part enters
+<code class="docutils literal notranslate"><span class="pre">calc_fint</span></code> and whose load stiffness enters <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> or <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>,
+both scaled by <span class="math notranslate nohighlight">\(\lambda\)</span>. The residual remains</p>
 <div class="math notranslate nohighlight">
-\[([K] + \lambda [K_G])\{u\} = \{0\}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\lambda\)</span> is the load multiplier of the load state that generated
-<span class="math notranslate nohighlight">\([K_G]\)</span>. It can also be used for more general eigenvalue analyses, e.g.
-if <code class="docutils literal notranslate"><span class="pre">K</span></code> is the tangent stiffness matrix of a given load state. The null
-rows and columns of <code class="docutils literal notranslate"><span class="pre">K</span></code> are removed from both matrices before solving
-the eigenvalue problem, unless <code class="docutils literal notranslate"><span class="pre">skip_null_cols=True</span></code>.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>K</strong><span class="classifier">sparse_matrix</span></dt><dd><p>Stiffness matrix. Should include all constant terms of the initial
-stress stiffness matrix, aerodynamic matrix and so forth when
-applicable.</p>
-</dd>
-<dt><strong>KG</strong><span class="classifier">sparse_matrix</span></dt><dd><p>Initial stress stiffness matrix that multiplies the load multiplier
-<span class="math notranslate nohighlight">\(\lambda\)</span> of the eigenvalue problem.</p>
-</dd>
-<dt><strong>tol</strong><span class="classifier">float, optional</span></dt><dd><p>A float tolerance passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>.</p>
-</dd>
-<dt><strong>sparse_solver</strong><span class="classifier">bool, optional</span></dt><dd><p>With <code class="docutils literal notranslate"><span class="pre">True</span></code>, when <code class="docutils literal notranslate"><span class="pre">KG</span></code> has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> non-null
-rows, the other dofs (typically the in-plane dofs) are condensed out
-with a sparse factorization of <code class="docutils literal notranslate"><span class="pre">K</span></code> and the condensed problem is
-solved with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>. Otherwise, or when this
-solution fails, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> solves the full
-problem in Cayley mode, with a shift estimated from the matrices.
-The eigenpairs are verified as described in the Notes, and
-<code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> load multipliers are returned.
-With <code class="docutils literal notranslate"><span class="pre">False</span></code>, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> solves the full problem,
-returning all load multipliers, and requires a positive definite
-<code class="docutils literal notranslate"><span class="pre">K</span></code>.</p>
-</dd>
-<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
-</dd>
-<dt><strong>num_eigvalues</strong><span class="classifier">int, optional</span></dt><dd><p>Number of load multipliers calculated with the sparse solver, and
-number of returned eigenvectors.</p>
-</dd>
-<dt><strong>num_eigvalues_print</strong><span class="classifier">int, optional</span></dt><dd><p>Number of eigenvalues to print.</p>
-</dd>
-<dt><strong>skip_null_cols</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, skip the removal of null columns from the matrices.
-Use only when K is known to be non-singular.</p>
-</dd>
-<dt><strong>max_dense_size</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum number of non-null rows of <code class="docutils literal notranslate"><span class="pre">KG</span></code> for which the sparse solver
-solves the condensed problem with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>. Use
-<code class="docutils literal notranslate"><span class="pre">0</span></code> to always use <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>.</p>
-</dd>
-<dt><strong>check_rtol</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum relative residual of the eigenpairs of the sparse solver,
-see the Notes.</p>
-</dd>
-<dt><strong>symmetric</strong><span class="classifier">bool or None, optional</span></dt><dd><p>Whether <code class="docutils literal notranslate"><span class="pre">K</span></code> and <code class="docutils literal notranslate"><span class="pre">KG</span></code> are symmetric. <code class="docutils literal notranslate"><span class="pre">None</span></code> checks it with
-<code class="xref py py-func docutils literal notranslate"><span class="pre">is_symmetric()</span></code>, <code class="docutils literal notranslate"><span class="pre">True</span></code> skips the check and uses the solvers
-of symmetric matrices, <code class="docutils literal notranslate"><span class="pre">False</span></code> forces the solvers of unsymmetric
-matrices, required e.g. when <code class="docutils literal notranslate"><span class="pre">KG</span></code> includes the load stiffness of
-follower loads, see the Notes.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>eigvals</strong><span class="classifier">ndarray</span></dt><dd><p>The load multipliers <span class="math notranslate nohighlight">\(\lambda\)</span>, calculated as <code class="docutils literal notranslate"><span class="pre">-1/eigval</span></code> from the
-eigenvalues <code class="docutils literal notranslate"><span class="pre">eigval</span></code> of <code class="docutils literal notranslate"><span class="pre">KG</span> <span class="pre">u</span> <span class="pre">=</span> <span class="pre">eigval</span> <span class="pre">K</span> <span class="pre">u</span></code>. The positive load
-multipliers come first in increasing order, followed by the negative
-ones, for both solvers. For unsymmetric matrices the array is
-complex when some eigenvalues are complex, which come last.</p>
-</dd>
-<dt><strong>eigvecs</strong><span class="classifier">ndarray</span></dt><dd><p>The <span class="math notranslate nohighlight">\(i^{th}\)</span> eigenvector is <code class="docutils literal notranslate"><span class="pre">eigvecs[:,</span> <span class="pre">i]</span></code>, with the size of the
-original matrices. Only <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvectors are returned.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-odd">Raises<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt>RuntimeError</dt><dd><p>When no eigenpairs of the sparse solver pass the verification.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Notes</p>
-<p>The eigenpairs of the sparse solver are verified as follows:</p>
-<ul class="simple">
-<li><p>the relative residual
-<span class="math notranslate nohighlight">\(||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)\)</span> of each
-eigenpair must not be larger than <code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
-<li><p>when <code class="docutils literal notranslate"><span class="pre">K</span></code> is positive definite, <span class="math notranslate nohighlight">\([K] + s [K_G]\)</span> must also be positive
-definite for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than the lowest positive load
-multiplier found, i.e. no lower load multiplier was missed. The
-factorization is done with SuperLU, without row interchanges.</p></li>
+\[\{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}\]</div>
+<p>with <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> its exact Jacobian <span class="math notranslate nohighlight">\(-\partial R/\partial c\)</span>.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: the current configuration, passed to <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>, which must then
+return the load vector of that configuration for a unit load factor, i.e.
+<span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at <span class="math notranslate nohighlight">\(c\)</span>. The arc-length solvers use it in the
+predictor and in the constraint instead of the constant reference vector
+<code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code>.</p></li>
 </ul>
-<p>When the condensed dense solution fails the verification,
-<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> is tried, and a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> is
-raised when it also fails.</p>
-<p>For unsymmetric matrices, e.g. <code class="docutils literal notranslate"><span class="pre">KG</span></code> with the load stiffness of a
-follower pressure that is not conservative, the eigenvalues may be
-complex. The symmetric solvers are then replaced by:</p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">sparse_solver=True</span></code>: <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code> on the problem
-condensed as for the symmetric case, but keeping the dofs where either
-the row or the column of <code class="docutils literal notranslate"><span class="pre">KG</span></code> is not null, when there are at most
-<code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> of them, otherwise or when this solution fails
-<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> on <span class="math notranslate nohighlight">\([K]^{-1}[K_G]\)</span>, returning the
-<code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> load multipliers of smallest modulus;</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>: <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code> on the full problem.</p></li>
-</ul>
-<p>The relative residual of each eigenpair is verified as above, but not
-the inertia, which requires symmetric matrices. Eigenvalues whose
-imaginary part is below <code class="docutils literal notranslate"><span class="pre">1e-8</span></code> of their modulus are returned as real,
-with real eigenvectors.</p>
-<p>ARPACK, used by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>, returns wrong
-eigenpairs at random, without any error, when linked against Intel MKL
-2024.2.0 to 2025.0.0, e.g. in some Anaconda builds of SciPy: the
-<code class="docutils literal notranslate"><span class="pre">dsteqr</span></code> routine of these MKL versions returns wrong eigenvectors for
-matrices larger than 32 x 32. MKL 2025.0.1 or newer is not affected.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.callbacks.accepts_kwarg">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">accepts_kwarg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.accepts_kwarg" title="Link to this definition">#</a></dt>
+<dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">func</span></code> declares the keyword argument <code class="docutils literal notranslate"><span class="pre">name</span></code></p>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="structsolve.linear_buckling.is_symmetric">
-<span class="sig-prename descclassname"><span class="pre">structsolve.linear_buckling.</span></span><span class="sig-name descname"><span class="pre">is_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.linear_buckling.is_symmetric" title="Link to this definition">#</a></dt>
-<dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">||A</span> <span class="pre">-</span> <span class="pre">A^T||</span> <span class="pre">&lt;=</span> <span class="pre">rtol</span> <span class="pre">||A||</span></code>, in the Frobenius norm</p>
-<p>A cheap check, of the order of the number of non-zero entries of <code class="docutils literal notranslate"><span class="pre">A</span></code>,
-used by <code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code> to select the solvers of symmetric or unsymmetric
-matrices.</p>
+<dt class="sig sig-object py" id="structsolve.callbacks.calc_fint">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_fint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_fint" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">an.calc_fint</span></code> at <code class="docutils literal notranslate"><span class="pre">c</span></code>, with <code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> when accepted</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.callbacks.calc_kT">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_kT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_kT" title="Link to this definition">#</a></dt>
+<dd><p>Tangent stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> at <code class="docutils literal notranslate"><span class="pre">c</span></code>, with
+<code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> passed to the callables that accept it</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.callbacks.calc_load_vector">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_load_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_load_vector" title="Link to this definition">#</a></dt>
+<dd><p><span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at <code class="docutils literal notranslate"><span class="pre">c</span></code>: <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c)</span></code>
+when <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts <code class="docutils literal notranslate"><span class="pre">c</span></code>, otherwise the constant <code class="docutils literal notranslate"><span class="pre">fext</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.callbacks.is_load_configuration_dependent">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">is_load_configuration_dependent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.is_load_configuration_dependent" title="Link to this definition">#</a></dt>
+<dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> accepts the configuration <code class="docutils literal notranslate"><span class="pre">c</span></code></p>
 </dd></dl>
 
 </section>
@@ -572,20 +498,20 @@ matrices.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="static.html"
+       href="arc_length.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</p>
+        <p class="prev-next-title">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</p>
       </div>
     </a>
     <a class="right-next"
-       href="freq.html"
+       href="sparseutils.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</p>
+        <p class="prev-next-title">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -608,15 +534,18 @@ matrices.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.lb"><code class="docutils literal notranslate"><span class="pre">lb()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.linear_buckling.is_symmetric"><code class="docutils literal notranslate"><span class="pre">is_symmetric()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.accepts_kwarg"><code class="docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_fint"><code class="docutils literal notranslate"><span class="pre">calc_fint()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_kT"><code class="docutils literal notranslate"><span class="pre">calc_kT()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_load_vector"><code class="docutils literal notranslate"><span class="pre">calc_load_vector()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.is_load_configuration_dependent"><code class="docutils literal notranslate"><span class="pre">is_load_configuration_dependent()</span></code></a></li>
 </ul>
   </nav></div>
 
   <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="_sources/linear_buckling.rst.txt">
+    <a href="_sources/callbacks.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>
