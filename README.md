@@ -40,7 +40,13 @@ History
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
 * version 0.5.0 (2026-10-01)
-    - Configuration-dependent loads and unsymmetric eigenproblems
+    - Configuration-dependent loads, e.g. follower pressures: the load factor
+      is passed to the callables that accept `inc`, and the arc-length
+      methods use the load vector of the current configuration
+    - Unsymmetric matrices in `lb` (automatic detection), `freq` (residual
+      check, optional symmetric solvers, kinetic criterion) and `solve`
+    - Linear static analysis with configuration-dependent loads in
+      `Analysis.static(NLgeom=False)`
 * version 0.4.3 (2026-09-17)
     - Fixed the eigenvalue shift of the sparse solver of `lb`, which could
       return buckling loads higher than the critical ones
