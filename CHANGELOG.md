@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 (2026-10-01)
+## 0.5.2 (2026-10-02)
 
 ### New: configuration-dependent loads and unsymmetric eigenproblems
 

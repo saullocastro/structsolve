@@ -24,7 +24,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -39,7 +39,7 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.5.0 (2026-10-01)
+* version 0.5.2 (2026-10-02)
     - Configuration-dependent loads, e.g. follower pressures: the load factor
       is passed to the callables that accept `inc`, and the arc-length
       methods use the load vector of the current configuration
