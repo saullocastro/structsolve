@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 
+import numpy as np
+
 from .static import solve
-from .logger import msg
+from .logger import msg, warn
+from . import callbacks
+from .newton_raphson import _check_convergence
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -132,6 +136,24 @@ class Analysis(object):
         matrix with the geometric stiffness matrix at ``c``. It is called
         with ``NLgeom=True``. Required for non-linear analyses.
 
+    Notes
+    -----
+    Configuration-dependent loads, e.g. follower pressures, are supported
+    through optional keyword arguments, passed only to the callables that
+    declare them explicitly, see :mod:`.callbacks`:
+
+    - ``calc_fint(c, inc=lbd)``, ``calc_kC(c, NLgeom=True, inc=lbd)`` and
+      ``calc_kG(c, NLgeom=True, inc=lbd)`` receive the current load factor,
+      such that ``calc_fint`` may contain the configuration-dependent part of
+      the load, scaled by ``inc``, and ``calc_kC + calc_kG`` its derivative.
+    - ``calc_fext(inc=1., c=c)`` must return the load vector of the
+      configuration ``c`` for a unit load factor, the derivative of the
+      residual with respect to the load factor, used by the arc-length
+      solvers.
+
+    The tangent stiffness matrix may then be unsymmetric, which the solvers
+    support, since they use LU factorizations.
+
     Attributes
     ----------
     increments : list
@@ -189,8 +211,28 @@ class Analysis(object):
         r"""General solver for static analyses
 
         The linear analysis solves `[K_C]\{c\} = \{F_{ext}\}` using
-        :func:`.solve`. The non-linear analysis uses the solver selected by
-        the ``NL_method`` attribute.
+        :func:`.solve`. When the load depends on the configuration, i.e.
+        ``calc_fext`` declares the keyword argument ``c``, see
+        :mod:`.callbacks`, the structure is still geometrically linear but
+        the load is evaluated in the current configuration,
+        `[K_C]\{c\} = \{F_{ext}(c)\}`, which is solved by the load
+        correction iterations
+
+        .. math::
+
+            \{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
+                          - [K_C]\{c_k\})
+
+        starting from the solution of the reference load, until the relative
+        criterion ``relTOL`` is satisfied, see
+        :func:`.newton_raphson._check_convergence`, or ``maxNumIter``
+        iterations are done. For a follower load whose force vector is
+        affine in `c`, `\{F(c)\} = \{F_0\} - [K_f]\{c\}`, this is the
+        solution of `([K_C] + [K_f])\{c\} = \{F_0\}`, with the
+        convergence rate of the spectral radius of `[K_C]^{-1}[K_f]`, i.e.
+        of the ratio of the load to the lowest critical load of the
+        linearized problem; beyond it the iterations diverge. The non-linear
+        analysis uses the solver selected by the ``NL_method`` attribute.
 
         Parameters
         ----------
@@ -232,6 +274,8 @@ class Analysis(object):
             k0 = self.calc_kC(silent=silent)
 
             c = solve(k0, fext, silent=silent)
+            if callbacks.is_load_configuration_dependent(self):
+                c = self._linear_static_follower(k0, c, silent)
 
             self.cs.append(c)
             self.increments.append(1.)
@@ -241,3 +285,25 @@ class Analysis(object):
 
         return self.increments, self.cs
 
+
+    def _linear_static_follower(self, k0, c, silent):
+        r"""Load correction iterations of the linear static analysis with a
+        configuration-dependent load, see :meth:`.static`"""
+        msg('Configuration-dependent load: load correction iterations',
+            level=2, silent=silent)
+        for iteration in range(1, self.maxNumIter + 1):
+            fext = self.calc_fext(inc=1., c=c, silent=True)
+            fint = k0 @ c
+            R = fext - fint
+            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext)
+            msg('Iteration: %d, relative ||R|| = %1.3e' % (iteration, Rrel),
+                level=3, silent=silent)
+            if conv:
+                return c
+            if not np.isfinite(Rnorm):
+                break
+            c = c + solve(k0, R, silent=True)
+        warn('The load correction iterations did not converge, the load may '
+             'exceed the critical load of the linearized problem', level=1,
+             silent=silent)
+        return c

@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.5.0 (2026-10-01)
+
+### New: configuration-dependent loads and unsymmetric eigenproblems
+
+- The non-linear solvers pass the current load factor as `inc=lbd` to the
+  callables `calc_fint`, `calc_kC` and `calc_kG` that declare a keyword
+  argument `inc`, such that configuration-dependent loads, e.g. follower
+  pressures, can enter the residual and the tangent stiffness matrix. The
+  callables that do not declare it are called exactly as before (a
+  `**kwargs` does not count). See the new module `structsolve.callbacks`.
+- The arc-length methods (Riks and Crisfield) use `calc_fext(inc=1., c=c)`,
+  the load vector of the current configuration, i.e. `dR/dlbd`, in the
+  tangent predictor and in the bordered solutions, when `calc_fext` declares
+  `c`. This restores the quadratic convergence of the Riks method for such
+  loads.
+- `lb(..., symmetric=None)`: with `None`, `K` and `KG` are checked with the
+  new `linear_buckling.is_symmetric` (`||A - A^T|| <= 1e-10 ||A||`); `True`
+  keeps the previous solvers without the check, `False` forces the solvers of
+  unsymmetric matrices: `scipy.linalg.eig` on the condensed problem (keeping
+  the dofs with a non-null row or column of `KG`), `scipy.sparse.linalg.eigs`
+  on `K^-1 KG`, or `scipy.linalg.eig` on the full problem with
+  `sparse_solver=False`. The residual of the eigenpairs is verified, the
+  inertia check requires symmetric matrices and is skipped. Eigenvalues with a
+  relative imaginary part below `1e-8` are returned as real, otherwise the
+  complex ones come last.
+- The Newton-Raphson and arc-length solvers already used LU factorizations
+  (`spsolve`, `splu`), valid for unsymmetric tangent stiffness matrices.
+- `Analysis.static(NLgeom=False)`: when `calc_fext` declares `c`, the
+  geometrically linear problem with the load in the current configuration,
+  `K0 c = F(c)`, is solved by load correction iterations, `c += K0^-1 (F(c) -
+  K0 c)`, up to `relTOL`; for a follower load affine in `c` this is `(K0 +
+  Kf) c = F0`. A warning is issued when they do not converge, beyond the
+  critical load of the linearized problem. Callables without `c` are solved
+  as before.
+- `solve`, `remove_null_cols`: a degree of freedom is removed only when both
+  its row and its column of the first matrix are null, such that an
+  unsymmetric matrix never loses an equation with a non-null row; unchanged
+  for matrices with a symmetric pattern. `static(K, fext)` documents
+  unsymmetric `K`, e.g. `K0 + kCfollower`.
+- `freq(..., symmetric=False, check_rtol=1e-6)`: the default keeps the
+  general solvers (`eigs`, `eig`), valid for unsymmetric `K`, e.g. with the
+  load stiffness of follower loads or aerodynamic matrices; `symmetric=True`
+  uses `eigsh` (shift-invert) or `eigh`, with real results, and `None`
+  selects them with `is_symmetric`. The relative residual of the eigenpairs
+  is checked, with a warning above `check_rtol`. The Notes document the
+  kinetic criterion (flutter: complex `lambda**2`). The printed eigenvalues
+  are formatted as complex numbers when complex.
+
 ## 0.4.3 (2026-09-17)
 
 ### Breaking: new defaults of the non-linear solvers

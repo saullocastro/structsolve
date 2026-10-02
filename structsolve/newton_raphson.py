@@ -9,6 +9,7 @@ import numpy as np
 
 from .logger import msg, warn
 from .static import solve
+from . import callbacks
 
 
 #: Number of iterations of a step before the divergence and too-slow checks
@@ -167,7 +168,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
     while True:
         iteration += 1
         if fint is None:
-            fint = an.calc_fint(c=(c + dc), silent=True)
+            fint = callbacks.calc_fint(an, c + dc, total)
         R = fext_total - fint
 
         conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total)
@@ -184,9 +185,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
             kT = kT0
             iter_kT = 1
         else:
-            kC = an.calc_kC(c=(c + dc), NLgeom=True, silent=True)
-            kG = an.calc_kG(c=(c + dc), NLgeom=True, silent=True)
-            kT = kC + kG
+            kT = callbacks.calc_kT(an, c + dc, total)
             iter_kT = 1
 
         varc = solve(kT, R, silent=True)
@@ -196,7 +195,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
         if an.line_search:
             # sufficient decrease of phi(eta) = ||R(eta)||**2, assuming
             # phi'(0) = -2*phi(0), exact for a Newton direction
-            fint = an.calc_fint(c=(c + dc + varc), silent=True)
+            fint = callbacks.calc_fint(an, c + dc + varc, total)
             phi0 = Rnorm**2
             phi1 = np.linalg.norm(fext_total - fint)**2
             iter_line_search = 0
@@ -210,7 +209,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
                 A = (phi1 - phi0 + 2*phi0*eta)/eta**2
                 eta_new = phi0/A if (np.isfinite(A) and A > 0) else 0.5*eta
                 eta = min(max(eta_new, 0.1*eta), 0.5*eta)
-                fint = an.calc_fint(c=(c + dc + eta*varc), silent=True)
+                fint = callbacks.calc_fint(an, c + dc + eta*varc, total)
                 phi1 = np.linalg.norm(fext_total - fint)**2
             if eta != 1.:
                 msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
@@ -231,6 +230,10 @@ def _solver_NR(an, silent=False, initialInc=None):
     converged increment of the solution, scaled by the ratio between the new
     and the previous load increments. The first increment uses the linear
     solution as predictor.
+
+    The callables that accept the keyword argument ``inc`` receive the load
+    factor `\lambda` of the step, see :mod:`.callbacks`, which allows
+    configuration-dependent loads such as follower pressures.
 
     By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
     ``kT = kC + kG`` is rebuilt at every iteration, which gives quadratic
