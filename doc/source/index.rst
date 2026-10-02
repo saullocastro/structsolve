@@ -20,6 +20,11 @@ can run:
     - the arc-length methods of Riks and Crisfield, able to trace limit points,
       snap-through and snap-back
 
+* Configuration-dependent loads, e.g. follower pressures, in the linear and
+  non-linear static analyses, see :mod:`.callbacks`, and unsymmetric matrices
+  in all the solvers, including the kinetic criterion (flutter) with
+  :func:`.freq`
+
 The constrained degrees of freedom of the models, i.e. the null rows and
 columns of the matrices, are removed before solving.
 
@@ -33,7 +38,7 @@ https://github.com/saullocastro/structsolve
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.4.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Usage examples
@@ -47,6 +52,7 @@ Usage examples
     ex_frequency.rst
     ex_newton_raphson.rst
     ex_arc_length.rst
+    ex_follower_loads.rst
 
 
 structsolve API
