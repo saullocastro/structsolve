@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.2 (2026-10-02)
+## 0.5.3 (2026-10-06)
 
 ### New: configuration-dependent loads and unsymmetric eigenproblems
 
@@ -24,7 +24,14 @@
   `sparse_solver=False`. The residual of the eigenpairs is verified, the
   inertia check requires symmetric matrices and is skipped. Eigenvalues with a
   relative imaginary part below `1e-8` are returned as real, otherwise the
-  complex ones come last.
+  complex ones come last. The arrays are real when the returned eigenpairs
+  are real, even if other eigenvalues of the solver are complex, and a solver
+  that raises an error is skipped, as one that fails the verification.
+- The solvers of unsymmetric matrices in `lb` and `freq` call
+  `scipy.linalg.eig` with complex matrices, i.e. the LAPACK drivers `zgeev`
+  and `zggev`: with Intel MKL 2025.0.0 the real drivers `dgeev` and `dggev`
+  crash the Python process for some matrices when computing the
+  eigenvectors, with any number of threads.
 - The Newton-Raphson and arc-length solvers already used LU factorizations
   (`spsolve`, `splu`), valid for unsymmetric tangent stiffness matrices.
 - `Analysis.static(NLgeom=False)`: when `calc_fext` declares `c`, the
