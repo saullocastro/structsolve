@@ -4,7 +4,7 @@ import numpy as np
 import scipy
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import eigs, eigsh, spsolve
-from scipy.linalg import eig, eigh
+from scipy.linalg import eigh
 
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
@@ -193,8 +193,12 @@ def freq(K, M, tol=0, sparse_solver=True,
         # for effiency reasons, solving:
         #    [M]{u} = (-1/lambda2)[K]{u}
         #    [M]{u} = eigval [K]{u}
+        #NOTE complex matrices to call zggev instead of dggev, which crashes
+        #     the process for some matrices with Intel MKL 2025.0.0, see
+        #     linear_buckling._eig_complex
+        from .linear_buckling import _eig_complex
         msg('eig() solver...', level=3, silent=silent)
-        eigvals, peigvecs = eig(a=Meff, b=Keff)
+        eigvals, peigvecs = _eig_complex(a=Meff, b=Keff)
         lambda2 = -1./eigvals
 
     if check_rtol is not None and peigvecs.shape[1]:

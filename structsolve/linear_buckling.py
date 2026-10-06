@@ -82,9 +82,25 @@ def _is_positive_definite(A):
     return bool(np.all(lu.U.diagonal() > 0))
 
 
+def _lu_solve(lu, b):
+    """``lu.solve(b)`` for a real or complex right-hand side ``b``
+
+    The SuperLU factorization of a real matrix rejects a complex ``b``, whose
+    real and imaginary parts are then solved separately.
+
+    """
+    b = np.asarray(b)
+    if np.iscomplexobj(b):
+        return (lu.solve(np.ascontiguousarray(b.real))
+                + 1j*lu.solve(np.ascontiguousarray(b.imag)))
+    return lu.solve(b)
+
+
 def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
                       check_inertia=True):
     r"""Verify the eigenpairs of `([K] + \lambda [K_G])\{u\} = \{0\}`
+
+    The eigenpairs may be real or complex.
 
     - The relative residual
       `||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)` of every
@@ -92,7 +108,8 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
     - No load multiplier is missing below the lowest positive `\lambda_1`
       of ``eigvals``: when ``K`` is positive definite, `[K] + s [K_G]` with
       `s = \lambda_1 (1 - min\_rel\_gap)` must also be positive definite.
-      Only for symmetric matrices, ``check_inertia=True``.
+      Only for symmetric matrices, ``check_inertia=True``, the complex
+      `\lambda` are ignored.
 
     Returns
     -------
@@ -100,6 +117,7 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
         Description of the failed check, ``None`` when all checks passed.
 
     """
+    eigvals = np.asarray(eigvals)
     finite = np.isfinite(eigvals)
     if not np.any(finite):
         return 'no finite load multiplier was found'
@@ -117,6 +135,7 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
                 '{2}'.format(residual[i], rtol, lam[i]))
     if not check_inertia:
         return None
+    lam = lam[np.isreal(lam)].real
     positive = lam[lam > 0]
     if positive.size and _is_positive_definite(K):
         s = positive.min()*(1 - min_rel_gap)
@@ -200,20 +219,21 @@ def _real_if_close(mu, eigvecs, rtol=1e-8):
 
     Each eigenvector of an eigenvalue whose imaginary part is below ``rtol``
     of its modulus is rotated in the complex plane to make its largest
-    component real. When all eigenpairs are real, real arrays are returned.
+    component real, and its imaginary part is dropped, as the imaginary part
+    of the eigenvalue. Complex arrays are returned, see
+    :func:`_general_eigenpairs`.
 
     """
-    mu = np.asarray(mu, dtype=complex)
-    eigvecs = np.asarray(eigvecs, dtype=complex)
+    mu = np.array(mu, dtype=complex)
+    eigvecs = np.array(eigvecs, dtype=complex)
     real = np.abs(mu.imag) <= rtol*np.abs(mu)
-    mu = np.where(real, mu.real, mu)
+    mu[real] = mu[real].real
     for i in np.flatnonzero(real):
         v = eigvecs[:, i]
         j = np.argmax(np.abs(v))
         if v[j] != 0:
-            eigvecs[:, i] = v*(abs(v[j])/v[j])
-    if np.all(real):
-        return mu.real, eigvecs.real
+            v = v*(abs(v[j])/v[j])
+        eigvecs[:, i] = v.real
     return mu, eigvecs
 
 
@@ -230,12 +250,61 @@ def _sort_eigenpairs_general(mu, eigvecs):
     return mu[order], eigvecs[:, order]
 
 
+def _general_eigenpairs(mu, eigvecs, k=None):
+    r"""The first ``k`` finite eigenpairs of a general eigenvalue solver
+
+    The eigenvalues with a negligible imaginary part are made real with
+    :func:`_real_if_close`, the finite eigenpairs are sorted with
+    :func:`_sort_eigenpairs_general` and the first ``k`` are kept, all of
+    them with ``k=None``. Real arrays are returned when the kept eigenpairs
+    are real, even when discarded ones, e.g. spurious eigenvalues far from
+    the critical ones, are complex.
+
+    """
+    mu = np.asarray(mu)
+    finite = np.isfinite(mu)
+    mu, eigvecs = _real_if_close(mu[finite], eigvecs[:, finite])
+    mu, eigvecs = _sort_eigenpairs_general(mu, eigvecs)
+    if k is not None:
+        mu = mu[:k]
+        eigvecs = eigvecs[:, :k]
+    if np.all(mu.imag == 0):
+        return mu.real, eigvecs.real
+    return mu, eigvecs
+
+
+def _eig_complex(a, b=None):
+    r"""All eigenpairs of `[a]\{v\} = w [b]\{v\}` with :func:`scipy.linalg.eig`
+
+    The matrices are converted to complex, such that LAPACK ``zgeev`` or
+    ``zggev`` is used instead of ``dgeev`` or ``dggev``. With Intel MKL
+    2025.0.0 the real drivers crash the Python process when computing the
+    eigenvectors of some matrices, with an access violation or a heap
+    corruption that cannot be caught, deterministically for a given matrix,
+    already for 48 x 48 matrices and with any number of threads. The complex
+    drivers are not affected, at about twice the cost of the real ones. The
+    complex eigenvectors of real eigenvalues are made real by
+    :func:`_general_eigenpairs`.
+
+    """
+    a = np.asarray(a, dtype=complex)
+    if b is not None:
+        b = np.asarray(b, dtype=complex)
+    return eig(a=a, b=b)
+
+
 def _eig_condensed(K, KG, k):
     r"""As :func:`_eigh_condensed`, for unsymmetric matrices
 
     The dofs where both the row and the column of ``KG`` are null are
     condensed out with an LU factorization of ``K``, and the condensed
-    problem is solved with :func:`scipy.linalg.eig`.
+    problem is solved with :func:`scipy.linalg.eig`, through the complex
+    LAPACK driver ``zggev``, see :func:`_eig_complex`. Neither converting to
+    the standard problem `[S]^{-1}[K_{G_{bb}}]` (``dgeev``) nor limiting the
+    threads of BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL
+    2025.0.0. The ``k`` returned eigenpairs, see :func:`_general_eigenpairs`,
+    are real when they are all real, and complex eigenvectors are
+    back-substituted with the real factorization of `[K_{aa}]`.
 
     """
     KG = csr_matrix(KG)
@@ -259,17 +328,12 @@ def _eig_condensed(K, KG, k):
             j1 = min(j0 + chunk, b.size)
             X = lu.solve(Kab[:, j0:j1].toarray())
             S[:, j0:j1] -= Kba @ X
-    mu, ub = eig(a=KGbb, b=S)
-    finite = np.isfinite(mu)
-    mu, ub = _real_if_close(mu[finite], ub[:, finite])
-    mu, ub = _sort_eigenpairs_general(mu, ub)
-    k = min(k, mu.shape[0])
-    mu = mu[:k]
-    ub = ub[:, :k]
-    eigvecs = np.zeros((K.shape[0], k), dtype=ub.dtype)
+    mu, ub = _eig_complex(a=KGbb, b=S)
+    mu, ub = _general_eigenpairs(mu, ub, k)
+    eigvecs = np.zeros((K.shape[0], mu.shape[0]), dtype=ub.dtype)
     eigvecs[b, :] = ub
     if a.size:
-        eigvecs[a, :] = -lu.solve(np.asarray(Kab @ ub))
+        eigvecs[a, :] = -_lu_solve(lu, np.asarray(Kab @ ub))
     return mu, eigvecs
 
 
@@ -278,20 +342,21 @@ def _eigs_inverse(K, KG, k, tol):
 
     The largest `|\mu|` of `[K]^{-1}[K_G] u = \mu u` are the load
     multipliers `\lambda = -1/\mu` of smallest modulus. ``K`` may be
-    unsymmetric, it is factorized once with SuperLU.
+    unsymmetric, it is factorized once with SuperLU. The operator is real
+    for real matrices, a complex vector is solved with :func:`_lu_solve`.
 
     """
+    K = csc_matrix(K)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        lu = splu(csc_matrix(K))
+        lu = splu(K)
     KG = csr_matrix(KG)
     n = K.shape[0]
-    OP = LinearOperator((n, n), matvec=lambda x: lu.solve(KG @ x),
-                        dtype=np.result_type(lu.U.dtype, KG.dtype))
+    OP = LinearOperator((n, n), matvec=lambda x: _lu_solve(lu, KG @ x),
+                        dtype=np.result_type(K.dtype, KG.dtype))
     k = min(k, n - 2)
     mu, eigvecs = eigs(OP, k=k, which='LM', tol=tol)
-    mu, eigvecs = _real_if_close(mu, eigvecs)
-    return _sort_eigenpairs_general(mu, eigvecs)
+    return _general_eigenpairs(mu, eigvecs)
 
 
 def _eigsh_cayley(K, KG, k, tol, silent):
@@ -418,13 +483,22 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     The relative residual of each eigenpair is verified as above, but not
     the inertia, which requires symmetric matrices. Eigenvalues whose
     imaginary part is below ``1e-8`` of their modulus are returned as real,
-    with real eigenvectors.
+    with real eigenvectors. The arrays are real when the returned eigenpairs
+    are real, even if other eigenvalues of the solver are complex. A solver
+    that raises an error is skipped, as one that fails the verification.
 
     ARPACK, used by :func:`scipy.sparse.linalg.eigsh`, returns wrong
     eigenpairs at random, without any error, when linked against Intel MKL
     2024.2.0 to 2025.0.0, e.g. in some Anaconda builds of SciPy: the
     ``dsteqr`` routine of these MKL versions returns wrong eigenvectors for
     matrices larger than 32 x 32. MKL 2025.0.1 or newer is not affected.
+
+    With Intel MKL 2025.0.0, the real LAPACK drivers ``dgeev`` and ``dggev``
+    of :func:`scipy.linalg.eig` crash the Python process for some matrices
+    when computing the eigenvectors, with any number of threads. The
+    solvers of unsymmetric matrices therefore call :func:`scipy.linalg.eig`
+    with complex matrices, i.e. ``zgeev`` and ``zggev``, which are not
+    affected.
 
     """
     msg('Running linear buckling analysis...', silent=silent)
@@ -461,10 +535,10 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
                 name, num_active, K.shape[0]), level=3, silent=silent)
             try:
                 eigvals, peigvecs = solver()
-                with np.errstate(divide='ignore'):
+                with np.errstate(divide='ignore', invalid='ignore'):
                     error = _check_eigenpairs(K, KG, -1./eigvals, peigvecs,
                                               check_rtol)
-            except (LinAlgError, RuntimeError, ValueError) as e:
+            except (LinAlgError, RuntimeError, ValueError, TypeError) as e:
                 error = '{0}: {1}'.format(type(e).__name__, e)
             if error is None:
                 msg('finished!', level=3, silent=silent)
@@ -488,13 +562,18 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         msg('finished!', level=3, silent=silent)
 
     num_eigvecs = min(num_eigvalues, peigvecs.shape[1])
+    if (np.iscomplexobj(peigvecs)
+            and np.all(np.imag(eigvals[:num_eigvecs]) == 0)):
+        # all eigenvalues are returned by eig(), only the returned
+        # eigenvectors must be real
+        peigvecs = peigvecs[:, :num_eigvecs].real
     if used_cols is not None:
         eigvecs = np.zeros((size, num_eigvecs), dtype=peigvecs.dtype)
         eigvecs[used_cols, :] = peigvecs[:, :num_eigvecs]
     else:
         eigvecs = peigvecs[:, :num_eigvecs]
 
-    with np.errstate(divide='ignore'):
+    with np.errstate(divide='ignore', invalid='ignore'):
         eigvals = -1./eigvals
 
     msg('finished!', level=2, silent=silent)
@@ -514,10 +593,9 @@ def _lb_unsymmetric(K, KG, tol, sparse_solver, silent, num_eigvalues,
     the Notes of :func:`lb`"""
     if not sparse_solver:
         msg('eig() solver...', level=3, silent=silent)
-        mu, eigvecs = eig(a=csr_matrix(KG).toarray(), b=csr_matrix(K).toarray())
-        finite = np.isfinite(mu)
-        mu, eigvecs = _real_if_close(mu[finite], eigvecs[:, finite])
-        mu, eigvecs = _sort_eigenpairs_general(mu, eigvecs)
+        mu, eigvecs = _eig_complex(a=csr_matrix(KG).toarray(),
+                                   b=csr_matrix(K).toarray())
+        mu, eigvecs = _general_eigenpairs(mu, eigvecs)
         msg('finished!', level=3, silent=silent)
         return mu, eigvecs
     K = csr_matrix(K)
@@ -536,10 +614,10 @@ def _lb_unsymmetric(K, KG, tol, sparse_solver, silent, num_eigvalues,
             .format(name, num_active, K.shape[0]), level=3, silent=silent)
         try:
             mu, eigvecs = solver()
-            with np.errstate(divide='ignore'):
+            with np.errstate(divide='ignore', invalid='ignore'):
                 error = _check_eigenpairs(K, KG, -1./mu, eigvecs, check_rtol,
                                           check_inertia=False)
-        except (LinAlgError, RuntimeError, ValueError) as e:
+        except (LinAlgError, RuntimeError, ValueError, TypeError) as e:
             error = '{0}: {1}'.format(type(e).__name__, e)
         if error is None:
             msg('finished!', level=3, silent=silent)
