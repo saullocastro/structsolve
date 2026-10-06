@@ -234,7 +234,13 @@ def test_lb_unsymmetric_complex_pairs():
     assert np.iscomplexobj(eigvals)
     mu = eig(KG, K, right=False)
     ref = -1/mu
-    assert np.allclose(np.sort_complex(eigvals), np.sort_complex(ref))
+    # the complex driver zggev, used by lb(), does not return conjugate
+    # pairs with identical real parts, which changes the order of
+    # np.sort_complex within a pair: nearest reference of each eigenvalue
+    assert eigvals.shape == ref.shape
+    dist = np.abs(eigvals[:, None] - ref[None, :])
+    assert np.all(dist.min(axis=1) <= 1e-8*np.abs(eigvals))
+    assert np.all(dist.min(axis=0) <= 1e-8*np.abs(ref))
     real = np.isreal(eigvals)
     # the real ones come first
     assert not np.any(real[np.argmin(real):]) or np.all(real)
