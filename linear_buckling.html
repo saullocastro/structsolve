@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.5.2 documentation</title>
+    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.5.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
 
-    <script src="_static/documentation_options.js?v=8e576371"></script>
+    <script src="_static/documentation_options.js?v=2a2fe768"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -49,7 +49,7 @@
     <link rel="prev" title="Linear static analysis (structsolve.static)" href="static.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.5.2" />
+  <meta name="docsearch:version" content="0.5.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.5.2 documentation</p>
+    <p class="title logo__title">structsolve 0.5.3 documentation</p>
   
 </a></div>
     
@@ -542,12 +542,20 @@ the row or the column of <code class="docutils literal notranslate"><span class=
 <p>The relative residual of each eigenpair is verified as above, but not
 the inertia, which requires symmetric matrices. Eigenvalues whose
 imaginary part is below <code class="docutils literal notranslate"><span class="pre">1e-8</span></code> of their modulus are returned as real,
-with real eigenvectors.</p>
+with real eigenvectors. The arrays are real when the returned eigenpairs
+are real, even if other eigenvalues of the solver are complex. A solver
+that raises an error is skipped, as one that fails the verification.</p>
 <p>ARPACK, used by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>, returns wrong
 eigenpairs at random, without any error, when linked against Intel MKL
 2024.2.0 to 2025.0.0, e.g. in some Anaconda builds of SciPy: the
 <code class="docutils literal notranslate"><span class="pre">dsteqr</span></code> routine of these MKL versions returns wrong eigenvectors for
 matrices larger than 32 x 32. MKL 2025.0.1 or newer is not affected.</p>
+<p>With Intel MKL 2025.0.0, the real LAPACK drivers <code class="docutils literal notranslate"><span class="pre">dgeev</span></code> and <code class="docutils literal notranslate"><span class="pre">dggev</span></code>
+of <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code> crash the Python process for some matrices
+when computing the eigenvectors, with any number of threads. The
+solvers of unsymmetric matrices therefore call <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code>
+with complex matrices, i.e. <code class="docutils literal notranslate"><span class="pre">zgeev</span></code> and <code class="docutils literal notranslate"><span class="pre">zggev</span></code>, which are not
+affected.</p>
 </dd></dl>
 
 <dl class="py function">
