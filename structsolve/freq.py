@@ -268,7 +268,7 @@ def freq(K, M, tol=0, sparse_solver=True,
     returns the ``num_eigvalues`` lowest eigenvalues with ``symmetric=True``,
     otherwise the ``num_eigvalues`` eigenvalues closest to the shift, as the
     sparse solver, and its eigenpairs are verified as well. Otherwise a
-    ``RuntimeError`` is raised. Before version 0.5.4, the sparse solver
+    ``RuntimeError`` is raised. Until version 0.5.3, the sparse solver
     only issued a warning when the residual check failed.
 
     :func:`scipy.sparse.linalg.eigsh` uses ARPACK's symmetric drivers, which

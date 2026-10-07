@@ -17,4 +17,5 @@ The main classes and functions are available directly from the
     arc_length.rst
     callbacks.rst
     sparseutils.rst
+    arpackutils.rst
     logger.rst

@@ -1,4 +1,4 @@
-r"""ARPACK utilities (:mod:`structsolve.arpackutils`)
+r"""Utilities for ARPACK, against the Intel MKL bug of ``dsteqr``
 
 The symmetric drivers of ARPACK, used by :func:`scipy.sparse.linalg.eigsh`,
 compute the Ritz vectors with the LAPACK routine ``dsteqr`` applied to the
