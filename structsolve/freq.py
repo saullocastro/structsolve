@@ -6,7 +6,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import eigs, spsolve
 from scipy.linalg import eigh, LinAlgError
 
-from .arpackutils import capped_eigsh, start_vector
+from .arpackutils import capped_eigsh, release_memory, start_vector
 from .linear_buckling import (_eig_complex, _negative_pivots, _sparse_first,
                               is_symmetric)
 from .logger import msg, warn
@@ -103,6 +103,7 @@ def _eigs_freq(K, M, k, tol, sigma):
     """:func:`scipy.sparse.linalg.eigs` in shift-invert mode"""
     eigvals, eigvecs = eigs(A=K, M=M, k=k, which='LM', tol=tol, sigma=sigma,
                             v0=start_vector(K.shape[0]))
+    release_memory()
     #NOTE eigs solves: [K] {u} = eigval [M] {u}
     #     therefore we must correct he sign of lambda^2 here:
     return -eigvals, eigvecs

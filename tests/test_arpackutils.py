@@ -262,3 +262,21 @@ def test_freq_symmetric_mkl():
         lambda2, eigvecs = freq(K, M, silent=True, symmetric=True,
                                 max_dense_size=0, sort=False)
         np.testing.assert_allclose(np.sort(-lambda2), w_ref, rtol=1e-8)
+
+
+def test_release_memory(monkeypatch):
+    """In Pyodide the reference cycles of SciPy's ARPACK wrappers, which
+    keep the SuperLU factorizations, exhaust the WebAssembly heap before the
+    cyclic garbage collector runs: gc.collect() is called after each ARPACK
+    call there, and only there"""
+    import gc
+    import sys
+
+    calls = []
+    monkeypatch.setattr(gc, 'collect', lambda: calls.append(1))
+    monkeypatch.setattr(sys, 'platform', 'win32')
+    arpackutils.release_memory()
+    assert calls == []
+    monkeypatch.setattr(sys, 'platform', 'emscripten')
+    arpackutils.release_memory()
+    assert calls == [1]

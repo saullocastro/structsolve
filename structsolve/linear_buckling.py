@@ -6,7 +6,7 @@ from scipy.sparse import csc_matrix, csr_matrix
 from scipy.sparse.linalg import eigs, splu, LinearOperator
 from scipy.linalg import eigh, eig, LinAlgError
 
-from .arpackutils import capped_eigsh, start_vector
+from .arpackutils import capped_eigsh, release_memory, start_vector
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
@@ -459,6 +459,7 @@ def _eigs_shifted(K, KG, s, k, tol, lu):
     OP = LinearOperator((n, n), matvec=lambda x: _lu_solve(lu, KG @ x),
                         dtype=np.result_type(K.dtype, KG.dtype))
     nu, eigvecs = eigs(OP, k=k, which='LM', tol=tol, v0=start_vector(n))
+    release_memory()
     null = np.abs(nu) <= 1e-12*np.abs(nu).max()
     if np.any(null):
         #NOTE the infinite load multipliers are not returned, as by

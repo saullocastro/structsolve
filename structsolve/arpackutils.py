@@ -24,9 +24,11 @@ be identified as such::
 """
 import contextlib
 import functools
+import gc
 import io
 import os
 import re
+import sys
 import warnings
 
 import numpy as np
@@ -240,6 +242,23 @@ def arpack_ncv(k, n):
     return ncv
 
 
+def release_memory():
+    """Collect the reference cycles of SciPy's ARPACK wrappers in the browser
+
+    The objects of :func:`scipy.sparse.linalg.eigsh` and
+    :func:`scipy.sparse.linalg.eigs` keep the SuperLU factorizations of the
+    shift-invert modes in reference cycles, freed only by the cyclic garbage
+    collector. Natively this is harmless, but the WebAssembly heap of
+    Pyodide (``sys.platform == 'emscripten'``) is exhausted before the
+    collector runs, e.g. after about ten ``eigs`` calls on a problem with
+    1,000 dofs, raising ``MemoryError``. :func:`gc.collect` is then called
+    after each ARPACK call; it does nothing on other platforms.
+
+    """
+    if sys.platform == 'emscripten':
+        gc.collect()
+
+
 def start_vector(n):
     """Fixed starting vector of ARPACK, uniform in ``[-1, 1]`` as ARPACK's
     random one, such that the results are reproducible"""
@@ -306,14 +325,17 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     max_ncv = arpack_max_ncv()
     max_k = n if max_ncv is None else (max_ncv - 1)//2
     if k <= max_k or min(n, max(2*k + 1, 20)) <= max_ncv:
-        return _scipy_eigsh(A=A, k=k, M=M, sigma=sigma, which=which,
-                            mode=mode, tol=tol, ncv=arpack_ncv(k, n),
-                            v0=start_vector(n))
+        result = _scipy_eigsh(A=A, k=k, M=M, sigma=sigma, which=which,
+                              mode=mode, tol=tol, ncv=arpack_ncv(k, n),
+                              v0=start_vector(n))
+        release_memory()
+        return result
     num_passes = -(-k//max_k)
     k_pass = -(-k//num_passes)
     ncv = min(n, max_ncv)
     w, V = _scipy_eigsh(A=A, k=k_pass, M=M, sigma=sigma, which=which,
                         mode=mode, tol=tol, ncv=ncv, v0=start_vector(n))
+    release_memory()
     far_shift = -sigma if mode == 'cayley' else sigma
     dtype = np.result_type(A.dtype, M.dtype)
     while w.shape[0] < k:
@@ -336,5 +358,6 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
                               v0=start_vector(n))
         w = np.concatenate((w, wi))
         V = np.hstack((V, Vi))
+        release_memory()
     order = np.argsort(w, kind='stable')
     return w[order], V[:, order]
