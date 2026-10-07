@@ -207,7 +207,8 @@ def test_freq_mkl_without_cap_uses_dense_fallback(monkeypatch):
     monkeypatch.setattr(arpackutils, 'ARPACK_MAX_NCV', 0)
     K, _ = load_saved_matrices('plate_ssss_Nxx')
     M = diags(1. + np.random.RandomState(3).rand(K.shape[0])).tocsr()
-    w_ref = eigh(K.toarray(), M.toarray(), eigvals_only=True)[:25]
+    w_ref = np.sort(1/eigh(M.toarray(), K.toarray(),
+                           eigvals_only=True))[:25]
     if mkl_bug_present():
         with pytest.warns(DenseFallbackWarning):
             lambda2, _ = freq(K, M, silent=True, symmetric=True, sort=False)

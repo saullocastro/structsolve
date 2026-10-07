@@ -245,7 +245,8 @@ def test_freq_symmetric_mkl():
     from structsolve.freq import _estimate_sigma as estimate_sigma_freq
 
     K, M = plate_freq_matrices()
-    w_ref = eigh(K.toarray(), M.toarray(), eigvals_only=True)[:25]
+    # M u = (1/omega**2) K u: accurate lowest frequencies
+    w_ref = np.sort(1/eigh(M.toarray(), K.toarray(), eigvals_only=True))[:25]
     sigma = estimate_sigma_freq(K, M)
     if arpackutils.dsteqr_is_faulty():
         try:
