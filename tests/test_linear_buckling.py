@@ -51,7 +51,8 @@ def test_lb_sparse_shift_mixed_spectrum(max_dense_size):
     quotient, in which the positive and negative eigenvalues of
     ``KG u = mu K u`` cancel. The shift landed below the critical ``|mu|``
     and eigsh returned the load multipliers near ``1/sigma`` instead of the
-    lowest ones. With ``max_dense_size=0`` eigsh is always used.
+    lowest ones. eigsh is always used first, ``max_dense_size=0`` disables
+    the dense fallback.
     """
     from scipy.sparse import diags
     from structsolve.linear_buckling import _estimate_sigma
@@ -101,37 +102,32 @@ def relative_residuals(K, KG, eigvals, eigvecs):
                + np.abs(eigvals)*np.linalg.norm(KGu, axis=0)))
 
 
+@pytest.mark.parametrize('max_dense_size', [0, 2000])
 @pytest.mark.parametrize('name, ref', SAVED_MATRICES)
-def test_lb_saved_matrices_sparse_solver(name, ref):
+def test_lb_saved_matrices_sparse_solver(name, ref, max_dense_size):
     """Regression test: ARPACK linked against Intel MKL 2024.2.0 to 2025.0.0
     returned wrong load multipliers at random, e.g. with the Anaconda builds
-    of SciPy. The default sparse solver condenses out the dofs where KG is
-    null and verifies the eigenpairs"""
+    of SciPy, whenever ncv > 32. eigsh() with ncv <= 32 returns the dense
+    load multipliers, without the dense fallback (max_dense_size=0) and
+    without any DenseFallbackWarning"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
     K, KG = load_saved_matrices(name)
     eig_dense, _ = lb(K, KG, silent=True, sparse_solver=False)
     np.testing.assert_allclose(eig_dense[:3], ref, rtol=1e-5)
     for trial in range(3):
-        eigvals, eigvecs = lb(K, KG, silent=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DenseFallbackWarning)
+            eigvals, eigvecs = lb(K, KG, silent=True,
+                                  max_dense_size=max_dense_size)
         assert eigvals.shape == (25,)
         assert eigvecs.shape == (K.shape[0], 25)
         np.testing.assert_allclose(eigvals, eig_dense[:25], rtol=1e-6)
-        assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
-
-
-@pytest.mark.parametrize('name, ref', SAVED_MATRICES)
-def test_lb_saved_matrices_eigsh_never_wrong(name, ref):
-    """With max_dense_size=0 only eigsh is used, which either returns the
-    correct load multipliers or raises a RuntimeError, when the eigenpairs
-    returned by ARPACK are wrong"""
-    K, KG = load_saved_matrices(name)
-    for trial in range(3):
-        try:
-            eigvals, eigvecs = lb(K, KG, silent=True, max_dense_size=0)
-        except RuntimeError as e:
-            assert 'verification' in str(e)
-            continue
-        np.testing.assert_allclose(eigvals[:3], ref, rtol=1e-5)
         assert np.all(eigvals[:-1] <= eigvals[1:])
+        # eigsh() is less accurate than the dense solution, but far below
+        # the default check_rtol=1e-3
+        assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-4)
 
 
 def test_lb_check_eigenpairs():
@@ -171,15 +167,20 @@ def test_lb_sparse_raises_when_verification_fails(monkeypatch):
 
     K, KG = load_saved_matrices('plate_ssss_Nxx')
 
-    def wrong_eigsh(K, KG, k, tol, silent):
+    def wrong_eigsh(K, KG, k, tol, silent, safety=10.):
         rng = np.random.RandomState(0)
         return -rng.rand(k), rng.randn(K.shape[0], k)
 
     monkeypatch.setattr(linear_buckling, '_eigsh_cayley', wrong_eigsh)
-    with pytest.raises(RuntimeError, match='verification'):
+    with pytest.raises(RuntimeError, match='verification') as e:
         lb(K, KG, silent=True, max_dense_size=0)
-    # the condensed dense solution is used first
-    eigvals, _ = lb(K, KG, silent=True)
+    # every attempted solver is listed
+    assert str(e.value).count('relative residual') == 2
+    assert 'dense fallback disabled with max_dense_size=0' in str(e.value)
+    # the condensed dense solution is the last resort, with a warning
+    with pytest.warns(linear_buckling.DenseFallbackWarning,
+                      match='relative residual'):
+        eigvals, _ = lb(K, KG, silent=True)
     np.testing.assert_allclose(eigvals[0], 157.5386, rtol=1e-5)
 
 
@@ -350,3 +351,29 @@ def test_lb_plate_buckling_fsdt():
 
     # FSDT gives slightly lower Ncr than CLPT due to shear deformation
     np.testing.assert_allclose(Ncr_computed, Ncr_analytical, rtol=0.02)
+
+
+@pytest.mark.parametrize('ratio', [1., 0.1, 0.01, 0.001])
+def test_lb_sparse_mixed_spectrum_coupled(ratio):
+    """Harder variants of test_lb_sparse_shift_mixed_spectrum, as the study
+    of the sparse solvers: negative load multipliers down to -ratio, which
+    made eigsh() without a shift (which='SA') slow or not converge, coupled
+    by a sparse congruence such that the problem is not diagonal. The
+    sparse solver, without dense fallback, returns the critical load
+    multipliers 1.0, 1.0, 1.1, 1.2"""
+    from scipy.sparse import diags, identity, random as sprandom, tril
+
+    n = 600
+    k = np.linspace(1e6, 5e6, n)
+    lambdas = np.concatenate([[1.0, 1.0, 1.1, 1.2],
+                              np.linspace(1.5, 4., n//2 - 4),
+                              -ratio*np.linspace(1., 4., n//2)])
+    T = (identity(n) + 0.1*tril(sprandom(n, n, density=2/n, random_state=1),
+                                -1)).tocsc()
+    K = (T.T @ diags(k) @ T).tocsr()
+    KG = (T.T @ diags(-k/lambdas) @ T).tocsr()
+    eigvals, eigvecs = lb(K, KG, silent=True, max_dense_size=0)
+    np.testing.assert_allclose(eigvals[:4], [1.0, 1.0, 1.1, 1.2], rtol=1e-8)
+    np.testing.assert_allclose(eigvals, np.sort(lambdas[lambdas > 0])[:25],
+                               rtol=1e-8)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
