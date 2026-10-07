@@ -56,3 +56,33 @@ def test_freq_with_null_dofs():
     eigvals, eigvecs = freq(K, M, silent=True, num_eigvalues=3,
                             sparse_solver=True)
     assert eigvecs.shape[0] == n
+
+
+def freq_problem(symmetric, n=300, seed=0):
+    from scipy.sparse import diags, random as sprandom
+    rng = np.random.RandomState(seed)
+    A = sprandom(n, n, density=0.02, random_state=rng)
+    K = A @ A.T + diags(np.linspace(1., 100., n))
+    if not symmetric:
+        K = K + 1e-2*sprandom(n, n, density=0.02, random_state=rng)
+    M = diags(1. + rng.rand(n))
+    return csc_matrix(K), csc_matrix(M)
+
+
+@pytest.mark.parametrize('num_eigvalues', [5, 25, 40])
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_freq_lowest_frequencies(symmetric, num_eigvalues):
+    """The sparse solver, without dense fallback, returns the lowest
+    frequencies of the full dense solution, also for many modes, which
+    eigsh() computes in several passes when ncv is capped"""
+    K, M = freq_problem(symmetric)
+    lambda2, eigvecs = freq(K, M, silent=True, symmetric=symmetric,
+                            num_eigvalues=num_eigvalues, max_dense_size=0,
+                            sort=False)
+    ref, _ = freq(K, M, silent=True, symmetric=symmetric,
+                  sparse_solver=False, sort=False)
+    w_ref = np.sort((-ref).real)[:num_eigvalues]
+    assert lambda2.shape == (num_eigvalues,)
+    np.testing.assert_allclose(np.sort((-lambda2).real), w_ref, rtol=1e-8)
+    if symmetric:
+        assert np.isrealobj(lambda2)

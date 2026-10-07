@@ -3,9 +3,12 @@ import warnings
 import numpy as np
 import scipy
 from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import eigs, eigsh, spsolve
-from scipy.linalg import eigh
+from scipy.sparse.linalg import eigs, spsolve
+from scipy.linalg import eigh, LinAlgError
 
+from .arpackutils import capped_eigsh, start_vector
+from .linear_buckling import (_eig_complex, _negative_pivots, _sparse_first,
+                              is_symmetric)
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
@@ -45,10 +48,107 @@ def _residuals(K, M, lambda2, eigvecs):
     return out
 
 
+def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
+                min_rel_gap=1e-4):
+    r"""Verify the eigenpairs of `([K] + \lambda^2 [M])\{u\} = \{0\}`
+
+    - The relative residuals of :func:`_residuals` must not be larger than
+      ``check_rtol``, unless it is ``None``.
+    - With ``symmetric=True``, no eigenvalue `\omega^2 = -\lambda^2` is
+      missing below the highest one returned, `\omega^2_n`: the number of
+      negative pivots of `[K] - s [M]`, with
+      `s = \omega^2_n - min\_rel\_gap |\omega^2_n|`, i.e. the number of
+      eigenvalues lower than `s` by Sylvester's law of inertia for a
+      positive definite ``M``, must be the number of returned eigenvalues
+      lower than `s`. The check is skipped when the count is unknown, see
+      :func:`.linear_buckling._negative_pivots`.
+
+    Returns
+    -------
+    error : str or None
+        Description of the failed check, ``None`` when all checks passed.
+
+    """
+    lambda2 = np.asarray(lambda2)
+    if not eigvecs.shape[1]:
+        return 'no eigenpair was found'
+    if check_rtol is not None:
+        res = _residuals(K, M, lambda2, eigvecs)
+        if not np.all(res <= check_rtol):
+            i = np.argmax(np.nan_to_num(res, nan=np.inf))
+            return ('relative residual {0:.2e} > {1:.1e} for the eigenvalue '
+                    'lambda**2={2}'.format(res[i], check_rtol,
+                                           lambda2[np.isfinite(lambda2)][i]))
+    if symmetric:
+        w2 = -np.real(lambda2[np.isfinite(lambda2)])
+        if not w2.size:
+            return 'no finite eigenvalue was found'
+        s = w2.max() - min_rel_gap*abs(w2.max())
+        expected = int(np.count_nonzero(w2 < s))
+        count = _negative_pivots(K - s*M) if s != 0 else None
+        if count is not None and count != expected:
+            return ('{0} eigenvalues omega**2 lower than {1} exist, {2} were '
+                    'found'.format(count, s, expected))
+    return None
+
+
+def _eigsh_freq(K, M, k, tol, sigma):
+    """:func:`.arpackutils.capped_eigsh` in shift-invert mode"""
+    eigvals, eigvecs = capped_eigsh(A=K, k=k, M=M, sigma=sigma, which='LM',
+                                    mode='normal', tol=tol)
+    return -eigvals, eigvecs
+
+
+def _eigs_freq(K, M, k, tol, sigma):
+    """:func:`scipy.sparse.linalg.eigs` in shift-invert mode"""
+    eigvals, eigvecs = eigs(A=K, M=M, k=k, which='LM', tol=tol, sigma=sigma,
+                            v0=start_vector(K.shape[0]))
+    #NOTE eigs solves: [K] {u} = eigval [M] {u}
+    #     therefore we must correct he sign of lambda^2 here:
+    return -eigvals, eigvecs
+
+
+def _dense_freq(K, M, k, sigma, symmetric):
+    r"""Dense fallback of the sparse solvers of :func:`freq`
+
+    With ``symmetric=True``, :func:`scipy.linalg.eigh` and the ``k`` lowest
+    `\omega^2`, with eigenvectors normalized with respect to ``M``.
+    Otherwise :func:`scipy.linalg.eig`, through the complex LAPACK driver
+    ``zggev``, see :func:`.linear_buckling._eig_complex`, and the ``k``
+    finite `\omega^2` nearest ``sigma``, as the sparse solver, by increasing
+    distance.
+
+    """
+    Kd = csr_matrix(K).toarray()
+    Md = csr_matrix(M).toarray()
+    if symmetric:
+        #NOTE [M]{u} = (1/omega**2) [K]{u} gives the lowest frequencies with
+        #     relative residuals of ~1e-10, against ~1e-6 for
+        #     eigh(a=K, b=M) for stiff models, but requires a positive
+        #     definite K
+        try:
+            eigvals, eigvecs = eigh(a=Md, b=Kd)
+            positive = np.flatnonzero(eigvals > 0)[::-1][:k]
+            w2 = 1./eigvals[positive]
+            eigvecs = eigvecs[:, positive]
+            eigvecs /= np.sqrt(np.einsum('ij,ij->j', eigvecs, Md @ eigvecs))
+        except LinAlgError:
+            eigvals, eigvecs = eigh(a=Kd, b=Md)
+            w2 = eigvals[:k]
+            eigvecs = eigvecs[:, :k]
+        return -w2, eigvecs
+    eigvals, eigvecs = _eig_complex(a=Md, b=Kd)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        w2 = 1./eigvals
+    finite = np.flatnonzero(np.isfinite(w2))
+    order = finite[np.argsort(np.abs(w2[finite] - sigma), kind='stable')[:k]]
+    return -w2[order], eigvecs[:, order]
+
+
 def freq(K, M, tol=0, sparse_solver=True,
         silent=False, sort=True, num_eigvalues=25,
         num_eigvalues_print=5, skip_null_cols=False, symmetric=False,
-        check_rtol=1e-6):
+        check_rtol=1e-6, max_dense_size=2000):
     r"""Frequency analysis
 
     Calculates the eigenvalues `\lambda^2` and eigenvectors `\{u\}` of the
@@ -71,17 +171,20 @@ def freq(K, M, tol=0, sparse_solver=True,
     M : sparse_matrix
         Mass matrix.
     tol : float, optional
-        A tolerance value passed to :func:`scipy.sparse.linalg.eigs`.
+        A tolerance value passed to :func:`scipy.sparse.linalg.eigs` and
+        :func:`scipy.sparse.linalg.eigsh`.
     sparse_solver : bool, optional
-        Tells if solver :func:`scipy.sparse.linalg.eigs` (``True``) or
-        :func:`scipy.linalg.eig` (``False``) should be used. The sparse
-        solver uses the shift-invert mode, with a negative shift estimated
-        from the matrices, and calculates the ``num_eigvalues`` eigenvalues
-        closest to the shift. The dense solver calculates all eigenvalues.
-
-        .. note:: The sparse solver is faster, but it was verified to become
-                  unstable for some cases, where ``sparse_solver=False`` is
-                  recommended.
+        With ``True``, the default, the sparse solver always runs first,
+        whatever the size of the problem: :func:`scipy.sparse.linalg.eigs`,
+        or :func:`scipy.sparse.linalg.eigsh` with ``symmetric=True``, in
+        shift-invert mode with a negative shift estimated from the matrices,
+        calculating the ``num_eigvalues`` eigenvalues closest to the shift.
+        Its eigenpairs are verified, and a dense solver is only used as a
+        last resort, see the Notes. With ``False``, the full problem is
+        explicitly solved with a dense solver, :func:`scipy.linalg.eig`, or
+        :func:`scipy.linalg.eigh` with ``symmetric=True``, without trying the
+        sparse solver, which calculates all eigenvalues, e.g. for the
+        kinetic criterion of stability, and is a reference for validations.
 
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
@@ -108,9 +211,15 @@ def freq(K, M, tol=0, sparse_solver=True,
         ``None`` selects them when :func:`.linear_buckling.is_symmetric` is
         true for both matrices.
     check_rtol : float or None, optional
-        A warning is issued when the relative residual of an eigenpair,
-        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`, is larger
-        than ``check_rtol``. ``None`` skips the check.
+        Maximum relative residual of an eigenpair,
+        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`. A larger
+        residual of the sparse solver is a failed verification, see the
+        Notes. For ``sparse_solver=False``, a warning is issued. ``None``
+        skips the check.
+    max_dense_size : int, optional
+        Maximum size of the dense problem solved as a last resort when the
+        sparse solver failed, see the Notes. Larger problems raise a
+        ``RuntimeError`` instead, and ``0`` disables the dense fallback.
 
     Returns
     -------
@@ -127,8 +236,46 @@ def freq(K, M, tol=0, sparse_solver=True,
         eigenvalues in ``lambda2`` only if the solver already returned them
         in the order of increasing natural frequency.
 
+    Raises
+    ------
+    RuntimeError
+        When the sparse solver failed and the dense fallback was not
+        possible or failed too, listing the attempted solvers and their
+        failures.
+
+    Warns
+    -----
+    .linear_buckling.DenseFallbackWarning
+        When the sparse solver failed and the dense solver was used.
+
     Notes
     -----
+    **Solver policy.** As in :func:`.lb`, with ``sparse_solver=True`` the
+    sparse solver runs first for every problem size, and its eigenpairs are
+    verified:
+
+    - the relative residual of each eigenpair must not be larger than
+      ``check_rtol``;
+    - with ``symmetric=True``, no eigenvalue `\omega_n^2` lower than the
+      highest one returned may be missing: the number of negative pivots of
+      `[K] - s [M]`, for `s` slightly lower than this eigenvalue, is the
+      number of eigenvalues below `s` (Sylvester's law of inertia).
+
+    When the verification fails or the sparse solver raises an error, e.g.
+    ARPACK did not converge, the dense solver is used as a last resort if
+    the problem has at most ``max_dense_size`` dofs, with a
+    :class:`.linear_buckling.DenseFallbackWarning` giving the reasons. It
+    returns the ``num_eigvalues`` lowest eigenvalues with ``symmetric=True``,
+    otherwise the ``num_eigvalues`` eigenvalues closest to the shift, as the
+    sparse solver, and its eigenpairs are verified as well. Otherwise a
+    ``RuntimeError`` is raised. Before version 0.5.4, the sparse solver
+    only issued a warning when the residual check failed.
+
+    :func:`scipy.sparse.linalg.eigsh` uses ARPACK's symmetric drivers, which
+    return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
+    2025.0.0 and ``ncv > 32``, see :func:`.lb` and
+    :mod:`structsolve.arpackutils`, where ``ncv`` is capped accordingly.
+
     Non-conservative systems, e.g. under follower loads, may lose stability
     by flutter, which the static criterion of :func:`.lb` does not detect:
     with ``K`` the tangent stiffness matrix at a load level, including the
@@ -151,62 +298,67 @@ def freq(K, M, tol=0, sparse_solver=True,
         Keff, Meff, used_cols = remove_null_cols(K, M, silent=silent,
                 level=3)
     if symmetric is None:
-        from .linear_buckling import is_symmetric
         symmetric = is_symmetric(Keff) and is_symmetric(Meff)
-    if symmetric and sparse_solver:
+    if sparse_solver:
+        Keff = csr_matrix(Keff)
+        Meff = csr_matrix(Meff)
         sigma = _estimate_sigma(Keff, Meff)
-        msg('eigsh() solver (sigma={0})...'.format(sigma), level=3,
-            silent=silent)
-        eigvals, peigvecs = eigsh(A=csr_matrix(Keff), M=csr_matrix(Meff),
-                                  k=k, which='LM', tol=tol, sigma=sigma)
-        lambda2 = -eigvals
-    elif symmetric:
-        msg('eigh() solver...', level=3, silent=silent)
-        Kd = Keff.toarray() if hasattr(Keff, 'toarray') else np.asarray(Keff)
-        Md = Meff.toarray() if hasattr(Meff, 'toarray') else np.asarray(Meff)
-        eigvals, peigvecs = eigh(a=Kd, b=Md)
-        lambda2 = -eigvals
-    elif sparse_solver:
-        #NOTE Looking for better performance with symmetric matrices, I tried
-        #     using sparseutils.sparse.is_symmetric and eigsh, but it seems not
-        #     to improve speed (I did not try passing only half of the sparse
-        #     matrices to the solver)
-        sigma = _estimate_sigma(Keff, Meff)
-        msg('eigs() solver (sigma={0})...'.format(sigma), level=3, silent=silent)
-        eigvals, peigvecs = eigs(A=Keff, M=Meff, k=k, which='LM', tol=tol,
-                                 sigma=sigma)
-        #NOTE eigs solves: [K] {u} = eigval [M] {u}
-        #     therefore we must correct he sign of lambda^2 here:
-        lambda2 = -eigvals
+        if symmetric:
+            strategies = [('eigsh() in shift-invert mode (sigma={0})'.format(
+                           sigma), lambda: _eigsh_freq(Keff, Meff, k, tol,
+                                                       sigma))]
+            dense = ('eigh()', lambda: _dense_freq(Keff, Meff, k, sigma,
+                                                   True))
+        else:
+            #NOTE Looking for better performance with symmetric matrices, I
+            #     tried using sparseutils.sparse.is_symmetric and eigsh, but
+            #     it seems not to improve speed (I did not try passing only
+            #     half of the sparse matrices to the solver)
+            strategies = [('eigs() in shift-invert mode (sigma={0})'.format(
+                           sigma), lambda: _eigs_freq(Keff, Meff, k, tol,
+                                                      sigma))]
+            dense = ('eig()', lambda: _dense_freq(Keff, Meff, k, sigma,
+                                                  False))
+        (lambda2, peigvecs), _ = _sparse_first('Frequency analysis',
+                strategies, lambda l2, v: _check_freq(Keff, Meff, l2, v,
+                    check_rtol, symmetric), dense, Keff.shape[0],
+                max_dense_size, silent,
+                hint=' Try sparse_solver=False or a larger max_dense_size.')
     else:
-        if isinstance(Meff, scipy.sparse.spmatrix):
-            Meff = Meff.toarray()
+        if symmetric:
+            msg('eigh() solver...', level=3, silent=silent)
+            Kd = (Keff.toarray() if hasattr(Keff, 'toarray')
+                  else np.asarray(Keff))
+            Md = (Meff.toarray() if hasattr(Meff, 'toarray')
+                  else np.asarray(Meff))
+            eigvals, peigvecs = eigh(a=Kd, b=Md)
+            lambda2 = -eigvals
         else:
-            Meff = np.asarray(Meff)
-        if isinstance(Keff, scipy.sparse.spmatrix):
-            Keff = Keff.toarray()
-        else:
-            Keff = np.asarray(Keff)
+            if isinstance(Meff, scipy.sparse.spmatrix):
+                Meff = Meff.toarray()
+            else:
+                Meff = np.asarray(Meff)
+            if isinstance(Keff, scipy.sparse.spmatrix):
+                Keff = Keff.toarray()
+            else:
+                Keff = np.asarray(Keff)
 
-        #TODO did not try using eigh when input is symmetric to see if there
-        #     will be speed improvements
-        # for effiency reasons, solving:
-        #    [M]{u} = (-1/lambda2)[K]{u}
-        #    [M]{u} = eigval [K]{u}
-        #NOTE complex matrices to call zggev instead of dggev, which crashes
-        #     the process for some matrices with Intel MKL 2025.0.0, see
-        #     linear_buckling._eig_complex
-        from .linear_buckling import _eig_complex
-        msg('eig() solver...', level=3, silent=silent)
-        eigvals, peigvecs = _eig_complex(a=Meff, b=Keff)
-        lambda2 = -1./eigvals
+            # for effiency reasons, solving:
+            #    [M]{u} = (-1/lambda2)[K]{u}
+            #    [M]{u} = eigval [K]{u}
+            #NOTE complex matrices to call zggev instead of dggev, which
+            #     crashes the process for some matrices with Intel MKL
+            #     2025.0.0, see linear_buckling._eig_complex
+            msg('eig() solver...', level=3, silent=silent)
+            eigvals, peigvecs = _eig_complex(a=Meff, b=Keff)
+            lambda2 = -1./eigvals
 
-    if check_rtol is not None and peigvecs.shape[1]:
-        res = _residuals(Keff, Meff, lambda2, peigvecs)
-        if res.size and res.max() > check_rtol:
-            warn('freq: relative residual {0:.1e} of an eigenpair is larger '
-                 'than check_rtol={1:.1e}'.format(res.max(), check_rtol),
-                 level=2, silent=silent)
+        if check_rtol is not None and peigvecs.shape[1]:
+            res = _residuals(Keff, Meff, lambda2, peigvecs)
+            if res.size and res.max() > check_rtol:
+                warn('freq: relative residual {0:.1e} of an eigenpair is '
+                     'larger than check_rtol={1:.1e}'.format(res.max(),
+                         check_rtol), level=2, silent=silent)
 
     if used_cols is not None:
         eigvecs = np.zeros((size, peigvecs.shape[1]), dtype=peigvecs.dtype)
