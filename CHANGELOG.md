@@ -35,7 +35,9 @@ wrong answer.
   environment variable `STRUCTSOLVE_ARPACK_MAX_NCV` (`0` lifts it). It is
   not applied without MKL, e.g. in Pyodide, where a larger `ncv` is faster.
   `eigs` (non-symmetric drivers) is not affected. `freq(symmetric=True)`,
-  added in 0.5.3, was affected and is fixed as well.
+  added in 0.5.3, was affected and is fixed as well: with MKL 2025.0.0 it
+  silently returned wrong frequencies, e.g. a lowest `omega**2` 1.3 and 12
+  times too high for a plate and a cylinder of panels.
 - **`lb`, symmetric matrices**: `eigsh` in Cayley mode with the capped `ncv`,
   retried with a 10 times larger shift; the dense condensed `eigh` is the
   last resort. The inertia check is stronger: the number of negative pivots
@@ -62,6 +64,11 @@ wrong answer.
   dense fallback, instead of a warning only. The symmetric dense fallback
   solves `M u = (1/omega**2) K u`, accurate for the lowest frequencies.
 - The ARPACK starting vector is fixed, results are reproducible.
+- In Pyodide, `gc.collect()` is called after each ARPACK call
+  (`arpackutils.release_memory`): SciPy's `eigs` and `eigsh` keep the SuperLU
+  factorization of the shift-invert mode in reference cycles, which exhausted
+  the WebAssembly heap, e.g. `MemoryError` at the 10th `freq` call on a
+  1,012-dof model.
 - In Pyodide (`sys.platform == 'emscripten'`) the explicit dense `eig` uses
   the real LAPACK drivers, the complex ones are only needed against MKL.
 - The static and non-linear solvers were audited: they only use sparse LU

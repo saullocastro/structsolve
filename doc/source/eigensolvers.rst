@@ -97,6 +97,16 @@ or, in Python::
     structsolve.arpackutils.ARPACK_MAX_NCV = 0
 
 The non-symmetric drivers of :func:`scipy.sparse.linalg.eigs` are not
-affected. The dense solvers of unsymmetric matrices call
+affected.
+
+
+In the browser
+--------------
+
+In Pyodide (``sys.platform == 'emscripten'``) SciPy uses OpenBLAS, ``ncv`` is
+not capped, and :func:`structsolve.arpackutils.release_memory` collects the
+reference cycles of SciPy's ARPACK wrappers after each call, which otherwise
+keep the sparse factorizations alive until the WebAssembly heap is
+exhausted. The dense solvers of unsymmetric matrices call
 :func:`scipy.linalg.eig` with complex matrices, since the real drivers crash
 the Python process for some matrices with Intel MKL 2025.0.0.
