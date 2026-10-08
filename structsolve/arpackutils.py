@@ -11,7 +11,9 @@ MKL 2025.0.1 or newer is not affected, neither are the non-symmetric drivers
 of :func:`scipy.sparse.linalg.eigs`, which do not call ``dsteqr``.
 
 :func:`capped_eigsh` keeps ``ncv <= 32`` when :func:`arpack_max_ncv` says so,
-computing more than 15 eigenpairs in several calls with deflation.
+computing more than 15 eigenpairs in several calls with deflation, whose
+eigenvectors are combined with a Rayleigh-Ritz projection such that they
+are orthonormal also across the calls.
 
 The cap is decided by :func:`arpack_max_ncv` and can be overridden with
 the module attribute :data:`ARPACK_MAX_NCV` or the environment variable
@@ -32,6 +34,7 @@ import sys
 import warnings
 
 import numpy as np
+from scipy.linalg import cholesky, eigh, solve_triangular
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import LinearOperator, splu
 from scipy.sparse.linalg import eigsh as _scipy_eigsh
@@ -281,6 +284,34 @@ def _deflation_shift(w, far_shift):
     return 0.5*(last[i] + last[i + 1])
 
 
+def _rayleigh_ritz(A, M, V):
+    r"""Rayleigh-Ritz projection of `[A]\{x\} = w [M]\{x\}` onto `[V]`
+
+    The eigenvectors of different passes of :func:`capped_eigsh` are only
+    `[M]`-orthogonal to the accuracy of ARPACK, e.g. `10^{-6}` between
+    close eigenvalues of different passes. `[V]` is `[M]`-orthonormalized
+    with the Cholesky factor `[L]` of `[V]^T[M][V]`, and the projected
+    problem `[W]^T[A][W]\{y\} = w\{y\}`, with `[W] = [V][L]^{-T}`, is
+    solved with the LAPACK driver ``dsyevr`` (``driver='evr'``), which does
+    not use the ``dsteqr`` of Intel MKL broken above 32 x 32 matrices, see
+    :func:`dsteqr_is_faulty`. The returned eigenvectors `[W]\{y\}` are
+    `[M]`-orthonormal to the rounding errors, and the Ritz values are at
+    least as accurate as the eigenvalues of the passes.
+
+    Returns
+    -------
+    w, x : ndarray
+        The Ritz values by increasing value and the Ritz vectors.
+
+    """
+    MV = M @ V
+    L = cholesky(0.5*(V.T @ MV + MV.T @ V), lower=True)
+    W = solve_triangular(L, V.T, lower=True).T
+    H = W.T @ (A @ W)
+    w, Y = eigh(0.5*(H + H.T), driver='evr')
+    return w, W @ Y
+
+
 def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     r""":func:`scipy.sparse.linalg.eigsh` with ``ncv`` from :func:`arpack_ncv`
 
@@ -312,7 +343,9 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     in the study of the panels cylinders it was 30 to 45% faster and gave
     eigenvalues 5 to 10 times more accurate. Each pass factorizes
     `[A] - \sigma_d [M]` with SuperLU, and every call starts from
-    :func:`start_vector`.
+    :func:`start_vector`. The eigenvectors of all the passes are finally
+    combined with a Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`,
+    such that they are `[M]`-orthonormal also across the passes.
 
     Returns
     -------
@@ -359,5 +392,4 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
         w = np.concatenate((w, wi))
         V = np.hstack((V, Vi))
         release_memory()
-    order = np.argsort(w, kind='stable')
-    return w[order], V[:, order]
+    return _rayleigh_ritz(A, M, V)

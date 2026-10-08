@@ -27,7 +27,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -42,9 +42,10 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.6.0 (2026-10-08)
+* version 0.6.1 (2026-10-08)
+    - Pyodide support: `await micropip.install("structsolve")` in the browser, and the whole test suite runs in Pyodide in GitHub Actions
     - `lb` and `freq` always run the sparse solvers first, whatever the size of the problem, with verified results; the dense solvers are only a last resort within `max_dense_size`, with a `DenseFallbackWarning`
-    - ARPACK's `ncv` is capped at 32 when SciPy is linked against the Intel MKL versions whose `dsteqr` is faulty (new `structsolve.arpackutils`)
+    - ARPACK's `ncv` is capped at 32 when SciPy is linked against the Intel MKL versions whose `dsteqr` is faulty (new `structsolve.arpackutils`), computing more than 15 eigenpairs in passes whose eigenvectors are made orthonormal with a Rayleigh-Ritz projection
     - Unsymmetric `lb`: a shift search finds the lowest positive real load multiplier, instead of silently returning negative or complex ones
     - The test extra no longer requires `buckling` and `composites`
 * version 0.5.3 (2026-10-06)

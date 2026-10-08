@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "description": "Runs the test suite of structsolve in Pyodide",
+  "dependencies": {
+    "pyodide": "314.0.7"
+  }
+}

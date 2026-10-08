@@ -862,9 +862,10 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     MKL versions returns wrong eigenvectors for matrices larger than
     32 x 32, which ARPACK uses with the size ``ncv``. When such a LAPACK is
     detected, ``ncv`` is capped at 32 and more than 15 eigenpairs are
-    computed in several passes, see :mod:`structsolve.arpackutils`, where
-    the cap can be overridden, e.g. with the environment variable
-    ``STRUCTSOLVE_ARPACK_MAX_NCV=0`` to lift it with MKL 2025.0.1 or newer.
+    computed in several passes, combined with a Rayleigh-Ritz projection,
+    see :mod:`structsolve.arpackutils`, where the cap can be overridden,
+    e.g. with the environment variable ``STRUCTSOLVE_ARPACK_MAX_NCV=0`` to
+    lift it with MKL 2025.0.1 or newer.
     The non-symmetric drivers of :func:`scipy.sparse.linalg.eigs` are not
     affected.
 

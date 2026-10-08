@@ -217,6 +217,9 @@ def test_lb_nearly_symmetric(sparse_solver, max_dense_size):
     assert np.all(relative_residuals(Kn, KG, eigvals, eigvecs) < 1e-8)
 
 
+@pytest.mark.skipif(sys.platform == 'emscripten',
+                    reason='no subprocesses in Pyodide, whose SciPy is not '
+                           'linked to MKL')
 def test_eig_complex_mkl_crash_regression():
     """Regression test: with Intel MKL 2025.0.0, scipy.linalg.eig on these
     real 48 x 48 matrices (LAPACK dggev) corrupts the heap and the process

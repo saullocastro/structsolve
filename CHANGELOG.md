@@ -1,6 +1,33 @@
 # Changelog
 
-## 0.6.0 (2026-10-08)
+## 0.6.1 (2026-10-08)
+
+Includes the changes first published as 0.6.0, with the support of Pyodide.
+
+### Pyodide support
+
+`structsolve` runs in the browser with Pyodide (WebAssembly): the wheel
+published on PyPI is pure Python and only requires NumPy and SciPy, which
+Pyodide distributes, i.e. `await micropip.install("structsolve")`.
+
+- The whole test suite runs in Pyodide, in the new GitHub Actions workflow
+  `pyodide.yml`: the wheel built from the repository is installed with
+  `micropip` in Pyodide under Node.js (`ci/pyodide/run_tests.mjs`, with
+  the version of Pyodide pinned in `ci/pyodide/package.json`).
+- `test_eig_complex_mkl_crash_regression` is skipped in Pyodide, which
+  cannot start the subprocess of the test and whose SciPy is not linked to
+  MKL.
+- New classifier `Environment :: WebAssembly :: Emscripten`.
+- Installation in Pyodide in the documentation.
+
+### Continuous integration
+
+- The GitHub Actions run on Node.js 24, whose Node.js 20 versions are
+  deprecated: `actions/checkout` v7, `actions/setup-python` v7,
+  `actions/setup-node` v7, `codecov/codecov-action` v7 and
+  `softprops/action-gh-release` v3.
+- `fail-fast: false` in the matrix of `pytest.yml`, such that a failed job
+  does not cancel the others.
 
 ### Eigenvalue solvers: sparse first, dense only as a last resort
 
@@ -31,7 +58,13 @@ wrong answer.
   or within the faulty range (read with the optional `mkl-service` or
   `threadpoolctl`). More than 15 eigenpairs are then computed in passes of
   at most 15 with deflation, since ARPACK hardly converges with `k` close to
-  `ncv`. The cap can be overridden with `arpackutils.ARPACK_MAX_NCV` or the
+  `ncv`. The eigenvectors of all the passes are combined with a
+  Rayleigh-Ritz projection, solved with the LAPACK driver `dsyevr`, which
+  does not use `dsteqr`: the eigenvectors of different passes were only
+  orthogonal to the accuracy of ARPACK, e.g. `v.T @ K @ v` deviated from
+  the identity by `1.1e-6` for 25 eigenpairs of a cylinder of panels on
+  Linux, now `1e-10`, and the eigenvalues are about 10 times more
+  accurate. The cap can be overridden with `arpackutils.ARPACK_MAX_NCV` or the
   environment variable `STRUCTSOLVE_ARPACK_MAX_NCV` (`0` lifts it). It is
   not applied without MKL, e.g. in Pyodide, where a larger `ncv` is faster.
   `eigs` (non-symmetric drivers) is not affected. `freq(symmetric=True)`,
