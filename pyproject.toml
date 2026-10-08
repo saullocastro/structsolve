@@ -43,8 +43,6 @@ test = [
     "pytest-cov",
     "flake8",
     "coverage",
-    "composites",
-    "buckling>=2026b4",
 ]
 
 [project.urls]

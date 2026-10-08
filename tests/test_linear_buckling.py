@@ -7,6 +7,8 @@ from scipy.sparse import csc_matrix
 
 from structsolve import lb
 
+from ritz import isotropic_plate, vecf, vecfxi
+
 
 def test_lb_simple_eigenvalue():
     """Test linear buckling with a well-conditioned system
@@ -246,8 +248,6 @@ def test_lb_plate_buckling_fsdt():
     Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.
     """
     from scipy.special import roots_legendre
-    from composites import isotropic_plate
-    from buckling.legendre import vecf, vecfxi
 
     m1 = 20
     m2 = 10
