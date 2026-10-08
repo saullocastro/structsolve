@@ -42,7 +42,7 @@ https://github.com/saullocastro/structsolve
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Eigenvalue solvers
