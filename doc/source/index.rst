@@ -42,7 +42,7 @@ https://github.com/saullocastro/structsolve
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Eigenvalue solvers
@@ -87,6 +87,13 @@ Install from the distributed packages by simply doing::
 or from the source code using::
 
     python -m pip install .
+
+In the browser, with `Pyodide <https://pyodide.org>`_, which already
+distributes NumPy and SciPy, the wheel published on PyPI is installed with
+``micropip``::
+
+    import micropip
+    await micropip.install("structsolve")
 
 
 Changelog

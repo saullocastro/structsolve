@@ -1,6 +1,24 @@
 # Changelog
 
-## 0.6.0 (2026-10-08)
+## 0.6.1 (2026-10-08)
+
+Includes the changes first published as 0.6.0, with the support of Pyodide.
+
+### Pyodide support
+
+`structsolve` runs in the browser with Pyodide (WebAssembly): the wheel
+published on PyPI is pure Python and only requires NumPy and SciPy, which
+Pyodide distributes, i.e. `await micropip.install("structsolve")`.
+
+- The whole test suite runs in Pyodide, in the new GitHub Actions workflow
+  `pyodide.yml`: the wheel built from the repository is installed with
+  `micropip` in Pyodide under Node.js (`ci/pyodide/run_tests.mjs`, with
+  the version of Pyodide pinned in `ci/pyodide/package.json`).
+- `test_eig_complex_mkl_crash_regression` is skipped in Pyodide, which
+  cannot start the subprocess of the test and whose SciPy is not linked to
+  MKL.
+- New classifier `Environment :: WebAssembly :: Emscripten`.
+- Installation in Pyodide in the documentation.
 
 ### Eigenvalue solvers: sparse first, dense only as a last resort
 
