@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "structsolve"
-version = "0.5.3"
+version = "0.6.0"
 description = "Structural analysis solvers"
 readme = "README.md"
 license = {text = "BSD-2-Clause"}
@@ -43,8 +43,6 @@ test = [
     "pytest-cov",
     "flake8",
     "coverage",
-    "composites",
-    "buckling>=2026b4",
 ]
 
 [project.urls]

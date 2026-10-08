@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 (2026-10-08)
 
 ### Eigenvalue solvers: sparse first, dense only as a last resort
 
@@ -115,6 +115,13 @@ wrong answer.
   Ramm (1984) from panels (new `tests/data/s1B1_m14n8_*`,
   `tests/data/s3B2_m14n8_*`), original and reversed, and harder mixed
   spectra for the symmetric solver.
+- The test dependencies `buckling` and `composites` are removed: the
+  hierarchical Legendre functions of Bardell (`vecf`, `vecfxi`, `vecfxixi`)
+  and the stiffnesses of an isotropic plate (`isotropic_plate`) of the Ritz
+  models of the tests are in the new `tests/ritz.py`, with NumPy only. The
+  test extra `.[test]` no longer requires a pre-release (`buckling` is only
+  published as `2026bN`) nor a compiled package (`composites`), whose wheels
+  are not available for every platform, e.g. Pyodide.
 
 ## 0.5.3 (2026-10-06)
 

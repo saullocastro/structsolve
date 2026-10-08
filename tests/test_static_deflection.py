@@ -8,6 +8,8 @@ from scipy.sparse import csc_matrix
 
 from structsolve import solve
 
+from ritz import isotropic_plate, vecf, vecfxi, vecfxixi
+
 
 def test_static_deflection_plate_clpt():
     """Test static deflection of a simply supported plate under point load (CLPT).
@@ -16,8 +18,6 @@ def test_static_deflection_plate_clpt():
     Compares the center deflection with the Navier analytical solution.
     """
     from scipy.special import roots_legendre
-    from composites import isotropic_plate
-    from buckling.legendre import vecf, vecfxi, vecfxixi
 
     m1 = m2 = 20
     N = m1 * m2
