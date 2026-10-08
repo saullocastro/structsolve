@@ -1,0 +1,31 @@
+name: pyodide
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v5
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: ci/pyodide/package-lock.json
+    - name: Build the wheel
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip wheel . --no-deps -w dist
+    - name: Install Pyodide
+      working-directory: ci/pyodide
+      run: npm ci
+    - name: Test with pytest in Pyodide
+      run: |
+        node ci/pyodide/run_tests.mjs "$PWD/dist" "$PWD/tests" -rs

@@ -20,3 +20,6 @@ temp*.*
 
 # Documentation
 doc/build
+
+# Node.js, Pyodide test runner
+node_modules
