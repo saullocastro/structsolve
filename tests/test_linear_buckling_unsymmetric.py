@@ -90,10 +90,14 @@ def test_lb_unsymmetric_general_eigenpairs_real_when_kept_real():
     assert np.all(u[:, :2].imag == 0)
 
 
-@pytest.mark.parametrize('max_dense_size', [2000, 0])
-def test_lb_unsymmetric_complex_eigenpairs(max_dense_size):
+def test_lb_unsymmetric_complex_eigenpairs():
     """Genuinely complex eigenpairs, with condensed dofs that receive complex
-    eigenvectors from the back-substitution"""
+    eigenvectors from the back-substitution. There is no positive real load
+    multiplier: the shift search fails, which raises a RuntimeError without
+    the dense fallback, and the dense fallback returns the load multipliers
+    of smallest modulus with a warning"""
+    from structsolve.linear_buckling import DenseFallbackWarning
+
     n, nb = 30, 12
     K = (diags(np.linspace(4., 8., n)) + diags(0.5*np.ones(n - 1), 1)
          + diags(0.5*np.ones(n - 1), -1)).toarray()
@@ -104,9 +108,13 @@ def test_lb_unsymmetric_complex_eigenpairs(max_dense_size):
     ref = dense_load_multipliers(K, KG)
     assert np.all(np.abs(ref.imag) > 1e-3*np.abs(ref))
     k = 4
-    eigvals, eigvecs = lb(csr_matrix(K), csr_matrix(KG), num_eigvalues=k,
-                          symmetric=False, silent=True,
-                          max_dense_size=max_dense_size)
+    with pytest.raises(RuntimeError, match='no positive real load multiplier'):
+        lb(csr_matrix(K), csr_matrix(KG), num_eigvalues=k, symmetric=False,
+           silent=True, max_dense_size=0)
+    with pytest.warns(DenseFallbackWarning), \
+            pytest.warns(RuntimeWarning, match='no divergence load'):
+        eigvals, eigvecs = lb(csr_matrix(K), csr_matrix(KG), num_eigvalues=k,
+                              symmetric=False, silent=True)
     assert np.iscomplexobj(eigvals) and np.iscomplexobj(eigvecs)
     assert eigvals.shape == (k,) and eigvecs.shape == (n, k)
     assert np.all(np.abs(eigvals.imag) > 1e-3*np.abs(eigvals))
@@ -151,10 +159,12 @@ def test_lb_check_eigenpairs_real_and_complex():
 
 
 @pytest.mark.parametrize('symmetric, solver', [
-    (False, '_eig_condensed'), (True, '_eigh_condensed')])
+    (False, '_eigs_shift_search'), (True, '_eigsh_cayley')])
 def test_lb_solver_type_error_falls_back(monkeypatch, symmetric, solver):
-    """A TypeError of the first solver is recorded and the next solver,
-    eigs() or eigsh(), is used"""
+    """A TypeError of the sparse solvers is recorded and the dense solver is
+    used as a last resort, with a warning that gives the error"""
+    from structsolve.linear_buckling import DenseFallbackWarning
+
     import structsolve.linear_buckling as linear_buckling
 
     n = 40
@@ -167,8 +177,9 @@ def test_lb_solver_type_error_falls_back(monkeypatch, symmetric, solver):
         raise TypeError('Cannot cast array data from dtype complex128')
 
     monkeypatch.setattr(linear_buckling, solver, raise_type_error)
-    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=5,
-                          symmetric=symmetric)
+    with pytest.warns(DenseFallbackWarning, match='TypeError: Cannot cast'):
+        eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=5,
+                              symmetric=symmetric)
     np.testing.assert_allclose(eigvals, lambdas[:5], rtol=1e-8)
     assert eigvals.dtype == np.float64 and eigvecs.dtype == np.float64
     assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-8)
@@ -239,3 +250,105 @@ def test_eig_complex_mkl_crash_regression():
     assert result.returncode == 0, (hex(result.returncode & 0xffffffff),
                                     result.stderr[-2000:])
     assert result.stdout.strip().endswith('ok')
+
+
+DATA = os.path.join(os.path.dirname(__file__), 'data')
+
+# Schweizerhof and Ramm (1984) cantilevers under a follower pressure, from
+# panels, with K = k0 and KG = kG(c0) + kCfollower, ~8 to 17% unsymmetric.
+# Reversed: -KG, many negative and complex load multipliers have a smaller
+# modulus than the critical one
+FOLLOWER = [('s1B1_m14n8', 1., 1.86216), ('s1B1_m14n8', -1., 15113.4),
+            ('s3B2_m14n8', 1., 0.0544612), ('s3B2_m14n8', -1., 1161.44)]
+
+
+def load_follower(name, sign):
+    from scipy.sparse import load_npz
+    K = load_npz(os.path.join(DATA, '%s_K.npz' % name)).tocsr()
+    KG = sign*load_npz(os.path.join(DATA, '%s_KG.npz' % name)).tocsr()
+    return K, KG
+
+
+def lowest_positive_real(eigvals):
+    eigvals = np.asarray(eigvals)
+    real = (np.isfinite(eigvals)
+            & (np.abs(np.imag(eigvals)) <= 1e-8*np.abs(eigvals)))
+    lam = np.real(eigvals[real])
+    return lam[lam > 0].min()
+
+
+@pytest.mark.parametrize('name, sign, approx', FOLLOWER)
+def test_lb_follower_shift_search(name, sign, approx):
+    """Regression test: the sparse fallback of version 0.5.3, eigs() on
+    K^-1 KG, silently returned only negative or complex load multipliers for
+    the reversed problems. The shift search returns the lowest positive real
+    load multiplier of the full dense eig(), first, without the dense
+    fallback"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
+    K, KG = load_follower(name, sign)
+    ref = lowest_positive_real(lb(K, KG, silent=True, sparse_solver=False)[0])
+    np.testing.assert_allclose(ref, approx, rtol=1e-5)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        eigvals, eigvecs = lb(K, KG, silent=True, max_dense_size=0)
+    assert eigvals.shape == (25,) and eigvecs.shape == (K.shape[0], 25)
+    assert np.isreal(eigvals[0]) and eigvals[0].real > 0
+    np.testing.assert_allclose(eigvals[0].real, ref, rtol=1e-8)
+    assert lowest_positive_real(eigvals) == eigvals[0].real
+    res = relative_residuals(K, KG, eigvals, eigvecs)
+    assert res[0] < 1e-8 and np.all(res < 1e-5)
+
+
+def test_lb_follower_parity_check(monkeypatch):
+    """A failed parity check is a failed sparse solution"""
+    import structsolve.linear_buckling as linear_buckling
+
+    K, KG = load_follower('s1B1_m14n8', -1.)
+    signs = iter([1, -1])
+    monkeypatch.setattr(linear_buckling, '_det_sign', lambda lu: next(signs))
+    with pytest.raises(RuntimeError, match='parity check failed'):
+        lb(K, KG, silent=True, max_dense_size=0)
+
+
+def test_shift_search_helpers():
+    """Coverage of the discs, determinant sign and permutation parity"""
+    from scipy.sparse.linalg import splu
+    from structsolve.linear_buckling import (_covered, _det_sign,
+                                             _permutation_parity)
+
+    assert _covered([(0., 1.)]) == 1.
+    assert _covered([(0., 1.), (2.5, 1.)]) == 1.
+    assert _covered([(0., 1.), (2.5, 1.), (1.5, 0.6)]) == 3.5
+    assert _covered([(3., 3.)]) == 6.
+    assert _covered([(3., 2.)]) == 0.
+    assert _permutation_parity([0, 1, 2]) == 1
+    assert _permutation_parity([1, 0, 2]) == -1
+    assert _permutation_parity([1, 2, 0]) == 1
+    rng = np.random.RandomState(0)
+    for trial in range(20):
+        A = rng.randn(12, 12)
+        lu = splu(csr_matrix(A).tocsc())
+        assert _det_sign(lu) == np.sign(np.linalg.det(A))
+
+
+def test_lb_ziegler_sparse_shift_search():
+    """Ziegler's double pendulum with decoupled dofs, such that the sparse
+    shift search runs: no positive real load multiplier is found and the
+    dense fallback either finds none, with a warning, or only spurious ones
+    far above the flutter load; without the fallback a RuntimeError"""
+    from scipy.linalg import block_diag
+
+    k, l = 3., 0.5
+    P_flutter = (3.5 - np.sqrt(2))*k/l
+    K0 = block_diag(np.array([[2*k, -k], [-k, k]]), np.diag(np.arange(1., 9.)))
+    KF = block_diag(np.array([[-l, l], [0., 0.]]), np.zeros((8, 8)))
+    with pytest.raises(RuntimeError, match='Attempted: eigs'):
+        lb(csr_matrix(K0), csr_matrix(KF), silent=True, max_dense_size=0)
+    try:
+        eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True)[0]
+    except RuntimeError:
+        return
+    finite = np.isfinite(eigvals)
+    assert np.all(np.abs(eigvals[finite]) > 1e6*P_flutter)

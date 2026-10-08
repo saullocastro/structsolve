@@ -12,6 +12,9 @@ Structural analysis solvers tailored for semi-analytical models
 - Linear statics: [K]{u} = {f}
 - Eigensolver for Linear buckling: ([K] + lambda[KG]){u} = 0
 - Eigensolver for dynamics: ([K] + lambda^2[M]){u} = 0
+- Sparse eigenvalue solvers first, verified, with dense solvers only as a
+  last resort, also in the browser (Pyodide) and with the Intel MKL versions
+  that break ARPACK
 - Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
 - Support for unsymmetric problems, such as those involving follower forces
@@ -39,6 +42,14 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
+* unreleased
+    - `lb` and `freq` always run the sparse solvers first, whatever the size
+      of the problem, with verified results; the dense solvers are only a
+      last resort within `max_dense_size`, with a `DenseFallbackWarning`
+    - ARPACK's `ncv` is capped at 32 when SciPy is linked against the Intel
+      MKL versions whose `dsteqr` is faulty (new `structsolve.arpackutils`)
+    - Unsymmetric `lb`: a shift search finds the lowest positive real load
+      multiplier, instead of silently returning negative or complex ones
 * version 0.5.3 (2026-10-06)
     - Configuration-dependent loads, e.g. follower pressures: the load factor
       is passed to the callables that accept `inc`, and the arc-length

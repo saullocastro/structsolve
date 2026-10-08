@@ -14,11 +14,13 @@ directly from the ``structsolve`` namespace:
 - :func:`.static`: linear static analysis
 - :func:`.lb`: linear buckling analysis
 - :func:`.freq`: frequency analysis
+- :class:`.DenseFallbackWarning`: warning of :func:`.lb` and :func:`.freq`
+  when a dense solver was used as a last resort
 
 """
 from __future__ import absolute_import
 
 from .analysis import Analysis
 from .freq import freq
-from .linear_buckling import lb
+from .linear_buckling import DenseFallbackWarning, lb
 from .static import solve, static

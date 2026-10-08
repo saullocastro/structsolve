@@ -1,5 +1,121 @@
 # Changelog
 
+## Unreleased
+
+### Eigenvalue solvers: sparse first, dense only as a last resort
+
+`lb` and `freq` will run in the browser through Pyodide (WebAssembly), where
+dense LAPACK is single-threaded and unoptimized: e.g. the dense `eig` of a
+1,536-dof follower load problem takes 38 s there, against 0.3 s for a sparse
+solver. Natively too, the dense paths are slow for follower loads, whose
+load stiffness couples almost all the dofs, so that the condensation of `lb`
+keeps almost all of them. The eigenvalue solvers now rely on the sparse
+solvers, robustly: a verified result, or an explicit error, never a silently
+wrong answer.
+
+- **Solver policy.** With `sparse_solver=True`, the default, `lb` and `freq`
+  always run the sparse solvers first, for every problem size, symmetric or
+  unsymmetric, and every result is verified. Only when all the sparse
+  solvers failed (verification, ARPACK error or no convergence, singular
+  factorization, no positive real load multiplier...) a dense solver is used,
+  if the dense problem has at most `max_dense_size` dofs, with a
+  `DenseFallbackWarning` (new, `structsolve.DenseFallbackWarning`) giving
+  the reasons of the failures; the dense result is verified as well.
+  Otherwise a `RuntimeError` lists every attempted solver and its failure.
+- **ARPACK and Intel MKL.** The `dsteqr` of Intel MKL 2024.2.0 to 2025.0.0
+  returns wrong eigenvectors for tridiagonal matrices larger than 32 x 32,
+  which ARPACK's symmetric drivers (`eigsh`) use with the size `ncv`. The
+  failures start exactly at `ncv=33`, in every `eigsh` mode. The new module
+  `structsolve.arpackutils` caps `ncv` at 32 when a functional probe of
+  `dsteqr` fails, or when SciPy's LAPACK is MKL and its version is unknown
+  or within the faulty range (read with the optional `mkl-service` or
+  `threadpoolctl`). More than 15 eigenpairs are then computed in passes of
+  at most 15 with deflation, since ARPACK hardly converges with `k` close to
+  `ncv`. The cap can be overridden with `arpackutils.ARPACK_MAX_NCV` or the
+  environment variable `STRUCTSOLVE_ARPACK_MAX_NCV` (`0` lifts it). It is
+  not applied without MKL, e.g. in Pyodide, where a larger `ncv` is faster.
+  `eigs` (non-symmetric drivers) is not affected. `freq(symmetric=True)`,
+  added in 0.5.3, was affected and is fixed as well: with MKL 2025.0.0 it
+  silently returned wrong frequencies, e.g. a lowest `omega**2` 1.3 and 12
+  times too high for a plate and a cylinder of panels.
+- **`lb`, symmetric matrices**: `eigsh` in Cayley mode with the capped `ncv`,
+  retried with a 10 times larger shift; the dense condensed `eigh` is the
+  last resort. The inertia check is stronger: the number of negative pivots
+  of `K + s KG` (SuperLU without row interchanges, Sylvester's law of
+  inertia) must equal the number of positive load multipliers found below
+  `s`, slightly below the highest one returned, i.e. none of them is
+  missing, not only the lowest one. The previous check is kept when a row
+  interchange makes the count unknown.
+- **`lb`, unsymmetric matrices**: the sparse fallback of 0.5.3, `eigs` on
+  `K^-1 KG`, returned the multipliers of smallest modulus. With follower
+  loads, e.g. a reversed (internal) pressure, none of them may be positive
+  real, and `lb` silently returned negative or complex multipliers. It is
+  replaced by a search of shifts along the positive real axis: `eigs` on
+  `(K + s KG)^-1 KG` finds the multipliers nearest each shift `s`, the
+  union of the discs of the steps covers `(0, lambda_cr)`, and a parity
+  check of the sign of `det(K + 0.9999 lambda_cr KG)` confirms an even
+  number of real multipliers below `lambda_cr`. The condensed dense `eig` is
+  the last resort; when it finds no positive real multiplier either, i.e. no
+  divergence load exists, its multipliers are returned with a
+  `RuntimeWarning`.
+- **`freq`**: new argument `max_dense_size=2000`. A failed verification of
+  the sparse solver (residual, and for `symmetric=True` the inertia of
+  `K - s M`, i.e. no lower mode missing) or an ARPACK error leads to the
+  dense fallback, instead of a warning only. The symmetric dense fallback
+  solves `M u = (1/omega**2) K u`, accurate for the lowest frequencies.
+- The ARPACK starting vector is fixed, results are reproducible.
+- In Pyodide, `gc.collect()` is called after each ARPACK call
+  (`arpackutils.release_memory`): SciPy's `eigs` and `eigsh` keep the SuperLU
+  factorization of the shift-invert mode in reference cycles, which exhausted
+  the WebAssembly heap, e.g. `MemoryError` at the 10th `freq` call on a
+  1,012-dof model.
+- In Pyodide (`sys.platform == 'emscripten'`) the explicit dense `eig` uses
+  the real LAPACK drivers, the complex ones are only needed against MKL.
+- The static and non-linear solvers were audited: they only use sparse LU
+  factorizations, no dense operation on full-size matrices.
+
+### Behavioural changes
+
+- `sparse_solver=True` now always means that the sparse solver runs first,
+  whatever the size of the problem. In 0.5.3, `lb` solved the condensed
+  problem with a dense solver first when it had at most `max_dense_size`
+  dofs, i.e. most panels models. These problems now take the sparse path:
+  natively, small and medium symmetric models can be slower than with the
+  dense condensed solution, large models, follower loads and the browser
+  are much faster.
+- `max_dense_size` keeps its default `2000` but is now the maximum size of
+  the dense **fallback** problem; `0` disables the fallback.
+- A dense solution only happens as a fallback, with a
+  `DenseFallbackWarning`.
+- Where `lb` silently returned only negative or complex multipliers for
+  unsymmetric matrices, it now finds the positive real one, falls back to
+  the dense solver, or raises a `RuntimeError`.
+- For unsymmetric matrices, when the search needed several shifts, the
+  returned eigenpairs are the `num_eigvalues` multipliers nearest the final
+  shift, sorted with the lowest positive real one first, not the ones of
+  smallest modulus.
+- `freq(sparse_solver=True)` raises a `RuntimeError` instead of a warning
+  when its eigenpairs fail the verification and the dense fallback is not
+  possible or fails too.
+- `sparse_solver=False` is unchanged: the explicit full dense solution,
+  returning all the eigenvalues, without trying the sparse solvers.
+
+### Tests
+
+- `tests/test_arpackutils.py`: the detection of MKL mocked both ways, the
+  override, the `ncv=32`/`ncv=33` boundary, the passes, `eigs` unaffected,
+  `freq(symmetric=True)` with a faulty `dsteqr`.
+- `tests/test_sparse_first.py`: spies showing that the sparse solver runs
+  first for any `max_dense_size`, also for small problems, and that no dense
+  solver is called when it succeeds; the explicit dense path; the dense
+  fallback with its warning and the `RuntimeError` without it; the cap
+  disabled with a faulty `dsteqr`, where the dense fallback gives the
+  correct result.
+- Follower load regression tests with the cantilevers of Schweizerhof and
+  Ramm (1984) from panels (new `tests/data/s1B1_m14n8_*`,
+  `tests/data/s3B2_m14n8_*`), original and reversed, and harder mixed
+  spectra for the symmetric solver.
+
 ## 0.5.3 (2026-10-06)
 
 ### New: configuration-dependent loads and unsymmetric eigenproblems

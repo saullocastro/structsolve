@@ -14,6 +14,10 @@ can run:
 
 * Frequency analyses, `([K] + \lambda^2 [M])\{u\} = \{0\}`, with :func:`.freq`
 
+* Sparse eigenvalue solvers first, with verified results and dense solvers
+  only as a last resort, also in the browser (Pyodide) and with the faulty
+  Intel MKL versions that break ARPACK, see :doc:`eigensolvers`
+
 * Non-linear static analyses with :class:`.Analysis`, using:
     - the Newton-Raphson method, full or modified, with an optional
       line-search
@@ -39,6 +43,15 @@ Citing this library
 -------------------
 
 Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+
+
+Eigenvalue solvers
+------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    eigensolvers.rst
 
 
 Usage examples
