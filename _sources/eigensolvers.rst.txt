@@ -85,8 +85,12 @@ drivers, used by :func:`scipy.sparse.linalg.eigsh`, apply it to a matrix of
 size ``ncv``, the dimension of the Krylov subspace, and then return wrong
 eigenpairs or raise ``ArpackError -8``, e.g. with some Anaconda builds of
 SciPy. :mod:`structsolve.arpackutils` detects such a LAPACK and keeps
-``ncv <= 32``, computing more than 15 eigenpairs in several passes. The
-detection can be overridden, e.g. to lift the cap with MKL 2025.0.1 or
+``ncv <= 32``, computing more than 15 eigenpairs in several passes with
+deflation. The eigenvectors of all the passes are combined with a
+Rayleigh-Ritz projection, solved with the LAPACK driver ``dsyevr``, which
+does not use ``dsteqr``, such that they are `[M]`-orthonormal also across
+the passes, where ARPACK alone gives them orthogonal only to its accuracy.
+The detection can be overridden, e.g. to lift the cap with MKL 2025.0.1 or
 newer when its version cannot be read::
 
     STRUCTSOLVE_ARPACK_MAX_NCV=0 python my_script.py

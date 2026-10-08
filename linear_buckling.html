@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.6.0 documentation</title>
+    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.6.1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
 
-    <script src="_static/documentation_options.js?v=8fa8b3e9"></script>
+    <script src="_static/documentation_options.js?v=2bd037f0"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -49,7 +49,7 @@
     <link rel="prev" title="Linear static analysis (structsolve.static)" href="static.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.6.0" />
+  <meta name="docsearch:version" content="0.6.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.6.0 documentation</p>
+    <p class="title logo__title">structsolve 0.6.1 documentation</p>
   
 </a></div>
     
@@ -604,9 +604,10 @@ e.g. in some Anaconda builds of SciPy: the <code class="docutils literal notrans
 MKL versions returns wrong eigenvectors for matrices larger than
 32 x 32, which ARPACK uses with the size <code class="docutils literal notranslate"><span class="pre">ncv</span></code>. When such a LAPACK is
 detected, <code class="docutils literal notranslate"><span class="pre">ncv</span></code> is capped at 32 and more than 15 eigenpairs are
-computed in several passes, see <a class="reference internal" href="arpackutils.html#module-structsolve.arpackutils" title="structsolve.arpackutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code></a>, where
-the cap can be overridden, e.g. with the environment variable
-<code class="docutils literal notranslate"><span class="pre">STRUCTSOLVE_ARPACK_MAX_NCV=0</span></code> to lift it with MKL 2025.0.1 or newer.
+computed in several passes, combined with a Rayleigh-Ritz projection,
+see <a class="reference internal" href="arpackutils.html#module-structsolve.arpackutils" title="structsolve.arpackutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code></a>, where the cap can be overridden,
+e.g. with the environment variable <code class="docutils literal notranslate"><span class="pre">STRUCTSOLVE_ARPACK_MAX_NCV=0</span></code> to
+lift it with MKL 2025.0.1 or newer.
 The non-symmetric drivers of <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> are not
 affected.</p>
 <p>With Intel MKL 2025.0.0, the real LAPACK drivers <code class="docutils literal notranslate"><span class="pre">dgeev</span></code> and <code class="docutils literal notranslate"><span class="pre">dggev</span></code>
