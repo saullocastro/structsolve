@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.5.3 documentation</title>
+    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.6.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
 
-    <script src="_static/documentation_options.js?v=2a2fe768"></script>
+    <script src="_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -49,7 +49,7 @@
     <link rel="prev" title="Linear buckling analysis (structsolve.linear_buckling)" href="linear_buckling.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.5.3" />
+  <meta name="docsearch:version" content="0.6.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.5.3 documentation</p>
+    <p class="title logo__title">structsolve 0.6.0 documentation</p>
   
 </a></div>
     
@@ -131,6 +131,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -158,13 +165,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
-    Non-linear static analysis with the arc-length methods
-  </a>
-</li>
-
             <li class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button"
                 data-bs-toggle="dropdown" aria-expanded="false"
@@ -173,6 +173,13 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
@@ -269,6 +276,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -368,6 +382,7 @@
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logger.html">Logging (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.logger</span></code>)</a></li>
 </ul>
 </div>
@@ -433,7 +448,7 @@
 <h1>Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)<a class="headerlink" href="#frequency-analysis-structsolve-freq" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.freq">
-<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">freq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.freq" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">freq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.freq" title="Link to this definition">#</a></dt>
 <dd><p>Frequency analysis</p>
 <p>Calculates the eigenvalues <span class="math notranslate nohighlight">\(\lambda^2\)</span> and eigenvectors <span class="math notranslate nohighlight">\(\{u\}\)</span> of the
 free-vibration eigenvalue problem:</p>
@@ -443,27 +458,28 @@ free-vibration eigenvalue problem:</p>
 in rad/s. The null rows and columns of <code class="docutils literal notranslate"><span class="pre">K</span></code> are removed from both
 matrices before solving the eigenvalue problem, unless
 <code class="docutils literal notranslate"><span class="pre">skip_null_cols=True</span></code>.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
+<dd class="field-odd"><dl class="simple">
 <dt><strong>K</strong><span class="classifier">sparse_matrix</span></dt><dd><p>Stiffness matrix. Should include initial stress stiffness matrix,
 aerodynamic matrix and so forth when applicable.</p>
 </dd>
 <dt><strong>M</strong><span class="classifier">sparse_matrix</span></dt><dd><p>Mass matrix.</p>
 </dd>
-<dt><strong>tol</strong><span class="classifier">float, optional</span></dt><dd><p>A tolerance value passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>.</p>
+<dt><strong>tol</strong><span class="classifier">float, optional</span></dt><dd><p>A tolerance value passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> and
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>.</p>
 </dd>
-<dt><strong>sparse_solver</strong><span class="classifier">bool, optional</span></dt><dd><p>Tells if solver <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or
-<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code> (<code class="docutils literal notranslate"><span class="pre">False</span></code>) should be used. The sparse
-solver uses the shift-invert mode, with a negative shift estimated
-from the matrices, and calculates the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues
-closest to the shift. The dense solver calculates all eigenvalues.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The sparse solver is faster, but it was verified to become
-unstable for some cases, where <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code> is
-recommended.</p>
-</div>
+<dt><strong>sparse_solver</strong><span class="classifier">bool, optional</span></dt><dd><p>With <code class="docutils literal notranslate"><span class="pre">True</span></code>, the default, the sparse solver always runs first,
+whatever the size of the problem: <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>,
+or <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, in
+shift-invert mode with a negative shift estimated from the matrices,
+calculating the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues closest to the shift.
+Its eigenpairs are verified, and a dense solver is only used as a
+last resort, see the Notes. With <code class="docutils literal notranslate"><span class="pre">False</span></code>, the full problem is
+explicitly solved with a dense solver, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code>, or
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, without trying the
+sparse solver, which calculates all eigenvalues, e.g. for the
+kinetic criterion of stability, and is a reference for validations.</p>
 </dd>
 <dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
 </dd>
@@ -489,9 +505,15 @@ real eigenvalues and eigenvectors normalized with respect to <code class="docuti
 <code class="docutils literal notranslate"><span class="pre">None</span></code> selects them when <a class="reference internal" href="linear_buckling.html#structsolve.linear_buckling.is_symmetric" title="structsolve.linear_buckling.is_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling.is_symmetric()</span></code></a> is
 true for both matrices.</p>
 </dd>
-<dt><strong>check_rtol</strong><span class="classifier">float or None, optional</span></dt><dd><p>A warning is issued when the relative residual of an eigenpair,
-<span class="math notranslate nohighlight">\(||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)\)</span>, is larger
-than <code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>. <code class="docutils literal notranslate"><span class="pre">None</span></code> skips the check.</p>
+<dt><strong>check_rtol</strong><span class="classifier">float or None, optional</span></dt><dd><p>Maximum relative residual of an eigenpair,
+<span class="math notranslate nohighlight">\(||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)\)</span>. A larger
+residual of the sparse solver is a failed verification, see the
+Notes. For <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, a warning is issued. <code class="docutils literal notranslate"><span class="pre">None</span></code>
+skips the check.</p>
+</dd>
+<dt><strong>max_dense_size</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum size of the dense problem solved as a last resort when the
+sparse solver failed, see the Notes. Larger problems raise a
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> instead, and <code class="docutils literal notranslate"><span class="pre">0</span></code> disables the dense fallback.</p>
 </dd>
 </dl>
 </dd>
@@ -511,8 +533,46 @@ in the order of increasing natural frequency.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>RuntimeError</dt><dd><p>When the sparse solver failed and the dense fallback was not
+possible or failed too, listing the attempted solvers and their
+failures.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Warns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>.linear_buckling.DenseFallbackWarning</dt><dd><p>When the sparse solver failed and the dense solver was used.</p>
+</dd>
+</dl>
+</dd>
 </dl>
 <p class="rubric">Notes</p>
+<p><strong>Solver policy.</strong> As in <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, with <code class="docutils literal notranslate"><span class="pre">sparse_solver=True</span></code> the
+sparse solver runs first for every problem size, and its eigenpairs are
+verified:</p>
+<ul class="simple">
+<li><p>the relative residual of each eigenpair must not be larger than
+<code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
+<li><p>with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, no eigenvalue <span class="math notranslate nohighlight">\(\omega_n^2\)</span> lower than the
+highest one returned may be missing: the number of negative pivots of
+<span class="math notranslate nohighlight">\([K] - s [M]\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than this eigenvalue, is the
+number of eigenvalues below <span class="math notranslate nohighlight">\(s\)</span> (Sylvester’s law of inertia).</p></li>
+</ul>
+<p>When the verification fails or the sparse solver raises an error, e.g.
+ARPACK did not converge, the dense solver is used as a last resort if
+the problem has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> dofs, with a
+<a class="reference internal" href="linear_buckling.html#structsolve.DenseFallbackWarning" title="structsolve.linear_buckling.DenseFallbackWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">linear_buckling.DenseFallbackWarning</span></code></a> giving the reasons. It
+returns the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> lowest eigenvalues with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>,
+otherwise the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues closest to the shift, as the
+sparse solver, and its eigenpairs are verified as well. Otherwise a
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> is raised. Until version 0.5.3, the sparse solver
+only issued a warning when the residual check failed.</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> uses ARPACK’s symmetric drivers, which
+return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
+2025.0.0 and <code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&gt;</span> <span class="pre">32</span></code>, see <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> and
+<a class="reference internal" href="arpackutils.html#module-structsolve.arpackutils" title="structsolve.arpackutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code></a>, where <code class="docutils literal notranslate"><span class="pre">ncv</span></code> is capped accordingly.</p>
 <p>Non-conservative systems, e.g. under follower loads, may lose stability
 by flutter, which the static criterion of <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> does not detect:
 with <code class="docutils literal notranslate"><span class="pre">K</span></code> the tangent stiffness matrix at a load level, including the
@@ -522,6 +582,7 @@ pairs above it, when two natural frequencies coalesce (the kinetic
 criterion). A real positive <span class="math notranslate nohighlight">\(\lambda^2\)</span> indicates divergence.</p>
 </dd></dl>
 
+<p>See also <a class="reference internal" href="eigensolvers.html"><span class="doc">Eigenvalue solvers</span></a> for the solver policy.</p>
 </section>
 
 

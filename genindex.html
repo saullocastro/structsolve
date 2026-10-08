@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; structsolve 0.5.3 documentation</title>
+    <title>Index &#8212; structsolve 0.6.0 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
 
-    <script src="_static/documentation_options.js?v=2a2fe768"></script>
+    <script src="_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
@@ -45,7 +45,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.5.3" />
+  <meta name="docsearch:version" content="0.6.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -113,7 +113,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.5.3 documentation</p>
+    <p class="title logo__title">structsolve 0.6.0 documentation</p>
   
 </a></div>
     
@@ -127,6 +127,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -154,13 +161,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
-    Non-linear static analysis with the arc-length methods
-  </a>
-</li>
-
             <li class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button"
                 data-bs-toggle="dropdown" aria-expanded="false"
@@ -169,6 +169,13 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
@@ -263,6 +270,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -416,9 +430,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="callbacks.html#structsolve.callbacks.accepts_kwarg">accepts_kwarg() (in module structsolve.callbacks)</a>
 </li>
+      <li><a href="analysis.html#structsolve.Analysis">Analysis (class in structsolve)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="analysis.html#structsolve.Analysis">Analysis (class in structsolve)</a>
+      <li><a href="arpackutils.html#structsolve.arpackutils.ARPACK_MAX_NCV">ARPACK_MAX_NCV (in module structsolve.arpackutils)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.arpack_max_ncv">arpack_max_ncv() (in module structsolve.arpackutils)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.arpack_ncv">arpack_ncv() (in module structsolve.arpackutils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -428,11 +448,13 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="callbacks.html#structsolve.callbacks.calc_fint">calc_fint() (in module structsolve.callbacks)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="callbacks.html#structsolve.callbacks.calc_kT">calc_kT() (in module structsolve.callbacks)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="callbacks.html#structsolve.callbacks.calc_load_vector">calc_load_vector() (in module structsolve.callbacks)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.capped_eigsh">capped_eigsh() (in module structsolve.arpackutils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -440,11 +462,17 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="linear_buckling.html#structsolve.DenseFallbackWarning">DenseFallbackWarning (class in structsolve)</a>
+</li>
       <li><a href="arc_length.html#structsolve.arc_length.DESIRED_NUM_ITER">DESIRED_NUM_ITER (in module structsolve.arc_length)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="newton_raphson.html#structsolve.newton_raphson.DIVERGENCE_FACTOR">DIVERGENCE_FACTOR (in module structsolve.newton_raphson)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.dsteqr_is_faulty">dsteqr_is_faulty() (in module structsolve.arpackutils)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.DSTEQR_MAX_SIZE">DSTEQR_MAX_SIZE (in module structsolve.arpackutils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -492,10 +520,12 @@
 <h2 id="L">L</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="linear_buckling.html#structsolve.lb">lb() (in module structsolve)</a>
+      <li><a href="arpackutils.html#structsolve.arpackutils.lapack_is_mkl">lapack_is_mkl() (in module structsolve.arpackutils)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="linear_buckling.html#structsolve.lb">lb() (in module structsolve)</a>
+</li>
       <li><a href="newton_raphson.html#structsolve.newton_raphson.LINE_SEARCH_ALPHA">LINE_SEARCH_ALPHA (in module structsolve.newton_raphson)</a>
 </li>
   </ul></td>
@@ -514,6 +544,10 @@
 </li>
       <li><a href="arc_length.html#structsolve.arc_length.MIN_GROWTH_FACTOR">MIN_GROWTH_FACTOR (in module structsolve.arc_length)</a>
 </li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.MKL_FAULTY_VERSIONS">MKL_FAULTY_VERSIONS (in module structsolve.arpackutils)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.mkl_version">mkl_version() (in module structsolve.arpackutils)</a>
+</li>
       <li>
     module
 
@@ -521,6 +555,8 @@
         <li><a href="api.html#module-structsolve">structsolve</a>
 </li>
         <li><a href="arc_length.html#module-structsolve.arc_length">structsolve.arc_length</a>
+</li>
+        <li><a href="arpackutils.html#module-structsolve.arpackutils">structsolve.arpackutils</a>
 </li>
         <li><a href="callbacks.html#module-structsolve.callbacks">structsolve.callbacks</a>
 </li>
@@ -557,6 +593,10 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="arpackutils.html#structsolve.arpackutils.release_memory">release_memory() (in module structsolve.arpackutils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="sparseutils.html#structsolve.sparseutils.remove_null_cols">remove_null_cols() (in module structsolve.sparseutils)</a>
 </li>
   </ul></td>
@@ -566,6 +606,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="static.html#structsolve.solve">solve() (in module structsolve)</a>
+</li>
+      <li><a href="arpackutils.html#structsolve.arpackutils.start_vector">start_vector() (in module structsolve.arpackutils)</a>
 </li>
       <li><a href="static.html#structsolve.static">static() (in module structsolve)</a>
 
@@ -585,6 +627,13 @@
 
       <ul>
         <li><a href="arc_length.html#module-structsolve.arc_length">module</a>
+</li>
+      </ul></li>
+      <li>
+    structsolve.arpackutils
+
+      <ul>
+        <li><a href="arpackutils.html#module-structsolve.arpackutils">module</a>
 </li>
       </ul></li>
   </ul></td>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear static analysis &#8212; structsolve 0.6.0 documentation</title>
+    <title>Eigenvalue solvers &#8212; structsolve 0.6.0 documentation</title>
   
   
   
@@ -40,12 +40,13 @@
     <script src="_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'ex_linear_static';</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'eigensolvers';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Linear buckling analysis" href="ex_linear_buckling.html" />
-    <link rel="prev" title="Eigenvalue solvers" href="eigensolvers.html" />
+    <link rel="next" title="Linear static analysis" href="ex_linear_static.html" />
+    <link rel="prev" title="Structural analysis solvers - structsolve" href="index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   <meta name="docsearch:version" content="0.6.0" />
@@ -130,15 +131,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="eigensolvers.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
     Eigenvalue solvers
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#" aria-current="page">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
@@ -275,15 +276,15 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="eigensolvers.html">
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
     Eigenvalue solvers
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#" aria-current="page">
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
@@ -411,7 +412,7 @@
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Linear static analysis</span></li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Eigenvalue solvers</span></li>
   </ul>
 </nav>
 </div>
@@ -428,64 +429,107 @@
 <div id="searchbox"></div>
                 <article class="bd-article">
                   
-  <section id="linear-static-analysis">
-<h1>Linear static analysis<a class="headerlink" href="#linear-static-analysis" title="Link to this heading">#</a></h1>
-<p>The function <a class="reference internal" href="static.html#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a> solves a linear system of equations, removing
-the null rows and columns of the stiffness matrix, which typically correspond
-to constrained degrees of freedom. The values of the solution at these
-degrees of freedom are zero. The code below is extracted from one of the
-<code class="docutils literal notranslate"><span class="pre">structsolve</span></code> unit tests:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_solve_with_null_columns</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Solve a system where some DOFs are constrained (null rows/cols)"""</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="mi">6</span>
-    <span class="n">K_dense</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
-    <span class="c1"># Only DOFs 1,2,3,4 are active</span>
-    <span class="n">active</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">active</span><span class="p">:</span>
-        <span class="n">K_dense</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">K</span> <span class="o">=</span> <span class="n">csc_matrix</span><span class="p">(</span><span class="n">K_dense</span><span class="p">)</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-    <span class="n">f</span><span class="p">[</span><span class="n">active</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
-    <span class="n">u</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># DOFs 0 and 5 should remain zero</span>
-    <span class="k">assert</span> <span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.0</span>
-    <span class="k">assert</span> <span class="n">u</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.0</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">active</span><span class="p">:</span>
-        <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+  <section id="eigenvalue-solvers">
+<h1>Eigenvalue solvers<a class="headerlink" href="#eigenvalue-solvers" title="Link to this heading">#</a></h1>
+<p>The eigenvalue analyses <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> and <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a> rely on sparse solvers
+and keep dense solvers only as a last resort. Sparse solvers scale with the
+number of non-null entries of the matrices, while a dense solution scales
+with the cube of the number of degrees of freedom. This matters in
+particular in the browser (Pyodide), where dense LAPACK is single-threaded,
+and for follower loads, whose load stiffness couples almost all the degrees
+of freedom.</p>
+<section id="solver-policy">
+<h2>Solver policy<a class="headerlink" href="#solver-policy" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sparse_solver=True</span></code>, the default, always runs the sparse solvers first,
+for every problem size, symmetric or unsymmetric. Every result is
+verified before it is returned: the relative residual of each eigenpair
+and, for symmetric matrices, the inertia of a shifted matrix, which tells
+whether an eigenvalue was missed (Sylvester’s law of inertia).</p></li>
+<li><p>When all the sparse solvers failed (verification, ARPACK error or no
+convergence, singular factorization, no positive real load multiplier
+for unsymmetric matrices…), a dense solver is used as a last resort, if
+the dense problem has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> degrees of freedom
+(default <code class="docutils literal notranslate"><span class="pre">2000</span></code>, <code class="docutils literal notranslate"><span class="pre">0</span></code> disables the dense fallback). A
+<a class="reference internal" href="linear_buckling.html#structsolve.DenseFallbackWarning" title="structsolve.DenseFallbackWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">DenseFallbackWarning</span></code></a> gives the reasons of the failures, so that
+a dense solution is never silent, and the dense result is verified as
+well.</p></li>
+<li><p>Otherwise a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> lists every attempted solver and the reason
+of its failure. No silently wrong result is returned.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code> explicitly solves the full problem with a dense
+solver, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> or <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code>, without
+trying the sparse solvers, returning all the eigenvalues. It is a
+reference for validations and for the callers that need all of them.</p></li>
+</ul>
+<p>The dense fallback makes <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> robust in environments where
+ARPACK is unreliable, see below, while normal runs never pay for a dense
+solution. To turn the fallback into an error, e.g. in a test suite:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">structsolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenseFallbackWarning</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="n">DenseFallbackWarning</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Linear static analyses can also be run with <a class="reference internal" href="static.html#structsolve.static" title="structsolve.static"><code class="xref py py-func docutils literal notranslate"><span class="pre">static()</span></code></a>, or with the class
-<a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a>, which receives callables that calculate the external force
-vector and the stiffness matrix:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">_make_linear_system</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Create simple linear system callables"""</span>
-    <span class="n">K</span> <span class="o">=</span> <span class="n">csc_matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="mf">3.0</span><span class="p">)</span>
-    <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="mf">6.0</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">calc_fext</span><span class="p">(</span><span class="n">inc</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">f</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">calc_kC</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">NLgeom</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">K</span>
-
-    <span class="k">return</span> <span class="n">calc_fext</span><span class="p">,</span> <span class="n">calc_kC</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">f</span>
+</section>
+<section id="linear-buckling-symmetric-matrices">
+<h2>Linear buckling, symmetric matrices<a class="headerlink" href="#linear-buckling-symmetric-matrices" title="Link to this heading">#</a></h2>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> in Cayley mode, with a shift estimated by
+power iterations on <span class="math notranslate nohighlight">\([K]^{-1}[K_G]\)</span>, retried with a 10 times larger shift.
+The dense fallback condenses out the degrees of freedom where <span class="math notranslate nohighlight">\([K_G]\)</span> has
+null rows and solves the condensed problem with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>.</p>
+</section>
+<section id="linear-buckling-unsymmetric-matrices">
+<h2>Linear buckling, unsymmetric matrices<a class="headerlink" href="#linear-buckling-unsymmetric-matrices" title="Link to this heading">#</a></h2>
+<p>With follower loads many negative or complex load multipliers may have a
+smaller modulus than the critical one, e.g. under an internal pressure, and
+the multipliers of smallest modulus may contain no positive real one. The
+sparse solver is a search of shifts <span class="math notranslate nohighlight">\(s\)</span> along the positive real axis: at
+each shift, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> finds the load multipliers
+nearest <span class="math notranslate nohighlight">\(s\)</span>, within a disc that contains all of them. The shifts move until
+the lowest positive real multiplier found is inside the union of the discs
+that covers the positive real axis from zero, such that none was missed. A
+parity check of the sign of <span class="math notranslate nohighlight">\(\det([K] + s [K_G])\)</span> confirms that an even
+number, normally zero, of real multipliers lies below the critical one. See
+<code class="xref py py-func docutils literal notranslate"><span class="pre">structsolve.linear_buckling._eigs_shift_search()</span></code>.</p>
+</section>
+<section id="frequency-analysis">
+<h2>Frequency analysis<a class="headerlink" href="#frequency-analysis" title="Link to this heading">#</a></h2>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>, or <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> with
+<code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, in shift-invert mode with a negative shift. The dense
+fallback returns the lowest frequencies, or the eigenvalues closest to the
+shift for unsymmetric matrices.</p>
+</section>
+<section id="intel-mkl-and-arpack">
+<h2>Intel MKL and ARPACK<a class="headerlink" href="#intel-mkl-and-arpack" title="Link to this heading">#</a></h2>
+<p>The LAPACK routine <code class="docutils literal notranslate"><span class="pre">dsteqr</span></code> of Intel MKL 2024.2.0 to 2025.0.0 returns
+wrong eigenvectors for matrices larger than 32 x 32. ARPACK’s symmetric
+drivers, used by <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code>, apply it to a matrix of
+size <code class="docutils literal notranslate"><span class="pre">ncv</span></code>, the dimension of the Krylov subspace, and then return wrong
+eigenpairs or raise <code class="docutils literal notranslate"><span class="pre">ArpackError</span> <span class="pre">-8</span></code>, e.g. with some Anaconda builds of
+SciPy. <a class="reference internal" href="arpackutils.html#module-structsolve.arpackutils" title="structsolve.arpackutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code></a> detects such a LAPACK and keeps
+<code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&lt;=</span> <span class="pre">32</span></code>, computing more than 15 eigenpairs in several passes. The
+detection can be overridden, e.g. to lift the cap with MKL 2025.0.1 or
+newer when its version cannot be read:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">STRUCTSOLVE_ARPACK_MAX_NCV</span><span class="o">=</span><span class="mi">0</span> <span class="n">python</span> <span class="n">my_script</span><span class="o">.</span><span class="n">py</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_analysis_linear_static</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""Test Analysis class for linear static analysis"""</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="mi">10</span>
-    <span class="n">calc_fext</span><span class="p">,</span> <span class="n">calc_kC</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">_make_linear_system</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
-
-    <span class="n">an</span> <span class="o">=</span> <span class="n">Analysis</span><span class="p">(</span><span class="n">calc_fext</span><span class="o">=</span><span class="n">calc_fext</span><span class="p">,</span> <span class="n">calc_kC</span><span class="o">=</span><span class="n">calc_kC</span><span class="p">)</span>
-    <span class="n">increments</span><span class="p">,</span> <span class="n">cs</span> <span class="o">=</span> <span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">increments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="k">assert</span> <span class="n">increments</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.0</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">cs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">cs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
-    <span class="k">assert</span> <span class="n">an</span><span class="o">.</span><span class="n">last_analysis</span> <span class="o">==</span> <span class="s1">'static'</span>
+<p>or, in Python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">structsolve.arpackutils</span>
+<span class="n">structsolve</span><span class="o">.</span><span class="n">arpackutils</span><span class="o">.</span><span class="n">ARPACK_MAX_NCV</span> <span class="o">=</span> <span class="mi">0</span>
 </pre></div>
 </div>
+<p>The non-symmetric drivers of <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code> are not
+affected.</p>
+</section>
+<section id="in-the-browser">
+<h2>In the browser<a class="headerlink" href="#in-the-browser" title="Link to this heading">#</a></h2>
+<p>In Pyodide (<code class="docutils literal notranslate"><span class="pre">sys.platform</span> <span class="pre">==</span> <span class="pre">'emscripten'</span></code>) SciPy uses OpenBLAS, <code class="docutils literal notranslate"><span class="pre">ncv</span></code> is
+not capped, and <a class="reference internal" href="arpackutils.html#structsolve.arpackutils.release_memory" title="structsolve.arpackutils.release_memory"><code class="xref py py-func docutils literal notranslate"><span class="pre">structsolve.arpackutils.release_memory()</span></code></a> collects the
+reference cycles of SciPy’s ARPACK wrappers after each call, which otherwise
+keep the sparse factorizations alive until the WebAssembly heap is
+exhausted. The dense solvers of unsymmetric matrices call
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code> with complex matrices, since the real drivers crash
+the Python process for some matrices with Intel MKL 2025.0.0.</p>
+</section>
 </section>
 
 
@@ -499,20 +543,20 @@ vector and the stiffness matrix:</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="eigensolvers.html"
+       href="index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Eigenvalue solvers</p>
+        <p class="prev-next-title">Structural analysis solvers - structsolve</p>
       </div>
     </a>
     <a class="right-next"
-       href="ex_linear_buckling.html"
+       href="ex_linear_static.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Linear buckling analysis</p>
+        <p class="prev-next-title">Linear static analysis</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -528,9 +572,26 @@ vector and the stiffness matrix:</p>
 
 
   <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#solver-policy">Solver policy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-buckling-symmetric-matrices">Linear buckling, symmetric matrices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-buckling-unsymmetric-matrices">Linear buckling, unsymmetric matrices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#frequency-analysis">Frequency analysis</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#intel-mkl-and-arpack">Intel MKL and ARPACK</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#in-the-browser">In the browser</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
 
   <div class="tocsection sourcelink">
-    <a href="_sources/ex_linear_static.rst.txt">
+    <a href="_sources/eigensolvers.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

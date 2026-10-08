@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.5.3 documentation</title>
+    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.6.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=64cc4de3f052d77215f0" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=64cc4de3f052d77215f0" />
 
-    <script src="_static/documentation_options.js?v=2a2fe768"></script>
+    <script src="_static/documentation_options.js?v=8fa8b3e9"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -49,7 +49,7 @@
     <link rel="prev" title="Non-linear static analysis with the arc-length methods" href="ex_arc_length.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.5.3" />
+  <meta name="docsearch:version" content="0.6.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.5.3 documentation</p>
+    <p class="title logo__title">structsolve 0.6.0 documentation</p>
   
 </a></div>
     
@@ -131,6 +131,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -158,13 +165,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
-    Non-linear static analysis with the arc-length methods
-  </a>
-</li>
-
             <li class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button"
                 data-bs-toggle="dropdown" aria-expanded="false"
@@ -173,6 +173,13 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
     Follower loads and unsymmetric matrices
@@ -269,6 +276,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -553,6 +567,36 @@ the geometrically linear problem <span class="math notranslate nohighlight">\([K
         <span class="n">u</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
         <span class="n">r</span> <span class="o">=</span> <span class="n">K</span> <span class="o">@</span> <span class="n">u</span> <span class="o">+</span> <span class="n">eigvals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">KG</span> <span class="o">@</span> <span class="n">u</span><span class="p">)</span>
         <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">K</span> <span class="o">@</span> <span class="n">u</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Under follower loads, many negative or complex load multipliers may have a
+smaller modulus than the critical one, e.g. when the pressure is reversed.
+The sparse solver of <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> searches the lowest positive real load
+multiplier along the positive real axis, see <a class="reference internal" href="eigensolvers.html"><span class="doc">Eigenvalue solvers</span></a>. The
+cantilevers of Schweizerhof and Ramm (1984), with the matrices of
+<a class="reference external" href="https://github.com/saullocastro/panels">panels</a>, original and reversed:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">'name, sign, approx'</span><span class="p">,</span> <span class="n">FOLLOWER</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_lb_follower_shift_search</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">sign</span><span class="p">,</span> <span class="n">approx</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Regression test: the sparse fallback of version 0.5.3, eigs() on</span>
+<span class="sd">    K^-1 KG, silently returned only negative or complex load multipliers for</span>
+<span class="sd">    the reversed problems. The shift search returns the lowest positive real</span>
+<span class="sd">    load multiplier of the full dense eig(), first, without the dense</span>
+<span class="sd">    fallback"""</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">structsolve.linear_buckling</span><span class="w"> </span><span class="kn">import</span> <span class="n">DenseFallbackWarning</span>
+
+    <span class="n">K</span><span class="p">,</span> <span class="n">KG</span> <span class="o">=</span> <span class="n">load_follower</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">sign</span><span class="p">)</span>
+    <span class="n">ref</span> <span class="o">=</span> <span class="n">lowest_positive_real</span><span class="p">(</span><span class="n">lb</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">KG</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sparse_solver</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">approx</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">'error'</span><span class="p">,</span> <span class="n">DenseFallbackWarning</span><span class="p">)</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">lb</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">KG</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_dense_size</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">eigvals</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">25</span><span class="p">,)</span> <span class="ow">and</span> <span class="n">eigvecs</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">25</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">and</span> <span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-8</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">lowest_positive_real</span><span class="p">(</span><span class="n">eigvals</span><span class="p">)</span> <span class="o">==</span> <span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">relative_residuals</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">KG</span><span class="p">,</span> <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">1e-8</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">res</span> <span class="o">&lt;</span> <span class="mf">1e-5</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
