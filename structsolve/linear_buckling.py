@@ -27,7 +27,46 @@ SHIFT_SEARCH_MAX_GROWTH = 1e10
 PARITY_REL_GAP = 1e-4
 
 
-def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3):
+def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
+    r"""Largest `|\mu|` of ``KG u = mu K u``, estimated by power
+    iterations, see :func:`_estimate_sigma`, or ``None`` when ``K`` is
+    singular, not positive definite, or the linear solution is
+    inaccurate"""
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            lu = splu(csc_matrix(K))
+        x = np.random.RandomState(42).randn(K.shape[0])
+        Kx = K @ x
+        mu_max = 0.
+        for i in range(max_iter):
+            xKx = x @ Kx
+            if not np.isfinite(xKx) or xKx <= 0:
+                return None
+            x = x / np.sqrt(xKx)
+            rhs = KG @ x
+            y = lu.solve(rhs)
+            Ky = K @ y
+            if i == 0:
+                residual = np.linalg.norm(Ky - rhs)
+                if not residual <= 1e-6 * np.linalg.norm(rhs):
+                    return None
+            # ||y||_K / ||x||_K, with ||x||_K = 1
+            ratio = np.sqrt(abs(y @ Ky))
+            if not np.isfinite(ratio) or ratio == 0:
+                return None
+            converged = i > 0 and ratio - mu_max <= rel_tol * ratio
+            mu_max = max(mu_max, ratio)
+            if converged:
+                break
+            x, Kx = y, Ky
+        return mu_max
+    except Exception:
+        return None
+
+
+def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
+                   mu_max=False):
     r"""Shift of the Cayley mode used by :func:`lb`
 
     With ``sigma > 0``, ``eigsh(A=KG, M=K, sigma=sigma, mode='cayley',
@@ -41,40 +80,15 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3):
     `[K]^{-1}[K_G]`, whose norm ratio in the `[K]`-norm increases towards the
     largest `|\mu|`, and multiplied by ``safety``. The default shift ``1.`` is
     returned when ``K`` is singular, not positive definite, or the linear
-    solution is inaccurate.
+    solution is inaccurate. An estimate of :func:`_estimate_mu_max` may be
+    given as ``mu_max``, e.g. to try another ``safety`` factor.
 
     """
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K))
-        x = np.random.RandomState(42).randn(K.shape[0])
-        Kx = K @ x
-        mu_max = 0.
-        for i in range(max_iter):
-            xKx = x @ Kx
-            if not np.isfinite(xKx) or xKx <= 0:
-                return 1.
-            x = x / np.sqrt(xKx)
-            rhs = KG @ x
-            y = lu.solve(rhs)
-            Ky = K @ y
-            if i == 0:
-                residual = np.linalg.norm(Ky - rhs)
-                if not residual <= 1e-6 * np.linalg.norm(rhs):
-                    return 1.
-            # ||y||_K / ||x||_K, with ||x||_K = 1
-            ratio = np.sqrt(abs(y @ Ky))
-            if not np.isfinite(ratio) or ratio == 0:
-                return 1.
-            converged = i > 0 and ratio - mu_max <= rel_tol * ratio
-            mu_max = max(mu_max, ratio)
-            if converged:
-                break
-            x, Kx = y, Ky
-        return safety * mu_max
-    except Exception:
+    if mu_max is False:
+        mu_max = _estimate_mu_max(K, KG, max_iter=max_iter, rel_tol=rel_tol)
+    if mu_max is None:
         return 1.
+    return safety * mu_max
 
 
 def _negative_pivots(A):
@@ -135,7 +149,7 @@ def _lu_solve(lu, b):
 
 
 def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
-                      check_inertia=True):
+                      check_inertia=True, K_positive_definite=None):
     r"""Verify the eigenpairs of `([K] + \lambda [K_G])\{u\} = \{0\}`
 
     The eigenpairs may be real or complex.
@@ -154,6 +168,10 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
       `s = \lambda_1 (1 - min\_rel\_gap)` must be positive definite. Only for
       symmetric matrices, ``check_inertia=True``, the complex `\lambda` are
       ignored. Missing negative load multipliers are not detected.
+
+    Whether ``K`` is positive definite may be given as
+    ``K_positive_definite``, a boolean or a function returning it, e.g. to
+    verify several solutions with one factorization of ``K``.
 
     Returns
     -------
@@ -181,7 +199,11 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
         return None
     lam = lam[np.isreal(lam)].real
     positive = lam[lam > 0]
-    if positive.size and _is_positive_definite(K):
+    if K_positive_definite is None:
+        K_positive_definite = _is_positive_definite
+    if positive.size and (K_positive_definite(K) if
+                          callable(K_positive_definite) else
+                          K_positive_definite):
         s = positive.max()*(1 - min_rel_gap)
         expected = int(np.count_nonzero(positive < s))
         count = _negative_pivots(K + s*KG) if expected else None
@@ -599,15 +621,16 @@ def _eigs_shift_search(K, KG, k, tol, check_rtol, silent):
     return mu, eigvecs
 
 
-def _eigsh_cayley(K, KG, k, tol, silent, safety=10.):
+def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     r"""Solution with :func:`scipy.sparse.linalg.eigsh` in Cayley mode
 
     The shift is estimated with :func:`_estimate_sigma` and the given
-    ``safety`` factor. ARPACK's ``ncv`` is chosen by
+    ``safety`` factor, from the estimate ``mu_max`` of
+    :func:`_estimate_mu_max` when given. ARPACK's ``ncv`` is chosen by
     :func:`.arpackutils.capped_eigsh`, which avoids the Intel MKL bug.
 
     """
-    sigma = _estimate_sigma(K, KG, safety=safety)
+    sigma = _estimate_sigma(K, KG, safety=safety, mu_max=mu_max)
     msg('sigma={0}'.format(sigma), level=4, silent=silent)
     k = min(k, K.shape[0] - 2)
     mu, eigvecs = capped_eigsh(A=KG, k=k, M=K, sigma=sigma, which='SM',
@@ -901,16 +924,32 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         msg('{0} of {1} rows of KG are non-null'.format(num_active,
             K.shape[0]), level=3, silent=silent)
 
+        # the estimate of the shift and the inertia of K are computed once
+        # for all the attempts
+        once = {}
+
+        def mu_max():
+            if 'mu_max' not in once:
+                once['mu_max'] = _estimate_mu_max(K, KG)
+            return once['mu_max']
+
+        def K_positive_definite(K):
+            if 'pd' not in once:
+                once['pd'] = _is_positive_definite(K)
+            return once['pd']
+
         def verify(mu, eigvecs):
             with np.errstate(divide='ignore', invalid='ignore'):
-                return _check_eigenpairs(K, KG, -1./mu, eigvecs, check_rtol)
+                return _check_eigenpairs(K, KG, -1./mu, eigvecs, check_rtol,
+                        K_positive_definite=K_positive_definite)
 
         strategies = [
             ('eigsh() in Cayley mode',
-             lambda: _eigsh_cayley(K, KG, num_eigvalues, tol, silent)),
+             lambda: _eigsh_cayley(K, KG, num_eigvalues, tol, silent,
+                                   mu_max=mu_max())),
             ('eigsh() in Cayley mode with a 10 times larger shift',
              lambda: _eigsh_cayley(K, KG, num_eigvalues, tol, silent,
-                                   safety=100.)),
+                                   safety=100., mu_max=mu_max())),
         ]
         dense = ('eigh() with condensed dofs',
                  lambda: _eigh_condensed(K, KG, num_eigvalues))
