@@ -138,7 +138,8 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     return False
 
 
-def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False, q=None):
+def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
+                   lbd_dependent=False):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Parameters
@@ -158,10 +159,11 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False, q=None):
         ``an.modified_NR=True``. If ``None`` it is calculated at ``c + dc``.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
-    q : array-like or None, optional
-        `\partial R/\partial \lambda`, when ``calc_fext`` accepts ``lbd``;
-        ``total*q`` is then an additional reference of the relative
-        convergence criterion, see :func:`._check_convergence`.
+    lbd_dependent : bool, optional
+        Whether ``calc_fext`` accepts ``lbd``, see :mod:`.callbacks`;
+        ``total*q``, with `\{q\} = \partial R/\partial \lambda` evaluated
+        at the current iterate, is then an additional reference of the
+        relative convergence criterion, see :func:`._check_convergence`.
 
     Returns
     -------
@@ -173,7 +175,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False, q=None):
     """
     modified_NR = an.modified_NR
     fext_total = total*fext
-    q_ref = None if q is None else total*q
+    q_ref = None
     Rnorms = []
     iter_kT = 0
     kT = None
@@ -185,6 +187,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False, q=None):
         if fint is None:
             fint = callbacks.calc_fint(an, c + dc, total)
         R = fext_total - fint
+        if lbd_dependent:
+            q_ref = total*callbacks.calc_load_vector(an, c + dc, fext, total)
 
         conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
                                                q_ref=q_ref)
@@ -254,11 +258,13 @@ def _solver_NR(an, silent=False, initialInc=None):
     When ``calc_fext`` accepts the keyword argument ``lbd``, e.g. for
     prescribed displacements imposed exactly, see :mod:`.callbacks`, the
     load vector `\{q\} = \partial R/\partial \lambda` at `c = 0`,
-    `\lambda = 0` is computed once: the first increment uses its linear
-    solution `[K_0]^{-1}\{q\}` as predictor, instead of the linear solution
-    of the reference vector, which is null under a prescribed displacement
-    alone, and `\lambda \|q\|` is an additional reference of the relative
-    convergence criterion.
+    `\lambda = 0` gives the predictor of the first increment, its linear
+    solution `[K_0]^{-1}\{q\}`, instead of the linear solution of the
+    reference vector, which is null under a prescribed displacement alone,
+    and `\lambda \|q\|`, with `\{q\}` evaluated at the current iterate
+    before each convergence check, is an additional reference of the
+    relative convergence criterion. With ``an.modified_NR = True`` this is
+    one call to ``calc_fext`` per iteration.
 
     By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
     ``kT = kC + kG`` is rebuilt at every iteration, which gives quadratic
@@ -334,7 +340,8 @@ def _solver_NR(an, silent=False, initialInc=None):
         if an.modified_NR and step_num == 1 and not an.kT_initial_state:
             kT0 = kC0
         converged, dc = _NR_iterations(an, c, dc, total, fext, kT0=kT0,
-                                       silent=silent, q=q)
+                                       silent=silent,
+                                       lbd_dependent=q is not None)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)
