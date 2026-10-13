@@ -26,10 +26,14 @@ do not declare it are called exactly as before and give the same results.
   solution of `dR/dlbd` at `c = 0`, `lbd = 0`, instead of the linear
   solution of the null reference vector; the next increments keep the
   extrapolation of the previous one.
-- Relative convergence criterion: `lbd*dR/dlbd`, at the start of the
-  analysis for Newton-Raphson and at the last converged state for the
-  arc-length methods, is an additional reference, new keyword `q_ref` of
-  `newton_raphson._check_convergence`. Under a prescribed displacement
+- Relative convergence criterion: `lbd*dR/dlbd`, evaluated at the current
+  iterate before each convergence check, is an additional reference, new
+  keyword `q_ref` of `newton_raphson._check_convergence`; it remains
+  meaningful when `dR/dlbd` vanishes at the origin, e.g. a prescribed
+  displacement whose coupling with the free degrees of freedom starts
+  quadratically. The arc-length methods reuse it in the bordered solution
+  at the same iterate; with `modified_NR=True` it costs one call to
+  `calc_fext` per iteration. Under a prescribed displacement
   alone, the reference vector and the reduced internal force vector both
   vanish at equilibrium and the criterion could not be satisfied without
   `absTOL`.
@@ -39,7 +43,7 @@ do not declare it are called exactly as before and give the same results.
   in series with the displacement of the last node prescribed, reduced to two
   degrees of freedom, compared with the exact solution, including a constant
   and an incremented prescribed displacement with a load, and the quadratic
-  convergence of the Riks method. Docs: `ex_prescribed_displacements.rst`,
+  convergence of the Riks method, and `dR/dlbd = 0` at the origin. Docs: `ex_prescribed_displacements.rst`,
   `callbacks` and `Analysis`.
 
 ## 0.6.1 (2026-10-08)

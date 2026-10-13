@@ -278,3 +278,21 @@ def test_constant_and_incremented_prescriptions(method):
     # at lbd = 0 the constant displacement alone is not in equilibrium with
     # c_r = 0: the first increment starts from a non-null residual
     assert np.linalg.norm(pb.residual(np.zeros(2), 0.)) > 1.
+
+
+@pytest.mark.parametrize('method', ['NR', 'arc_length_riks',
+                                    'arc_length_crisfield'])
+def test_null_load_vector_at_the_origin(method):
+    r"""The last spring is purely cubic, `f_3 = a_3 e^3`, such that
+    `\partial R/\partial \lambda = 0` at `c = 0`, `\lambda = 0`: the
+    reference of the relative criterion is `\lambda \partial R/\partial
+    \lambda` at the current iterate, not at the origin"""
+    pb = SpringsProblem(k=(100., 150., 0.), a=(20., 40., 600.), d1=0.5)
+    assert np.linalg.norm(pb.dR_dlbd(np.zeros(2), 0.)) == 0.
+    an = pb.analysis(NL_method=method, initialInc=0.2, relTOL=1e-10,
+                     absTOL=None)
+    an.static(NLgeom=True, silent=True)
+    assert np.isclose(an.increments[-1], 1.)
+    for lbd, c_r in zip(an.increments, an.cs):
+        ref, P = pb.exact(lbd)
+        assert np.allclose(c_r, ref, rtol=1e-8, atol=1e-12), (lbd, c_r, ref)

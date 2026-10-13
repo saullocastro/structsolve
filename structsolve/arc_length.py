@@ -117,8 +117,12 @@ def _solver_arc_length(an, method, silent=False):
     `\{u_{ref}\}` is the linear solution of `\partial R/\partial \lambda`
     at `c = 0`, `\lambda = 0`, since the reference vector may be null, e.g.
     under a prescribed displacement alone; and `\lambda \, \partial
-    R/\partial \lambda` at the last converged state is an additional
-    reference of the relative convergence criterion.
+    R/\partial \lambda`, evaluated at the current iterate before each
+    convergence check, is an additional reference of the relative
+    convergence criterion. The same `\partial R/\partial \lambda` is used
+    in the bordered solution when the tangent stiffness matrix is updated at
+    that iterate; with ``an.modified_NR = True`` it is one call to
+    ``calc_fext`` per iteration.
 
     The initial arc length corresponds to a load factor increment of
     ``an.initialInc`` along the initial tangent. The convergence and
@@ -221,7 +225,12 @@ def _solver_arc_length(an, method, silent=False):
             fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
             R = fext_total - fint
-            q_ref = (lbd + dlbd)*q_conv if lbd_dependent else None
+            q_ref = None
+            if lbd_dependent:
+                # dR/dlbd at the current iterate
+                q_iter = callbacks.calc_load_vector(an, c + dc, fext,
+                                                    lbd + dlbd)
+                q_ref = (lbd + dlbd)*q_iter
             conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
                                                    fext_ref=dlbd*fext,
                                                    q_ref=q_ref)
@@ -244,8 +253,11 @@ def _solver_arc_length(an, method, silent=False):
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
-                dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc, fext,
-                                                           lbd + dlbd))
+                if lbd_dependent:
+                    dc_q = solve_kT(q_iter)
+                else:
+                    dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
+                                                               fext))
                 iter_kT = 1
             dc_R = solve_kT(R)
 
@@ -282,7 +294,7 @@ def _solver_arc_length(an, method, silent=False):
             msg('Load factor 1.0 exceeded, correcting to load factor 1.0...', level=1, silent=silent)
             t = (1. - lbd)/dlbd
             converged, dc1 = _NR_iterations(an, c, t*dc, 1., fext, kT0=None,
-                    silent=silent, q=q_conv if lbd_dependent else None)
+                    silent=silent, lbd_dependent=lbd_dependent)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())
