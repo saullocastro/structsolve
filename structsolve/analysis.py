@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .static import solve
+from .static import solve, _factorize
 from .logger import msg, warn
 from . import callbacks
 from .newton_raphson import _check_convergence
@@ -302,6 +302,8 @@ class Analysis(object):
         configuration-dependent load, see :meth:`.static`"""
         msg('Configuration-dependent load: load correction iterations',
             level=2, silent=silent)
+        # k0 is factorized once for all the corrections
+        solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
@@ -313,7 +315,12 @@ class Analysis(object):
                 return c
             if not np.isfinite(Rnorm):
                 break
-            c = c + solve(k0, R, silent=True)
+            if solve_k0 is None:
+                try:
+                    solve_k0 = _factorize(k0)
+                except RuntimeError:
+                    break
+            c = c + solve_k0(R)
         warn('The load correction iterations did not converge, the load may '
              'exceed the critical load of the linearized problem', level=1,
              silent=silent)
