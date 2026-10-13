@@ -108,6 +108,16 @@ def calc_load_vector(an, c, fext, lbd=None):
     configuration; with prescribed displacements imposed exactly it also
     contains `-[T]^T [K_T] \{c_{p1}\}`, see the module docstring.
 
+    With prescribed displacements, `\{q\}` is not their reaction force: it
+    has the size of the reduced problem and acts on the free degrees of
+    freedom. It is the out-of-balance force produced by a unit increment of
+    the load factor at the current configuration, with the free degrees of
+    freedom held fixed. The reaction is a quantity of the full problem,
+    e.g. the generalized reaction work-conjugate to `\lambda`, `P =
+    \{c_{p1}\}^T (\{F_{int}(c)\} - \lambda \{F_{ext}\})`. ``structsolve``
+    does not compute it; see for instance ``MultiDomain.reaction_pd`` of
+    `panels`.
+
     ``an.calc_fext`` is called with ``inc=1.`` and only with the keyword
     arguments that it declares:
 
