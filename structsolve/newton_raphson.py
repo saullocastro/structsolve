@@ -32,13 +32,14 @@ INC_GROWTH_FACTOR = 1.1111
 INC_CUT_FACTOR = 0.5
 
 
-def _check_convergence(an, R, fint, fext_total, fext_ref=None):
-    """Check the convergence of the residual force vector
+def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None):
+    r"""Check the convergence of the residual force vector
 
     The convergence is achieved when either:
 
-    - ``||R|| <= relTOL*max(||fext_total||, ||fint||, ||fext_ref||)``, using
-      the Euclidean norm, if ``an.relTOL`` is not ``None``
+    - ``||R|| <= relTOL*max(||fext_total||, ||fint||, ||fext_ref||,
+      ||q_ref||)``, using the Euclidean norm, if ``an.relTOL`` is not
+      ``None``
     - ``max(|R|) <= absTOL``, if ``an.absTOL`` is not ``None``
 
     Parameters
@@ -54,6 +55,12 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None):
     fext_ref : array-like or None, optional
         Additional reference force vector, e.g. the external force vector of
         the current increment, useful when the load factor is close to zero.
+    q_ref : array-like or None, optional
+        Additional reference force vector, the load factor times
+        `\partial R/\partial \lambda` when ``calc_fext`` accepts ``lbd``,
+        see :mod:`.callbacks`. Under a prescribed displacement alone, the
+        external and the internal force vectors of the reduced problem both
+        vanish at equilibrium and cannot be the reference.
 
     Returns
     -------
@@ -62,7 +69,8 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None):
     Rnorm : float
         Euclidean norm of the residual.
     Rrel : float
-        Relative residual ``||R||/max(||fext_total||, ||fint||, ||fext_ref||)``.
+        Relative residual ``||R||/max(||fext_total||, ||fint||, ||fext_ref||,
+        ||q_ref||)``.
 
     """
     if an.relTOL is None and an.absTOL is None:
@@ -71,6 +79,8 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None):
     ref = max(np.linalg.norm(fext_total), np.linalg.norm(fint))
     if fext_ref is not None:
         ref = max(ref, np.linalg.norm(fext_ref))
+    if q_ref is not None:
+        ref = max(ref, np.linalg.norm(q_ref))
     Rrel = Rnorm/ref if ref > 0 else Rnorm
     converged = False
     if an.relTOL is not None and Rnorm <= an.relTOL*ref:
@@ -128,8 +138,8 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     return False
 
 
-def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
-    """Newton-Raphson iterations at a fixed load factor
+def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False, q=None):
+    r"""Newton-Raphson iterations at a fixed load factor
 
     Parameters
     ----------
@@ -148,6 +158,10 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
         ``an.modified_NR=True``. If ``None`` it is calculated at ``c + dc``.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
+    q : array-like or None, optional
+        `\partial R/\partial \lambda`, when ``calc_fext`` accepts ``lbd``;
+        ``total*q`` is then an additional reference of the relative
+        convergence criterion, see :func:`._check_convergence`.
 
     Returns
     -------
@@ -159,6 +173,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
     """
     modified_NR = an.modified_NR
     fext_total = total*fext
+    q_ref = None if q is None else total*q
     Rnorms = []
     iter_kT = 0
     kT = None
@@ -171,7 +186,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False):
             fint = callbacks.calc_fint(an, c + dc, total)
         R = fext_total - fint
 
-        conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total)
+        conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
+                                               q_ref=q_ref)
         msg('Iteration: %d, max(|R|) = %1.3e, relative ||R|| = %1.3e'
             % (iteration, np.abs(R).max(), Rrel), level=2, silent=silent)
         if conv:
@@ -235,6 +251,15 @@ def _solver_NR(an, silent=False, initialInc=None):
     factor `\lambda` of the step, see :mod:`.callbacks`, which allows
     configuration-dependent loads such as follower pressures.
 
+    When ``calc_fext`` accepts the keyword argument ``lbd``, e.g. for
+    prescribed displacements imposed exactly, see :mod:`.callbacks`, the
+    load vector `\{q\} = \partial R/\partial \lambda` at `c = 0`,
+    `\lambda = 0` is computed once: the first increment uses its linear
+    solution `[K_0]^{-1}\{q\}` as predictor, instead of the linear solution
+    of the reference vector, which is null under a prescribed displacement
+    alone, and `\lambda \|q\|` is an additional reference of the relative
+    convergence criterion.
+
     By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
     ``kT = kC + kG`` is rebuilt at every iteration, which gives quadratic
     convergence when ``kT`` is the exact Jacobian of ``fint``. With
@@ -283,8 +308,12 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
+    q = None
+    if callbacks.is_load_factor_dependent(an):
+        # dR/dlbd at c = 0 and lbd = 0
+        q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
     # predictor of the first step: linear solution scaled by the load factor
-    dc_last = solve(kC0, fext, silent=True)
+    dc_last = solve(kC0, fext if q is None else q, silent=True)
     inc_last = 1.
     c = np.zeros_like(dc_last)
     total_last = 0.
@@ -305,7 +334,7 @@ def _solver_NR(an, silent=False, initialInc=None):
         if an.modified_NR and step_num == 1 and not an.kT_initial_state:
             kT0 = kC0
         converged, dc = _NR_iterations(an, c, dc, total, fext, kT0=kT0,
-                                       silent=silent)
+                                       silent=silent, q=q)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)

@@ -24,6 +24,39 @@ are called exactly as before:
   predictor and in the constraint instead of the constant reference vector
   ``calc_fext(inc=1.)``.
 
+- ``lbd``: the current load factor `\lambda`, passed to ``calc_fext``
+  together with ``c``, for a load vector `\partial R/\partial \lambda` that
+  depends on the load factor as well, e.g. prescribed displacements imposed
+  exactly as linear constraints `c = [T] c_r + \{c_{p0}\} + \lambda
+  \{c_{p1}\}`, whose reduced residual
+
+  .. math::
+
+      \{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
+      \{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
+
+  has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
+  \{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
+  load factor. The keyword ``inc`` keeps its meaning, the factor that
+  multiplies the returned vector, and the solvers keep calling
+  ``calc_fext(inc=1., ...)``. When ``calc_fext`` declares ``lbd``:
+
+  - the arc-length solvers pass ``lbd`` with ``c`` in the predictor and in
+    the constraint;
+  - the arc-length solvers scale the displacements with the linear solution
+    of `\partial R/\partial \lambda` at `c = 0, \lambda = 0`, instead of
+    the linear solution of the reference vector ``calc_fext(inc=1.)``, and
+    the Newton-Raphson solver uses this linear solution as the predictor of
+    its first step;
+  - the relative convergence criterion also considers the norm of
+    `\lambda \, \partial R/\partial \lambda`, see
+    :func:`.newton_raphson._check_convergence`, since under a prescribed
+    displacement alone the reference vector and the reduced internal force
+    vector both vanish at equilibrium.
+
+  ``lbd`` is never passed by the linear static analysis,
+  ``Analysis.static(NLgeom=False)``.
+
 """
 import inspect
 
@@ -60,9 +93,25 @@ def is_load_configuration_dependent(an):
     return accepts_kwarg(an.calc_fext, 'c')
 
 
-def calc_load_vector(an, c, fext):
-    r"""`\partial R/\partial \lambda` at ``c``: ``calc_fext(inc=1., c=c)``
-    when ``calc_fext`` accepts ``c``, otherwise the constant ``fext``"""
+def is_load_factor_dependent(an):
+    """Tell whether ``an.calc_fext`` accepts the load factor ``lbd``"""
+    return accepts_kwarg(an.calc_fext, 'lbd')
+
+
+def calc_load_vector(an, c, fext, lbd=None):
+    r"""`\partial R/\partial \lambda` at ``c`` and ``lbd``
+
+    Returns ``calc_fext(inc=1., c=c)`` when ``calc_fext`` accepts ``c``,
+    with ``lbd=lbd`` when it also accepts ``lbd`` and ``lbd`` is given, or
+    ``calc_fext(inc=1., lbd=lbd)`` when it accepts only ``lbd``, otherwise
+    the constant ``fext``.
+
+    """
+    kwargs = {}
     if is_load_configuration_dependent(an):
-        return an.calc_fext(inc=1., c=c, silent=True)
-    return fext
+        kwargs['c'] = c
+    if lbd is not None and is_load_factor_dependent(an):
+        kwargs['lbd'] = lbd
+    if not kwargs:
+        return fext
+    return an.calc_fext(inc=1., silent=True, **kwargs)
