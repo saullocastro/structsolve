@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.8.0 (2026-10-14)
+
+### Performance: fewer evaluations and factorizations, same solutions
+
+- `dR/dlbd` of a `calc_fext` that declares `lbd` is evaluated together with
+  the tangent stiffness matrix, at the same iterate, instead of before every
+  convergence check. The last one evaluated is the reference
+  `lbd*dR/dlbd` of the relative criterion until the next update of the
+  tangent, also across steps (the one of a failed step is not kept).
+  Newton-Raphson no longer evaluates it at the converged iterate of each
+  step, where the tangent is not needed, and with `modified_NR=True` it is
+  evaluated once per update of the tangent instead of once per iteration.
+  The arc-length methods keep the one of the converged state with its
+  tangent when a step is repeated, and reuse the one of the origin in the
+  first step. `calc_fext(c=c, lbd=lbd)` is always called right after
+  `calc_kC` and `calc_kG` at the same configuration and load factor, such
+  that the callables can share their computations. When `dR/dlbd`
+  requires the tangent stiffness matrix, e.g. `[K_T] {c_p1}`, this removes
+  one assembly per increment with full Newton-Raphson and most of them with
+  modified Newton-Raphson. The convergence histories change slightly, the
+  reference norm being lagged by at most one update of the tangent.
+- Newton-Raphson reuses the LU factorization of the tangent stiffness
+  matrix while it is not updated (`modified_NR=True`), as the arc-length
+  methods already did; a singular tangent stops the iterations of the step
+  with a warning, instead of a non-finite residual. `_factorize` moved
+  from `arc_length` to `static`.
+- The load correction iterations of the linear static analysis with a
+  configuration-dependent load, `Analysis.static(NLgeom=False)` with a
+  `calc_fext` that declares `c`, factorize `K0` once.
+- `lb`: the estimate of the Cayley shift (power iterations, with one
+  factorization of `K`) and the positive definiteness of `K` (one
+  factorization) are computed once for all the attempts, the retry with a
+  10 times larger shift and the dense fallback. New
+  `linear_buckling._estimate_mu_max`; `_estimate_sigma` and `_eigsh_cayley`
+  accept a precomputed `mu_max`, and `_check_eigenpairs` a precomputed
+  `K_positive_definite`, a boolean or a function.
+
+### Tests
+
+- `tests/test_reuse.py`: number of calls to `calc_fext`, `calc_kC` and of
+  factorizations in Newton-Raphson (full and modified) and in the arc-length
+  methods, and the reuse in `lb` and in the linear static analysis with a
+  configuration-dependent load.
+
 ## 0.7.0 (2026-10-13)
 
 ### New: load vectors that depend on the load factor
