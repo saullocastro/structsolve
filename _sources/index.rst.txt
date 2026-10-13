@@ -29,6 +29,10 @@ can run:
   in all the solvers, including the kinetic criterion (flutter) with
   :func:`.freq`
 
+* Load vectors that depend on the load factor, e.g. prescribed
+  displacements imposed exactly as linear constraints, in the non-linear
+  static analyses, see :mod:`.callbacks`
+
 The constrained degrees of freedom of the models, i.e. the null rows and
 columns of the matrices, are removed before solving.
 
@@ -42,7 +46,7 @@ https://github.com/saullocastro/structsolve
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.7.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Eigenvalue solvers
@@ -66,6 +70,7 @@ Usage examples
     ex_newton_raphson.rst
     ex_arc_length.rst
     ex_follower_loads.rst
+    ex_prescribed_displacements.rst
 
 
 structsolve API
