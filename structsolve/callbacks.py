@@ -99,12 +99,39 @@ def is_load_factor_dependent(an):
 
 
 def calc_load_vector(an, c, fext, lbd=None):
-    r"""`\partial R/\partial \lambda` at ``c`` and ``lbd``
+    r"""Derivative of the residual with respect to the load factor
 
-    Returns ``calc_fext(inc=1., c=c)`` when ``calc_fext`` accepts ``c``,
-    with ``lbd=lbd`` when it also accepts ``lbd`` and ``lbd`` is given, or
-    ``calc_fext(inc=1., lbd=lbd)`` when it accepts only ``lbd``, otherwise
-    the constant ``fext``.
+    Returns `\{q\} = \partial R/\partial \lambda` at the configuration ``c``
+    and the load factor ``lbd``, used by the solvers in the predictors, in
+    the arc-length constraint and in the convergence criterion. It is the
+    external load vector only for loads that do not depend on the
+    configuration; with prescribed displacements imposed exactly it also
+    contains `-[T]^T [K_T] \{c_{p1}\}`, see the module docstring.
+
+    ``an.calc_fext`` is called with ``inc=1.`` and only with the keyword
+    arguments that it declares:
+
+    - ``c=c``, when it declares ``c``;
+    - ``lbd=lbd``, when it declares ``lbd`` and ``lbd`` is not ``None``.
+
+    When none of them is passed, `\{q\}` is the constant reference vector,
+    and ``fext`` is returned without calling ``an.calc_fext``.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    c : array-like
+        Configuration.
+    fext : array-like
+        Reference vector ``an.calc_fext(inc=1.)``.
+    lbd : float or None, optional
+        Load factor.
+
+    Returns
+    -------
+    q : array-like
+        `\partial R/\partial \lambda`.
 
     """
     kwargs = {}
