@@ -1,5 +1,6 @@
 import numpy as np
-from scipy.sparse.linalg import spsolve
+from scipy.sparse import csc_matrix
+from scipy.sparse.linalg import spsolve, splu
 
 from .logger import msg
 from .sparseutils import remove_null_cols
@@ -41,6 +42,36 @@ def solve(a, b, silent=False, **kwargs):
     x[used_cols] = px
 
     return x
+
+
+def _factorize(kT):
+    """LU factorization of the tangent stiffness matrix
+
+    Null rows and columns are removed, the corresponding values of the
+    solution are zero, as in :func:`.solve`. The factorization is reused by
+    the non-linear solvers while the tangent stiffness matrix is not
+    updated.
+
+    Parameters
+    ----------
+    kT : sparse matrix
+        Tangent stiffness matrix.
+
+    Returns
+    -------
+    solve_kT : callable
+        Function that returns the solution ``x`` of ``kT x = b``.
+
+    """
+    kT_red, used_cols = remove_null_cols(kT, silent=True)
+    lu = splu(csc_matrix(kT_red))
+
+    def solve_kT(b):
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, lu.U.dtype))
+        x[used_cols] = lu.solve(b[used_cols])
+        return x
+
+    return solve_kT
 
 
 def static(K, fext, silent=False):

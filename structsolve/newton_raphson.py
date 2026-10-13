@@ -8,7 +8,7 @@ and they are shared with the arc-length solvers of
 import numpy as np
 
 from .logger import msg, warn
-from .static import solve
+from .static import solve, _factorize
 from . import callbacks
 
 
@@ -139,7 +139,7 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
 
 
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
-                   lbd_dependent=False):
+                   lbd_dependent=False, q=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Parameters
@@ -161,9 +161,15 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         A boolean to tell whether the log messages should be printed.
     lbd_dependent : bool, optional
         Whether ``calc_fext`` accepts ``lbd``, see :mod:`.callbacks`;
-        ``total*q``, with `\{q\} = \partial R/\partial \lambda` evaluated
-        at the current iterate, is then an additional reference of the
-        relative convergence criterion, see :func:`._check_convergence`.
+        ``total*q``, with `\{q\} = \partial R/\partial \lambda`, is then an
+        additional reference of the relative convergence criterion, see
+        :func:`._check_convergence`. `\{q\}` is evaluated together with the
+        tangent stiffness matrix, at the same iterate, and the last one
+        evaluated is the reference until the next update of the tangent.
+    q : array-like or None, optional
+        The last `\{q\}` evaluated before these iterations, the reference
+        until the first update of the tangent stiffness matrix, used only
+        when ``lbd_dependent=True``.
 
     Returns
     -------
@@ -171,14 +177,18 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         Whether the iterations converged.
     dc : array-like
         Solution increment, such that ``c + dc`` is the solution.
+    q : array-like or None
+        The last `\{q\}` evaluated, ``None`` when ``lbd_dependent=False``.
 
     """
     modified_NR = an.modified_NR
     fext_total = total*fext
+    if not lbd_dependent:
+        q = None
     q_ref = None
     Rnorms = []
     iter_kT = 0
-    kT = None
+    solve_kT = None
     fint = None
 
     iteration = 0
@@ -187,28 +197,37 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         if fint is None:
             fint = callbacks.calc_fint(an, c + dc, total)
         R = fext_total - fint
-        if lbd_dependent:
-            q_ref = total*callbacks.calc_load_vector(an, c + dc, fext, total)
+        if q is not None:
+            q_ref = total*q
 
         conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
                                                q_ref=q_ref)
         msg('Iteration: %d, max(|R|) = %1.3e, relative ||R|| = %1.3e'
             % (iteration, np.abs(R).max(), Rrel), level=2, silent=silent)
         if conv:
-            return True, dc
+            return True, dc, q
         if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
-            return False, dc
+            return False, dc, q
 
-        if modified_NR and iteration > 1 and iter_kT < an.compute_every_n:
-            iter_kT += 1
-        elif modified_NR and iteration == 1 and kT0 is not None:
-            kT = kT0
-            iter_kT = 1
-        else:
-            kT = callbacks.calc_kT(an, c + dc, total)
-            iter_kT = 1
+        # the factorization of the tangent stiffness matrix is reused while
+        # the matrix is not updated
+        try:
+            if modified_NR and iteration > 1 and iter_kT < an.compute_every_n:
+                iter_kT += 1
+            elif modified_NR and iteration == 1 and kT0 is not None:
+                solve_kT = _factorize(kT0)
+                iter_kT = 1
+            else:
+                solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total))
+                iter_kT = 1
+                if lbd_dependent:
+                    # dR/dlbd at the iterate of the tangent stiffness matrix
+                    q = callbacks.calc_load_vector(an, c + dc, fext, total)
+        except RuntimeError:
+            warn('Singular tangent stiffness matrix', level=2, silent=silent)
+            return False, dc, q
 
-        varc = solve(kT, R, silent=True)
+        varc = solve_kT(R)
 
         eta = 1.
         fint = None
@@ -261,16 +280,19 @@ def _solver_NR(an, silent=False, initialInc=None):
     `\lambda = 0` gives the predictor of the first increment, its linear
     solution `[K_0]^{-1}\{q\}`, instead of the linear solution of the
     reference vector, which is null under a prescribed displacement alone,
-    and `\lambda \|q\|`, with `\{q\}` evaluated at the current iterate
-    before each convergence check, is an additional reference of the
-    relative convergence criterion. With ``an.modified_NR = True`` this is
-    one call to ``calc_fext`` per iteration.
+    and `\lambda \|q\|` is an additional reference of the relative
+    convergence criterion. `\{q\}` is evaluated together with the tangent
+    stiffness matrix, at the same iterate, i.e. ``calc_fext`` is called once
+    per update of the tangent stiffness matrix, and the last `\{q\}`
+    evaluated is the reference of the next convergence checks, also in the
+    next step.
 
     By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
     ``kT = kC + kG`` is rebuilt at every iteration, which gives quadratic
     convergence when ``kT`` is the exact Jacobian of ``fint``. With
     ``an.modified_NR = True`` the tangent stiffness matrix is rebuilt only at
     the first iteration of each step and every ``an.compute_every_n``
+    iterations, and its LU factorization is reused in the other
     iterations.
 
     With ``an.line_search = True``, the full Newton step (``eta = 1``) is tried
@@ -315,7 +337,8 @@ def _solver_NR(an, silent=False, initialInc=None):
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
     q = None
-    if callbacks.is_load_factor_dependent(an):
+    lbd_dependent = callbacks.is_load_factor_dependent(an)
+    if lbd_dependent:
         # dR/dlbd at c = 0 and lbd = 0
         q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
     # predictor of the first step: linear solution scaled by the load factor
@@ -339,12 +362,13 @@ def _solver_NR(an, silent=False, initialInc=None):
         kT0 = None
         if an.modified_NR and step_num == 1 and not an.kT_initial_state:
             kT0 = kC0
-        converged, dc = _NR_iterations(an, c, dc, total, fext, kT0=kT0,
-                                       silent=silent,
-                                       lbd_dependent=q is not None)
+        converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
+                kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)
+            # the dR/dlbd of a step that failed is not kept
+            q = q_new
             c = c + dc
             total_last = total
             an.cs.append(c.copy()) #NOTE copy required

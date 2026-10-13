@@ -52,7 +52,13 @@ are called exactly as before:
     `\lambda \, \partial R/\partial \lambda`, see
     :func:`.newton_raphson._check_convergence`, since under a prescribed
     displacement alone the reference vector and the reduced internal force
-    vector both vanish at equilibrium.
+    vector both vanish at equilibrium;
+  - ``calc_fext(c=c, lbd=lbd)`` is called at the configurations where the
+    tangent stiffness matrix is updated, right after ``calc_kC`` and
+    ``calc_kG`` at the same ``c`` and load factor, such that the callables
+    may share their computations, and the last `\partial R/\partial
+    \lambda` evaluated is the reference of the convergence checks until the
+    next update.
 
   ``lbd`` is never passed by the linear static analysis,
   ``Analysis.static(NLgeom=False)``.
