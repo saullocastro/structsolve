@@ -110,6 +110,16 @@ def _solver_arc_length(an, method, silent=False):
     solution of the reference vector. The callables that accept ``inc``
     receive the current load factor, see :mod:`.callbacks`.
 
+    When ``calc_fext`` also accepts the keyword argument ``lbd``, e.g. for
+    prescribed displacements imposed exactly, it receives the load factor
+    together with the configuration, `\{F_{ext}\}` above being then
+    `\partial R/\partial \lambda` at the current `c` and `\lambda`;
+    `\{u_{ref}\}` is the linear solution of `\partial R/\partial \lambda`
+    at `c = 0`, `\lambda = 0`, since the reference vector may be null, e.g.
+    under a prescribed displacement alone; and `\lambda \, \partial
+    R/\partial \lambda` at the last converged state is an additional
+    reference of the relative convergence criterion.
+
     The initial arc length corresponds to a load factor increment of
     ``an.initialInc`` along the initial tangent. The convergence and
     divergence checks are the same as in the Newton-Raphson solver, see
@@ -136,7 +146,13 @@ def _solver_arc_length(an, method, silent=False):
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
-    u_ref = solve(kC0, fext, silent=True)
+    lbd_dependent = callbacks.is_load_factor_dependent(an)
+    if lbd_dependent:
+        # dR/dlbd at c = 0 and lbd = 0
+        q0 = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
+        u_ref = solve(kC0, q0, silent=True)
+    else:
+        u_ref = solve(kC0, fext, silent=True)
     scale2 = u_ref.dot(u_ref)
     if not scale2 > 0:
         scale2 = 1.
@@ -175,7 +191,8 @@ def _solver_arc_length(an, method, silent=False):
                      level=1, silent=silent)
                 break
         # load vector of the converged configuration, dR/dlbd
-        dc_q_conv = solve_kT_conv(callbacks.calc_load_vector(an, c, fext))
+        q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
+        dc_q_conv = solve_kT_conv(q_conv)
         norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
         if arc_length is None:
             arc_length = an.initialInc*norm_q
@@ -204,8 +221,10 @@ def _solver_arc_length(an, method, silent=False):
             fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
             R = fext_total - fint
+            q_ref = (lbd + dlbd)*q_conv if lbd_dependent else None
             conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
-                                                   fext_ref=dlbd*fext)
+                                                   fext_ref=dlbd*fext,
+                                                   q_ref=q_ref)
             msg('Iteration: %d, lbd %1.5f, max(|R|) = %1.3e, relative ||R|| = %1.3e'
                 % (iteration, lbd + dlbd, np.abs(R).max(), Rrel), level=2, silent=silent)
             if conv:
@@ -225,7 +244,8 @@ def _solver_arc_length(an, method, silent=False):
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
-                dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc, fext))
+                dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc, fext,
+                                                           lbd + dlbd))
                 iter_kT = 1
             dc_R = solve_kT(R)
 
@@ -261,7 +281,8 @@ def _solver_arc_length(an, method, silent=False):
         if converged and lbd + dlbd > 1. and lbd < 1.:
             msg('Load factor 1.0 exceeded, correcting to load factor 1.0...', level=1, silent=silent)
             t = (1. - lbd)/dlbd
-            converged, dc1 = _NR_iterations(an, c, t*dc, 1., fext, kT0=None, silent=silent)
+            converged, dc1 = _NR_iterations(an, c, t*dc, 1., fext, kT0=None,
+                    silent=silent, q=q_conv if lbd_dependent else None)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())

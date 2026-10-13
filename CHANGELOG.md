@@ -1,5 +1,47 @@
 # Changelog
 
+## 0.7.0 (2026-10-13)
+
+### New: load vectors that depend on the load factor
+
+For prescribed displacements imposed exactly as linear constraints, e.g. by
+the null-space method of `panels`, `c = T c_r + c_p0 + lbd*c_p1`, the
+derivative of the reduced residual with respect to the load factor,
+`dR_r/dlbd = T^T (F_ext - K_T(c) c_p1)`, depends on the configuration and on
+the load factor. All the changes apply only when `calc_fext` declares the
+new keyword argument `lbd` (a `**kwargs` does not count); the callables that
+do not declare it are called exactly as before and give the same results.
+
+- `callbacks.calc_load_vector(an, c, fext, lbd=None)` passes `lbd` to
+  `calc_fext` when it declares it, together with `c` when it declares `c`.
+  New `callbacks.is_load_factor_dependent(an)`. `inc` keeps its meaning, the
+  factor that multiplies the returned vector, and the solvers keep calling
+  `calc_fext(inc=1., ...)`.
+- Arc-length methods (Riks and Crisfield): the tangent predictor and the
+  bordered solutions use `calc_fext(inc=1., c=c, lbd=lbd)` at the current
+  configuration and load factor, and the displacement scale `u_ref` is the
+  linear solution of `dR/dlbd` at `c = 0`, `lbd = 0`, since the reference
+  vector `calc_fext(inc=1.)` is null under a prescribed displacement alone.
+- Newton-Raphson: the predictor of the first increment is the linear
+  solution of `dR/dlbd` at `c = 0`, `lbd = 0`, instead of the linear
+  solution of the null reference vector; the next increments keep the
+  extrapolation of the previous one.
+- Relative convergence criterion: `lbd*dR/dlbd`, at the start of the
+  analysis for Newton-Raphson and at the last converged state for the
+  arc-length methods, is an additional reference, new keyword `q_ref` of
+  `newton_raphson._check_convergence`. Under a prescribed displacement
+  alone, the reference vector and the reduced internal force vector both
+  vanish at equilibrium and the criterion could not be satisfied without
+  `absTOL`.
+- The linear static analysis, `Analysis.static(NLgeom=False)`, never passes
+  `lbd`.
+- Tests: `tests/test_load_factor_dependent_load.py`, three hardening springs
+  in series with the displacement of the last node prescribed, reduced to two
+  degrees of freedom, compared with the exact solution, including a constant
+  and an incremented prescribed displacement with a load, and the quadratic
+  convergence of the Riks method. Docs: `ex_prescribed_displacements.rst`,
+  `callbacks` and `Analysis`.
+
 ## 0.6.1 (2026-10-08)
 
 Includes the changes first published as 0.6.0, with the support of Pyodide.

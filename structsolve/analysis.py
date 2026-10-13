@@ -120,7 +120,8 @@ class Analysis(object):
         ``calc_fext(inc=1., silent=False)``, must return a 1-D array with the
         external force vector. Required for linear and non-linear static
         analyses. The non-linear solvers call it with ``inc=1.`` and scale the
-        returned vector by the load factor.
+        returned vector by the load factor. It may declare the optional
+        keyword arguments ``c`` and ``lbd``, see the notes below.
     calc_fint : callable, optional
         ``calc_fint(c, silent=False)``, must return a 1-D array with the
         internal force vector for the solution vector ``c``. Required for
@@ -150,6 +151,16 @@ class Analysis(object):
       configuration ``c`` for a unit load factor, the derivative of the
       residual with respect to the load factor, used by the arc-length
       solvers.
+    - ``calc_fext(inc=1., c=c, lbd=lbd)`` also receives the current load
+      factor when it declares ``lbd``, for a derivative `\partial
+      R/\partial \lambda` that depends on the load factor, e.g. prescribed
+      displacements imposed exactly as linear constraints, where the
+      reference vector ``calc_fext(inc=1.)`` may be null. The solvers then
+      use `\partial R/\partial \lambda` for the displacement scale of the
+      arc-length methods, for the predictor of the first Newton-Raphson
+      increment and as a reference of the relative convergence criterion,
+      see :mod:`.callbacks`. The linear static analysis never passes
+      ``lbd``.
 
     The tangent stiffness matrix may then be unsymmetric, which the solvers
     support, since they use LU factorizations.

@@ -18,6 +18,8 @@ Structural analysis solvers tailored for semi-analytical models
 - Nonlinear statics using Newton-Raphson 
 - Nonlinear statics using the Arc-Length method
 - Support for unsymmetric problems, such as those involving follower forces
+- Load vectors that depend on the load factor, e.g. prescribed displacements
+  imposed exactly as linear constraints
 
 Currently these solvers are pretty much compatible with my other repositories
 [panels](https://github.com/saullocastro/panels), 
@@ -27,7 +29,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.6.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.7.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -42,6 +44,8 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
+* version 0.7.0 (2026-10-13)
+    - `calc_fext` may declare the keyword argument `lbd` and then receives the current load factor with the configuration, for prescribed displacements imposed exactly as linear constraints; the solvers use `dR/dlbd` for the arc-length scale, the first Newton-Raphson predictor and the relative convergence criterion. Callables without `lbd` behave as before
 * version 0.6.1 (2026-10-08)
     - Pyodide support: `await micropip.install("structsolve")` in the browser, and the whole test suite runs in Pyodide in GitHub Actions
     - `lb` and `freq` always run the sparse solvers first, whatever the size of the problem, with verified results; the dense solvers are only a last resort within `max_dense_size`, with a `DenseFallbackWarning`
