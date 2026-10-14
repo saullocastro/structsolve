@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.5.0 documentation</title>
+    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.8.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=1dd76d02"></script>
+    <script src="_static/documentation_options.js?v=486e5634"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
@@ -50,7 +50,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.5.0" />
+  <meta name="docsearch:version" content="0.8.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.5.0 documentation</p>
+    <p class="title logo__title">structsolve 0.8.0 documentation</p>
   
 </a></div>
     
@@ -132,6 +132,13 @@
 <nav>
   <ul class="bd-navbar-elements navbar-nav">
     
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
@@ -159,13 +166,6 @@
   </a>
 </li>
 
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
-    Non-linear static analysis with the arc-length methods
-  </a>
-</li>
-
             <li class="nav-item dropdown">
                 <button class="btn dropdown-toggle nav-item" type="button"
                 data-bs-toggle="dropdown" aria-expanded="false"
@@ -175,8 +175,22 @@
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
   </a>
 </li>
 
@@ -271,6 +285,13 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_linear_static.html">
     Linear static analysis
   </a>
@@ -308,6 +329,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
   </a>
 </li>
 
@@ -369,6 +397,7 @@
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="logger.html">Logging (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.logger</span></code>)</a></li>
 </ul>
 </div>
@@ -485,6 +514,20 @@ tangent predictor is the load vector of the current configuration
 \lambda\)</span> of the residual, whereas <span class="math notranslate nohighlight">\(\{u_{ref}\}\)</span> remains the linear
 solution of the reference vector. The callables that accept <code class="docutils literal notranslate"><span class="pre">inc</span></code>
 receive the current load factor, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> also accepts the keyword argument <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, e.g. for
+prescribed displacements imposed exactly, it receives the load factor
+together with the configuration, <span class="math notranslate nohighlight">\(\{F_{ext}\}\)</span> above being then
+<span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at the current <span class="math notranslate nohighlight">\(c\)</span> and <span class="math notranslate nohighlight">\(\lambda\)</span>;
+<span class="math notranslate nohighlight">\(\{u_{ref}\}\)</span> is the linear solution of <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span>
+at <span class="math notranslate nohighlight">\(c = 0\)</span>, <span class="math notranslate nohighlight">\(\lambda = 0\)</span>, since the reference vector may be null, e.g.
+under a prescribed displacement alone; and <span class="math notranslate nohighlight">\(\lambda \, \partial
+R/\partial \lambda\)</span> is an additional reference of the relative
+convergence criterion. <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> is evaluated
+together with the tangent stiffness matrix, at the same iterate, i.e.
+once per update of the tangent stiffness matrix, and used in the
+bordered solution; the last one evaluated is the reference of the next
+convergence checks. At the converged state it is kept with the tangent
+stiffness matrix when the step is repeated with a shorter arc length.</p>
 <p>The initial arc length corresponds to a load factor increment of
 <code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code> along the initial tangent. The convergence and
 divergence checks are the same as in the Newton-Raphson solver, see

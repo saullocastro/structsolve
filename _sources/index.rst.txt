@@ -14,6 +14,10 @@ can run:
 
 * Frequency analyses, `([K] + \lambda^2 [M])\{u\} = \{0\}`, with :func:`.freq`
 
+* Sparse eigenvalue solvers first, with verified results and dense solvers
+  only as a last resort, also in the browser (Pyodide) and with the faulty
+  Intel MKL versions that break ARPACK, see :doc:`eigensolvers`
+
 * Non-linear static analyses with :class:`.Analysis`, using:
     - the Newton-Raphson method, full or modified, with an optional
       line-search
@@ -24,6 +28,10 @@ can run:
   non-linear static analyses, see :mod:`.callbacks`, and unsymmetric matrices
   in all the solvers, including the kinetic criterion (flutter) with
   :func:`.freq`
+
+* Load vectors that depend on the load factor, e.g. prescribed
+  displacements imposed exactly as linear constraints, in the non-linear
+  static analyses, see :mod:`.callbacks`
 
 The constrained degrees of freedom of the models, i.e. the null rows and
 columns of the matrices, are removed before solving.
@@ -38,7 +46,16 @@ https://github.com/saullocastro/structsolve
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.5.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.8.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+
+
+Eigenvalue solvers
+------------------
+
+.. toctree::
+    :maxdepth: 1
+
+    eigensolvers.rst
 
 
 Usage examples
@@ -53,6 +70,7 @@ Usage examples
     ex_newton_raphson.rst
     ex_arc_length.rst
     ex_follower_loads.rst
+    ex_prescribed_displacements.rst
 
 
 structsolve API
@@ -74,6 +92,13 @@ Install from the distributed packages by simply doing::
 or from the source code using::
 
     python -m pip install .
+
+In the browser, with `Pyodide <https://pyodide.org>`_, which already
+distributes NumPy and SciPy, the wheel published on PyPI is installed with
+``micropip``::
+
+    import micropip
+    await micropip.install("structsolve")
 
 
 Changelog

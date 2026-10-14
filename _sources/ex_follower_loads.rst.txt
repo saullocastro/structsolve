@@ -43,6 +43,16 @@ Linear buckling with unsymmetric matrices
 .. literalinclude:: ../../tests/test_follower_loads.py
     :pyobject: test_lb_unsymmetric_real
 
+Under follower loads, many negative or complex load multipliers may have a
+smaller modulus than the critical one, e.g. when the pressure is reversed.
+The sparse solver of :func:`.lb` searches the lowest positive real load
+multiplier along the positive real axis, see :doc:`eigensolvers`. The
+cantilevers of Schweizerhof and Ramm (1984), with the matrices of
+`panels <https://github.com/saullocastro/panels>`_, original and reversed:
+
+.. literalinclude:: ../../tests/test_linear_buckling_unsymmetric.py
+    :pyobject: test_lb_follower_shift_search
+
 Flutter: the kinetic criterion
 ------------------------------
 
