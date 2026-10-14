@@ -8,12 +8,9 @@ control the arc-length scaling and adaptation.
 
 """
 import numpy as np
-from scipy.sparse import csc_matrix
-from scipy.sparse.linalg import splu
 
 from .logger import msg, warn
-from .static import solve
-from .sparseutils import remove_null_cols
+from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, INC_CUT_FACTOR)
@@ -29,34 +26,6 @@ MAX_GROWTH_FACTOR = 1.5
 MIN_GROWTH_FACTOR = 0.5
 #: Maximum number of converged steps of an arc-length analysis
 MAX_NUM_STEPS = 1000
-
-
-def _factorize(kT):
-    """LU factorization of the tangent stiffness matrix
-
-    Null rows and columns are removed, the corresponding values of the
-    solution are zero.
-
-    Parameters
-    ----------
-    kT : sparse matrix
-        Tangent stiffness matrix.
-
-    Returns
-    -------
-    solve_kT : callable
-        Function that returns the solution ``x`` of ``kT x = b``.
-
-    """
-    kT_red, used_cols = remove_null_cols(kT, silent=True)
-    lu = splu(csc_matrix(kT_red))
-
-    def solve_kT(b):
-        x = np.zeros(b.shape[0], dtype=np.result_type(b, lu.U.dtype))
-        x[used_cols] = lu.solve(b[used_cols])
-        return x
-
-    return solve_kT
 
 
 def _solver_arc_length(an, method, silent=False):
@@ -117,12 +86,13 @@ def _solver_arc_length(an, method, silent=False):
     `\{u_{ref}\}` is the linear solution of `\partial R/\partial \lambda`
     at `c = 0`, `\lambda = 0`, since the reference vector may be null, e.g.
     under a prescribed displacement alone; and `\lambda \, \partial
-    R/\partial \lambda`, evaluated at the current iterate before each
-    convergence check, is an additional reference of the relative
-    convergence criterion. The same `\partial R/\partial \lambda` is used
-    in the bordered solution when the tangent stiffness matrix is updated at
-    that iterate; with ``an.modified_NR = True`` it is one call to
-    ``calc_fext`` per iteration.
+    R/\partial \lambda` is an additional reference of the relative
+    convergence criterion. `\partial R/\partial \lambda` is evaluated
+    together with the tangent stiffness matrix, at the same iterate, i.e.
+    once per update of the tangent stiffness matrix, and used in the
+    bordered solution; the last one evaluated is the reference of the next
+    convergence checks. At the converged state it is kept with the tangent
+    stiffness matrix when the step is repeated with a shorter arc length.
 
     The initial arc length corresponds to a load factor increment of
     ``an.initialInc`` along the initial tangent. The convergence and
@@ -194,8 +164,12 @@ def _solver_arc_length(an, method, silent=False):
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
                 break
-        # load vector of the converged configuration, dR/dlbd
-        q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
+            # load vector of the converged configuration, dR/dlbd, kept with
+            # the tangent stiffness matrix when the step is repeated
+            if step_num == 1 and lbd_dependent:
+                q_conv = q0
+            else:
+                q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
         dc_q_conv = solve_kT_conv(q_conv)
         norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
         if arc_length is None:
@@ -218,6 +192,8 @@ def _solver_arc_length(an, method, silent=False):
         Rnorms = []
         solve_kT = solve_kT_conv
         dc_q = dc_q_conv
+        # the last dR/dlbd evaluated, with the tangent stiffness matrix
+        q_iter = q_conv
         iter_kT = 0
         iteration = 0
         while True:
@@ -227,9 +203,6 @@ def _solver_arc_length(an, method, silent=False):
             R = fext_total - fint
             q_ref = None
             if lbd_dependent:
-                # dR/dlbd at the current iterate
-                q_iter = callbacks.calc_load_vector(an, c + dc, fext,
-                                                    lbd + dlbd)
                 q_ref = (lbd + dlbd)*q_iter
             conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
                                                    fext_ref=dlbd*fext,
@@ -254,6 +227,9 @@ def _solver_arc_length(an, method, silent=False):
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
                 if lbd_dependent:
+                    # dR/dlbd at the iterate of the tangent stiffness matrix
+                    q_iter = callbacks.calc_load_vector(an, c + dc, fext,
+                                                        lbd + dlbd)
                     dc_q = solve_kT(q_iter)
                 else:
                     dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
@@ -293,8 +269,9 @@ def _solver_arc_length(an, method, silent=False):
         if converged and lbd + dlbd > 1. and lbd < 1.:
             msg('Load factor 1.0 exceeded, correcting to load factor 1.0...', level=1, silent=silent)
             t = (1. - lbd)/dlbd
-            converged, dc1 = _NR_iterations(an, c, t*dc, 1., fext, kT0=None,
-                    silent=silent, lbd_dependent=lbd_dependent)
+            converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
+                    kT0=None, silent=silent, lbd_dependent=lbd_dependent,
+                    q=q_iter)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())

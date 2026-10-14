@@ -29,7 +29,7 @@ Currently these solvers are pretty much compatible with my other repositories
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.7.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.8.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -44,6 +44,8 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
+* version 0.8.0 (2026-10-14)
+    - Fewer evaluations and factorizations, same solutions: `dR/dlbd` is evaluated together with the tangent stiffness matrix only, Newton-Raphson reuses the factorization of the tangent while it is not updated, the follower linear static analysis factorizes `K0` once, and `lb` estimates its shift and the inertia of `K` once for all its attempts
 * version 0.7.0 (2026-10-13)
     - `calc_fext` may declare the keyword argument `lbd` and then receives the current load factor with the configuration, for prescribed displacements imposed exactly as linear constraints; the solvers use `dR/dlbd` for the arc-length scale, the first Newton-Raphson predictor and the relative convergence criterion. Callables without `lbd` behave as before
 * version 0.6.1 (2026-10-08)
