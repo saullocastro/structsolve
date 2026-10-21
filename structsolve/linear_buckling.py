@@ -1,3 +1,12 @@
+"""Linear buckling analysis (:func:`lb`)
+
+Load multipliers and buckling modes from the constitutive and geometric
+stiffness matrices, computed with the sparse eigenvalue solvers first and
+with a dense solver as a last resort, with a :class:`DenseFallbackWarning`.
+:func:`is_symmetric` selects the solvers of symmetric or unsymmetric
+matrices.
+
+"""
 import sys
 import warnings
 
@@ -13,7 +22,14 @@ from .sparseutils import remove_null_cols
 
 class DenseFallbackWarning(RuntimeWarning):
     """Issued by :func:`lb` and :func:`.freq` when the sparse eigenvalue
-    solvers failed and the dense solver was used as a last resort"""
+    solvers failed and the dense solver was used as a last resort
+
+    A subclass of :class:`RuntimeWarning`, issued with :func:`warnings.warn`,
+    whose message gives the reasons of the failures of the sparse solvers.
+    It can be turned into an error with
+    ``warnings.simplefilter('error', DenseFallbackWarning)``.
+
+    """
 
 
 #NOTE eigenvalues per step of the shift search of unsymmetric problems,
@@ -282,6 +298,23 @@ def is_symmetric(A, rtol=1e-10):
     A cheap check, of the order of the number of non-zero entries of ``A``,
     used by :func:`lb` to select the solvers of symmetric or unsymmetric
     matrices.
+
+    Parameters
+    ----------
+    A : array or sparse matrix
+        Square matrix, converted to CSR format.
+    rtol : float, optional
+        Relative tolerance, dimensionless. Default ``1e-10``.
+
+    Returns
+    -------
+    symmetric : bool
+        ``True`` when the Frobenius norm of ``A - A^T`` is not larger than
+        ``rtol`` times the Frobenius norm of ``A``.
+
+    See Also
+    --------
+    structsolve.sparseutils.is_symmetric : entry-wise check.
 
     """
     A = csr_matrix(A)

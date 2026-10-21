@@ -1,3 +1,9 @@
+"""Arc-length solver with the Crisfield method
+
+Selected with ``Analysis.NL_method = 'arc_length_crisfield'``. The
+implementation is shared with the Riks method, see :mod:`.arc_length`.
+
+"""
 from .logger import msg
 from .arc_length import _solver_arc_length
 

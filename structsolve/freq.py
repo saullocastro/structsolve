@@ -1,3 +1,10 @@
+"""Frequency analysis (:func:`freq`)
+
+Natural frequencies and modes from the stiffness and mass matrices, computed
+with the sparse eigenvalue solvers first and with a dense solver as a last
+resort, with a :class:`.linear_buckling.DenseFallbackWarning`.
+
+"""
 import warnings
 
 import numpy as np

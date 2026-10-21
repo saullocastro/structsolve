@@ -68,7 +68,31 @@ import inspect
 
 
 def accepts_kwarg(func, name):
-    """Tell whether ``func`` declares the keyword argument ``name``"""
+    """Tell whether ``func`` declares the keyword argument ``name``
+
+    The argument is declared when it is a named parameter of the signature,
+    positional-or-keyword or keyword-only; a ``**kwargs`` does not count. A
+    callable whose signature cannot be read by :func:`inspect.signature` does
+    not declare it.
+
+    Parameters
+    ----------
+    func : callable
+        Function or method to inspect.
+    name : str
+        Name of the keyword argument.
+
+    Returns
+    -------
+    accepts : bool
+        ``True`` when ``func`` has a parameter ``name`` that can be passed by
+        keyword.
+
+    See Also
+    --------
+    calc_fint, calc_kT, calc_load_vector : calls that depend on it.
+
+    """
     try:
         sig = inspect.signature(func)
     except (TypeError, ValueError):
@@ -79,14 +103,55 @@ def accepts_kwarg(func, name):
 
 
 def calc_fint(an, c, lbd):
-    r"""``an.calc_fint`` at ``c``, with ``inc=lbd`` when accepted"""
+    r"""``an.calc_fint`` at ``c``, with ``inc=lbd`` when accepted
+
+    Calls ``an.calc_fint(c=c, silent=True)``, adding ``inc=lbd`` only when
+    ``an.calc_fint`` declares ``inc``, see :func:`accepts_kwarg`.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object providing ``calc_fint``.
+    c : array-like
+        Configuration, the vector of the degrees of freedom.
+    lbd : float
+        Current load factor, dimensionless, passed as ``inc``.
+
+    Returns
+    -------
+    fint : array-like
+        The internal force vector returned by ``an.calc_fint``.
+
+    """
     kwargs = dict(inc=lbd) if accepts_kwarg(an.calc_fint, 'inc') else {}
     return an.calc_fint(c=c, silent=True, **kwargs)
 
 
 def calc_kT(an, c, lbd):
     r"""Tangent stiffness matrix ``calc_kC + calc_kG`` at ``c``, with
-    ``inc=lbd`` passed to the callables that accept it"""
+    ``inc=lbd`` passed to the callables that accept it
+
+    Calls ``an.calc_kC(c=c, NLgeom=True, silent=True)`` and
+    ``an.calc_kG(c=c, NLgeom=True, silent=True)``, each with ``inc=lbd`` only
+    when it declares ``inc``, see :func:`accepts_kwarg`, and returns their
+    sum.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object providing ``calc_kC`` and ``calc_kG``.
+    c : array-like
+        Configuration, the vector of the degrees of freedom.
+    lbd : float
+        Current load factor, dimensionless, passed as ``inc``.
+
+    Returns
+    -------
+    kT : sparse matrix or ndarray
+        The sum of the matrices returned by ``an.calc_kC`` and ``an.calc_kG``,
+        of the type given by them.
+
+    """
     kwC = dict(inc=lbd) if accepts_kwarg(an.calc_kC, 'inc') else {}
     kwG = dict(inc=lbd) if accepts_kwarg(an.calc_kG, 'inc') else {}
     kC = an.calc_kC(c=c, NLgeom=True, silent=True, **kwC)
@@ -95,12 +160,46 @@ def calc_kT(an, c, lbd):
 
 
 def is_load_configuration_dependent(an):
-    """Tell whether ``an.calc_fext`` accepts the configuration ``c``"""
+    """Tell whether ``an.calc_fext`` accepts the configuration ``c``
+
+    When it does, the solvers evaluate the load vector at the current
+    configuration, see :func:`calc_load_vector`, and the linear static
+    analysis iterates on the load, see :meth:`.Analysis.static`.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object providing ``calc_fext``.
+
+    Returns
+    -------
+    dependent : bool
+        ``True`` when ``an.calc_fext`` declares the keyword argument ``c``,
+        see :func:`accepts_kwarg`.
+
+    """
     return accepts_kwarg(an.calc_fext, 'c')
 
 
 def is_load_factor_dependent(an):
-    """Tell whether ``an.calc_fext`` accepts the load factor ``lbd``"""
+    """Tell whether ``an.calc_fext`` accepts the load factor ``lbd``
+
+    When it does, the solvers pass the current load factor to ``calc_fext``
+    together with ``c``, see :func:`calc_load_vector` and the module
+    docstring.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object providing ``calc_fext``.
+
+    Returns
+    -------
+    dependent : bool
+        ``True`` when ``an.calc_fext`` declares the keyword argument ``lbd``,
+        see :func:`accepts_kwarg`.
+
+    """
     return accepts_kwarg(an.calc_fext, 'lbd')
 
 

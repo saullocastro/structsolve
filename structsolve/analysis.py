@@ -1,3 +1,13 @@
+"""Static analyses of a model given by callables (:class:`Analysis`)
+
+The class :class:`Analysis` receives the callables that compute the force
+vectors and the stiffness matrices of a model and runs a linear static
+analysis, or a non-linear static analysis with the Newton-Raphson solver of
+:mod:`.newton_raphson` or the arc-length solvers of :mod:`.arc_length`. The
+optional keyword arguments of the callables are described in
+:mod:`.callbacks`.
+
+"""
 from __future__ import absolute_import
 
 import numpy as np
@@ -262,6 +272,12 @@ class Analysis(object):
             documentation of each solver.
         cs : list
             Solution vectors of the converged increments.
+
+        Raises
+        ------
+        ValueError
+            When ``NLgeom=True`` and the ``NL_method`` attribute is not
+            ``'NR'``, ``'arc_length_riks'`` or ``'arc_length_crisfield'``.
 
         """
         self.increments = []

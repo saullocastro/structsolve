@@ -1,3 +1,10 @@
+"""Linear static analysis and solution of linear systems
+
+:func:`solve` solves a sparse linear system after removing the null rows and
+columns, and :func:`static` is a linear static analysis based on it. For
+analyses based on callables, linear or non-linear, see :class:`.Analysis`.
+
+"""
 import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse.linalg import spsolve, splu

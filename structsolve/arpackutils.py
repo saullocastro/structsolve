@@ -210,6 +210,17 @@ def arpack_max_ncv():
 
     The detection runs once per process.
 
+    Returns
+    -------
+    max_ncv : int or None
+        The cap of ``ncv``, at least ``3``, or ``None`` when ``ncv`` is not
+        capped.
+
+    Raises
+    ------
+    ValueError
+        When the value given is an integer lower than ``3`` and not ``0``.
+
     """
     value = ARPACK_MAX_NCV
     if value is None:
@@ -236,6 +247,18 @@ def arpack_ncv(k, n):
     SciPy's default ``min(n, max(2 k + 1, 20))``, capped at
     :func:`arpack_max_ncv`. With a cap, ``k`` should not exceed
     ``(max_ncv - 1)//2``, see :func:`capped_eigsh`.
+
+    Parameters
+    ----------
+    k : int
+        Number of eigenpairs.
+    n : int
+        Size of the problem, the number of rows of the matrices.
+
+    Returns
+    -------
+    ncv : int
+        Number of Lanczos vectors.
 
     """
     ncv = min(n, max(2*k + 1, 20))
@@ -264,7 +287,22 @@ def release_memory():
 
 def start_vector(n):
     """Fixed starting vector of ARPACK, uniform in ``[-1, 1]`` as ARPACK's
-    random one, such that the results are reproducible"""
+    random one, such that the results are reproducible
+
+    The vector is drawn from :class:`numpy.random.RandomState` with the seed
+    ``42``, so that the same ``n`` always gives the same vector.
+
+    Parameters
+    ----------
+    n : int
+        Size of the problem.
+
+    Returns
+    -------
+    v0 : ndarray
+        1-D array of size ``n``.
+
+    """
     return np.random.RandomState(42).uniform(-1., 1., n)
 
 
@@ -347,11 +385,37 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     combined with a Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`,
     such that they are `[M]`-orthonormal also across the passes.
 
+    Parameters
+    ----------
+    A : sparse matrix
+        Square matrix of the left-hand side, of size ``n x n``.
+    k : int
+        Number of eigenpairs.
+    M : sparse matrix
+        Positive definite matrix of the right-hand side, of size ``n x n``.
+    sigma : float
+        Shift of the shift-invert or Cayley mode, in the units of `w`.
+    which : str
+        Eigenvalues to find, passed to :func:`scipy.sparse.linalg.eigsh`, e.g.
+        ``'LM'`` or ``'SM'``.
+    mode : str, optional
+        ``'normal'`` (shift-invert, default) or ``'cayley'``, passed to
+        :func:`scipy.sparse.linalg.eigsh`.
+    tol : float, optional
+        Relative accuracy of the eigenvalues, passed to
+        :func:`scipy.sparse.linalg.eigsh`; ``0`` (default) means the machine
+        precision.
+
     Returns
     -------
     w, x : ndarray
         The eigenvalues and the `[M]`-orthonormal eigenvectors, by
-        increasing `w` when computed in passes.
+        increasing `w` when computed in passes. ``w`` is a 1-D array of size
+        ``k`` and ``x`` an array of shape ``(n, k)``.
+
+    See Also
+    --------
+    arpack_max_ncv, arpack_ncv, start_vector
 
     """
     n = A.shape[0]
