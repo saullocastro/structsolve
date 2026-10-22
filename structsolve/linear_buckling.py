@@ -46,10 +46,11 @@ PARITY_REL_GAP = 1e-4
 #: multiplier is infinite up to the round-off, e.g. at the dofs where
 #: `[K_G]` is null
 NULL_MU_RTOL = 1e-12
-#: When no load multiplier of one sign is found, `[K] + s [K_G]` must be
-#: positive definite for `s` this factor divided by the largest `|\mu|`,
-#: with the sign of `s` of the missing load multipliers
-NO_MULTIPLIER_CHECK_FACTOR = 1e3
+#: The load multipliers of each sign are counted with the inertia of
+#: `[K] + s [K_G]` below the modulus `|s|`, this factor divided by the
+#: largest `|\mu|`, i.e. this factor times the lowest modulus that a load
+#: multiplier may have
+INERTIA_COUNT_FACTOR = 1e6
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -793,19 +794,22 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     return _sort_eigenpairs(mu, eigvecs)
 
 
-def _check_no_multiplier(K, KG, mu_max, sign, K_positive_definite):
-    r"""Check that no load multiplier of the given ``sign`` is lower in
-    modulus than ``NO_MULTIPLIER_CHECK_FACTOR/mu_max``, with the inertia of
-    `[K] + s [K_G]`, raising a ``RuntimeError`` otherwise"""
-    name = 'positive' if sign > 0 else 'negative'
+def _count_multipliers(K, KG, mu_max, sign, K_positive_definite):
+    r"""Number of load multipliers of the given ``sign`` whose modulus is
+    lower than ``INERTIA_COUNT_FACTOR/mu_max``, or ``None`` when unknown
+
+    By Sylvester's law of inertia, for a positive definite ``K``, the number
+    of negative pivots of `[K] + s [K_G]` is the number of load multipliers
+    in `(0, s)` for `s > 0`, and in `(s, 0)` for `s < 0`, see
+    :func:`_check_eigenpairs` and :func:`_negative_pivots`. ``None`` is
+    returned when ``mu_max`` is unknown, ``K`` is not positive definite, or
+    the count is unknown.
+
+    """
     if mu_max is None or not K_positive_definite(K):
-        raise RuntimeError('no {0} load multiplier was found and K is not '
-                           'positive definite'.format(name))
-    s = sign*NO_MULTIPLIER_CHECK_FACTOR/mu_max
-    if not _is_positive_definite(K + s*KG):
-        raise RuntimeError('no {0} load multiplier was found, but at least '
-                           'one exists with a modulus lower than {1:g}'
-                           .format(name, abs(s)))
+        return None
+    s = sign*INERTIA_COUNT_FACTOR/mu_max
+    return _negative_pivots(K + s*KG)
 
 
 def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
@@ -822,23 +826,28 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
     selects the eigenvalues `\mu` of `[K_G]\{u\} = \mu [K]\{u\}` by
     increasing `(\mu + \sigma)/(\mu - \sigma)`, i.e. all the negative
     `\mu` before the null and the positive ones, see :func:`_eigsh_cayley`.
+    ARPACK may not converge when fewer negative `\mu` exist than the number
+    of requested eigenvalues, the remaining ones being then in the cluster
+    of the null `\mu`, e.g. for a tensile reference load. The number of
+    requested eigenvalues of each sign is therefore limited by the number
+    of load multipliers of that sign, counted with the inertia of `[K] + s
+    [K_G]` below the modulus ``INERTIA_COUNT_FACTOR`` divided by the largest
+    `|\mu|`, see :func:`_count_multipliers`:
 
     1. ``KG`` gives the positive load multipliers `\lambda = -1/\mu`,
-       `\mu < 0`. The null `\mu`, see :func:`_null_mu`, and the positive
-       `\mu` are discarded.
-    2. When fewer than ``k`` positive load multipliers were found, they are
-       all the positive ones, and ``-KG``, i.e. the reversed load, gives the
-       remaining ones, the negative load multipliers closest to zero.
-    3. When no load multiplier of one sign was found, the inertia of `[K] +
-       s [K_G]` checks that none exists with a modulus lower than
-       ``NO_MULTIPLIER_CHECK_FACTOR`` divided by the largest `|\mu|`, see
-       :func:`_check_no_multiplier`; one of larger modulus, i.e. `|\mu|`
-       below ``1/NO_MULTIPLIER_CHECK_FACTOR`` of the largest one, could be
-       missed.
+       `\mu < 0`, at most as many as counted. The null `\mu`, see
+       :func:`_null_mu`, and the positive `\mu` are discarded.
+    2. When fewer than ``k`` positive load multipliers were found, ``-KG``,
+       i.e. the reversed load, gives the remaining ones, the negative load
+       multipliers closest to zero, at most as many as counted.
 
-    A tensile reference load, without any positive load multiplier, thus
-    gives the negative load multipliers closest to zero without a dense
-    solution.
+    When the counts are unknown, e.g. ``K`` is not positive definite, ``k``
+    eigenvalues are requested. A tensile reference load, without any
+    positive load multiplier, thus gives the negative load multipliers
+    closest to zero without a dense solution. The load multipliers whose
+    modulus is larger than the limit of the counts, i.e. `|\mu|` below
+    ``1/INERTIA_COUNT_FACTOR`` of the largest one, are only returned when
+    the counts are unknown.
 
     """
     if mu_max is False:
@@ -846,29 +855,35 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
     if K_positive_definite is None:
         K_positive_definite = _is_positive_definite
     kmax = min(k, K.shape[0] - 2)
-    mu, eigvecs = _eigsh_cayley(K, KG, kmax, tol, silent, safety=safety,
-                                mu_max=mu_max)
-    keep = (mu < 0) & ~_null_mu(mu, mu_max)
-    mu, eigvecs = mu[keep], eigvecs[:, keep]
-    msg('{0} positive load multipliers'.format(mu.size), level=4,
+    num_pos = _count_multipliers(K, KG, mu_max, 1, K_positive_definite)
+    msg('{0} positive load multipliers counted'.format(num_pos), level=4,
         silent=silent)
-    if mu.size >= kmax:
-        return mu[:kmax], eigvecs[:, :kmax]
-    if mu.size == 0:
-        _check_no_multiplier(K, KG, mu_max, 1, K_positive_definite)
+    mu = np.zeros(0)
+    eigvecs = np.zeros((K.shape[0], 0))
+    if num_pos != 0:
+        k1 = kmax if num_pos is None else min(kmax, num_pos)
+        mu, eigvecs = _eigsh_cayley(K, KG, k1, tol, silent, safety=safety,
+                                    mu_max=mu_max)
+        keep = (mu < 0) & ~_null_mu(mu, mu_max)
+        mu, eigvecs = mu[keep], eigvecs[:, keep]
+        if mu.size >= kmax:
+            return mu[:kmax], eigvecs[:, :kmax]
     # the reversed load
-    mu2, eigvecs2 = _eigsh_cayley(K, -KG, kmax - mu.size, tol, silent,
-                                  safety=safety, mu_max=mu_max)
-    keep2 = (mu2 < 0) & ~_null_mu(mu2, mu_max)
-    mu2, eigvecs2 = -mu2[keep2], eigvecs2[:, keep2]
-    msg('{0} negative load multipliers of the reversed load'.format(
-        mu2.size), level=4, silent=silent)
-    if mu2.size == 0:
-        if mu.size == 0:
-            raise RuntimeError('no finite load multiplier was found')
-        _check_no_multiplier(K, KG, mu_max, -1, K_positive_definite)
-    return (np.concatenate((mu, mu2)),
-            np.concatenate((eigvecs, eigvecs2), axis=1))
+    num_neg = _count_multipliers(K, -KG, mu_max, 1, K_positive_definite)
+    msg('{0} negative load multipliers counted'.format(num_neg), level=4,
+        silent=silent)
+    if num_neg != 0:
+        k2 = kmax - mu.size
+        if num_neg is not None:
+            k2 = min(k2, num_neg)
+        mu2, eigvecs2 = _eigsh_cayley(K, -KG, k2, tol, silent, safety=safety,
+                                      mu_max=mu_max)
+        keep2 = (mu2 < 0) & ~_null_mu(mu2, mu_max)
+        mu = np.concatenate((mu, -mu2[keep2]))
+        eigvecs = np.concatenate((eigvecs, eigvecs2[:, keep2]), axis=1)
+    if mu.size == 0:
+        raise RuntimeError('no finite load multiplier was found')
+    return mu, eigvecs
 
 
 def _check_both_signs(K, KG, mu, eigvecs, rtol, K_positive_definite=None):
@@ -1178,13 +1193,15 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
       :func:`_check_both_signs`.
 
     The Cayley mode selects all the negative `\mu`, i.e. the positive load
-    multipliers, before the null and the positive `\mu`. When fewer than
-    ``num_eigvalues`` positive load multipliers were found, they are all
-    the positive ones, and the Cayley mode with `-[K_G]` gives the negative
-    load multipliers closest to zero. When no load multiplier of one sign
-    was found, `[K] + s [K_G]` must be positive definite for `s` of that
-    sign and ``NO_MULTIPLIER_CHECK_FACTOR`` times larger in modulus than the
-    lowest possible load multiplier, see :func:`_eigsh_both_signs`.
+    multipliers, before the null and the positive `\mu`. The load
+    multipliers of each sign are first counted with the inertia of `[K] + s
+    [K_G]`, for `|s|` equal to ``INERTIA_COUNT_FACTOR`` times the lowest
+    modulus that a load multiplier may have, and at most as many are
+    requested, since ARPACK may not converge when it must return
+    eigenvalues of the cluster of the null `\mu`. When fewer than
+    ``num_eigvalues`` positive load multipliers exist, the Cayley mode with
+    `-[K_G]` gives the negative load multipliers closest to zero, see
+    :func:`_eigsh_both_signs`.
 
     **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a
     follower pressure that is not conservative, may have complex

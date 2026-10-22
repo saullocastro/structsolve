@@ -469,3 +469,36 @@ def test_lb_sparse_mixed_spectrum_coupled(ratio):
     np.testing.assert_allclose(eigvals, np.sort(lambdas[lambdas > 0])[:25],
                                rtol=1e-8)
     assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+
+
+def test_lb_reference_load():
+    """The load multipliers multiply the reference load of KG: a reference
+    load twice as large halves them, a constant preload belongs to K, and
+    the reversed, tensile, reference load gives the negative load
+    multipliers closest to zero, without the dense fallback. Plate of
+    panels under a uniaxial compression, saved in tests/data"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
+    K, KG = load_saved_matrices('plate_ssss_Nxx')
+    ref = np.array([157.5386, 226.3470, 232.5623])
+    eigvals, _ = lb(K, KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals[:3], ref, rtol=1e-5)
+    lambda_1 = eigvals[0]
+
+    # a reference load twice as large
+    eigvals2, _ = lb(K, 2*KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals2, eigvals/2, rtol=1e-8)
+
+    # a constant preload of 0.4 lambda_1 times the reference load
+    eigvals_pre, _ = lb(K + 0.4*lambda_1*KG, KG, silent=True,
+                        num_eigvalues=5)
+    np.testing.assert_allclose(eigvals_pre[0], 0.6*lambda_1, rtol=1e-8)
+
+    # the reversed reference load: no positive load multiplier
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        eigvals_rev, eigvecs_rev = lb(K, -KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals_rev, -eigvals, rtol=1e-8)
+    assert np.all(relative_residuals(K, -KG, eigvals_rev, eigvecs_rev)
+                  < 1e-3)

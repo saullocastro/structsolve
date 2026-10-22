@@ -14,9 +14,13 @@
   positive load multiplier, e.g. a tensile load, no longer needs the dense
   fallback. The infinite load multipliers, e.g. of the null rows of `KG`,
   come last, and the sparse solver of symmetric matrices does not return
-  them. New `linear_buckling._eigsh_both_signs`, `_check_both_signs`,
-  `_check_no_multiplier`, `_lb_order`, `_null_mu`, `NULL_MU_RTOL` and
-  `NO_MULTIPLIER_CHECK_FACTOR`.
+  them. The load multipliers of each sign are counted with the inertia of
+  `K + s KG` before requesting them from ARPACK, which does not converge
+  when it must return eigenvalues of the cluster of the null ones, e.g.
+  for the tensile reference load of a plate. New
+  `linear_buckling._eigsh_both_signs`, `_count_multipliers`,
+  `_check_both_signs`, `_lb_order`, `_null_mu`, `NULL_MU_RTOL` and
+  `INERTIA_COUNT_FACTOR`.
 - `freq(sort=True)`, the default, sorts and filters `lambda2` together with
   the eigenvectors, instead of the eigenvectors only, such that
   `eigvecs[:, i]` is always the eigenvector of `lambda2[i]`. The eigenpairs
