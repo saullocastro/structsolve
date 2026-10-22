@@ -17,7 +17,14 @@ Solver policy
   for every problem size, symmetric or unsymmetric. Every result is
   verified before it is returned: the relative residual of each eigenpair
   and, for symmetric matrices, the inertia of a shifted matrix, which tells
-  whether an eigenvalue was missed (Sylvester's law of inertia).
+  whether an eigenvalue was missed (Sylvester's law of inertia). The
+  residual `\|[K]\{u\} + \lambda [B]\{u\}\|` is relative to
+  `\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|`, with `[B] = [K_G]` or `[M]`,
+  but at least ``RESIDUAL_FLOOR`` `= 10^{-8}` times the matrix-norm scale
+  `(\|[K]\|_F + |\lambda| \, \|[B]\|_F)\|\{u\}\|`, such that the residual of
+  a rigid-body mode of :func:`.freq`, whose eigenvalue and `[K]\{u\}` are
+  both null up to the round-off, is meaningful, see
+  :func:`.linear_buckling._relative_residuals`.
 - When all the sparse solvers failed (verification, ARPACK error or no
   convergence, singular factorization, no positive real load multiplier
   for unsymmetric matrices...), a dense solver is used as a last resort, if

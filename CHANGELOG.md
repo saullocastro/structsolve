@@ -27,6 +27,12 @@
   with a natural frequency not larger than `1e-6` rad/s, e.g. rigid-body
   modes, are removed from both arrays, which may then have fewer than
   `num_eigvalues` entries.
+- `freq` and `lb`: the relative residual of the verification is at least
+  `linear_buckling.RESIDUAL_FLOOR = 1e-8` times the matrix-norm scale
+  `(||K||_F + |lambda| ||B||_F) ||u||` in its denominator, see
+  `linear_buckling._relative_residuals`. The rigid-body modes of `freq`,
+  whose relative residual was about 1, failed the verification of the
+  sparse solvers and of the dense fallback, raising a `RuntimeError`.
 
 ## 0.8.0 (2026-10-14)
 

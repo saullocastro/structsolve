@@ -93,14 +93,13 @@ def test_freq_lowest_frequencies(symmetric, num_eigvalues):
 def test_freq_sort(sparse_solver, symmetric):
     """sort=True sorts and filters the eigenvalues together with the
     eigenvectors: increasing natural frequencies, without the rigid-body
-    mode of the dense solvers"""
+    mode"""
     rng = np.random.RandomState(3)
     n = 12
     k = rng.permutation(np.arange(1, n + 1, dtype=float))*100
     K = np.diag(k)
-    if not sparse_solver:
-        # a free-free pair of springs: one rigid-body mode
-        K[:2, :2] = 50.*np.array([[1., -1.], [-1., 1.]])
+    # a free-free pair of springs: one rigid-body mode
+    K[:2, :2] = 50.*np.array([[1., -1.], [-1., 1.]])
     M = np.eye(n)
     K, M = csc_matrix(K), csc_matrix(M)
     lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=6, sort=True,
@@ -153,3 +152,34 @@ def test_freq_prestressed_plate():
     assert np.all(np.diff(omega2, axis=0) <= 1e-12*omega2[0, 0])
     # the lowest one vanishes linearly at the critical load multiplier
     np.testing.assert_allclose(omega2[-2, 0]/omega2[-1, 0], 10., rtol=1e-2)
+
+
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_freq_rigid_body_modes(symmetric):
+    """A free-free chain of springs has a rigid-body mode, lambda2 = 0 up to
+    the round-off, which passes the residual check of the sparse solvers
+    without the dense fallback, the matrix-norm floor of the relative
+    residual being meaningful when lambda2 vanishes"""
+    import warnings
+    from structsolve import DenseFallbackWarning
+    from structsolve.freq import _residuals
+
+    n = 30
+    K = 100.*(2*np.eye(n) - np.eye(n, k=1) - np.eye(n, k=-1))
+    K[0, 0] = K[-1, -1] = 100.
+    K, M = csc_matrix(K), csc_matrix(np.eye(n))
+    w2_ref = np.linalg.eigvalsh(K.toarray())
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
+                                symmetric=symmetric, sort=False,
+                                max_dense_size=0)
+    w2 = np.sort((-lambda2).real)
+    assert abs(w2[0]) <= 1e-10*w2_ref[1]
+    np.testing.assert_allclose(w2[1:], w2_ref[1:5], rtol=1e-8)
+    res = _residuals(K, M, lambda2, eigvecs)
+    assert np.all(res <= 1e-6)
+    # sort=True removes the rigid-body mode
+    lambda2_s, eigvecs_s = freq(K, M, silent=True, num_eigvalues=5,
+                                symmetric=symmetric)
+    assert lambda2_s.shape == (4,) and eigvecs_s.shape == (n, 4)

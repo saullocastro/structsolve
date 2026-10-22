@@ -14,7 +14,8 @@ from scipy.sparse.linalg import eigs, spsolve
 from scipy.linalg import eigh, LinAlgError
 
 from .arpackutils import capped_eigsh, release_memory, start_vector
-from .linear_buckling import (_eig_complex, _negative_pivots, _sparse_first,
+from .linear_buckling import (_eig_complex, _negative_pivots,
+                              _relative_residuals, _sparse_first,
                               is_symmetric)
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
@@ -42,17 +43,12 @@ def _estimate_sigma(K, M):
 
 def _residuals(K, M, lambda2, eigvecs):
     r"""Relative residuals `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2|
-    ||M u||)` of the finite eigenpairs"""
+    ||M u||)` of the finite eigenpairs, with the floor of the denominator
+    of :func:`.linear_buckling._relative_residuals`, which is meaningful
+    for the rigid-body modes, `\lambda^2 = 0` up to the round-off"""
+    lambda2 = np.asarray(lambda2)
     finite = np.isfinite(lambda2)
-    u = eigvecs[:, finite]
-    lam = lambda2[finite]
-    Ku = K @ u
-    Mu = M @ u
-    num = np.linalg.norm(Ku + Mu*lam, axis=0)
-    den = np.linalg.norm(Ku, axis=0) + np.abs(lam)*np.linalg.norm(Mu, axis=0)
-    out = np.zeros(num.shape)
-    np.divide(num, den, out=out, where=den > 0)
-    return out
+    return _relative_residuals(K, M, lambda2[finite], eigvecs[:, finite])
 
 
 def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
@@ -260,7 +256,12 @@ def freq(K, M, tol=0, sparse_solver=True,
         true for both matrices.
     check_rtol : float or None, optional
         Maximum relative residual of an eigenpair,
-        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`. A larger
+        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`, the
+        denominator being at least
+        ``linear_buckling.RESIDUAL_FLOOR`` times the matrix-norm scale
+        `(||K||_F + |\lambda^2| ||M||_F) ||u||`, such that the residual of a
+        rigid-body mode, `\lambda^2 = 0` up to the round-off, is meaningful,
+        see :func:`.linear_buckling._relative_residuals`. A larger
         residual of the sparse solver is a failed verification, see
         above. For ``sparse_solver=False``, a warning is issued. ``None``
         skips the check.

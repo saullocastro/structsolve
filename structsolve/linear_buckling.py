@@ -51,6 +51,9 @@ NULL_MU_RTOL = 1e-12
 #: largest `|\mu|`, i.e. this factor times the lowest modulus that a load
 #: multiplier may have
 INERTIA_COUNT_FACTOR = 1e6
+#: Floor of the scale of the relative residuals of the eigenpairs, as a
+#: fraction of the matrix-norm scale, see :func:`_relative_residuals`
+RESIDUAL_FLOOR = 1e-8
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -183,7 +186,8 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
 
     - The relative residual
       ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of every
-      eigenpair with a finite load multiplier ``lambda`` must not be larger
+      eigenpair with a finite load multiplier ``lambda``, with the floor of
+      the denominator of :func:`_relative_residuals`, must not be larger
       than ``rtol``.
     - With ``check_inertia=True``, only for symmetric matrices, and when
       ``K`` is positive definite: no positive load multiplier is missing
@@ -244,12 +248,7 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
         return 'no finite load multiplier was found'
     lam = eigvals[finite]
     u = eigvecs[:, finite]
-    Ku = K @ u
-    KGu = KG @ u
-    num = np.linalg.norm(Ku + KGu*lam, axis=0)
-    den = np.linalg.norm(Ku, axis=0) + np.abs(lam)*np.linalg.norm(KGu, axis=0)
-    residual = np.full(lam.shape, np.inf)
-    np.divide(num, den, out=residual, where=den > 0)
+    residual = _relative_residuals(K, KG, lam, u)
     if not np.all(residual <= rtol):
         i = np.argmax(np.nan_to_num(residual, nan=np.inf))
         return ('relative residual {0:.2e} > {1:.1e} for the load multiplier '
@@ -279,6 +278,52 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
             return ('at least one load multiplier lower than {0} is missing'
                     .format(positive.min()))
     return None
+
+
+def _frobenius(A):
+    """Frobenius norm of a dense or sparse matrix"""
+    data = A.data if hasattr(A, 'nnz') else np.asarray(A)
+    return float(np.sqrt(np.sum(np.abs(data)**2)))
+
+
+def _relative_residuals(A, B, lam, u):
+    r"""Relative residuals of the eigenpairs of `([A] + \lambda [B])\{u\}
+    = \{0\}`, used by :func:`_check_eigenpairs` and :func:`.freq`
+
+    .. math::
+
+        \frac{\|[A]\{u\} + \lambda [B]\{u\}\|}{\max\left(\|[A]\{u\}\|
+        + |\lambda| \, \|[B]\{u\}\|, \;
+        \epsilon_f (\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|\right)}
+
+    with `\epsilon_f` = ``RESIDUAL_FLOOR``, one value per column of ``u``.
+
+    Notes
+    -----
+    The first scale of the denominator compares the residual with the
+    terms of the eigenvalue problem for the eigenvector itself. For an
+    eigenvector in the null space of `[A]` with a null eigenvalue, e.g. a
+    rigid-body mode of :func:`.freq`, both the residual and this scale are
+    round-off errors, and their ratio is meaningless, of the order of 1.
+    The second scale, a fraction ``RESIDUAL_FLOOR`` of the matrix-norm scale
+    of the backward error `\|r\|/((\|[A]\| + |\lambda| \, \|[B]\|)
+    \|\{u\}\|)`, is then the reference. It does not change the check of the
+    other eigenpairs, whose first scale is larger, unless
+    `\|[A]\{u\}\| + |\lambda| \, \|[B]\{u\}\|` is smaller than
+    ``RESIDUAL_FLOOR`` times the matrix-norm scale.
+
+    """
+    Au = A @ u
+    Bu = B @ u
+    lam = np.asarray(lam)
+    num = np.linalg.norm(Au + Bu*lam, axis=0)
+    den = np.linalg.norm(Au, axis=0) + np.abs(lam)*np.linalg.norm(Bu, axis=0)
+    floor = RESIDUAL_FLOOR*(_frobenius(A) + np.abs(lam)*_frobenius(B)
+                            )*np.linalg.norm(u, axis=0)
+    den = np.maximum(den, floor)
+    residual = np.full(lam.shape, np.inf)
+    np.divide(num, den, out=residual, where=den > 0)
+    return residual
 
 
 def _null_mu(mu, scale=None):
@@ -1115,7 +1160,10 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     check_rtol : float, optional
         Maximum relative residual
         ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of the
-        eigenpairs of the sparse solver, see above.
+        eigenpairs of the sparse solver, see above. The denominator is at
+        least ``RESIDUAL_FLOOR`` times the matrix-norm scale
+        ``(||K||_F + |lambda| ||KG||_F) ||u||``, see
+        :func:`_relative_residuals`.
     symmetric : bool or None, optional
         Whether ``K`` and ``KG`` are symmetric. ``None`` checks it with
         :func:`is_symmetric`, ``True`` skips the check and uses the solvers
@@ -1179,7 +1227,9 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
     - the relative residual
       `||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)` of each
-      eigenpair must not be larger than ``check_rtol``;
+      eigenpair must not be larger than ``check_rtol``, the denominator
+      being at least ``RESIDUAL_FLOOR`` times the matrix-norm scale of the
+      backward error, see :func:`_relative_residuals`;
     - when ``K`` is positive definite, no load multiplier below the highest
       positive one returned may be missing: the number of negative pivots of
       `[K] + s [K_G]`, for `s` slightly below that multiplier, is the number
