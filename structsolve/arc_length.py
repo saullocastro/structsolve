@@ -86,7 +86,7 @@ def _solver_arc_length(an, method, silent=False):
     the arc length `\Delta s` independent of the units of the model. In the
     linear regime `\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda`, see
     [4]_ for the arc-length methods. `\psi` is the constant ``PSI``,
- and `\{u_{ref}\}^T\{u_{ref}\}` is
+    and `\{u_{ref}\}^T\{u_{ref}\}` is
     replaced by 1 when it is null. With the inner product
 
     .. math::
