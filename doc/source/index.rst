@@ -136,7 +136,7 @@ In BibTeX:
 
 .. code-block:: bibtex
 
-    @software{castro_structsolve,
+    @misc{castro_structsolve,
       author    = {Castro, Saullo G. P.},
       title     = {Structural analysis solvers tailored for semi-analytical
                    models},
