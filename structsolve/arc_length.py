@@ -172,10 +172,10 @@ def _solver_arc_length(an, method, silent=False):
     step that was repeated, and the limit is in fact
     ``max(an.maxInc, initial arc length)``. When a step fails, the arc length
     is multiplied by ``INC_CUT_FACTOR`` and the step is repeated from the
-    same tangent predictor direction.
-
-    TODO(author): is the rule ``sqrt(DESIRED_NUM_ITER/num_iter)`` to be
-    attributed to [2]_ or [3]_?
+    same tangent predictor direction. The square root of the ratio is the
+    rule recommended by Ramm [3]_ (p. 76), who found that the ratio itself,
+    as used by Crisfield [2]_ (Eq. 15), makes the number of iterations
+    oscillate from step to step.
 
     When the load factor 1.0 is exceeded within a converged step, from
     `\lambda < 1` to `\lambda + \Delta\lambda > 1`, the step is replaced by
@@ -216,13 +216,11 @@ def _solver_arc_length(an, method, silent=False):
        TODO(author): confirm this source
     .. [2] Crisfield, M.A., A fast incremental/iterative solution procedure
        that handles "snap-through", Computers & Structures, 13(1-3), 55-62,
-       1981.
-       TODO(author): confirm this source
+       1981. https://doi.org/10.1016/0045-7949(81)90108-5
     .. [3] Ramm, E., Strategies for tracing the nonlinear response near
        limit points, in: Wunderlich, W., Stein, E., Bathe, K.J. (eds.),
        Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
-       63-89, 1981.
-       TODO(author): confirm this source
+       63-89, 1981. https://doi.org/10.1007/978-3-642-81589-8_5
     .. [4] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
        Structures, Vol. 1: Essentials, Wiley, 1991.
        TODO(author): confirm this source
