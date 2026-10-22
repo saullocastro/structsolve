@@ -56,10 +56,10 @@ matrix ``KG`` of a reference load, see :doc:`lb_prestress`, or the tangent
 stiffness matrix of a non-linear analysis. A compressive prestress reduces
 the frequencies, and the lowest one vanishes at the buckling load.
 
-For the transverse modes of the pinned column of ``tests/column.py``, with
-lumped masses, the eigenvectors of ``K``, ``KG`` and ``M`` coincide and
-`\omega_k^2(\lambda) = \omega_k^2 (1 - \lambda/\lambda_k)`, with
-`\lambda_k` the load multipliers of :func:`.lb`:
+For the plate of `panels <https://github.com/saullocastro/panels>`_ saved in
+``tests/data``, with a lumped mass matrix, the frequencies decrease under a
+compressive prestress and the lowest one vanishes at the critical load
+multiplier of :func:`.lb`:
 
-.. literalinclude:: ../../tests/test_column.py
-    :pyobject: test_freq_prestressed_column
+.. literalinclude:: ../../tests/test_freq.py
+    :pyobject: test_freq_prestressed_plate

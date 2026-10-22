@@ -68,18 +68,14 @@ from zero add a particular solution, `\{c\} = [T]\{c_r\} + \{c_p\}`, see
 Example
 -------
 
-The pinned column of ``tests/column.py``, discretized with finite
-differences, has axial and transverse dofs and the constraints `u_0 = w_0 =
-w_N = 0`:
+The chain of hardening springs of ``tests/analytic_problems.py``, see
+:doc:`ex_newton_raphson`, with its free end constrained to zero:
 
-.. literalinclude:: ../../tests/column.py
-    :pyobject: Column
+.. literalinclude:: ../../tests/analytic_problems.py
+    :pyobject: hardening_springs
 
-.. literalinclude:: ../../tests/column.py
-    :pyobject: apply_null_rows
+The three forms give the same static solution, natural frequencies and
+modes, the first one with the size of the model:
 
-The three forms give the same load multipliers and the same buckling modes,
-the first one with the size of the model:
-
-.. literalinclude:: ../../tests/test_column.py
-    :pyobject: test_null_rows_free_partition_and_null_space
+.. literalinclude:: ../../tests/test_static.py
+    :pyobject: test_boundary_conditions_three_ways

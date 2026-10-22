@@ -40,7 +40,7 @@ Negative and complex load multipliers
 -------------------------------------
 
 A negative `\lambda` is a buckling load of the reversed reference load,
-e.g. a column under tension buckles only under the opposite, compressive,
+e.g. a plate under tension buckles only under the opposite, compressive,
 load. :func:`.lb` returns the positive load multipliers first, in
 increasing order, followed, when fewer than ``num_eigvalues`` positive ones
 exist, by the negative load multipliers closest to zero, i.e. the critical
@@ -58,16 +58,21 @@ positive real load multiplier, see :doc:`ex_follower_loads`.
 Example
 -------
 
-The pinned column of :doc:`boundary_conditions`, ``tests/column.py``, under
-a compressive reference load, with and without a constant preload:
+The plate of `panels <https://github.com/saullocastro/panels>`_ under a
+uniaxial compression, whose matrices ``K`` and ``KG`` are saved in
+``tests/data``: a reference load twice as large, a constant preload, and the
+reversed, tensile, reference load, which has only negative load
+multipliers:
 
-.. literalinclude:: ../../tests/test_column.py
-    :pyobject: test_lb_prestress
+.. literalinclude:: ../../tests/test_linear_buckling.py
+    :pyobject: test_lb_reference_load
 
-Under a tensile reference load all the load multipliers are negative, and
-the critical ones of the reversed load are returned:
+The negative load multipliers closest to zero after the positive ones, for
+the sparse and the dense solvers:
 
-.. literalinclude:: ../../tests/test_column.py
-    :pyobject: test_lb_reversed_load
+.. literalinclude:: ../../tests/test_linear_buckling.py
+    :pyobject: test_lb_negative_multipliers_closest_to_zero
 
-A complete Ritz model of a plate is in :doc:`ex_linear_buckling`.
+A complete Ritz model of a plate, in which the geometric stiffness matrix
+is integrated from the stress resultants of the reference load, is in
+:doc:`ex_linear_buckling`.

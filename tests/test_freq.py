@@ -117,3 +117,39 @@ def test_freq_sort(sparse_solver, symmetric):
     # each eigenvalue with its eigenvector
     res = np.linalg.norm(K @ eigvecs + (M @ eigvecs)*lambda2, axis=0)
     assert np.all(res <= 1e-6*np.linalg.norm(K @ eigvecs, axis=0))
+
+
+def test_freq_prestressed_plate():
+    """Natural frequencies of the plate of panels saved in tests/data, with
+    a lumped mass matrix, under a compressive prestress lam*KG: they
+    decrease with lam, and the lowest one vanishes linearly at the critical
+    load multiplier of lb"""
+    import os
+    from scipy.sparse import diags, load_npz
+    from structsolve import lb
+
+    data = os.path.join(os.path.dirname(__file__), 'data')
+    K = load_npz(os.path.join(data, 'plate_ssss_Nxx_K.npz')).tocsr()
+    KG = load_npz(os.path.join(data, 'plate_ssss_Nxx_KG.npz')).tocsr()
+    rng = np.random.RandomState(3)
+    M = diags(1. + rng.rand(K.shape[0])).tocsr()
+    # uniaxial compression: KG is negative semi-definite
+    assert np.linalg.eigvalsh(KG.toarray()).max() <= 1e-10*abs(KG).max()
+    lambda_1 = lb(K, KG, silent=True, sparse_solver=False)[0][0]
+
+    omega2 = []
+    for frac in [0., 0.5, 0.9, 1 - 1e-6, 1 - 1e-7]:
+        lambda2, eigvecs = freq(K + frac*lambda_1*KG, M, silent=True,
+                                num_eigvalues=5, symmetric=True)
+        omega = np.sqrt(-lambda2)        # rad/s
+        f_Hz = omega/(2*np.pi)           # Hz
+        assert np.all(np.diff(f_Hz) >= 0)
+        # symmetric=True: eigenvectors normalized with respect to M
+        np.testing.assert_allclose(eigvecs.T @ M @ eigvecs, np.eye(5),
+                                   atol=1e-8)
+        omega2.append(omega**2)
+    omega2 = np.array(omega2)
+    # the frequencies decrease with the compressive prestress
+    assert np.all(np.diff(omega2, axis=0) <= 1e-12*omega2[0, 0])
+    # the lowest one vanishes linearly at the critical load multiplier
+    np.testing.assert_allclose(omega2[-2, 0]/omega2[-1, 0], 10., rtol=1e-2)
