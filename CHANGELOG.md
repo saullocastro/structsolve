@@ -62,9 +62,9 @@
   solver. A double eigenvalue returned with a round-off difference in an
   order that depends on the LAPACK build, e.g. `omega_n**2 = 100` by the
   dense `eig()` with OpenBLAS, is returned in increasing order whatever
-  the order of the solver. `omega_n**2` breaks the ties of `omega_n` after the square root,
-  e.g. of `100` and `100` minus one unit in the last place, both
-  `omega_n = 10.0`.
+  the order of the solver. `omega_n**2` breaks the ties of `omega_n`
+  after the square root, e.g. of `100` and `100` minus one unit in the
+  last place, both `omega_n = 10.0`.
 - `freq` and `lb`: the relative residual of the verification is at least
   `linear_buckling.RESIDUAL_FLOOR = 1e-8` times the matrix-norm scale
   `(||K||_F + |lambda| ||B||_F) ||u||` in its denominator, see
