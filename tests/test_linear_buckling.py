@@ -163,6 +163,33 @@ def test_lb_check_eigenpairs():
     assert 'missing' in error
 
 
+def test_lb_repeated_load_multipliers():
+    """Two equal critical load multipliers: the sparse and the dense solvers
+    agree on the load multipliers and on the eigenspace of the pair, but
+    not necessarily on the individual eigenvectors, any basis of the
+    eigenspace being valid. With num_eigvalues=1 only one of them is
+    returned"""
+    from scipy.linalg import subspace_angles
+
+    K, KG = load_saved_matrices('cylinder_5panels')
+    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=4)
+    eig_dense, eigvecs_dense = lb(K, KG, silent=True, sparse_solver=False,
+                                  num_eigvalues=4)
+    np.testing.assert_allclose(eigvals, eig_dense[:4], rtol=1e-7)
+    np.testing.assert_allclose(eigvals[0], eigvals[1], rtol=1e-7)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-3)
+    # same eigenspace of the pair
+    assert subspace_angles(eigvecs[:, :2], eigvecs_dense[:, :2]).max() < 1e-4
+    # the individual eigenvectors of both solvers are equally valid
+    assert np.all(relative_residuals(K, KG, eig_dense[:2],
+                                     eigvecs_dense[:, :2]) < 1e-8)
+
+    eigvals1, eigvecs1 = lb(K, KG, silent=True, num_eigvalues=1)
+    assert eigvals1.shape == (1,)
+    assert eigvecs1.shape == (K.shape[0], 1)
+    np.testing.assert_allclose(eigvals1[0], eigvals[0], rtol=1e-7)
+
+
 def test_lb_sparse_raises_when_verification_fails(monkeypatch):
     """A RuntimeError is raised instead of returning wrong eigenpairs"""
     import structsolve.linear_buckling as linear_buckling
