@@ -232,10 +232,17 @@ def freq(K, M, tol=0, sparse_solver=True,
         natural frequency, keeping only those with a natural frequency
         larger than ``1e-6`` rad/s, e.g. without the rigid-body modes. The
         sort key is the real part of `\omega_n = \sqrt{-\lambda^2}` rounded
-        to one decimal, then its imaginary part rounded to one decimal, the
-        order of the solver being kept between equal keys. With ``False``
+        to one decimal, then its imaginary part rounded to one decimal, then,
+        between equal rounded keys, the exact real and imaginary parts of
+        `\omega_n`, then those of `\omega_n^2 = -\lambda^2`, which separate
+        two `\omega_n^2` differing at the round-off that have the same
+        `\omega_n` after the square root. Only identical eigenvalues keep
+        the order of the solver, such that a multiple eigenvalue returned
+        with round-off differences, in an order that may depend on the
+        LAPACK build, is sorted by increasing exact value. With ``False``
         the eigenpairs are returned in the order of the solver. Until
-        version 0.8.0, only the eigenvectors were sorted and filtered.
+        version 0.8.0, only the eigenvectors were sorted and filtered, and
+        the eigenpairs with equal rounded keys kept the order of the solver.
     num_eigvalues : int, optional
         Number of calculated eigenvalues with the sparse solver, limited to
         the size of ``M`` minus 2.
@@ -427,8 +434,17 @@ def freq(K, M, tol=0, sparse_solver=True,
     if sort:
         #NOTE complex square root, a positive real lambda2 (divergence) has
         #     an imaginary natural frequency and is filtered out
-        omegan = np.sqrt(-np.asarray(lambda2, dtype=complex))
-        sort_ind = np.lexsort((np.round(omegan.imag, 1),
+        omegan2 = -np.asarray(lambda2, dtype=complex)
+        omegan = np.sqrt(omegan2)
+        #NOTE np.lexsort: the last key is the primary one. The exact
+        #     omega_n, then the exact omega_n**2, break the ties of the
+        #     rounded keys, e.g. a double eigenvalue returned with a
+        #     round-off difference in an order that depends on the LAPACK
+        #     build. omega_n**2 = 100 and 100 minus one unit in the last
+        #     place have the same omega_n = 10.0 after the square root
+        sort_ind = np.lexsort((omegan2.imag, omegan2.real,
+                               omegan.imag, omegan.real,
+                               np.round(omegan.imag, 1),
                                np.round(omegan.real, 1)))
         omegan = omegan[sort_ind]
         higher_zero = omegan.real > 1e-6

@@ -107,11 +107,12 @@ def test_freq_sort(sparse_solver, symmetric):
     omega2 = (-lambda2).real
     assert lambda2.shape[0] == eigvecs.shape[1]
     assert np.all(omega2 > 1e-6)
-    # increasing sort key of the docstring, omega_n rounded to one decimal:
-    # the double eigenvalue omega2 = 100, of the springs and of k = 100,
-    # keeps the order of the solver, which differs at the round-off between
-    # LAPACK builds
-    assert np.all(np.diff(np.round(np.sqrt(omega2), 1)) >= 0)
+    # exactly non-decreasing, which implies the non-decreasing rounded
+    # omega_n of the primary sort key: the double eigenvalue omega2 = 100,
+    # of the springs and of k = 100, which the dense eig() returns with a
+    # round-off difference in an order depending on the LAPACK build, is
+    # ordered by the exact tie-break of the sort key
+    assert np.all(np.diff(omega2) >= 0)
     lambda2_u, _ = freq(K, M, silent=True, num_eigvalues=6, sort=False,
                         sparse_solver=sparse_solver, symmetric=symmetric)
     w2_u = np.sort((-lambda2_u).real)
@@ -120,6 +121,43 @@ def test_freq_sort(sparse_solver, symmetric):
     # each eigenvalue with its eigenvector
     res = np.linalg.norm(K @ eigvecs + (M @ eigvecs)*lambda2, axis=0)
     assert np.all(res <= 1e-6*np.linalg.norm(K @ eigvecs, axis=0))
+
+
+@pytest.mark.parametrize('w2_tie', [(100.0001, 100.),
+                                    (100., np.nextafter(100., 0.))])
+def test_freq_sort_tie(monkeypatch, w2_tie):
+    """Eigenpairs with the same rounded sort key are returned by increasing
+    exact natural frequency, not in the order of the solver: the solver is
+    replaced by one returning the tied pair of omega2 ``w2_tie`` in
+    decreasing order. With 100 and the omega2 one unit in the last place
+    below it, the double eigenvalue returned by the dense eig() with
+    OpenBLAS, both omega_n are 10.0 after the square root, and the tie is
+    broken by the exact omega2"""
+    import importlib
+    freq_module = importlib.import_module('structsolve.freq')
+    w2 = np.array([400., w2_tie[0], w2_tie[1], 900.])
+    K = csc_matrix(np.diag(w2))
+    M = csc_matrix(np.eye(w2.size))
+
+    def eig_decreasing_tie(a, b):
+        # eigenvalues 1/omega2 of M u = (1/omega2) K u, in the order of w2
+        return 1./w2.astype(complex), np.eye(w2.size, dtype=complex)
+
+    monkeypatch.setattr(freq_module, '_eig_complex', eig_decreasing_tie)
+    lambda2_u, _ = freq(K, M, silent=True, sort=False, sparse_solver=False,
+                        symmetric=False)
+    w2_u = (-lambda2_u).real
+    # the solver order has the tie in decreasing order of omega2
+    assert w2_u[1] > w2_u[2]
+    assert np.round(np.sqrt(w2_u[1]), 1) == np.round(np.sqrt(w2_u[2]), 1)
+    lambda2, eigvecs = freq(K, M, silent=True, sort=True,
+                            sparse_solver=False, symmetric=False)
+    omega2 = (-lambda2).real
+    assert np.all(np.diff(omega2) > 0)
+    np.testing.assert_array_equal(omega2, np.sort(w2_u))
+    # each eigenvalue with its eigenvector, e_i for omega2 = w2[i]
+    np.testing.assert_array_equal(np.argmax(np.abs(eigvecs), axis=0),
+                                  np.argsort(w2, kind='stable'))
 
 
 def test_freq_prestressed_plate():

@@ -55,6 +55,16 @@
   with a natural frequency not larger than `1e-6` rad/s, e.g. rigid-body
   modes, are removed from both arrays, which may then have fewer than
   `num_eigvalues` entries.
+- `freq(sort=True)`: the eigenpairs with the same rounded sort key, the
+  real then the imaginary part of `omega_n` rounded to one decimal, are
+  sorted by the exact `omega_n`, real then imaginary part, then by the
+  exact `omega_n**2 = -lambda2`, instead of keeping the order of the
+  solver. A double eigenvalue returned with a round-off difference in an
+  order that depends on the LAPACK build, e.g. `omega_n**2 = 100` by the
+  dense `eig()` with OpenBLAS, is returned in increasing order whatever
+  the order of the solver. `omega_n**2` breaks the ties of `omega_n` after the square root,
+  e.g. of `100` and `100` minus one unit in the last place, both
+  `omega_n = 10.0`.
 - `freq` and `lb`: the relative residual of the verification is at least
   `linear_buckling.RESIDUAL_FLOOR = 1e-8` times the matrix-norm scale
   `(||K||_F + |lambda| ||B||_F) ||u||` in its denominator, see
