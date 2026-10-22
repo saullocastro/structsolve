@@ -106,8 +106,12 @@ def test_freq_sort(sparse_solver, symmetric):
                             sparse_solver=sparse_solver, symmetric=symmetric)
     omega2 = (-lambda2).real
     assert lambda2.shape[0] == eigvecs.shape[1]
-    assert np.all(np.diff(omega2) >= 0)
     assert np.all(omega2 > 1e-6)
+    # increasing sort key of the docstring, omega_n rounded to one decimal:
+    # the double eigenvalue omega2 = 100, of the springs and of k = 100,
+    # keeps the order of the solver, which differs at the round-off between
+    # LAPACK builds
+    assert np.all(np.diff(np.round(np.sqrt(omega2), 1)) >= 0)
     lambda2_u, _ = freq(K, M, silent=True, num_eigvalues=6, sort=False,
                         sparse_solver=sparse_solver, symmetric=symmetric)
     w2_u = np.sort((-lambda2_u).real)
