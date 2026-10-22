@@ -147,3 +147,89 @@ def test_nr_non_monotonic_residual_is_not_divergence():
     # the residual did increase after the third iteration
     Rs = [abs(8. - p.fint(c)[0]) for _, c in p.fint_calls]
     assert any(Rs[i] > Rs[i-1] for i in range(3, len(Rs)))
+
+
+def tangent_error(p, c, eps=1e-6):
+    """Relative difference between the tangent stiffness matrix of the
+    callables and the central finite differences of ``calc_fint`` at ``c``"""
+    an = p.analysis()
+    kT = (an.calc_kC(c, NLgeom=True) + an.calc_kG(c, NLgeom=True)).toarray()
+    kT_fd = np.zeros_like(kT)
+    for j in range(c.size):
+        dc = np.zeros_like(c)
+        dc[j] = eps*max(1., abs(c[j]))
+        kT_fd[:, j] = (p.fint(c + dc) - p.fint(c - dc))/(2*dc[j])
+    return np.linalg.norm(kT - kT_fd)/np.linalg.norm(kT_fd)
+
+
+def test_tangent_consistency_finite_differences():
+    """The tangent stiffness matrix must be the derivative of the internal
+    force vector, which a finite-difference check verifies at any
+    configuration"""
+    c = np.array([0.1, -0.2, 0.3, 0.5])
+    assert tangent_error(hardening_springs(), c) < 1e-8
+    assert tangent_error(von_mises_truss(), c[:2]) < 1e-8
+    # without kG the tangent is inconsistent
+    p = hardening_springs()
+    p.kG = lambda u: np.zeros((4, 4))
+    assert tangent_error(p, c) > 1e-2
+
+
+def test_inconsistent_tangent_converges_linearly():
+    """An inconsistent tangent stiffness matrix converges linearly, with many
+    more iterations per step, and here not at all at the higher load
+    factors: the analysis stops before the load factor 1.0"""
+    p = hardening_springs()
+    p.analysis(initialInc=0.1)
+    p.an.static(NLgeom=True, silent=True)
+    check_increments_and_equilibrium(p)
+    assert max(p.calls_per_step()) <= 5
+
+    q = hardening_springs()
+    ref = q.solve_reference(lbd=0.1)
+    q.kG = lambda u: np.zeros((4, 4))
+    q.analysis(initialInc=0.1)
+    q.an.static(NLgeom=True, silent=True)
+    assert q.an.increments[-1] < 1.
+    assert max(q.calls_per_step()) > 20
+    # the first attempt, at the load factor 0.1, stops after maxNumIter
+    # corrections without reaching relTOL, the step is then cut
+    assert q.an.increments[0] < 0.1
+    errors = [np.linalg.norm(c - ref)/np.linalg.norm(ref)
+              for _, c in q.fint_calls[:q.an.maxNumIter]]
+    orders = convergence_orders(errors)
+    assert len(orders) >= 1
+    assert max(orders) < 1.2, orders
+
+
+def test_nr_unreachable_tolerance_stops_without_increments():
+    """A tolerance below the round-off cannot be met: every step is cut
+    until the increment is smaller than minInc, and no increment is
+    stored"""
+    p = hardening_springs()
+    p.analysis(relTOL=1e-20)
+    p.an.static(NLgeom=True, silent=True)
+    assert p.an.increments == []
+    assert p.an.cs == []
+
+
+def test_nr_jumps_over_limit_point():
+    """Beyond the limit load, load control converges to another branch of
+    the equilibrium path: the run finishes at the load factor 1.0, with a
+    jump of the solution that the arc-length methods do not have"""
+    p = von_mises_truss(frac=1.5)
+    p.analysis(initialInc=0.05)
+    p.an.static(NLgeom=True, silent=True)
+    check_increments_and_equilibrium(p)
+    w = np.array([c[0] for c in p.an.cs])
+    assert np.diff(w).max() > 1.
+    # the same final state as the arc-length methods, on the inverted
+    # configuration
+    assert w[-1] > 2.
+
+    q = von_mises_truss(frac=1.5)
+    q.analysis(NL_method='arc_length_riks', initialInc=0.05)
+    q.an.static(NLgeom=True, silent=True)
+    wq = np.array([c[0] for c in q.an.cs])
+    assert np.diff(wq).max() < 0.5
+    np.testing.assert_allclose(p.an.cs[-1], q.an.cs[-1], rtol=1e-5)
