@@ -244,8 +244,9 @@ def test_lb_sparse_singular_K():
 def test_lb_plate_buckling_fsdt():
     """Test plate buckling (FSDT) based on semi-analytical Ritz method.
 
-    Reference: notebook BucklingPlates-FSDT.ipynb from the buckling repository.
     Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.
+    Compares the critical load with the classical solution ``4*pi**2*D/b**2``,
+    with a relative tolerance of 2 %.
     """
     from scipy.special import roots_legendre
 

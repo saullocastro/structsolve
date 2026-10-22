@@ -8,9 +8,8 @@ The function :func:`.lb` solves the linear buckling eigenvalue problem
 The example below calculates the critical load of a simply supported
 isotropic plate under uniaxial compression, using a Ritz model based on the
 first-order shear deformation theory (FSDT). The approximation functions are
-the hierarchical Legendre functions of Bardell, the same as those of
-`buckling <https://github.com/saullocastro/buckling>`_, and the plate
-stiffnesses are those of
+the hierarchical Legendre functions of Bardell, and the plate stiffnesses
+are those of
 `composites <https://github.com/saullocastro/composites>`_; both are
 implemented with NumPy in the module ``tests/ritz.py``:
 

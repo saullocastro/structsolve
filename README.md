@@ -21,9 +21,8 @@ Structural analysis solvers tailored for semi-analytical models
 - Load vectors that depend on the load factor, e.g. prescribed displacements
   imposed exactly as linear constraints
 
-Currently these solvers are pretty much compatible with my other repositories
-[panels](https://github.com/saullocastro/panels), 
-[buckling](https://github.com/saullocastro/buckling).
+Currently these solvers are pretty much compatible with my other repository
+[panels](https://github.com/saullocastro/panels).
 
 
 Citing this library
