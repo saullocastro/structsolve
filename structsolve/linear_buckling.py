@@ -166,13 +166,36 @@ def _lu_solve(lu, b):
 
 def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
                       check_inertia=True, K_positive_definite=None):
-    r"""Verify the eigenpairs of `([K] + \lambda [K_G])\{u\} = \{0\}`
+    r"""Verify the eigenpairs of ``(K + lambda*KG) @ u = 0``
+
 
     The eigenpairs may be real or complex.
 
     - The relative residual
-      `||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)` of every
-      eigenpair with a finite `\lambda` must not be larger than ``rtol``.
+      ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of every
+      eigenpair with a finite load multiplier ``lambda`` must not be larger
+      than ``rtol``.
+    - With ``check_inertia=True``, only for symmetric matrices, and when
+      ``K`` is positive definite: no positive load multiplier is missing
+      below the highest positive one of ``eigvals``, checked with the
+      number of negative pivots of ``K + s KG`` for ``s`` slightly lower,
+      by the relative gap ``min_rel_gap``. When this count
+      is unknown, see :func:`_negative_pivots`, the weaker check that no
+      load multiplier is missing below the lowest positive one is done. The
+      complex load multipliers are then ignored. Missing negative load
+      multipliers are not detected.
+
+    Whether ``K`` is positive definite may be given as
+    ``K_positive_definite``, a boolean or a function returning it, e.g. to
+    verify several solutions with one factorization of ``K``.
+
+    Returns
+    -------
+    error : str or None
+        Description of the failed check, ``None`` when all checks passed.
+
+    Notes
+    -----
     - No load multiplier is missing below the highest positive `\lambda_n`
       of ``eigvals``: when ``K`` is positive definite, the number of
       negative pivots of `[K] + s [K_G]` with
@@ -185,16 +208,26 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
       symmetric matrices, ``check_inertia=True``, the complex `\lambda` are
       ignored. Missing negative load multipliers are not detected.
 
-    Whether ``K`` is positive definite may be given as
-    ``K_positive_definite``, a boolean or a function returning it, e.g. to
-    verify several solutions with one factorization of ``K``.
+    For symmetric `[K]` and `[K_G]` with a positive definite `[K]`,
+    `[K] + s [K_G]` is congruent to `[I] + s [K]^{-1/2}[K_G][K]^{-1/2}`,
+    whose eigenvalues are `1 + s \mu_i = 1 - s/\lambda_i`, with `\mu_i =
+    -1/\lambda_i` the eigenvalues of `[K_G]\{u\} = \mu [K]\{u\}`. For
+    `s > 0`, `1 - s/\lambda_i < 0` exactly when `0 < \lambda_i < s`, hence
+    the number of negative eigenvalues of `[K] + s [K_G]`, equal to its
+    number of negative pivots by Sylvester's law of inertia, is the number
+    of load multipliers in `(0, s)`. This is the Sturm sequence check of
+    the eigenvalue solvers of structural analysis [1]_. When only one
+    positive load multiplier was returned, none is expected in `(0, s)` and
+    the weaker check is done. The gap ``min_rel_gap`` keeps `s` away from
+    `\lambda_n`, where `[K] + s [K_G]` is singular.
 
-    Returns
-    -------
-    error : str or None
-        Description of the failed check, ``None`` when all checks passed.
+    References
+    ----------
+    .. [1] Bathe, K.J., Finite Element Procedures, Prentice Hall, 1996.
+       TODO(author): confirm this source
 
     """
+
     eigvals = np.asarray(eigvals)
     finite = np.isfinite(eigvals)
     if not np.any(finite):
@@ -545,6 +578,30 @@ def _eigs_shift_search(K, KG, k, tol, check_rtol, silent):
     r"""Lowest positive real load multiplier of unsymmetric matrices, with a
     search of shifts along the positive real axis
 
+    At each shift, :func:`_eigs_shifted` finds the ``k`` load multipliers
+    nearest the shift, ``k`` being at least
+    :data:`SHIFT_SEARCH_MIN_EIGVALUES` and at most the size minus 2, and
+    their residuals are verified with :func:`_check_eigenpairs` and
+    ``check_inertia=False``. The shift moves along the positive real axis
+    until no positive real load multiplier lower than the lowest one found
+    can have been missed, at most :data:`SHIFT_SEARCH_MAX_STEPS` times, and
+    a parity check of the signs of determinants confirms the result.
+
+    Returns
+    -------
+    mu, eigvecs : ndarray
+        The eigenpairs of the step that found `\lambda_{cr}`, i.e. the ``k``
+        multipliers nearest its shift, sorted by :func:`_general_eigenpairs`
+        with `\lambda_{cr}` first.
+
+    Raises
+    ------
+    RuntimeError
+        When ``K`` is singular, a verification failed, no positive real load
+        multiplier was found, or the parity check failed.
+
+    Notes
+    -----
     The eigenvalue solver :func:`scipy.sparse.linalg.eigs` finds the load
     multipliers of smallest modulus, see :func:`_eigs_shifted` with
     `s = 0`, but with follower loads many negative or complex multipliers
@@ -573,18 +630,13 @@ def _eigs_shift_search(K, KG, k, tol, check_rtol, silent):
        SuperLU factorizations, see :func:`_det_sign`. This check cannot
        detect two missing real multipliers, nor a missing complex pair.
 
-    Returns
-    -------
-    mu, eigvecs : ndarray
-        The eigenpairs of the step that found `\lambda_{cr}`, i.e. the ``k``
-        multipliers nearest its shift, sorted by :func:`_general_eigenpairs`
-        with `\lambda_{cr}` first.
-
-    Raises
-    ------
-    RuntimeError
-        When ``K`` is singular, a verification failed, no positive real load
-        multiplier was found, or the parity check failed.
+    The parity check follows from `\det([K] + s [K_G]) = \det [K]
+    \prod_i (1 + s \mu_i)`, with `\mu_i = -1/\lambda_i` the eigenvalues of
+    `[K]^{-1}[K_G]`: a complex conjugate pair gives the positive factor
+    `|1 + s \mu_i|^2`, a null `\mu_i` the factor 1, and a real `\mu_i` a
+    negative factor exactly when `0 < \lambda_i < s`. The sign of the
+    determinant therefore changes with the parity of the number of real
+    load multipliers in `(0, s)`.
 
     """
     K = csc_matrix(K)
@@ -661,8 +713,32 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     ``safety`` factor, from the estimate ``mu_max`` of
     :func:`_estimate_mu_max` when given. ARPACK's ``ncv`` is chosen by
     :func:`.arpackutils.capped_eigsh`, which avoids the Intel MKL bug.
+    Returns the ``min(k, n - 2)`` eigenvalues ``mu`` of ``KG u = mu K u``
+    selected by the Cayley mode and their eigenvectors, sorted by
+    increasing ``mu``, see :func:`_sort_eigenpairs`.
+
+    Notes
+    -----
+    :func:`scipy.sparse.linalg.eigsh` solves `[K_G]\{u\} = \mu [K]\{u\}`,
+    with `\mu = -1/\lambda`, which requires symmetric matrices and a
+    positive definite `[K]`. In the Cayley mode, ARPACK computes the
+    eigenvalues `(\mu + \sigma)/(\mu - \sigma)` of the operator
+    `([K_G] - \sigma [K])^{-1}([K_G] + \sigma [K])` [1]_, and ``which='SM'``
+    selects those of smallest modulus. When `\sigma` is larger than `|\mu|`
+    of all the eigenvalues, `(\mu + \sigma)/(\mu - \sigma)` increases in
+    modulus with `\mu` in `(-\sigma, \sigma)`, such that the most negative
+    `\mu`, i.e. the lowest positive load multipliers, are selected, see
+    :func:`_estimate_sigma`.
+
+    References
+    ----------
+    .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
+       Solution of Large-Scale Eigenvalue Problems with Implicitly
+       Restarted Arnoldi Methods, SIAM, 1998.
+       TODO(author): confirm this source
 
     """
+
     sigma = _estimate_sigma(K, KG, safety=safety, mu_max=mu_max)
     msg('sigma={0}'.format(sigma), level=4, silent=silent)
     k = min(k, K.shape[0] - 2)
@@ -763,18 +839,63 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        symmetric=None):
     r"""Linear buckling analysis
 
-    Calculates the eigenvalues `\lambda` and eigenvectors `\{u\}` of the
-    eigenvalue problem:
+    Calculates the load multipliers ``lambda`` and the buckling modes ``u``
+    of the linear buckling problem of ``K`` and ``KG``, i.e. the eigenpairs
+    with ``(K + lambda*KG) @ u = 0``, where ``lambda`` is the load
+    multiplier of the load state that generated ``KG``. It can also be used
+    for more general eigenvalue analyses, e.g. if ``K`` is the tangent
+    stiffness matrix of a given load state. The null rows and columns of
+    ``K`` are removed from both matrices before solving the eigenvalue
+    problem, unless ``skip_null_cols=True``.
 
-    .. math::
+    **Solver policy.** With ``sparse_solver=True`` the sparse solvers run
+    first for every problem size, in the order given below, and each result
+    must pass the verification: the relative residual of each eigenpair
+    must not be larger than ``check_rtol`` and, for symmetric matrices with
+    a positive definite ``K``, no positive load multiplier below the highest
+    one returned may be missing, see :func:`_check_eigenpairs`. Only when
+    all of them failed (verification, ARPACK error or no convergence,
+    singular factorization, no positive real load multiplier...) a dense
+    solver is used, if the dense problem has at most ``max_dense_size``
+    dofs, with a :class:`DenseFallbackWarning` that gives the reasons of the
+    failures. Its result is verified as well. A ``RuntimeError`` listing
+    every attempted solver is raised when the problem is too large for the
+    dense fallback, or when the dense solution also failed.
 
-        ([K] + \lambda [K_G])\{u\} = \{0\}
+    **Symmetric matrices.** The sparse solvers are:
 
-    where `\lambda` is the load multiplier of the load state that generated
-    `[K_G]`. It can also be used for more general eigenvalue analyses, e.g.
-    if ``K`` is the tangent stiffness matrix of a given load state. The null
-    rows and columns of ``K`` are removed from both matrices before solving
-    the eigenvalue problem, unless ``skip_null_cols=True``.
+    1. :func:`scipy.sparse.linalg.eigsh` in Cayley mode, with the shift
+       estimated from the matrices by :func:`_estimate_sigma`;
+    2. the same with a 10 times larger shift.
+
+    The dense fallback condenses out the dofs where ``KG`` has null rows
+    and solves the condensed problem with :func:`scipy.linalg.eigh`, see
+    :func:`_eigh_condensed`.
+
+    **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a
+    follower pressure, may have complex load multipliers. The sparse solver
+    is a search of shifts along the positive real axis with
+    :func:`scipy.sparse.linalg.eigs`, see :func:`_eigs_shift_search`, which
+    finds the lowest positive real load multiplier. The returned eigenpairs
+    are the ``num_eigvalues`` load multipliers nearest the last shift of the
+    search, which is zero unless the multipliers of smallest modulus did not
+    include a positive real one, not necessarily the load multipliers of
+    smallest modulus. The dense fallback, :func:`_eig_condensed`, keeps the
+    dofs where either the row or the column of ``KG`` is not null, and
+    returns the ``num_eigvalues`` first load multipliers in the order
+    described in Returns; when none of them is positive and real, they are
+    returned with a warning. Eigenvalues whose imaginary part is below
+    ``1e-8`` of their modulus are returned as real, with real eigenvectors.
+    The arrays are real when the returned eigenpairs are real, even if other
+    eigenvalues of the solver are complex.
+
+    **Intel MKL.** When SciPy is linked against Intel MKL 2024.2.0 to
+    2025.0.0, ``ncv`` of :func:`scipy.sparse.linalg.eigsh` is capped at 32
+    and more than 15 eigenpairs are computed in several passes, see
+    :mod:`structsolve.arpackutils`, where the cap can be overridden, e.g.
+    with the environment variable ``STRUCTSOLVE_ARPACK_MAX_NCV=0`` to lift
+    it with MKL 2025.0.1 or newer. The dense solvers of unsymmetric
+    matrices call :func:`scipy.linalg.eig` with complex matrices.
 
     Parameters
     ----------
@@ -791,7 +912,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     sparse_solver : bool, optional
         With ``True``, the default, the sparse solvers always run first,
         whatever the size of the problem, and a dense solver is only used as
-        a last resort, see the Notes. ``num_eigvalues`` load multipliers are
+        a last resort, see above. ``num_eigvalues`` load multipliers are
         returned. With ``False``, the full problem is explicitly solved with
         a dense solver, without trying the sparse solvers:
         :func:`scipy.linalg.eigh`, which requires a positive definite ``K``,
@@ -812,18 +933,19 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         Maximum size of the dense problem solved as a last resort, when all
         the sparse solvers failed, i.e. the number of non-null rows of
         ``KG``, or of non-null rows or columns for unsymmetric matrices, see
-        the Notes. Larger problems raise a ``RuntimeError`` instead, and
+        above. Larger problems raise a ``RuntimeError`` instead, and
         ``0`` disables the dense fallback. Until version 0.5.3, it was the
         size below which the dense solver was tried first.
     check_rtol : float, optional
-        Maximum relative residual of the eigenpairs of the sparse solver,
-        see the Notes.
+        Maximum relative residual
+        ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of the
+        eigenpairs of the sparse solver, see above.
     symmetric : bool or None, optional
         Whether ``K`` and ``KG`` are symmetric. ``None`` checks it with
         :func:`is_symmetric`, ``True`` skips the check and uses the solvers
         of symmetric matrices, ``False`` forces the solvers of unsymmetric
         matrices, required e.g. when ``KG`` includes the load stiffness of
-        follower loads, see the Notes.
+        follower loads, see above.
 
     Returns
     -------
@@ -853,28 +975,26 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
     Notes
     -----
-    **Solver policy.** With ``sparse_solver=True`` the sparse solvers run
-    first for every problem size, in the order given below, and each result
-    must pass the verification. Only when all of them failed (verification,
-    ARPACK error or no convergence, singular factorization, no positive real
-    load multiplier...) a dense solver is used, if the dense problem has at
-    most ``max_dense_size`` dofs, with a :class:`DenseFallbackWarning` that
-    gives the reasons of the failures. Its result is verified as well. A
-    ``RuntimeError`` listing every attempted solver is raised when the
-    problem is too large for the dense fallback, or when the dense solution
-    also failed. The dense fallback keeps structsolve robust where ARPACK is
-    unreliable, normal runs never pay for a dense solution.
+    The eigenvalue problem is
 
-    **Symmetric matrices.** The sparse solvers are:
+    .. math::
 
-    1. :func:`scipy.sparse.linalg.eigsh` in Cayley mode, with the shift
-       estimated from the matrices by :func:`_estimate_sigma`;
-    2. the same with a 10 times larger shift.
+        ([K] + \lambda [K_G])\{u\} = \{0\}
 
-    The dense fallback condenses out the dofs where ``KG`` has null rows,
-    typically the in-plane dofs, with a sparse factorization of ``K``, and
-    solves the condensed problem with :func:`scipy.linalg.eigh`, see
-    :func:`_eigh_condensed`. The eigenpairs are verified as follows:
+    where `\lambda` is the load multiplier of the load state that generated
+    `[K_G]`. It is solved as `[K_G]\{u\} = \mu [K]\{u\}`, with `\lambda =
+    -1/\mu`; the null eigenvalues `\mu`, e.g. of the dofs where `[K_G]` is
+    null, give infinite load multipliers.
+
+    **Solver policy.** The dense fallback keeps structsolve robust where
+    ARPACK is unreliable, normal runs never pay for a dense solution.
+
+    **Symmetric matrices.** The shift of the Cayley mode is estimated by
+    power iterations on `[K]^{-1}[K_G]`, see :func:`_estimate_sigma` and
+    :func:`_eigsh_cayley`. The dense fallback condenses out the dofs where
+    ``KG`` has null rows, typically the in-plane dofs, with a sparse
+    factorization of ``K``, see :func:`_eigh_condensed`. The eigenpairs are
+    verified as follows:
 
     - the relative residual
       `||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)` of each
@@ -890,26 +1010,16 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
     **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a
     follower pressure that is not conservative, may have complex
-    eigenvalues. The sparse solver is a search of shifts along the positive
-    real axis with :func:`scipy.sparse.linalg.eigs`, see
-    :func:`_eigs_shift_search`, which finds the lowest positive real load
-    multiplier even when many negative or complex multipliers have a
-    smaller modulus, verifies the residuals, and checks the parity of the
-    number of real multipliers below the critical one. The returned
-    eigenpairs are the ``num_eigvalues`` load multipliers nearest the last
-    shift of the search, which is zero unless the multipliers of smallest
-    modulus did not include a positive real one, not necessarily the load
-    multipliers of smallest modulus. The dense fallback,
-    :func:`_eig_condensed`, keeps the dofs where either the row or the
-    column of ``KG`` is not null, which for follower loads are almost all
-    of them, and returns the ``num_eigvalues`` first load multipliers in the
-    order described above; when none of them is positive and real, i.e. no
+    eigenvalues. The search of shifts of :func:`_eigs_shift_search` finds
+    the lowest positive real load multiplier even when many negative or
+    complex multipliers have a smaller modulus, verifies the residuals, and
+    checks the parity of the number of real multipliers below the critical
+    one. The dofs kept by the dense fallback, where either the row or the
+    column of ``KG`` is not null, are for follower loads almost all of
+    them. When no returned load multiplier is positive and real, no
     divergence load exists, e.g. for a system that only loses stability by
-    flutter, they are returned with a warning. The inertia check requires
-    symmetric matrices and is skipped. Eigenvalues whose imaginary part is
-    below ``1e-8`` of their modulus are returned as real, with real
-    eigenvectors. The arrays are real when the returned eigenpairs are real,
-    even if other eigenvalues of the solver are complex.
+    flutter, see :func:`.freq`. The inertia check requires symmetric
+    matrices and is skipped.
 
     **Intel MKL.** ARPACK, used by :func:`scipy.sparse.linalg.eigsh`, returns
     wrong eigenpairs at random, without any error, or raises
@@ -919,9 +1029,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     32 x 32, which ARPACK uses with the size ``ncv``. When such a LAPACK is
     detected, ``ncv`` is capped at 32 and more than 15 eigenpairs are
     computed in several passes, combined with a Rayleigh-Ritz projection,
-    see :mod:`structsolve.arpackutils`, where the cap can be overridden,
-    e.g. with the environment variable ``STRUCTSOLVE_ARPACK_MAX_NCV=0`` to
-    lift it with MKL 2025.0.1 or newer.
+    see :mod:`structsolve.arpackutils`.
     The non-symmetric drivers of :func:`scipy.sparse.linalg.eigs` are not
     affected.
 

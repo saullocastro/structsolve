@@ -1,67 +1,80 @@
 r"""Calls to the callables of :class:`.Analysis` used by the non-linear solvers
 
-The callables may depend on the load factor `\lambda` and on the
-configuration through their optional keyword arguments, which are passed only
-when the callable declares them explicitly in its signature (a ``**kwargs``
-does not count), such that the callables written for the previous versions
-are called exactly as before:
+The callables may depend on the load factor and on the configuration
+through their optional keyword arguments, which are passed only when the
+callable declares them explicitly in its signature (a ``**kwargs`` does not
+count), such that the callables written for the previous versions are called
+exactly as before:
 
-- ``inc``: the current load factor `\lambda`, passed to ``calc_fint``,
-  ``calc_kC`` and ``calc_kG``. It allows configuration-dependent loads, e.g.
-  follower pressures, whose configuration-dependent part enters
-  ``calc_fint`` and whose load stiffness enters ``calc_kC`` or ``calc_kG``,
-  both scaled by `\lambda`. The residual remains
-
-  .. math::
-
-      \{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}
-
-  with ``calc_kC + calc_kG`` its exact Jacobian `-\partial R/\partial c`.
+- ``inc``: the current load factor, passed to ``calc_fint``, ``calc_kC`` and
+  ``calc_kG``. It allows configuration-dependent loads, e.g. follower
+  pressures, whose configuration-dependent part enters ``calc_fint`` and
+  whose load stiffness enters ``calc_kC`` or ``calc_kG``, both scaled by the
+  load factor.
 
 - ``c``: the current configuration, passed to ``calc_fext``, which must then
-  return the load vector of that configuration for a unit load factor, i.e.
-  `\partial R/\partial \lambda` at `c`. The arc-length solvers use it in the
-  predictor and in the constraint instead of the constant reference vector
-  ``calc_fext(inc=1.)``.
+  return the load vector of that configuration for a unit load factor. The
+  arc-length solvers use it in the predictor and in the constraint instead
+  of the constant reference vector ``calc_fext(inc=1.)``.
 
-- ``lbd``: the current load factor `\lambda`, passed to ``calc_fext``
-  together with ``c``, for a load vector `\partial R/\partial \lambda` that
-  depends on the load factor as well, e.g. prescribed displacements imposed
-  exactly as linear constraints `c = [T] c_r + \{c_{p0}\} + \lambda
-  \{c_{p1}\}`, whose reduced residual
-
-  .. math::
-
-      \{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
-      \{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
-
-  has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
-  \{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
-  load factor. The keyword ``inc`` keeps its meaning, the factor that
-  multiplies the returned vector, and the solvers keep calling
-  ``calc_fext(inc=1., ...)``. When ``calc_fext`` declares ``lbd``:
+- ``lbd``: the current load factor, passed to ``calc_fext`` together with
+  ``c``, for a load vector that depends on the load factor as well, e.g.
+  prescribed displacements imposed exactly as linear constraints. The
+  keyword ``inc`` keeps its meaning, the factor that multiplies the returned
+  vector, and the solvers keep calling ``calc_fext(inc=1., ...)``. When
+  ``calc_fext`` declares ``lbd``:
 
   - the arc-length solvers pass ``lbd`` with ``c`` in the predictor and in
     the constraint;
   - the arc-length solvers scale the displacements with the linear solution
-    of `\partial R/\partial \lambda` at `c = 0, \lambda = 0`, instead of
-    the linear solution of the reference vector ``calc_fext(inc=1.)``, and
-    the Newton-Raphson solver uses this linear solution as the predictor of
-    its first step;
-  - the relative convergence criterion also considers the norm of
-    `\lambda \, \partial R/\partial \lambda`, see
-    :func:`.newton_raphson._check_convergence`, since under a prescribed
-    displacement alone the reference vector and the reduced internal force
-    vector both vanish at equilibrium;
+    of the load vector at ``c = 0``, ``lbd = 0``, instead of the linear
+    solution of the reference vector ``calc_fext(inc=1.)``, and the
+    Newton-Raphson solver uses this linear solution as the predictor of its
+    first step;
+  - the relative convergence criterion also considers the norm of the load
+    factor times the load vector, see
+    :func:`.newton_raphson._check_convergence`;
   - ``calc_fext(c=c, lbd=lbd)`` is called at the configurations where the
     tangent stiffness matrix is updated, right after ``calc_kC`` and
     ``calc_kG`` at the same ``c`` and load factor, such that the callables
-    may share their computations, and the last `\partial R/\partial
-    \lambda` evaluated is the reference of the convergence checks until the
-    next update.
+    may share their computations, and the last load vector evaluated is the
+    reference of the convergence checks until the next update.
 
   ``lbd`` is never passed by the linear static analysis,
   ``Analysis.static(NLgeom=False)``.
+
+Notes
+-----
+With ``inc``, the residual remains
+
+.. math::
+
+    \{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}
+
+with ``calc_kC + calc_kG`` its exact Jacobian `-\partial R/\partial c`.
+
+With ``c``, ``calc_fext(inc=1., c=c)`` is `\partial R/\partial \lambda` at
+`c`.
+
+With ``lbd``, prescribed displacements imposed exactly as linear
+constraints `c = [T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\}` give the
+reduced residual
+
+.. math::
+
+    \{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
+    \{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
+
+which has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
+\{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
+load factor, the vector that ``calc_fext(inc=1., c=c, lbd=lbd)`` must
+return. The relative convergence criterion also considers the norm of
+`\lambda \, \partial R/\partial \lambda`, since under a prescribed
+displacement alone the reference vector and the reduced internal force
+vector both vanish at equilibrium, and the displacements of the arc-length
+solvers are scaled with the linear solution of `\partial R/\partial
+\lambda` at `c = 0, \lambda = 0`, since the reference vector
+``calc_fext(inc=1.)`` may then be null.
 
 """
 import inspect
@@ -206,22 +219,13 @@ def is_load_factor_dependent(an):
 def calc_load_vector(an, c, fext, lbd=None):
     r"""Derivative of the residual with respect to the load factor
 
-    Returns `\{q\} = \partial R/\partial \lambda` at the configuration ``c``
-    and the load factor ``lbd``, used by the solvers in the predictors, in
-    the arc-length constraint and in the convergence criterion. It is the
-    external load vector only for loads that do not depend on the
-    configuration; with prescribed displacements imposed exactly it also
-    contains `-[T]^T [K_T] \{c_{p1}\}`, see the module docstring.
-
-    With prescribed displacements, `\{q\}` is not their reaction force: it
-    has the size of the reduced problem and acts on the free degrees of
-    freedom. It is the out-of-balance force produced by a unit increment of
-    the load factor at the current configuration, with the free degrees of
-    freedom held fixed. The reaction is a quantity of the full problem,
-    e.g. the generalized reaction work-conjugate to `\lambda`, `P =
-    \{c_{p1}\}^T (\{F_{int}(c)\} - \lambda \{F_{ext}\})`. ``structsolve``
-    does not compute it; see for instance ``MultiDomain.reaction_pd`` of
-    `panels`.
+    Returns the load vector ``q`` given by ``an.calc_fext`` for a unit load
+    factor at the configuration ``c`` and the load factor ``lbd``, used by
+    the solvers in the predictors, in the arc-length constraint and in the
+    convergence criterion. With prescribed displacements, ``q`` is not their
+    reaction force: it has the size of the reduced problem and acts on the
+    free degrees of freedom. ``structsolve`` does not compute the reaction;
+    see for instance ``MultiDomain.reaction_pd`` of `panels`.
 
     ``an.calc_fext`` is called with ``inc=1.`` and only with the keyword
     arguments that it declares:
@@ -248,7 +252,22 @@ def calc_load_vector(an, c, fext, lbd=None):
     q : array-like
         `\partial R/\partial \lambda`.
 
+    Notes
+    -----
+    `\{q\} = \partial R/\partial \lambda` is the external load vector only
+    for loads that do not depend on the configuration; with prescribed
+    displacements imposed exactly it also contains `-[T]^T [K_T]
+    \{c_{p1}\}`, see the module docstring.
+
+    With prescribed displacements, `\{q\}` is the out-of-balance force
+    produced by a unit increment of the load factor at the current
+    configuration, with the free degrees of freedom held fixed. The reaction
+    is a quantity of the full problem, e.g. the generalized reaction
+    work-conjugate to `\lambda`, `P = \{c_{p1}\}^T (\{F_{int}(c)\} - \lambda
+    \{F_{ext}\})`.
+
     """
+
     kwargs = {}
     if is_load_configuration_dependent(an):
         kwargs['c'] = c

@@ -1,14 +1,10 @@
 r"""Utilities for ARPACK, against the Intel MKL bug of ``dsteqr``
 
-The symmetric drivers of ARPACK, used by :func:`scipy.sparse.linalg.eigsh`,
-compute the Ritz vectors with the LAPACK routine ``dsteqr`` applied to the
-``ncv x ncv`` tridiagonal matrix of the Lanczos process. The ``dsteqr`` of
-Intel MKL 2024.2.0 to 2025.0.0 returns wrong eigenvectors for matrices
-larger than 32 x 32, such that :func:`scipy.sparse.linalg.eigsh` returns
-wrong eigenpairs, without any error, or raises ``ArpackError -8``, whenever
-``ncv > 32``, e.g. with SciPy's default ``ncv = 2 k + 1`` for ``k >= 16``.
-MKL 2025.0.1 or newer is not affected, neither are the non-symmetric drivers
-of :func:`scipy.sparse.linalg.eigs`, which do not call ``dsteqr``.
+With Intel MKL 2024.2.0 to 2025.0.0, :func:`scipy.sparse.linalg.eigsh`
+returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
+whenever its number of Lanczos vectors is ``ncv > 32``, e.g. with SciPy's
+default ``ncv = 2 k + 1`` for ``k >= 16`` eigenpairs. MKL 2025.0.1 or newer
+is not affected, neither is :func:`scipy.sparse.linalg.eigs`.
 
 :func:`capped_eigsh` keeps ``ncv <= 32`` when :func:`arpack_max_ncv` says so,
 computing more than 15 eigenpairs in several calls with deflation, whose
@@ -22,6 +18,16 @@ be identified as such::
 
     import structsolve.arpackutils
     structsolve.arpackutils.ARPACK_MAX_NCV = 0  # no cap
+
+Notes
+-----
+The symmetric drivers of ARPACK, used by :func:`scipy.sparse.linalg.eigsh`,
+compute the Ritz vectors with the LAPACK routine ``dsteqr`` applied to the
+``ncv x ncv`` tridiagonal matrix of the Lanczos process. The ``dsteqr`` of
+Intel MKL 2024.2.0 to 2025.0.0 returns wrong eigenvectors for matrices
+larger than 32 x 32, hence the wrong eigenpairs whenever ``ncv > 32``. The
+non-symmetric drivers of :func:`scipy.sparse.linalg.eigs` do not call
+``dsteqr``.
 
 """
 import contextlib
@@ -310,8 +316,15 @@ def _deflation_shift(w, far_shift):
     """Shift of the passes after the first one of :func:`capped_eigsh`
 
     The middle of the largest gap between the last five eigenvalues found,
-    sorted by increasing value, i.e. close to the next eigenvalues and away
-    from the deflated ones. ``far_shift`` when they are all equal.
+    sorted by increasing value. ``far_shift`` when they are all equal, i.e.
+    when their largest gap is not larger than ``1e-8`` times their largest
+    modulus.
+
+    Notes
+    -----
+    The shift-invert mode finds first the eigenvalues nearest the shift.
+    The middle of the largest gap is close to the next eigenvalues and away
+    from the deflated ones.
 
     """
     last = np.sort(w)[-5:]
@@ -323,8 +336,24 @@ def _deflation_shift(w, far_shift):
 
 
 def _rayleigh_ritz(A, M, V):
-    r"""Rayleigh-Ritz projection of `[A]\{x\} = w [M]\{x\}` onto `[V]`
+    r"""Rayleigh-Ritz projection of ``A x = w M x`` onto the columns of ``V``
 
+
+    Returns the Ritz values and the ``M``-orthonormal Ritz vectors of the
+    eigenvalue problem of the symmetric ``A`` and the positive definite
+    ``M`` in the subspace spanned by the columns of ``V``, which must be
+    linearly independent. Used by :func:`capped_eigsh` to combine the
+    eigenvectors of its passes. The projected problem is solved with the
+    LAPACK driver ``dsyevr`` (``driver='evr'``) of
+    :func:`scipy.linalg.eigh`.
+
+    Returns
+    -------
+    w, x : ndarray
+        The Ritz values by increasing value and the Ritz vectors.
+
+    Notes
+    -----
     The eigenvectors of different passes of :func:`capped_eigsh` are only
     `[M]`-orthogonal to the accuracy of ARPACK, e.g. `10^{-6}` between
     close eigenvalues of different passes. `[V]` is `[M]`-orthonormalized
@@ -334,12 +363,17 @@ def _rayleigh_ritz(A, M, V):
     not use the ``dsteqr`` of Intel MKL broken above 32 x 32 matrices, see
     :func:`dsteqr_is_faulty`. The returned eigenvectors `[W]\{y\}` are
     `[M]`-orthonormal to the rounding errors, and the Ritz values are at
-    least as accurate as the eigenvalues of the passes.
+    least as accurate as the eigenvalues of the passes. `[V]^T[M][V]` and
+    `[W]^T[A][W]` are symmetrized, `\frac{1}{2}([B] + [B]^T)`, before the
+    Cholesky factorization and the eigenvalue solution.
 
-    Returns
-    -------
-    w, x : ndarray
-        The Ritz values by increasing value and the Ritz vectors.
+    TODO(author): cite a source for the accuracy of the Ritz values, e.g.
+    [1]_?
+
+    References
+    ----------
+    .. [1] Parlett, B.N., The Symmetric Eigenvalue Problem, SIAM, 1998.
+       TODO(author): confirm this source
 
     """
     MV = M @ V
@@ -363,27 +397,15 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     When ``ncv`` is capped at ``max_ncv``, see :func:`arpack_max_ncv`, and
     ``k`` is larger than ``(max_ncv - 1)//2``, i.e. 15, the eigenpairs are
     computed in passes of at most 15 eigenpairs, each with ``ncv=max_ncv``.
-    With ``k`` close to ``ncv`` ARPACK converges very slowly, not at all, or
-    misses eigenvalues, e.g. ``k=31`` and ``ncv=32``. The first pass is a
-    call in the requested mode. The following passes use the shift-invert
-    mode about `\sigma_d`, the middle of the largest gap between the last
-    five eigenvalues found, with the eigenvectors `[V]` of the previous
-    passes deflated from the operator:
-
-    .. math::
-
-        \{y\} = ([I] - [V][V]^T[M])([A] - \sigma_d [M])^{-1}\{x\}
-
-    such that the eigenvalues of `[V]`, already found, become null and are
-    not found again. Each pass therefore returns the eigenvalues nearest
-    `\sigma_d` among those not found yet, i.e. the next ones by increasing
-    `w`. A shift close to them, instead of ``sigma``, separates them better:
-    in the study of the panels cylinders it was 30 to 45% faster and gave
-    eigenvalues 5 to 10 times more accurate. Each pass factorizes
-    `[A] - \sigma_d [M]` with SuperLU, and every call starts from
-    :func:`start_vector`. The eigenvectors of all the passes are finally
-    combined with a Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`,
-    such that they are `[M]`-orthonormal also across the passes.
+    The first pass is a call in the requested mode. The following passes
+    use the shift-invert mode about the shift ``sigma_d`` given by
+    :func:`_deflation_shift`, with the eigenvectors of the previous passes
+    deflated from the operator, and each of them returns the next
+    eigenvalues by increasing `w`. Each pass factorizes ``A - sigma_d*M``
+    with SuperLU, and every call starts from :func:`start_vector`. The
+    eigenvectors of all the passes are finally combined with a
+    Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`, such that they are
+    ``M``-orthonormal also across the passes.
 
     Parameters
     ----------
@@ -417,7 +439,43 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     --------
     arpack_max_ncv, arpack_ncv, start_vector
 
+    Notes
+    -----
+    In the shift-invert mode ARPACK computes the eigenvalues
+    `\nu = 1/(w - \sigma)` of largest modulus of the operator
+    `([A] - \sigma [M])^{-1}[M]`, i.e. the `w` nearest `\sigma` [1]_.
+    The passes keep ``k <= (max_ncv - 1)//2``, i.e. ``ncv >= 2 k + 1``.
+    With ``k`` close to ``ncv`` ARPACK converges very slowly, not at all, or
+    misses eigenvalues, e.g. ``k=31`` and ``ncv=32``.
+
+    The passes after the first one use the shift-invert mode about
+    `\sigma_d`, the middle of the largest gap between the last five
+    eigenvalues found, with the eigenvectors `[V]` of the previous passes
+    deflated from the operator:
+
+    .. math::
+
+        \{y\} = ([I] - [V][V]^T[M])([A] - \sigma_d [M])^{-1}\{x\}
+
+    such that the eigenvalues of `[V]`, already found, become null and are
+    not found again. Each pass therefore returns the eigenvalues nearest
+    `\sigma_d` among those not found yet, i.e. the next ones by increasing
+    `w`. A shift close to them, instead of ``sigma``, separates them better:
+    in the study of the panels cylinders it was 30 to 45% faster and gave
+    eigenvalues 5 to 10 times more accurate. ARPACK applies the operator
+    to `[M]\{x\}`; for an eigenvector `\{v_i\}` of `[V]`,
+    `([A] - \sigma_d [M])^{-1}[M]\{v_i\} = \{v_i\}/(w_i - \sigma_d)` and,
+    `[V]` being `[M]`-orthonormal, `([I] - [V][V]^T[M])\{v_i\} = \{0\}`.
+
+    References
+    ----------
+    .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
+       Solution of Large-Scale Eigenvalue Problems with Implicitly
+       Restarted Arnoldi Methods, SIAM, 1998.
+       TODO(author): confirm this source
+
     """
+
     n = A.shape[0]
     max_ncv = arpack_max_ncv()
     max_k = n if max_ncv is None else (max_ncv - 1)//2

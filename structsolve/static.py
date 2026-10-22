@@ -14,7 +14,8 @@ from .sparseutils import remove_null_cols
 
 
 def solve(a, b, silent=False, **kwargs):
-    """Solve a linear system of equations removing null rows and columns
+    r"""Solve a linear system of equations removing null rows and columns
+
 
     Wrapper for :func:`scipy.sparse.linalg.spsolve`. The rows and columns of
     ``a`` without any non-zero term, typically the constrained degrees of
@@ -41,6 +42,15 @@ def solve(a, b, silent=False, **kwargs):
     x : ndarray
         The solution of the system of equations, a 1-D array of size
         ``a.shape[1]`` with the same ``dtype`` as ``b``.
+
+    Notes
+    -----
+    With `u` the set of the degrees of freedom whose row or column of ``a``
+    is not null, the reduced system `[a_{uu}]\{x_u\} = \{b_u\}` is solved
+    and `x = 0` at the other degrees of freedom. The terms of ``b`` at the
+    removed degrees of freedom are ignored: ``x`` solves the full system
+    only when they are null, otherwise the full system has no solution,
+    since a null row and column make ``a`` singular.
 
     """
     a, used_cols = remove_null_cols(a, silent=silent)
@@ -69,6 +79,17 @@ def _factorize(kT):
     solve_kT : callable
         Function that returns the solution ``x`` of ``kT x = b``.
 
+    Notes
+    -----
+    The reduced matrix is factorized once with SuperLU,
+    :func:`scipy.sparse.linalg.splu` with its default options, i.e. a
+    sparse LU factorization with row and column permutations, valid for
+    unsymmetric matrices. Each call of ``solve_kT`` is then only a forward
+    and a backward substitution, which is why the factorization is reused
+    while the tangent stiffness matrix is not updated, e.g. in the
+    modified Newton-Raphson method and in the two solutions of the bordered
+    system of the arc-length methods.
+
     """
     kT_red, used_cols = remove_null_cols(kT, silent=True)
     lu = splu(csc_matrix(kT_red))
@@ -84,7 +105,8 @@ def _factorize(kT):
 def static(K, fext, silent=False):
     r"""Linear static analysis
 
-    Solves `[K]\{u\} = \{F_{ext}\}` using :func:`.solve`. For linear and
+    Solves the linear system ``K u = fext`` using :func:`.solve`. For linear and
+
     non-linear static analyses based on callables that calculate the force
     vectors and stiffness matrices, see :class:`.Analysis`.
 

@@ -54,13 +54,11 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None):
         External force vector at the current load factor.
     fext_ref : array-like or None, optional
         Additional reference force vector, e.g. the external force vector of
-        the current increment, useful when the load factor is close to zero.
+        the current increment.
     q_ref : array-like or None, optional
         Additional reference force vector, the load factor times
         `\partial R/\partial \lambda` when ``calc_fext`` accepts ``lbd``,
-        see :mod:`.callbacks`. Under a prescribed displacement alone, the
-        external and the internal force vectors of the reduced problem both
-        vanish at equilibrium and cannot be the reference.
+        see :mod:`.callbacks`.
 
     Returns
     -------
@@ -71,6 +69,19 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None):
     Rrel : float
         Relative residual ``||R||/max(||fext_total||, ||fint||, ||fext_ref||,
         ||q_ref||)``.
+
+    Notes
+    -----
+    The relative criterion compares the residual with the largest norm of
+    the force vectors of the problem, such that it does not depend on the
+    units of the model, whereas ``absTOL`` does. When all the reference
+    norms are null, ``Rrel`` is ``||R||`` itself.
+
+    The reference ``fext_ref`` is useful when the load factor is close to
+    zero, where ``fext_total`` and ``fint`` are small. The reference
+    ``q_ref`` is needed under a prescribed displacement alone, where the
+    external and the internal force vectors of the reduced problem both
+    vanish at equilibrium and cannot be the reference.
 
     """
     if an.relTOL is None and an.absTOL is None:
@@ -91,7 +102,8 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None):
 
 
 def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
-    """Check if the iterations of a step must be stopped without convergence
+    r"""Check if the iterations of a step must be stopped without convergence
+
 
     The iterations are stopped when the residual is not finite, when
     ``an.maxNumIter`` corrections were performed, and, after
@@ -117,6 +129,25 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     stop : bool
         Whether the iterations must be stopped.
 
+    Notes
+    -----
+    With `r_i` the residual norm at the iteration `i` of the step, `r_1`
+    being the residual of the predictor, the iterations are stopped at the
+    iteration `j` when:
+
+    - `r_j` is not finite;
+    - `j >` ``an.maxNumIter``, i.e. ``an.maxNumIter`` corrections were done;
+    - `j >` ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` and `r_j >`
+      ``DIVERGENCE_FACTOR`` `r_1` (divergence);
+    - `j >` ``NUM_ITER_BEFORE_DIVERGENCE_CHECK``, `j > W` and
+      `\min(r_{j-W+1}, ..., r_j) > (1 -` ``an.too_slow_TOL``
+      `) \min(r_1, ..., r_{j-W})`, with `W` = ``TOO_SLOW_WINDOW`` (too slow
+      convergence).
+
+    The divergence and too-slow checks are delayed because a non-monotonic
+    residual in the first iterations is normal, especially in
+    postbuckling.
+
     """
     if not np.isfinite(Rnorm):
         warn('Diverged - residual is not finite', level=2, silent=silent)
@@ -141,6 +172,15 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                    lbd_dependent=False, q=None):
     r"""Newton-Raphson iterations at a fixed load factor
+
+    Corrects the predictor ``dc`` at the load factor ``total`` until the
+    convergence criteria of :func:`._check_convergence` are satisfied, or
+    until the iterations are stopped by :func:`._check_divergence` or by a
+    singular tangent stiffness matrix. The tangent stiffness matrix is
+    ``calc_kC + calc_kG`` at the current iterate, see
+    :func:`.callbacks.calc_kT`; its updates and the line search are
+    controlled by ``an.modified_NR``, ``an.compute_every_n``,
+    ``an.line_search`` and ``an.max_iter_line_search``.
 
     Parameters
     ----------
@@ -180,7 +220,54 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     q : array-like or None
         The last `\{q\}` evaluated, ``None`` when ``lbd_dependent=False``.
 
+    Notes
+    -----
+    At each iteration, with the load factor `\lambda` = ``total`` fixed,
+
+    .. math::
+
+        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c + \Delta c, \lambda)\},
+        \qquad \{\delta c\} = [K_T]^{-1}\{R\}, \qquad
+        \{\Delta c\} \leftarrow \{\Delta c\} + \eta \{\delta c\}
+
+    With full Newton-Raphson, `[K_T]` is computed and factorized at every
+    iteration at `c + \Delta c`, and the convergence is quadratic when it is
+    the exact Jacobian `-\partial R/\partial c` [1]_. With
+    ``an.modified_NR = True``, `[K_T]` is computed at the first iteration,
+    or given as ``kT0``, and then every ``an.compute_every_n`` iterations,
+    its LU factorization being reused in the other iterations.
+
+    `\eta = 1` without line search. With ``an.line_search = True``, with
+    `\phi(\eta) = \|R(c + \Delta c + \eta \, \delta c)\|^2`, the step `\eta`
+    is accepted when it satisfies the sufficient-decrease (Armijo) test
+
+    .. math::
+
+        \phi(\eta) \le (1 - 2 \alpha \eta) \phi(0)
+
+    with `\alpha` = ``LINE_SEARCH_ALPHA``, which assumes `\phi'(0) =
+    -2\phi(0)`, exact for a Newton direction, i.e. when `[K_T]` is the exact
+    Jacobian at `c + \Delta c`; with ``an.modified_NR = True`` it is an
+    approximation. The full step `\eta = 1` is tried first. Otherwise `\eta`
+    is replaced by the minimizer `\phi(0)/A` of the quadratic interpolation
+    of `\phi(0)`, `\phi'(0)` and `\phi(\eta)`, with `A = (\phi(\eta) -
+    \phi(0) + 2\phi(0)\eta)/\eta^2`, or by `\eta/2` when `A` is not
+    positive, safeguarded in `[0.1 \eta, 0.5 \eta]` [2]_. After
+    ``an.max_iter_line_search`` reductions the last `\eta` is accepted. The
+    internal force vector of the accepted point is reused in the residual
+    of the next iteration.
+
+    References
+    ----------
+    .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+       Structures, Vol. 1: Essentials, Wiley, 1991.
+       TODO(author): confirm this source
+    .. [2] Dennis, J.E., Schnabel, R.B., Numerical Methods for Unconstrained
+       Optimization and Nonlinear Equations, Prentice-Hall, 1983.
+       TODO(author): confirm this source
+
     """
+
     modified_NR = an.modified_NR
     fext_total = total*fext
     if not lbd_dependent:
@@ -259,7 +346,47 @@ def _solver_NR(an, silent=False, initialInc=None):
     r"""Newton-Raphson solver with load control
 
     Used by :meth:`.Analysis.static` when ``NL_method='NR'``. The load factor
-    `\lambda` goes from zero to one in increments, solving at each increment
+    goes from zero to one in increments; at each increment the equilibrium
+    of the internal force vector with the external force vector scaled by
+    the load factor is solved with the iterations of :func:`._NR_iterations`,
+    starting from a predictor extrapolated from the previous converged
+    increment, and the converged load factors and solutions are appended to
+    ``an.increments`` and ``an.cs``.
+
+    The variant of the iterations is selected by ``an.modified_NR``,
+    ``an.compute_every_n``, ``an.kT_initial_state``, ``an.line_search`` and
+    ``an.max_iter_line_search``. See :func:`._check_convergence` for the
+    convergence criteria. A step that does not converge within
+    ``an.maxNumIter`` iterations, that diverges or that converges too slowly
+    is repeated with the load increment multiplied by ``INC_CUT_FACTOR``.
+    The divergence and too-slow checks are only activated after
+    ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations, see
+    :func:`._check_divergence`.
+
+    After a step that converged without being cut, the load increment is
+    multiplied by ``INC_GROWTH_FACTOR``, limited by ``an.maxInc``. The last
+    step is adjusted such that the analysis finishes at a load factor of
+    exactly ``1.0``. The analysis stops earlier, keeping the converged
+    increments, when the load increment becomes smaller than ``an.minInc``.
+
+    The callables of ``an`` that declare the optional keyword arguments
+    ``inc``, ``c`` or ``lbd`` receive the current load factor and
+    configuration, see :mod:`.callbacks`.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object, the converged load factors and solutions are appended
+        to ``an.increments`` and ``an.cs``.
+    silent : bool, optional
+        A boolean to tell whether the log messages should be printed.
+    initialInc : float or None, optional
+        Initial load increment, ``an.initialInc`` is used if ``None``.
+
+    Notes
+    -----
+    The load factor `\lambda` goes from zero to one in increments, solving
+    at each increment
 
     .. math::
 
@@ -268,7 +395,8 @@ def _solver_NR(an, silent=False, initialInc=None):
     Each increment starts from a predictor that extrapolates the previous
     converged increment of the solution, scaled by the ratio between the new
     and the previous load increments. The first increment uses the linear
-    solution as predictor.
+    solution as predictor: `\Delta\lambda [K_0]^{-1}\{F_{ext}\}`, with
+    `[K_0]` the linear stiffness matrix ``calc_kC()``.
 
     The callables that accept the keyword argument ``inc`` receive the load
     factor `\lambda` of the step, see :mod:`.callbacks`, which allows
@@ -293,34 +421,26 @@ def _solver_NR(an, silent=False, initialInc=None):
     ``an.modified_NR = True`` the tangent stiffness matrix is rebuilt only at
     the first iteration of each step and every ``an.compute_every_n``
     iterations, and its LU factorization is reused in the other
-    iterations.
+    iterations, at the cost of a linear convergence rate; at the first step
+    with ``an.kT_initial_state = False``, the linear constitutive stiffness
+    matrix `[K_0]` is used instead of the tangent at the first iteration.
 
     With ``an.line_search = True``, the full Newton step (``eta = 1``) is tried
     first and it is accepted if it satisfies a sufficient-decrease test on the
-    residual norm. Otherwise ``eta`` is reduced by backtracking.
+    residual norm. Otherwise ``eta`` is reduced by backtracking, see
+    :func:`._NR_iterations`.
 
-    See :func:`._check_convergence` for the convergence criteria. A step that
-    does not converge within ``an.maxNumIter`` iterations, that diverges or
-    that converges too slowly is repeated with the load increment multiplied
-    by ``INC_CUT_FACTOR``. The divergence and too-slow checks are only
-    activated after ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations, see
-    :func:`._check_divergence`.
+    The full and modified Newton-Raphson methods are described in [1]_.
 
-    After a step that converged without being cut, the load increment is
-    multiplied by ``INC_GROWTH_FACTOR``, limited by ``an.maxInc``. The last
-    step is adjusted such that the analysis finishes at a load factor of
-    exactly ``1.0``. The analysis stops earlier, keeping the converged
-    increments, when the load increment becomes smaller than ``an.minInc``.
+    The step that would end within ``max(an.minInc, 1e-12)`` of the load
 
-    Parameters
+    factor 1.0, or beyond it, is replaced by the step to exactly 1.0.
+
+    References
     ----------
-    an : :class:`.Analysis`
-        Analysis object, the converged load factors and solutions are appended
-        to ``an.increments`` and ``an.cs``.
-    silent : bool, optional
-        A boolean to tell whether the log messages should be printed.
-    initialInc : float or None, optional
-        Initial load increment, ``an.initialInc`` is used if ``None``.
+    .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+       Structures, Vol. 1: Essentials, Wiley, 1991.
+       TODO(author): confirm this source
 
     """
     msg('___________________________________________', level=1, silent=silent)

@@ -31,6 +31,48 @@ MAX_NUM_STEPS = 1000
 def _solver_arc_length(an, method, silent=False):
     r"""Arc-length solver
 
+    Traces the equilibrium path of the model of ``an`` with an arc-length
+    method, in which the load factor is an unknown of each step besides the
+    solution vector, such that limit points can be passed. ``method`` selects
+    how the load factor of each iteration is computed, see
+    :func:`.arc_length_riks._solver_arc_length_riks` and
+    :func:`.arc_length_crisfield._solver_arc_length_crisfield`.
+
+    The steps are controlled by the attributes ``initialInc``, ``minInc``,
+    ``maxInc`` and ``maxArcLength`` of ``an``, and by the module-level
+    constants; the iterations of each step by ``relTOL``, ``absTOL``,
+    ``maxNumIter`` and ``too_slow_TOL``, with the checks of
+    :func:`.newton_raphson._check_convergence` and
+    :func:`.newton_raphson._check_divergence`, where the relative criterion
+    also considers the external force vector of the current increment; and
+    ``an.modified_NR``, ``an.compute_every_n`` and ``an.kT_initial_state``
+    control how often the tangent stiffness matrix is updated. A step that
+    fails is repeated with the arc length multiplied by ``INC_CUT_FACTOR``.
+    The analysis stops when:
+
+    - the load factor reaches 1.0, the last solution being computed at a load
+      factor of exactly 1.0
+    - the cumulative arc length reaches ``an.maxArcLength``
+    - the arc length becomes smaller than ``an.minInc``
+    - ``MAX_NUM_STEPS`` steps converged
+    - the tangent stiffness matrix at the last converged state is singular
+
+    The callables of ``an`` that declare the optional keyword arguments
+    ``inc``, ``c`` or ``lbd`` receive the current load factor and
+    configuration, see :mod:`.callbacks`.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object, the converged load factors and solutions are appended
+        to ``an.increments`` and ``an.cs``.
+    method : str
+        ``'riks'`` or ``'crisfield'``.
+    silent : bool, optional
+        A boolean to tell whether the log messages should be printed.
+
+    Notes
+    -----
     The equilibrium path `\{F_{int}(c)\} = \lambda \{F_{ext}\}` is traced with
     the arc-length constraint
 
@@ -42,34 +84,104 @@ def _solver_arc_length(an, method, silent=False):
     where `\{\Delta c\}` and `\Delta\lambda` are the increments of the current
     step and `\{u_{ref}\}` is the linear solution for `\lambda=1`, which makes
     the arc length `\Delta s` independent of the units of the model. In the
-    linear regime `\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda`.
+    linear regime `\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda`, see
+    [4]_ for the arc-length methods. `\psi` is the constant ``PSI``,
+ and `\{u_{ref}\}^T\{u_{ref}\}` is
+    replaced by 1 when it is null. With the inner product
+
+    .. math::
+
+        \langle (a, \alpha), (b, \beta) \rangle =
+        \frac{\{a\}^T\{b\}}{\{u_{ref}\}^T\{u_{ref}\}} + \psi^2 \alpha \beta
+
+    the constraint reads `g = \frac{1}{2}(\langle (\Delta c, \Delta\lambda),
+    (\Delta c, \Delta\lambda) \rangle - \Delta s^2) = 0`.
 
     Each step starts from a tangent predictor, whose direction follows the
-    previous increment, allowing limit points to be passed. At each
-    iteration, the bordered system is solved with two solutions of the
-    tangent stiffness matrix, `\{\delta c_R\} = [K_T]^{-1}\{R\}` and
-    `\{\delta c_q\} = [K_T]^{-1}\{F_{ext}\}`, and the correction of the load
-    factor `\delta\lambda` comes from the constraint:
+    previous increment, allowing limit points to be passed. With
+    `\{\delta c_q\} = [K_T]^{-1}\{F_{ext}\}` at the last converged state,
+    the predictor
+
+    .. math::
+
+        \Delta\lambda = \pm \frac{\Delta s}{\sqrt{\langle (\delta c_q, 1),
+        (\delta c_q, 1) \rangle}}, \qquad
+        \{\Delta c\} = \Delta\lambda \{\delta c_q\}
+
+    satisfies the constraint, with the sign of `\langle (\delta c_q, 1),
+    (\Delta c_{prev}, \Delta\lambda_{prev}) \rangle`, where
+    `(\Delta c_{prev}, \Delta\lambda_{prev})` is the increment of the
+    previous converged step, and a positive sign at the first step. The
+    initial arc length, `\Delta s_0 = initialInc \sqrt{\langle (\delta c_q,
+    1), (\delta c_q, 1) \rangle}` at the origin, corresponds to a load factor
+    increment of ``an.initialInc`` along the initial tangent.
+
+    At each iteration, the residual is `\{R\} = (\lambda + \Delta\lambda)
+    \{F_{ext}\} - \{F_{int}(c + \Delta c)\}`, and the bordered system is
+    solved with two solutions of the tangent stiffness matrix,
+    `\{\delta c_R\} = [K_T]^{-1}\{R\}` and `\{\delta c_q\} =
+    [K_T]^{-1}\{F_{ext}\}`; the increment is updated to `(\Delta c +
+    \delta c_R + \delta\lambda \, \delta c_q, \Delta\lambda +
+    \delta\lambda)`, where the correction of the load factor
+    `\delta\lambda` comes from the constraint:
 
     - ``method='riks'``: the constraint is linearized at the current
       increment (updated normal plane), which is Newton-Raphson applied to
-      the augmented system and gives quadratic convergence.
+      the augmented system and gives quadratic convergence, see [1]_ and
+      [3]_:
+
+      .. math::
+
+          \delta\lambda = -\frac{g + \langle (\Delta c, \Delta\lambda),
+          (\delta c_R, 0) \rangle}{\langle (\Delta c, \Delta\lambda),
+          (\delta c_q, 1) \rangle}
+
     - ``method='crisfield'``: the quadratic (spherical) constraint is solved
       exactly, choosing the root with the smallest angle to the current
       increment. When the roots are complex, the linearized constraint is
-      used.
+      used, see [2]_. With `\{u\} = \{\Delta c\} + \{\delta c_R\}`, the
+      constraint
+      `\langle (u + \delta\lambda \, \delta c_q, \Delta\lambda +
+      \delta\lambda), (u + \delta\lambda \, \delta c_q, \Delta\lambda +
+      \delta\lambda) \rangle = \Delta s^2` is the quadratic equation
+      `a \, \delta\lambda^2 + b \, \delta\lambda + c = 0` with
+      `a = \langle (\delta c_q, 1), (\delta c_q, 1) \rangle`,
+      `b = 2 \langle (u, \Delta\lambda), (\delta c_q, 1) \rangle` and
+      `c = \langle (u, \Delta\lambda), (u, \Delta\lambda) \rangle -
+      \Delta s^2`. Its roots are computed as `q/a` and `c/q`, with
+      `q = -\frac{1}{2}(b + \mathrm{sign}(b) \sqrt{b^2 - 4 a c})`, and the
+      root that maximizes the inner product of the new increment with the
+      current one `(\Delta c, \Delta\lambda)` is chosen, i.e. the smallest
+      angle, since both have the length `\Delta s`.
+
+    The step fails when `\delta\lambda` cannot be computed or is not
+    finite. With full Newton-Raphson, `[K_T]` is updated at every iteration
+    at the current iterate `(c + \Delta c, \lambda + \Delta\lambda)`; with
+    ``an.modified_NR = True`` the factorization at the last converged state
+    is used for the first ``an.compute_every_n`` iterations and the tangent
+    is then updated every ``an.compute_every_n`` iterations; at the first
+    step with ``an.kT_initial_state = False`` the linear constitutive
+    stiffness matrix replaces the tangent of the initial state.
 
     After each converged step, the arc length is multiplied by
     ``sqrt(DESIRED_NUM_ITER/num_iter)``, bounded by ``MIN_GROWTH_FACTOR`` and
     ``MAX_GROWTH_FACTOR`` and limited by ``an.maxInc``, where ``num_iter`` is
-    the number of corrections of the step. When a step fails, the arc length
-    is multiplied by ``INC_CUT_FACTOR``. The analysis stops when:
+    the number of corrections of the step. The factor is at most 1 after a
+    step that was repeated, and the limit is in fact
+    ``max(an.maxInc, initial arc length)``. When a step fails, the arc length
+    is multiplied by ``INC_CUT_FACTOR`` and the step is repeated from the
+    same tangent predictor direction.
 
-    - the load factor reaches 1.0, the step where it is exceeded is replaced
-      by Newton-Raphson iterations at exactly `\lambda = 1`
-    - the cumulative arc length reaches ``an.maxArcLength``
-    - the arc length becomes smaller than ``an.minInc``
-    - ``MAX_NUM_STEPS`` steps converged
+    TODO(author): is the rule ``sqrt(DESIRED_NUM_ITER/num_iter)`` to be
+    attributed to [2]_ or [3]_?
+
+    When the load factor 1.0 is exceeded within a converged step, from
+    `\lambda < 1` to `\lambda + \Delta\lambda > 1`, the step is replaced by
+    Newton-Raphson iterations at exactly `\lambda = 1`, see
+    :func:`.newton_raphson._NR_iterations`, from the predictor
+    `t \{\Delta c\}` with `t = (1 - \lambda)/\Delta\lambda`. When these
+    iterations do not converge, the step is repeated with a shorter arc
+    length.
 
     When the load depends on the configuration, i.e. ``calc_fext`` accepts
     the keyword argument ``c``, `\{F_{ext}\}` in `\{\delta c_q\}` and in the
@@ -94,24 +206,24 @@ def _solver_arc_length(an, method, silent=False):
     convergence checks. At the converged state it is kept with the tangent
     stiffness matrix when the step is repeated with a shorter arc length.
 
-    The initial arc length corresponds to a load factor increment of
-    ``an.initialInc`` along the initial tangent. The convergence and
-    divergence checks are the same as in the Newton-Raphson solver, see
-    :func:`.newton_raphson._check_convergence` and
-    :func:`.newton_raphson._check_divergence`, where the relative criterion
-    also considers the external force vector of the current increment, and
-    ``an.modified_NR`` and ``an.compute_every_n`` control how often the
-    tangent stiffness matrix is updated.
-
-    Parameters
+    References
     ----------
-    an : :class:`.Analysis`
-        Analysis object, the converged load factors and solutions are appended
-        to ``an.increments`` and ``an.cs``.
-    method : str
-        ``'riks'`` or ``'crisfield'``.
-    silent : bool, optional
-        A boolean to tell whether the log messages should be printed.
+    .. [1] Riks, E., An incremental approach to the solution of snapping and
+       buckling problems, International Journal of Solids and Structures,
+       15(7), 529-551, 1979.
+       TODO(author): confirm this source
+    .. [2] Crisfield, M.A., A fast incremental/iterative solution procedure
+       that handles "snap-through", Computers & Structures, 13(1-3), 55-62,
+       1981.
+       TODO(author): confirm this source
+    .. [3] Ramm, E., Strategies for tracing the nonlinear response near
+       limit points, in: Wunderlich, W., Stein, E., Bathe, K.J. (eds.),
+       Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
+       63-89, 1981.
+       TODO(author): confirm this source
+    .. [4] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+       Structures, Vol. 1: Essentials, Wiley, 1991.
+       TODO(author): confirm this source
 
     """
     if method not in ('riks', 'crisfield'):
