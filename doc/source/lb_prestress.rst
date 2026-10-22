@@ -1,0 +1,74 @@
+Linear buckling with a prestress
+================================
+
+A linear buckling analysis with :func:`.lb` has three steps, of which only
+the last one is done by ``structsolve``:
+
+1. the linear static solution `\{c_0\}` of a reference load
+   `\{F_{ref}\}`, `[K_0]\{c_0\} = \{F_{ref}\}`, e.g. with :func:`.solve`,
+   :func:`.static` or ``Analysis.static(NLgeom=False)``;
+2. the geometric stiffness matrix `[K_G(c_0)]` of the prestress of
+   `\{c_0\}`, computed by the model, e.g. from the pre-buckling stress
+   resultants at each integration point;
+3. the eigenvalue problem
+
+   .. math::
+
+       ([K_0] + \lambda [K_G(c_0)])\{u\} = \{0\}
+
+   solved by ``lb(K0, KG)``, which returns the load multipliers `\lambda`
+   and the buckling modes `\{u\}`.
+
+Since the static solution is linear, `[K_G]` is proportional to the load,
+`[K_G(\lambda c_0)] = \lambda [K_G(c_0)]`, and the eigenvalue problem gives
+the load levels `\lambda \{F_{ref}\}` at which `[K_0] + \lambda [K_G]` is
+singular.
+
+
+Meaning of the load multipliers
+-------------------------------
+
+`\lambda` multiplies the reference load: the critical load is `\lambda_1
+\{F_{ref}\}`, and a reference load `\alpha` times larger gives load
+multipliers `\alpha` times smaller. A load that is kept constant, e.g. a
+preload `\{F_0\}`, is not multiplied by `\lambda`: its geometric stiffness
+matrix belongs to the first matrix, ``lb(K0 + KG0, KG)``, and the critical
+load is `\{F_0\} + \lambda_1 \{F_{ref}\}`.
+
+
+Negative and complex load multipliers
+-------------------------------------
+
+A negative `\lambda` is a buckling load of the reversed reference load,
+e.g. a column under tension buckles only under the opposite, compressive,
+load. :func:`.lb` returns the positive load multipliers first, in
+increasing order, and its sparse solvers search them; the negative load
+multipliers that follow are not necessarily those of smallest modulus. To
+obtain the critical load of the reversed load, the reference load is
+reversed, i.e. ``lb(K0, -KG)``. When no positive load multiplier exists, the
+sparse solvers may fail, as in the example below, and the dense solver is
+then used as a last resort, with a :class:`.DenseFallbackWarning`, see
+:doc:`eigensolvers`. The null rows of ``KG``, e.g. of the in-plane dofs,
+give infinite load multipliers.
+
+Complex load multipliers only exist for unsymmetric matrices, e.g. with the
+load stiffness of follower loads, for which :func:`.lb` returns the lowest
+positive real load multiplier, see :doc:`ex_follower_loads`.
+
+
+Example
+-------
+
+The pinned column of :doc:`boundary_conditions`, ``tests/column.py``, under
+a compressive reference load, with and without a constant preload:
+
+.. literalinclude:: ../../tests/test_column.py
+    :pyobject: test_lb_prestress
+
+Under a tensile reference load all the load multipliers are negative, and
+the critical load is obtained by reversing the reference load:
+
+.. literalinclude:: ../../tests/test_column.py
+    :pyobject: test_lb_reversed_load
+
+A complete Ritz model of a plate is in :doc:`ex_linear_buckling`.
