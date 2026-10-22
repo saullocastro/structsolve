@@ -13,7 +13,8 @@ from .logger import msg, warn
 from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
-                             _NR_iterations, INC_CUT_FACTOR)
+                             _NR_iterations, _log_iteration, _weights,
+                             INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -40,11 +41,12 @@ def _solver_arc_length(an, method, silent=False):
 
     The steps are controlled by the attributes ``initialInc``, ``minInc``,
     ``maxInc`` and ``maxArcLength`` of ``an``, and by the module-level
-    constants; the iterations of each step by ``relTOL``, ``absTOL``,
-    ``maxNumIter`` and ``too_slow_TOL``, with the checks of
+    constants; the iterations of each step by ``convergence``, ``relTOL``,
+    ``absTOL``, ``maxNumIter`` and ``too_slow_TOL``, with the checks of
     :func:`.newton_raphson._check_convergence` and
-    :func:`.newton_raphson._check_divergence`, where the relative criterion
-    also considers the external force vector of the current increment; and
+    :func:`.newton_raphson._check_divergence`, where the convergence
+    criterion also considers the external force vector of the increment of
+    the load factor of the current step; and
     ``an.modified_NR``, ``an.compute_every_n`` and ``an.kT_initial_state``
     control how often the tangent stiffness matrix is updated. A step that
     fails is repeated with the arc length multiplied by ``INC_CUT_FACTOR``.
@@ -232,6 +234,7 @@ def _solver_arc_length(an, method, silent=False):
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
+    w = _weights(an, kC0)
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
         # dR/dlbd at c = 0 and lbd = 0
@@ -318,9 +321,8 @@ def _solver_arc_length(an, method, silent=False):
                 q_ref = (lbd + dlbd)*q_iter
             conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
                                                    fext_ref=dlbd*fext,
-                                                   q_ref=q_ref)
-            msg('Iteration: %d, lbd %1.5f, max(|R|) = %1.3e, relative ||R|| = %1.3e'
-                % (iteration, lbd + dlbd, np.abs(R).max(), Rrel), level=2, silent=silent)
+                                                   q_ref=q_ref, w=w)
+            _log_iteration(an, iteration, R, Rrel, silent, lbd=lbd + dlbd)
             if conv:
                 converged = True
                 break
@@ -383,7 +385,7 @@ def _solver_arc_length(an, method, silent=False):
             t = (1. - lbd)/dlbd
             converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
                     kT0=None, silent=silent, lbd_dependent=lbd_dependent,
-                    q=q_iter)
+                    q=q_iter, w=w)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())

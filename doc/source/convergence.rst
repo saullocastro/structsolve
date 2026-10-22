@@ -11,20 +11,40 @@ increment and the size of the increments.
 Convergence criteria
 --------------------
 
-An iteration converged when either criterion is satisfied, see
-:func:`.newton_raphson._check_convergence`:
+The criterion is selected with ``Analysis.convergence``, see
+:mod:`.convergence` and :func:`.newton_raphson._check_convergence`:
 
-- ``relTOL``, default ``1e-6``: the Euclidean norm of `\{R\}` is not larger
-  than ``relTOL`` times the largest norm of the force vectors of the
-  increment, `\lambda\{F_{ext}\}` and `\{F_{int}\}`, and of `\lambda
-  \partial R/\partial\lambda` for load vectors that depend on the load
-  factor, see :mod:`.callbacks`. It does not depend on the units of the
-  model as a whole.
-- ``absTOL``, default ``None``: the largest absolute value of `\{R\}` is
-  not larger than ``absTOL``, a force in the units of the model.
+- ``'crisfield'``, the default: Crisfield's criterion. Each component of a
+  force-like vector is scaled with the diagonal of the linear stiffness
+  matrix ``calc_kC()``, `D_j = |{K_0}_{jj}|`, over the free degrees of
+  freedom, i.e. those whose row or column of ``calc_kC()`` is not null,
 
-``None`` disables a criterion, and at least one must be given. A tolerance
-below the round-off error of `\{R\}` cannot be met: every step then fails.
+  .. math::
+
+      \|v\|_D = \sqrt{\sum_j v_j^2/D_j}, \qquad
+      \zeta = \frac{\|R\|_D}{\max\left(\|\lambda F_{ext}\|_D,
+      \|F_{int}\|_D, \|\Delta\lambda F_{ext}\|_D,
+      \|\lambda \, \partial R/\partial \lambda\|_D\right)}
+
+  and the iteration converged when `\zeta \le` ``relTOL``, default
+  ``1e-9``. `\Delta\lambda F_{ext}` is a reference of the arc-length
+  methods only, and `\lambda \, \partial R/\partial \lambda` of load
+  vectors that depend on the load factor, see :mod:`.callbacks`. The
+  criterion does not depend on the units of each degree of freedom, e.g.
+  translations and rotations, and the residual at the constrained degrees
+  of freedom, e.g. a support reaction, does not enter it.
+- ``'relative'``: the Euclidean norm of `\{R\}` is not larger than
+  ``relTOL`` times the largest Euclidean norm of the same references, over
+  all the degrees of freedom, the only criterion up to version 0.8.0, with
+  the default ``relTOL=1e-6`` then. It does not depend on the units of the
+  model as a whole, but it adds the squares of forces and of moments.
+
+With either criterion, ``absTOL``, default ``None``, also accepts an
+iteration whose largest absolute value of `\{R\}` is not larger than
+``absTOL``, a force in the units of the model. ``None`` disables a
+tolerance, and at least one must be given. A tolerance below the round-off
+error of `\{R\}` cannot be met: every step then fails. The divergence and
+too-slow checks and the line search use the norm of the selected criterion.
 
 
 Increments and iterations
@@ -112,8 +132,20 @@ Load control beyond a limit point:
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_nr_jumps_over_limit_point
 
-The relative criterion gives the same increments and solutions when the
-forces and the displacements of a model are scaled:
+Both criteria give the same increments and solutions when the forces and
+the displacements of a model are scaled:
 
 .. literalinclude:: ../../tests/test_arc_length.py
     :pyobject: test_units_independence
+
+Only Crisfield's criterion is independent of the units of each degree of
+freedom, and only it ignores the residual of a support:
+
+.. literalinclude:: ../../tests/test_arc_length.py
+    :pyobject: rescaled_dof_problem
+
+.. literalinclude:: ../../tests/test_arc_length.py
+    :pyobject: test_crisfield_criterion_units_invariance
+
+.. literalinclude:: ../../tests/test_arc_length.py
+    :pyobject: test_crisfield_criterion_free_dofs_only

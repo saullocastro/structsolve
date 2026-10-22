@@ -2,6 +2,34 @@
 
 ## Unreleased
 
+### New default: Crisfield's convergence criterion
+
+- The non-linear analyses of `Analysis`, Newton-Raphson, arc-length and
+  the load correction iterations of the linear static analysis with a
+  configuration-dependent load, check the convergence by default with
+  Crisfield's criterion, `Analysis.convergence = 'crisfield'`: the residual
+  and the reference force vectors are measured with the norm scaled by the
+  diagonal of the linear stiffness matrix `calc_kC()`, over the free
+  degrees of freedom, those whose row or column of `calc_kC()` is not
+  null, and `zeta = ||R||_D/max(||lbd*Fext||_D, ||Fint||_D,
+  ||dlbd*Fext||_D, ||lbd*dR/dlbd||_D) <= relTOL`, the third reference in
+  the arc-length methods only, the fourth when `calc_fext` declares `lbd`.
+  The same scaled norm is used by the divergence and too-slow checks and
+  by the line search. The criterion does not depend on the units of each
+  degree of freedom, e.g. translations and rotations, and ignores the
+  residual at the constrained degrees of freedom, e.g. support reactions.
+  The same implementation as `pyfe3d.solver`.
+- The default `relTOL` is `1e-9`, instead of `1e-6`. The former check,
+  the Euclidean norm over all the degrees of freedom, is kept with
+  `Analysis.convergence = 'relative'`; `absTOL` is accepted with both. A
+  null diagonal entry of `calc_kC()` at a free degree of freedom raises a
+  `ValueError` with `'crisfield'`.
+- New module `structsolve.convergence`: `crisfield_weights`, `scaled_norm`,
+  `crisfield_zeta`, `check_convergence`, `CRITERIA`. New
+  `newton_raphson._weights`, `_norm`, `_log_iteration`; argument `w` of
+  `newton_raphson._check_convergence` and `_NR_iterations`. The log of the
+  iterations prints `zeta` with `'crisfield'`.
+
 ### Bug fixes
 
 - `lb`: the negative load multipliers returned after the positive ones are

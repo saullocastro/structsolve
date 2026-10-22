@@ -10,6 +10,7 @@ import numpy as np
 from .logger import msg, warn
 from .static import solve, _factorize
 from . import callbacks
+from .convergence import check_convergence, crisfield_weights, scaled_norm
 
 
 #: Number of iterations of a step before the divergence and too-slow checks
@@ -32,73 +33,108 @@ INC_GROWTH_FACTOR = 1.1111
 INC_CUT_FACTOR = 0.5
 
 
-def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None):
+def _weights(an, kC0):
+    r"""Weights of Crisfield's criterion from the linear stiffness matrix
+    ``kC0``, see :func:`.convergence.crisfield_weights`, or ``None`` with
+    ``an.convergence = 'relative'``"""
+    if an.convergence == 'crisfield':
+        return crisfield_weights(kC0)
+    return None
+
+
+def _norm(v, w):
+    r"""Norm of the convergence criterion: `\|v\|_D` with the weights ``w``
+    of Crisfield's criterion, the Euclidean norm when ``w`` is ``None``"""
+    if w is None:
+        return float(np.linalg.norm(v))
+    return scaled_norm(v, w)
+
+
+def _log_iteration(an, iteration, R, zeta, silent, lbd=None):
+    r"""Message of one equilibrium iteration, with `\zeta` of Crisfield's
+    criterion or the relative residual of the relative criterion"""
+    name = 'zeta' if an.convergence == 'crisfield' else 'relative ||R||'
+    load = '' if lbd is None else ', lbd %1.5f' % lbd
+    msg('Iteration: %d%s, max(|R|) = %1.3e, %s = %1.3e'
+        % (iteration, load, np.abs(R).max(), name, zeta), level=2,
+        silent=silent)
+
+
+def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
+                       w=None):
     r"""Check the convergence of the residual force vector
 
-    The convergence is achieved when either:
+    With ``an.convergence = 'crisfield'``, the default, the convergence is
+    achieved when Crisfield's `\zeta \le` ``an.relTOL``, the residual and
+    the reference force vectors being measured with the scaled norm of the
+    weights ``w`` over the free degrees of freedom. With ``an.convergence =
+    'relative'`` it is achieved when either:
 
     - ``||R|| <= relTOL*max(||fext_total||, ||fint||, ||fext_ref||,
       ||q_ref||)``, using the Euclidean norm, if ``an.relTOL`` is not
       ``None``
     - ``max(|R|) <= absTOL``, if ``an.absTOL`` is not ``None``
 
+    ``an.absTOL`` is also accepted as an additional criterion with
+    ``'crisfield'``. See :func:`.convergence.check_convergence`.
+
     Parameters
     ----------
     an : :class:`.Analysis`
-        Analysis object with the convergence criteria.
+        Analysis object with the attributes ``convergence``, ``relTOL`` and
+        ``absTOL``.
     R : array-like
         Residual force vector.
     fint : array-like
-        Internal force vector.
+        Internal force vector, of the same evaluation as ``R``.
     fext_total : array-like
         External force vector at the current load factor.
     fext_ref : array-like or None, optional
         Additional reference force vector, e.g. the external force vector of
-        the current increment.
+        the current increment of the arc-length solvers.
     q_ref : array-like or None, optional
         Additional reference force vector, the load factor times
         `\partial R/\partial \lambda` when ``calc_fext`` accepts ``lbd``,
         see :mod:`.callbacks`.
+    w : array-like or None, optional
+        Weights of Crisfield's criterion, see
+        :func:`.convergence.crisfield_weights`, required with
+        ``an.convergence = 'crisfield'``.
 
     Returns
     -------
     converged : bool
-        Whether the convergence criteria are satisfied.
+        Whether the convergence criterion is satisfied.
     Rnorm : float
-        Euclidean norm of the residual.
+        Norm of the residual of the criterion, `\|R\|_D` with
+        ``'crisfield'``, the Euclidean norm with ``'relative'``, used by the
+        divergence checks and the line search.
     Rrel : float
-        Relative residual ``||R||/max(||fext_total||, ||fint||, ||fext_ref||,
-        ||q_ref||)``.
+        Relative residual, Crisfield's `\zeta` with ``'crisfield'``,
+        ``||R||/max(||fext_total||, ||fint||, ||fext_ref||, ||q_ref||)``
+        with ``'relative'``.
+
+    Raises
+    ------
+    ValueError
+        When ``an.convergence`` is not ``'crisfield'`` or ``'relative'``,
+        when ``an.relTOL`` and ``an.absTOL`` are both ``None``, or when
+        ``w`` is missing with ``'crisfield'``.
 
     Notes
     -----
-    The relative criterion compares the residual with the largest norm of
-    the force vectors of the problem, such that it does not depend on the
-    units of the model, whereas ``absTOL`` does. When all the reference
-    norms are null, ``Rrel`` is ``||R||`` itself.
-
-    The reference ``fext_ref`` is useful when the load factor is close to
-    zero, where ``fext_total`` and ``fint`` are small. The reference
-    ``q_ref`` is needed under a prescribed displacement alone, where the
-    external and the internal force vectors of the reduced problem both
-    vanish at equilibrium and cannot be the reference.
+    Crisfield's criterion, see :mod:`.convergence`, does not depend on the
+    units of each degree of freedom, e.g. translations and rotations,
+    whereas the Euclidean norm of the relative criterion adds the squares
+    of forces and of moments. The reference ``fext_ref`` is useful when the
+    load factor is close to zero, where ``fext_total`` and ``fint`` are
+    small. The reference ``q_ref`` is needed under a prescribed displacement
+    alone, where the external and the internal force vectors of the reduced
+    problem both vanish at equilibrium and cannot be the reference.
 
     """
-    if an.relTOL is None and an.absTOL is None:
-        raise ValueError('At least one of relTOL or absTOL must be defined')
-    Rnorm = np.linalg.norm(R)
-    ref = max(np.linalg.norm(fext_total), np.linalg.norm(fint))
-    if fext_ref is not None:
-        ref = max(ref, np.linalg.norm(fext_ref))
-    if q_ref is not None:
-        ref = max(ref, np.linalg.norm(q_ref))
-    Rrel = Rnorm/ref if ref > 0 else Rnorm
-    converged = False
-    if an.relTOL is not None and Rnorm <= an.relTOL*ref:
-        converged = True
-    if an.absTOL is not None and np.abs(R).max() <= an.absTOL:
-        converged = True
-    return converged, Rnorm, Rrel
+    return check_convergence(an, R, fint, fext_total, fext_ref=fext_ref,
+                             q_ref=q_ref, w=w)
 
 
 def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
@@ -115,7 +151,8 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     an : :class:`.Analysis`
         Analysis object with the convergence criteria.
     Rnorm : float
-        Norm of the residual at the current iteration.
+        Norm of the residual at the current iteration, the norm of the
+        convergence criterion, see :func:`._check_convergence`.
     Rnorms : list
         Norms of the residual at the previous iterations of the step, the
         current norm is appended to it.
@@ -146,7 +183,9 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
 
     The divergence and too-slow checks are delayed because a non-monotonic
     residual in the first iterations is normal, especially in
-    postbuckling.
+    postbuckling. The checks only compare norms of the same step with each
+    other, and with the scaled norm of Crisfield's criterion they do not
+    depend on the units of the degrees of freedom.
 
     """
     if not np.isfinite(Rnorm):
@@ -170,7 +209,7 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
 
 
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
-                   lbd_dependent=False, q=None):
+                   lbd_dependent=False, q=None, w=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Corrects the predictor ``dc`` at the load factor ``total`` until the
@@ -202,7 +241,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     lbd_dependent : bool, optional
         Whether ``calc_fext`` accepts ``lbd``, see :mod:`.callbacks`;
         ``total*q``, with `\{q\} = \partial R/\partial \lambda`, is then an
-        additional reference of the relative convergence criterion, see
+        additional reference of the convergence criterion, see
         :func:`._check_convergence`. `\{q\}` is evaluated together with the
         tangent stiffness matrix, at the same iterate, and the last one
         evaluated is the reference until the next update of the tangent.
@@ -210,6 +249,10 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         The last `\{q\}` evaluated before these iterations, the reference
         until the first update of the tangent stiffness matrix, used only
         when ``lbd_dependent=True``.
+    w : array-like or None, optional
+        Weights of Crisfield's criterion, see
+        :func:`.convergence.crisfield_weights`, computed from ``calc_kC()``
+        when ``None`` and ``an.convergence = 'crisfield'``.
 
     Returns
     -------
@@ -269,6 +312,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     """
 
     modified_NR = an.modified_NR
+    if w is None:
+        w = _weights(an, an.calc_kC(silent=True))
     fext_total = total*fext
     if not lbd_dependent:
         q = None
@@ -288,9 +333,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             q_ref = total*q
 
         conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
-                                               q_ref=q_ref)
-        msg('Iteration: %d, max(|R|) = %1.3e, relative ||R|| = %1.3e'
-            % (iteration, np.abs(R).max(), Rrel), level=2, silent=silent)
+                                               q_ref=q_ref, w=w)
+        _log_iteration(an, iteration, R, Rrel, silent)
         if conv:
             return True, dc, q
         if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
@@ -323,7 +367,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             # phi'(0) = -2*phi(0), exact for a Newton direction
             fint = callbacks.calc_fint(an, c + dc + varc, total)
             phi0 = Rnorm**2
-            phi1 = np.linalg.norm(fext_total - fint)**2
+            phi1 = _norm(fext_total - fint, w)**2
             iter_line_search = 0
             while not phi1 <= (1 - 2*LINE_SEARCH_ALPHA*eta)*phi0:
                 if iter_line_search == an.max_iter_line_search:
@@ -336,7 +380,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 eta_new = phi0/A if (np.isfinite(A) and A > 0) else 0.5*eta
                 eta = min(max(eta_new, 0.1*eta), 0.5*eta)
                 fint = callbacks.calc_fint(an, c + dc + eta*varc, total)
-                phi1 = np.linalg.norm(fext_total - fint)**2
+                phi1 = _norm(fext_total - fint, w)**2
             if eta != 1.:
                 msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
         dc = dc + eta*varc
@@ -456,6 +500,7 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
+    w = _weights(an, kC0)
     q = None
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
@@ -483,7 +528,8 @@ def _solver_NR(an, silent=False, initialInc=None):
         if an.modified_NR and step_num == 1 and not an.kT_initial_state:
             kT0 = kC0
         converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
-                kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q)
+                kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
+                w=w)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)

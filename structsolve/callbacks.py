@@ -31,7 +31,7 @@ exactly as before:
     solution of the reference vector ``calc_fext(inc=1.)``, and the
     Newton-Raphson solver uses this linear solution as the predictor of its
     first step;
-  - the relative convergence criterion also considers the norm of the load
+  - the convergence criterion also considers the norm of the load
     factor times the load vector, see
     :func:`.newton_raphson._check_convergence`;
   - ``calc_fext(c=c, lbd=lbd)`` is called at the configurations where the
@@ -68,7 +68,7 @@ reduced residual
 which has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
 \{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
 load factor, the vector that ``calc_fext(inc=1., c=c, lbd=lbd)`` must
-return. The relative convergence criterion also considers the norm of
+return. The convergence criterion also considers the norm of
 `\lambda \, \partial R/\partial \lambda`, since under a prescribed
 displacement alone the reference vector and the reduced internal force
 vector both vanish at equilibrium, and the displacements of the arc-length

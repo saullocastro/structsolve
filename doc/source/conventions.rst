@@ -63,7 +63,9 @@ rad\ :sup:`2`/s\ :sup:`2` when the stiffness and the mass matrices are in
 consistent units of force, length and time, and the arc length of the
 arc-length methods is dimensionless, see
 :func:`.arc_length._solver_arc_length`. ``absTOL`` is in the units of the
-forces of the model, ``relTOL`` is relative, see :doc:`convergence`.
+forces of the model, ``relTOL`` is relative and, with the default
+Crisfield criterion, independent of the units of each degree of freedom,
+see :doc:`convergence`.
 
 
 Log messages and ``silent``

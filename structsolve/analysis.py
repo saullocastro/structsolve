@@ -15,7 +15,7 @@ import numpy as np
 from .static import solve, _factorize
 from .logger import msg, warn
 from . import callbacks
-from .newton_raphson import _check_convergence
+from .newton_raphson import _check_convergence, _weights
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -93,11 +93,23 @@ class Analysis(object):
     ====================    ============================================
     Convergence Criteria    Description
     ====================    ============================================
-    ``relTOL``              the convergence is achieved when the norm of
-                            the residual force vector is smaller than
-                            ``relTOL`` times the largest norm between the
-                            external and internal force vectors. Not used
-                            if ``None``. Default is ``1.e-6``
+    ``convergence``         ``str``, ``'crisfield'`` (default) for
+                            Crisfield's criterion, the residual scaled
+                            with the diagonal of the linear stiffness
+                            matrix over the free degrees of freedom, or
+                            ``'relative'`` for the Euclidean norm of the
+                            residual, see :mod:`.convergence`
+    ``relTOL``              tolerance `\epsilon` of the relative force
+                            imbalance: Crisfield's `\zeta \le` ``relTOL``,
+                            or, with ``'relative'``, the norm of the
+                            residual force vector smaller than ``relTOL``
+                            times the largest norm between the external
+                            and internal force vectors. Not used if
+                            ``None``. Default is ``1.e-9``, the tight
+                            tolerance of Crisfield's criterion with a
+                            consistent tangent; until version 0.8.0 the
+                            relative criterion was the only one, with the
+                            default ``1.e-6``
     ``absTOL``              the convergence is also achieved when the
                             maximum absolute residual force is smaller
                             than this value, which depends on the units of
@@ -170,10 +182,17 @@ class Analysis(object):
     and the tangent stiffness matrix `[K_T] = [K_C] + [K_G]`, given by the
     callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
     `\{F_{int}\}` with respect to `\{c\}`, such that the Newton-Raphson
-    iterations converge quadratically.
+    iterations converge quadratically. The convergence is checked by
+    default with Crisfield's criterion, the residual and the reference
+    force vectors scaled with the diagonal of the linear stiffness matrix
+    ``calc_kC()`` over the free degrees of freedom, such that it does not
+    depend on the units of each degree of freedom, e.g. translations and
+    rotations, see :mod:`.convergence`; ``convergence = 'relative'`` keeps
+    the Euclidean norm of the versions up to 0.8.0.
 
     The line-search tries the full step first and only reduces it when it
-    fails a sufficient-decrease test on the residual norm, see
+    fails a sufficient-decrease test on the norm of the residual of the
+    convergence criterion, see
     :func:`.newton_raphson._NR_iterations`.
 
     The arc length is dimensionless, with displacements scaled by the
@@ -200,8 +219,8 @@ class Analysis(object):
       reference vector ``calc_fext(inc=1.)`` may be null. The solvers then
       use `\partial R/\partial \lambda` for the displacement scale of the
       arc-length methods, for the predictor of the first Newton-Raphson
-      increment and as a reference of the relative convergence criterion,
-      see :mod:`.callbacks`. The linear static analysis never passes
+      increment and as a reference of the convergence criterion, see
+      :mod:`.callbacks`. The linear static analysis never passes
       ``lbd``.
 
     The tangent stiffness matrix may then be unsymmetric, which the solvers
@@ -211,7 +230,8 @@ class Analysis(object):
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
-            'maxArcLength', 'absTOL', 'relTOL', 'maxNumIter', 'too_slow_TOL',
+            'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
+            'too_slow_TOL',
             'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
             'calc_fint', 'calc_kG']
 
@@ -231,8 +251,9 @@ class Analysis(object):
         self.maxInc = 1.
         self.maxArcLength = 18
         # convergence criteria
+        self.convergence = 'crisfield'
         self.absTOL = None
-        self.relTOL = 1.e-6
+        self.relTOL = 1.e-9
         self.maxNumIter = 30
         self.too_slow_TOL = 0.005
 
@@ -356,14 +377,16 @@ class Analysis(object):
         configuration-dependent load, see :meth:`.static`"""
         msg('Configuration-dependent load: load correction iterations',
             level=2, silent=silent)
+        w = _weights(self, k0)
         # k0 is factorized once for all the corrections
         solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
             R = fext - fint
-            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext)
-            msg('Iteration: %d, relative ||R|| = %1.3e' % (iteration, Rrel),
+            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext, w=w)
+            msg('Iteration: %d, %s = %1.3e' % (iteration, 'zeta' if
+                self.convergence == 'crisfield' else 'relative ||R||', Rrel),
                 level=3, silent=silent)
             if conv:
                 return c
