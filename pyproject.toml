@@ -7,7 +7,7 @@ name = "structsolve"
 version = "0.8.0"
 description = "Structural analysis solvers"
 readme = "README.md"
-license = {text = "BSD-2-Clause"}
+license = {text = "BSD-3-Clause"}
 requires-python = ">=3.8"
 authors = [
     { name = "Saullo G. P. Castro", email = "castrosaullo@gmail.com" },
@@ -47,8 +47,8 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/compmech/structsolve"
-Repository = "https://github.com/compmech/structsolve"
+Homepage = "https://github.com/saullocastro/structsolve"
+Repository = "https://github.com/saullocastro/structsolve"
 
 [tool.setuptools.packages.find]
 include = ["structsolve*"]
