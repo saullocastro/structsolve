@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Bug fixes
+
+- `lb`: the negative load multipliers returned after the positive ones are
+  those closest to zero, i.e. the critical load multipliers of the reversed
+  load, instead of those of largest modulus, for the sparse and the dense
+  solvers, symmetric or unsymmetric. The sparse solver of symmetric
+  matrices computes them with `-KG` when fewer than `num_eigvalues`
+  positive load multipliers exist, and verifies them with the same
+  residual and inertia checks, such that a reference load without any
+  positive load multiplier, e.g. a tensile load, no longer needs the dense
+  fallback. The infinite load multipliers, e.g. of the null rows of `KG`,
+  come last, and the sparse solver of symmetric matrices does not return
+  them. New `linear_buckling._eigsh_both_signs`, `_check_both_signs`,
+  `_check_no_multiplier`, `_lb_order`, `_null_mu`, `NULL_MU_RTOL` and
+  `NO_MULTIPLIER_CHECK_FACTOR`.
+
 ## 0.8.0 (2026-10-14)
 
 ### Performance: fewer evaluations and factorizations, same solutions

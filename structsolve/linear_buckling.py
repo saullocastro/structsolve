@@ -41,6 +41,15 @@ SHIFT_SEARCH_MIN_EIGVALUES = 6
 SHIFT_SEARCH_MAX_STEPS = 40
 SHIFT_SEARCH_MAX_GROWTH = 1e10
 PARITY_REL_GAP = 1e-4
+#: An eigenvalue `\mu` of `[K_G]\{u\} = \mu [K]\{u\}` with `|\mu|` not
+#: larger than this fraction of the largest `|\mu|` is null, i.e. its load
+#: multiplier is infinite up to the round-off, e.g. at the dofs where
+#: `[K_G]` is null
+NULL_MU_RTOL = 1e-12
+#: When no load multiplier of one sign is found, `[K] + s [K_G]` must be
+#: positive definite for `s` this factor divided by the largest `|\mu|`,
+#: with the sign of `s` of the missing load multipliers
+NO_MULTIPLIER_CHECK_FACTOR = 1e3
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -271,10 +280,48 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
     return None
 
 
-def _sort_eigenpairs(mu, eigvecs):
-    r"""Sort by increasing `\mu`, i.e. the positive `\lambda = -1/\mu` first
-    in increasing order, as returned by :func:`scipy.linalg.eigh`"""
-    order = np.argsort(mu, kind='stable')
+def _null_mu(mu, scale=None):
+    r"""Tell which eigenvalues `\mu` are null, `|\mu| \le`
+    ``NULL_MU_RTOL`` ``scale``, ``scale`` being the largest finite `|\mu|`
+    when not given"""
+    absmu = np.abs(np.asarray(mu))
+    finite = np.isfinite(absmu)
+    if scale is None:
+        scale = absmu[finite].max() if np.any(finite) else 0.
+    return finite & (absmu <= NULL_MU_RTOL*scale)
+
+
+def _lb_order(mu, scale=None):
+    r"""Order of the load multipliers `\lambda = -1/\mu` returned by
+    :func:`lb`
+
+    The positive real `\lambda` first, in increasing order, then the
+    negative real `\lambda` by increasing modulus, i.e. the critical load
+    multipliers of the reversed load first, then the complex `\lambda` by
+    increasing modulus, and at the end the null `\mu`, see
+    :func:`_null_mu`, and the eigenvalues that are not finite.
+
+    """
+    mu = np.asarray(mu)
+    null = _null_mu(mu, scale)
+    finite = np.isfinite(mu)
+    real = np.isreal(mu) & finite & ~null
+    re = np.real(mu)
+    neg = np.flatnonzero(real & (re < 0))
+    neg = neg[np.argsort(re[neg], kind='stable')]
+    pos = np.flatnonzero(real & (re > 0))
+    pos = pos[np.argsort(-re[pos], kind='stable')]
+    cplx = np.flatnonzero(~np.isreal(mu) & finite & ~null)
+    cplx = cplx[np.argsort(-np.abs(mu[cplx]), kind='stable')]
+    first = np.concatenate((neg, pos, cplx))
+    rest = np.setdiff1d(np.arange(mu.size), first)
+    return np.concatenate((first, rest)).astype(int)
+
+
+def _sort_eigenpairs(mu, eigvecs, scale=None):
+    r"""Sort the eigenpairs of `[K_G]\{u\} = \mu [K]\{u\}` in the order of
+    the load multipliers returned by :func:`lb`, see :func:`_lb_order`"""
+    order = _lb_order(mu, scale)
     return mu[order], eigvecs[:, order]
 
 
@@ -291,8 +338,9 @@ def _eigh_condensed(K, KG, k):
         \{u_a\} = -[K_{aa}]^{-1}[K_{ab}]\{u_b\}
 
     solved with :func:`scipy.linalg.eigh`, which requires a positive
-    definite Schur complement. Returns the ``k`` lowest eigenvalues `\mu` of
-    `K_G u = \mu K u` and the corresponding eigenvectors.
+    definite Schur complement. Returns the first ``k`` eigenvalues `\mu` of
+    `K_G u = \mu K u` in the order of :func:`_sort_eigenpairs`, i.e. the
+    positive load multipliers first, and the corresponding eigenvectors.
 
     """
     active = np.asarray(abs(KG).sum(axis=1)).ravel() > 0
@@ -316,6 +364,7 @@ def _eigh_condensed(K, KG, k):
             X = lu.solve(Kab[:, j0:j1].toarray())
             S[:, j0:j1] -= Kba @ X
     mu, ub = eigh(a=0.5*(KGbb + KGbb.T), b=0.5*(S + S.T))
+    mu, ub = _sort_eigenpairs(mu, ub)
     k = min(k, b.size)
     ub = ub[:, :k]
     eigvecs = np.zeros((K.shape[0], k), dtype=ub.dtype)
@@ -381,15 +430,12 @@ def _real_if_close(mu, eigvecs, rtol=1e-8):
 
 
 def _sort_eigenpairs_general(mu, eigvecs):
-    r"""As :func:`_sort_eigenpairs` for the real `\mu`, with the complex
-    ones at the end, by increasing `|\lambda| = 1/|\mu|`"""
+    r"""As :func:`_sort_eigenpairs`, for real or complex `\mu`: the
+    positive real load multipliers first, then the negative real ones by
+    increasing modulus, then the complex ones by increasing `|\lambda| =
+    1/|\mu|`, see :func:`_lb_order`"""
     mu = np.asarray(mu)
-    real = np.isreal(mu)
-    ireal = np.flatnonzero(real)
-    icplx = np.flatnonzero(~real)
-    ireal = ireal[np.argsort(mu[ireal].real, kind='stable')]
-    icplx = icplx[np.argsort(-np.abs(mu[icplx]), kind='stable')]
-    order = np.concatenate((ireal, icplx))
+    order = _lb_order(mu)
     return mu[order], eigvecs[:, order]
 
 
@@ -715,7 +761,7 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     :func:`.arpackutils.capped_eigsh`, which avoids the Intel MKL bug.
     Returns the ``min(k, n - 2)`` eigenvalues ``mu`` of ``KG u = mu K u``
     selected by the Cayley mode and their eigenvectors, sorted by
-    increasing ``mu``, see :func:`_sort_eigenpairs`.
+    :func:`_sort_eigenpairs`.
 
     Notes
     -----
@@ -745,6 +791,112 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     mu, eigvecs = capped_eigsh(A=KG, k=k, M=K, sigma=sigma, which='SM',
                                mode='cayley', tol=tol)
     return _sort_eigenpairs(mu, eigvecs)
+
+
+def _check_no_multiplier(K, KG, mu_max, sign, K_positive_definite):
+    r"""Check that no load multiplier of the given ``sign`` is lower in
+    modulus than ``NO_MULTIPLIER_CHECK_FACTOR/mu_max``, with the inertia of
+    `[K] + s [K_G]`, raising a ``RuntimeError`` otherwise"""
+    name = 'positive' if sign > 0 else 'negative'
+    if mu_max is None or not K_positive_definite(K):
+        raise RuntimeError('no {0} load multiplier was found and K is not '
+                           'positive definite'.format(name))
+    s = sign*NO_MULTIPLIER_CHECK_FACTOR/mu_max
+    if not _is_positive_definite(K + s*KG):
+        raise RuntimeError('no {0} load multiplier was found, but at least '
+                           'one exists with a modulus lower than {1:g}'
+                           .format(name, abs(s)))
+
+
+def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
+                      K_positive_definite=None):
+    r"""The lowest positive load multipliers, completed by the negative ones
+    closest to zero, with :func:`_eigsh_cayley`
+
+    Returns the eigenpairs of at most ``min(k, n - 2)`` finite load
+    multipliers, in the order of :func:`_sort_eigenpairs`.
+
+    Notes
+    -----
+    The Cayley mode with a shift `\sigma` larger than all the `|\mu|`
+    selects the eigenvalues `\mu` of `[K_G]\{u\} = \mu [K]\{u\}` by
+    increasing `(\mu + \sigma)/(\mu - \sigma)`, i.e. all the negative
+    `\mu` before the null and the positive ones, see :func:`_eigsh_cayley`.
+
+    1. ``KG`` gives the positive load multipliers `\lambda = -1/\mu`,
+       `\mu < 0`. The null `\mu`, see :func:`_null_mu`, and the positive
+       `\mu` are discarded.
+    2. When fewer than ``k`` positive load multipliers were found, they are
+       all the positive ones, and ``-KG``, i.e. the reversed load, gives the
+       remaining ones, the negative load multipliers closest to zero.
+    3. When no load multiplier of one sign was found, the inertia of `[K] +
+       s [K_G]` checks that none exists with a modulus lower than
+       ``NO_MULTIPLIER_CHECK_FACTOR`` divided by the largest `|\mu|`, see
+       :func:`_check_no_multiplier`; one of larger modulus, i.e. `|\mu|`
+       below ``1/NO_MULTIPLIER_CHECK_FACTOR`` of the largest one, could be
+       missed.
+
+    A tensile reference load, without any positive load multiplier, thus
+    gives the negative load multipliers closest to zero without a dense
+    solution.
+
+    """
+    if mu_max is False:
+        mu_max = _estimate_mu_max(K, KG)
+    if K_positive_definite is None:
+        K_positive_definite = _is_positive_definite
+    kmax = min(k, K.shape[0] - 2)
+    mu, eigvecs = _eigsh_cayley(K, KG, kmax, tol, silent, safety=safety,
+                                mu_max=mu_max)
+    keep = (mu < 0) & ~_null_mu(mu, mu_max)
+    mu, eigvecs = mu[keep], eigvecs[:, keep]
+    msg('{0} positive load multipliers'.format(mu.size), level=4,
+        silent=silent)
+    if mu.size >= kmax:
+        return mu[:kmax], eigvecs[:, :kmax]
+    if mu.size == 0:
+        _check_no_multiplier(K, KG, mu_max, 1, K_positive_definite)
+    # the reversed load
+    mu2, eigvecs2 = _eigsh_cayley(K, -KG, kmax - mu.size, tol, silent,
+                                  safety=safety, mu_max=mu_max)
+    keep2 = (mu2 < 0) & ~_null_mu(mu2, mu_max)
+    mu2, eigvecs2 = -mu2[keep2], eigvecs2[:, keep2]
+    msg('{0} negative load multipliers of the reversed load'.format(
+        mu2.size), level=4, silent=silent)
+    if mu2.size == 0:
+        if mu.size == 0:
+            raise RuntimeError('no finite load multiplier was found')
+        _check_no_multiplier(K, KG, mu_max, -1, K_positive_definite)
+    return (np.concatenate((mu, mu2)),
+            np.concatenate((eigvecs, eigvecs2), axis=1))
+
+
+def _check_both_signs(K, KG, mu, eigvecs, rtol, K_positive_definite=None):
+    r"""Verify the eigenpairs of :func:`lb` with :func:`_check_eigenpairs`,
+    the positive load multipliers with ``KG``, the negative ones with
+    ``-KG``, i.e. the reversed load, such that the inertia check also tells
+    that no negative load multiplier closer to zero than the returned ones
+    is missing. The null `\mu`, see :func:`_null_mu`, are not verified."""
+    mu = np.asarray(mu)
+    kept = np.isfinite(mu) & ~_null_mu(mu)
+    if not np.any(kept):
+        return 'no finite load multiplier was found'
+    with np.errstate(divide='ignore', invalid='ignore'):
+        lam = -1./mu
+    positive = kept & (lam > 0)
+    negative = kept & (lam < 0)
+    if np.any(positive):
+        error = _check_eigenpairs(K, KG, lam[positive], eigvecs[:, positive],
+                                  rtol, K_positive_definite=K_positive_definite)
+        if error is not None:
+            return error
+    if np.any(negative):
+        error = _check_eigenpairs(K, -KG, -lam[negative],
+                                  eigvecs[:, negative], rtol,
+                                  K_positive_definite=K_positive_definite)
+        if error is not None:
+            return 'reversed load: ' + error
+    return None
 
 
 def _sparse_first(analysis, strategies, verify, dense, dense_size,
@@ -853,7 +1005,8 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     must pass the verification: the relative residual of each eigenpair
     must not be larger than ``check_rtol`` and, for symmetric matrices with
     a positive definite ``K``, no positive load multiplier below the highest
-    one returned may be missing, see :func:`_check_eigenpairs`. Only when
+    one returned, and no negative one closer to zero than the returned
+    ones, may be missing, see :func:`_check_both_signs`. Only when
     all of them failed (verification, ARPACK error or no convergence,
     singular factorization, no positive real load multiplier...) a dense
     solver is used, if the dense problem has at most ``max_dense_size``
@@ -868,6 +1021,11 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        estimated from the matrices by :func:`_estimate_sigma`;
     2. the same with a 10 times larger shift.
 
+    Each one computes the lowest positive load multipliers and, when fewer
+    than ``num_eigvalues`` exist, the negative ones closest to zero, i.e.
+    the critical load multipliers of the reversed load, with ``-KG``, see
+    :func:`_eigsh_both_signs`. A reference load without any positive load
+    multiplier, e.g. a tensile load, is solved by the sparse solvers too.
     The dense fallback condenses out the dofs where ``KG`` has null rows
     and solves the condensed problem with :func:`scipy.linalg.eigh`, see
     :func:`_eigh_condensed`.
@@ -923,7 +1081,10 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         A boolean to tell whether the log messages should be printed.
     num_eigvalues : int, optional
         Number of load multipliers calculated with the sparse solver, and
-        number of returned eigenvectors.
+        number of returned eigenvectors. Fewer are returned by the sparse
+        solver of symmetric matrices when fewer finite load multipliers
+        exist, the infinite ones, e.g. of the null rows of ``KG``, being
+        discarded.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
     skip_null_cols : bool, optional
@@ -953,8 +1114,13 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         The load multipliers `\lambda`, calculated as ``-1/eigval`` from the
         eigenvalues ``eigval`` of ``KG u = eigval K u``. The positive load
         multipliers come first in increasing order, followed by the negative
-        ones, for both solvers. For unsymmetric matrices the array is
-        complex when some eigenvalues are complex, which come last.
+        ones in order of increasing modulus, i.e. the critical load
+        multipliers of the reversed load first, for both solvers. For
+        unsymmetric matrices the array is complex when some eigenvalues are
+        complex, which come after the real ones by increasing modulus. The
+        load multipliers of the null ``eigval``, ``|eigval|`` not larger
+        than ``NULL_MU_RTOL`` times the largest ``|eigval|``, infinite up to
+        the round-off, come last.
     eigvecs : ndarray
         The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
         original matrices. Only ``num_eigvalues`` eigenvectors are returned.
@@ -1006,7 +1172,19 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
       factorization is done with SuperLU, without row interchanges. When a
       row interchange was needed and the count is unknown, `[K] + s [K_G]`
       must be positive definite for `s` slightly below the lowest positive
-      load multiplier. See :func:`_check_eigenpairs`.
+      load multiplier. See :func:`_check_eigenpairs`;
+    - the same for the negative load multipliers with `-[K_G]`, i.e. the
+      positive load multipliers of the reversed load, see
+      :func:`_check_both_signs`.
+
+    The Cayley mode selects all the negative `\mu`, i.e. the positive load
+    multipliers, before the null and the positive `\mu`. When fewer than
+    ``num_eigvalues`` positive load multipliers were found, they are all
+    the positive ones, and the Cayley mode with `-[K_G]` gives the negative
+    load multipliers closest to zero. When no load multiplier of one sign
+    was found, `[K] + s [K_G]` must be positive definite for `s` of that
+    sign and ``NO_MULTIPLIER_CHECK_FACTOR`` times larger in modulus than the
+    lowest possible load multiplier, see :func:`_eigsh_both_signs`.
 
     **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a
     follower pressure that is not conservative, may have complex
@@ -1080,17 +1258,17 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
             return once['pd']
 
         def verify(mu, eigvecs):
-            with np.errstate(divide='ignore', invalid='ignore'):
-                return _check_eigenpairs(K, KG, -1./mu, eigvecs, check_rtol,
-                        K_positive_definite=K_positive_definite)
+            return _check_both_signs(K, KG, mu, eigvecs, check_rtol,
+                    K_positive_definite=K_positive_definite)
 
         strategies = [
             ('eigsh() in Cayley mode',
-             lambda: _eigsh_cayley(K, KG, num_eigvalues, tol, silent,
-                                   mu_max=mu_max())),
+             lambda: _eigsh_both_signs(K, KG, num_eigvalues, tol, silent,
+                    mu_max=mu_max(), K_positive_definite=K_positive_definite)),
             ('eigsh() in Cayley mode with a 10 times larger shift',
-             lambda: _eigsh_cayley(K, KG, num_eigvalues, tol, silent,
-                                   safety=100., mu_max=mu_max())),
+             lambda: _eigsh_both_signs(K, KG, num_eigvalues, tol, silent,
+                    safety=100., mu_max=mu_max(),
+                    K_positive_definite=K_positive_definite)),
         ]
         dense = ('eigh() with condensed dofs',
                  lambda: _eigh_condensed(K, KG, num_eigvalues))
@@ -1107,6 +1285,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         KG = csr_matrix(KG).toarray()
         msg('eigh() solver...', level=3, silent=silent)
         eigvals, peigvecs = eigh(a=KG, b=K)
+        eigvals, peigvecs = _sort_eigenpairs(eigvals, peigvecs)
         msg('finished!', level=3, silent=silent)
 
     num_eigvecs = min(num_eigvalues, peigvecs.shape[1])

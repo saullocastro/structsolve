@@ -42,14 +42,13 @@ Negative and complex load multipliers
 A negative `\lambda` is a buckling load of the reversed reference load,
 e.g. a column under tension buckles only under the opposite, compressive,
 load. :func:`.lb` returns the positive load multipliers first, in
-increasing order, and its sparse solvers search them; the negative load
-multipliers that follow are not necessarily those of smallest modulus. To
-obtain the critical load of the reversed load, the reference load is
-reversed, i.e. ``lb(K0, -KG)``. When no positive load multiplier exists, the
-sparse solvers may fail, as in the example below, and the dense solver is
-then used as a last resort, with a :class:`.DenseFallbackWarning`, see
-:doc:`eigensolvers`. The null rows of ``KG``, e.g. of the in-plane dofs,
-give infinite load multipliers.
+increasing order, followed, when fewer than ``num_eigvalues`` positive ones
+exist, by the negative load multipliers closest to zero, i.e. the critical
+load multipliers of the reversed load, see :doc:`eigensolvers`. A reference
+load without any positive load multiplier, e.g. a tensile load, thus gives
+the critical load multipliers of the reversed load directly. The null rows
+of ``KG``, e.g. of the in-plane dofs, give infinite load multipliers, which
+the sparse solvers do not return.
 
 Complex load multipliers only exist for unsymmetric matrices, e.g. with the
 load stiffness of follower loads, for which :func:`.lb` returns the lowest
@@ -66,7 +65,7 @@ a compressive reference load, with and without a constant preload:
     :pyobject: test_lb_prestress
 
 Under a tensile reference load all the load multipliers are negative, and
-the critical load is obtained by reversing the reference load:
+the critical ones of the reversed load are returned:
 
 .. literalinclude:: ../../tests/test_column.py
     :pyobject: test_lb_reversed_load

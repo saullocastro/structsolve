@@ -47,7 +47,10 @@ Linear buckling, symmetric matrices
 
 :func:`scipy.sparse.linalg.eigsh` in Cayley mode, with a shift estimated by
 power iterations on `[K]^{-1}[K_G]`, retried with a 10 times larger shift.
-The dense fallback condenses out the degrees of freedom where `[K_G]` has
+It gives the lowest positive load multipliers; when fewer than
+``num_eigvalues`` exist, the same solver with `-[K_G]` gives the negative
+ones closest to zero, i.e. the critical load multipliers of the reversed
+load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where `[K_G]` has
 null rows and solves the condensed problem with :func:`scipy.linalg.eigh`.
 
 

@@ -88,26 +88,19 @@ def test_lb_prestress():
 
 def test_lb_reversed_load():
     r"""Under a tensile reference load all the load multipliers are negative:
-    the column buckles only under the reversed load. The negative load
-    multipliers returned are not those of smallest modulus; reversing the
-    reference load gives the critical one"""
+    the column buckles only under the reversed load, whose critical load
+    multipliers are the negative ones closest to zero"""
     col = Column()
     K = apply_null_rows(col.K(), col.bc)
     c = solve(K, col.fext(P=-1.), silent=True)
     KG = apply_null_rows(col.KG(c), col.bc)
-    lambda_1 = col.load_multipliers(1)
+    lambda_k = col.load_multipliers(np.arange(1, 6))
     with warnings.catch_warnings():
-        # the sparse solvers search positive load multipliers
-        warnings.simplefilter('ignore', DenseFallbackWarning)
+        warnings.simplefilter('error', DenseFallbackWarning)
         eigvals, _ = lb(K, KG, silent=True, num_eigvalues=5)
-    assert np.all(eigvals < 0)
-    assert np.all(np.abs(eigvals) > 10*lambda_1)
-    # all the load multipliers of the dense solver: -lambda_1 is the last
+    np.testing.assert_allclose(eigvals, -lambda_k, rtol=1e-8)
     eigvals_all, _ = lb(K, KG, silent=True, sparse_solver=False)
-    np.testing.assert_allclose(eigvals_all[-1], -lambda_1, rtol=1e-8)
-    # the reversed reference load
-    eigvals_rev, _ = lb(K, -KG, silent=True, num_eigvalues=5)
-    np.testing.assert_allclose(eigvals_rev[0], lambda_1, rtol=1e-8)
+    np.testing.assert_allclose(eigvals_all[:5], -lambda_k, rtol=1e-8)
 
 
 def test_freq_prestressed_column():

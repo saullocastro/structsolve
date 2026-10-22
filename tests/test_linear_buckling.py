@@ -236,6 +236,70 @@ def test_lb_sparse_sorted_as_dense(max_dense_size):
     assert np.all(relative_residuals(K, KG, eig_sparse, eigvecs) < 1e-8)
 
 
+def mixed_sign_problem(lambdas, num_null=0):
+    """Diagonal ``K`` and ``KG`` with the load multipliers ``lambdas``,
+    coupled by a sparse congruence, and ``num_null`` dofs where ``KG`` is
+    null, e.g. in-plane dofs"""
+    from scipy.sparse import diags, identity, random as sprandom, tril
+
+    lambdas = np.concatenate([lambdas, np.full(num_null, np.inf)])
+    n = lambdas.size
+    k = np.linspace(1., 3., n)
+    T = (identity(n) + 0.1*tril(sprandom(n, n, density=2/n, random_state=1),
+                                -1)).tocsc()
+    K = (T.T @ diags(k) @ T).tocsr()
+    KG = (T.T @ diags(-k/lambdas) @ T).tocsr()
+    return K, KG
+
+
+@pytest.mark.parametrize('max_dense_size', [0, 2000])
+def test_lb_negative_multipliers_closest_to_zero(max_dense_size):
+    """After the positive load multipliers, the negative ones closest to
+    zero, i.e. the critical load multipliers of the reversed load, for the
+    sparse and the dense solvers"""
+    positive = np.linspace(1., 20., 5)
+    negative = -np.linspace(2., 40., 35)
+    K, KG = mixed_sign_problem(np.concatenate([positive, negative]),
+                               num_null=10)
+    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=10,
+                          max_dense_size=max_dense_size)
+    np.testing.assert_allclose(eigvals[:5], positive, rtol=1e-8)
+    np.testing.assert_allclose(eigvals[5:], negative[:5], rtol=1e-8)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+    eig_dense, _ = lb(K, KG, silent=True, sparse_solver=False)
+    np.testing.assert_allclose(eig_dense[:10], eigvals, rtol=1e-8)
+    # the infinite load multipliers of the null rows of KG come last
+    assert np.all(np.abs(eig_dense[-10:]) > 1e8)
+    # the same order with the solvers of unsymmetric matrices
+    eig_gen, _ = lb(K, KG, silent=True, num_eigvalues=10, symmetric=False,
+                    max_dense_size=max_dense_size)
+    pos, neg = eig_gen[eig_gen > 0], eig_gen[eig_gen < 0]
+    np.testing.assert_allclose(pos, positive[:pos.size], rtol=1e-8)
+    np.testing.assert_allclose(neg, negative[:neg.size], rtol=1e-8)
+    np.testing.assert_array_equal(eig_gen, np.concatenate((pos, neg)))
+
+
+def test_lb_tensile_reference_load():
+    """No positive load multiplier, e.g. a tensile reference load: the
+    sparse solver returns the negative load multipliers closest to zero,
+    without the dense fallback"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
+    negative = -np.linspace(2., 40., 40)
+    K, KG = mixed_sign_problem(negative, num_null=10)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=10,
+                              max_dense_size=0)
+    np.testing.assert_allclose(eigvals, negative[:10], rtol=1e-8)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+    # the reversed load
+    eigvals_rev, _ = lb(K, -KG, silent=True, num_eigvalues=10,
+                        max_dense_size=0)
+    np.testing.assert_allclose(eigvals_rev, -negative[:10], rtol=1e-8)
+
+
 def test_lb_sparse_null_KG_rows_and_null_cols():
     """Condensed solution with null rows of KG and null rows of K, returning
     eigenvectors with the size of the original matrices"""
