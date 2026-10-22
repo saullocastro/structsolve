@@ -38,7 +38,12 @@ extensions = [
     'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.mathjax',
+    'nbsphinx',
 ]
+
+# the notebooks are stored with their outputs, executed against the code of
+# the repository, and they are not executed when building the documentation
+nbsphinx_execute = 'never'
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -46,7 +51,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['**.ipynb_checkpoints']
 
 default_role = 'math'
 

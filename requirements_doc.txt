@@ -3,3 +3,6 @@ scipy
 sphinx
 numpydoc
 pydata-sphinx-theme
+nbsphinx
+ipykernel
+matplotlib
