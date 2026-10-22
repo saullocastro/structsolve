@@ -86,3 +86,34 @@ def test_freq_lowest_frequencies(symmetric, num_eigvalues):
     np.testing.assert_allclose(np.sort((-lambda2).real), w_ref, rtol=1e-8)
     if symmetric:
         assert np.isrealobj(lambda2)
+
+
+@pytest.mark.parametrize('sparse_solver', [True, False])
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_freq_sort(sparse_solver, symmetric):
+    """sort=True sorts and filters the eigenvalues together with the
+    eigenvectors: increasing natural frequencies, without the rigid-body
+    mode of the dense solvers"""
+    rng = np.random.RandomState(3)
+    n = 12
+    k = rng.permutation(np.arange(1, n + 1, dtype=float))*100
+    K = np.diag(k)
+    if not sparse_solver:
+        # a free-free pair of springs: one rigid-body mode
+        K[:2, :2] = 50.*np.array([[1., -1.], [-1., 1.]])
+    M = np.eye(n)
+    K, M = csc_matrix(K), csc_matrix(M)
+    lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=6, sort=True,
+                            sparse_solver=sparse_solver, symmetric=symmetric)
+    omega2 = (-lambda2).real
+    assert lambda2.shape[0] == eigvecs.shape[1]
+    assert np.all(np.diff(omega2) >= 0)
+    assert np.all(omega2 > 1e-6)
+    lambda2_u, _ = freq(K, M, silent=True, num_eigvalues=6, sort=False,
+                        sparse_solver=sparse_solver, symmetric=symmetric)
+    w2_u = np.sort((-lambda2_u).real)
+    np.testing.assert_allclose(omega2, w2_u[w2_u > 1e-6][:omega2.size],
+                               rtol=1e-8)
+    # each eigenvalue with its eigenvector
+    res = np.linalg.norm(K @ eigvecs + (M @ eigvecs)*lambda2, axis=0)
+    assert np.all(res <= 1e-6*np.linalg.norm(K @ eigvecs, axis=0))

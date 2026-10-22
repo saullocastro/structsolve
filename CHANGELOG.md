@@ -17,6 +17,12 @@
   them. New `linear_buckling._eigsh_both_signs`, `_check_both_signs`,
   `_check_no_multiplier`, `_lb_order`, `_null_mu`, `NULL_MU_RTOL` and
   `NO_MULTIPLIER_CHECK_FACTOR`.
+- `freq(sort=True)`, the default, sorts and filters `lambda2` together with
+  the eigenvectors, instead of the eigenvectors only, such that
+  `eigvecs[:, i]` is always the eigenvector of `lambda2[i]`. The eigenpairs
+  with a natural frequency not larger than `1e-6` rad/s, e.g. rigid-body
+  modes, are removed from both arrays, which may then have fewer than
+  `num_eigvalues` entries.
 
 ## 0.8.0 (2026-10-14)
 

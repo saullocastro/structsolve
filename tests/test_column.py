@@ -142,12 +142,3 @@ def test_freq_prestressed_column():
     np.testing.assert_allclose(
         np.sort(-lambda2_pre),
         col.omega2(k)*(1 - lam/col.load_multipliers(k)), rtol=1e-8)
-
-    # sort=True sorts and filters the eigenvectors only, lambda2 keeps the
-    # order of the solver
-    lambda2_s, eigvecs_s = freq(K, M, silent=True, num_eigvalues=3,
-                                symmetric=True, sort=True)
-    lambda2_u, eigvecs_u = freq(K, M, silent=True, num_eigvalues=3,
-                                symmetric=True, sort=False)
-    np.testing.assert_array_equal(lambda2_s, lambda2_u)
-    assert eigvecs_s.shape == eigvecs_u.shape

@@ -232,9 +232,14 @@ def freq(K, M, tol=0, sparse_solver=True,
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
     sort : bool, optional
-        Sort the eigenvectors by increasing natural frequency, keeping only
-        those with a natural frequency larger than ``1e-6`` rad/s. The
-        returned eigenvalues are not affected by this option.
+        Sort the eigenvalues and the eigenvectors together by increasing
+        natural frequency, keeping only those with a natural frequency
+        larger than ``1e-6`` rad/s, e.g. without the rigid-body modes. The
+        sort key is the real part of `\omega_n = \sqrt{-\lambda^2}` rounded
+        to one decimal, then its imaginary part rounded to one decimal, the
+        order of the solver being kept between equal keys. With ``False``
+        the eigenpairs are returned in the order of the solver. Until
+        version 0.8.0, only the eigenvectors were sorted and filtered.
     num_eigvalues : int, optional
         Number of calculated eigenvalues with the sparse solver, limited to
         the size of ``M`` minus 2.
@@ -267,17 +272,14 @@ def freq(K, M, tol=0, sparse_solver=True,
     Returns
     -------
     lambda2 : ndarray
-        Complex array with the eigenvalues `\lambda^2 = -\omega_n^2`, in the
-        order returned by the eigenvalue solver, real with
-        ``symmetric=True``.
+        Complex array with the eigenvalues `\lambda^2 = -\omega_n^2`, real
+        with ``symmetric=True``, sorted and filtered as described in
+        ``sort``, otherwise in the order returned by the eigenvalue solver.
     eigvecs : ndarray
-        The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
-        original matrices. The sparse solver returns eigenvectors normalized
-        with respect to ``M``, the dense solver returns eigenvectors with
-        unit Euclidean norm. If ``sort=True`` the columns are sorted and
-        filtered as described above, in which case they correspond to the
-        eigenvalues in ``lambda2`` only if the solver already returned them
-        in the order of increasing natural frequency.
+        The `i^{th}` eigenvector is ``eigvecs[:, i]``, the eigenvector of
+        ``lambda2[i]``, with the size of the original matrices. The sparse
+        solver returns eigenvectors normalized with respect to ``M``, the
+        dense solver returns eigenvectors with unit Euclidean norm.
 
     Raises
     ------
@@ -422,16 +424,16 @@ def freq(K, M, tol=0, sparse_solver=True,
     msg('finished!', level=3, silent=silent)
 
     if sort:
-        omegan = np.sqrt(-lambda2)
+        #NOTE complex square root, a positive real lambda2 (divergence) has
+        #     an imaginary natural frequency and is filtered out
+        omegan = np.sqrt(-np.asarray(lambda2, dtype=complex))
         sort_ind = np.lexsort((np.round(omegan.imag, 1),
                                np.round(omegan.real, 1)))
         omegan = omegan[sort_ind]
-        eigvecs = eigvecs[:, sort_ind]
-
         higher_zero = omegan.real > 1e-6
-
-        omegan = omegan[higher_zero]
-        eigvecs = eigvecs[:, higher_zero]
+        # the eigenvalues are sorted and filtered with their eigenvectors
+        lambda2 = lambda2[sort_ind][higher_zero]
+        eigvecs = eigvecs[:, sort_ind][:, higher_zero]
 
     msg('finished!', level=2, silent=silent)
 
