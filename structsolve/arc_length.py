@@ -132,9 +132,19 @@ def _solver_arc_length(an, method, silent=False):
 
     - ``method='riks'``: the constraint is linearized at the current
       increment (updated normal plane), which is Newton-Raphson applied to
-      the augmented system of the equilibrium equations and the constraint,
-      as proposed by Riks [1]_ ([4]_, Section 9.3.2, p. 272), and gives
-      quadratic convergence. Without the mismatch `g` of the constraint, it
+      the augmented system of the equilibrium equations and the constraint
+      ([4]_, Section 9.3.2, p. 272), with quadratic convergence when `[K_T]`
+      is updated at every iteration and is the exact Jacobian. It follows
+      Riks [1]_, who applies Newton's method to the equilibrium equations
+      augmented with an equation that controls the arc length, and states
+      its quadratic convergence (Sections 3.2 and 3.3, Eqs. (3.7), (3.11)
+      and (3.17), pp. 537-539). The equation of Riks is linear (Section 3.1,
+      Eqs. (3.4) and (3.9), pp. 537-538): the plane normal to the unit
+      tangent of the path at the last converged point, at the distance
+      `\Delta s` from it, in the unscaled Euclidean space of the load
+      parameter and the generalized coordinates; the plane is fixed during
+      the iterations of a step and redefined at each converged point.
+      Without the mismatch `g` of the constraint, it
       is the updated normal plane of Ramm [3]_ (p. 75); [4]_ (Section
       9.3.2.2, Eq. (9.29), pp. 274-275) attributes the mismatch term to
       Schweizerhof and Wriggers and to Riks:
@@ -220,7 +230,6 @@ def _solver_arc_length(an, method, silent=False):
     .. [1] Riks, E., An incremental approach to the solution of snapping and
        buckling problems, International Journal of Solids and Structures,
        15(7), 529-551, 1979. https://doi.org/10.1016/0020-7683(79)90081-7
-       TODO(author): confirm this source, cited above through [4]_, p. 272
     .. [2] Crisfield, M.A., A fast incremental/iterative solution procedure
        that handles "snap-through", Computers & Structures, 13(1-3), 55-62,
        1981. https://doi.org/10.1016/0045-7949(81)90108-5

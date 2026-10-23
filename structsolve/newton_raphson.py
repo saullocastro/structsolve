@@ -296,22 +296,43 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     is replaced by the minimizer `\phi(0)/A` of the quadratic interpolation
     of `\phi(0)`, `\phi'(0)` and `\phi(\eta)`, with `A = (\phi(\eta) -
     \phi(0) + 2\phi(0)\eta)/\eta^2`, or by `\eta/2` when `A` is not
-    positive, safeguarded in `[0.1 \eta, 0.5 \eta]` [2]_. After
+    finite or not positive, safeguarded in `[0.1 \eta, 0.5 \eta]`. After
     ``an.max_iter_line_search`` reductions the last `\eta` is accepted. The
     internal force vector of the accepted point is reused in the residual
     of the next iteration.
+
+    The line search is adapted from the backtracking line search of [2]_
+    (Section 6.3.2, Algorithm 6.3.5, pp. 126-129, and Algorithm A6.3.1,
+    pp. 325-327), applied to nonlinear equations with the merit function
+    `f = \frac{1}{2}\|D_F F\|^2` ([2]_, Section 6.5, Eq. (6.5.3), p. 147,
+    and Algorithm NEFN, p. 303), whose directional derivative along the
+    Newton step is `-F^T F = -2f` (p. 148, with `D_F` the identity). With
+    `F = R` and `\phi = 2f`, `D_F` being the identity with the Euclidean
+    norm or `\mathrm{diag}(\sqrt{w_j})` with Crisfield's criterion, the test
+    above is their condition (6.3.3) (p. 118) with their `\alpha = 10^{-4}`
+    (p. 126), and the first reduction is their quadratic backtrack,
+    Eq. (6.3.17) (p. 127). It differs from Algorithm A6.3.1 in that: the
+    quadratic interpolation through the last trial `\eta` is used at every
+    reduction, whereas [2]_ uses, from the second backtrack on, the cubic
+    interpolation of `f(0)`, `f'(0)` and the last two trial values,
+    Eq. (6.3.18) (p. 128); the bound `0.5 \eta` is also imposed at the
+    first reduction, where [2]_ imposes only the lower bound `0.1`, the
+    quadratic backtrack being then smaller than `1/(2(1 - \alpha))`
+    (p. 127; Algorithm A6.3.1, steps 10.3c.1E.4 and 10.3c.4); and [2]_ has
+    no maximum number of reductions, but limits the length of the step to
+    ``maxstep`` and stops when the step length becomes smaller than a
+    minimum, returning the current point.
 
     References
     ----------
     .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
        Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
        1991.
-    .. [2] Dennis, J.E., Schnabel, R.B., Numerical Methods for Unconstrained
-       Optimization and Nonlinear Equations, Prentice-Hall, Englewood
-       Cliffs, NJ, 1983; SIAM, Philadelphia, 1996.
+    .. [2] Dennis, J.E., Jr., Schnabel, R.B., Numerical Methods for
+       Unconstrained Optimization and Nonlinear Equations, SIAM,
+       Philadelphia, 1996 (first published by Prentice-Hall, Englewood
+       Cliffs, NJ, 1983), pages of the SIAM edition.
        https://doi.org/10.1137/1.9781611971200
-       TODO(author): confirm this source (Chapter 6, "Globally Convergent
-       Modifications of Newton's Method", not accessible)
 
     """
 
