@@ -2,6 +2,10 @@
 
 ## 0.9.0 (unreleased)
 
+### Python versions
+
+- Python 3.9 is no longer supported, it reached its end of life in October 2025: Python 3.10 or newer is required, and the tests and wheels cover Python 3.10 to 3.14.
+
 ### New default: Crisfield's convergence criterion
 
 - The non-linear analyses of `Analysis`, Newton-Raphson, arc-length and
