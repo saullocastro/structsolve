@@ -28,7 +28,7 @@ Currently these solvers are pretty much compatible with my other repository
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.8.5). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -43,7 +43,7 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.8.5 (unreleased)
+* version 0.9.0 (unreleased)
     - Crisfield's convergence criterion is the default of the non-linear analyses, `Analysis.convergence = 'crisfield'`, with `relTOL = 1e-9`: the residual and the reference forces are measured with the norm scaled by the diagonal of `calc_kC()` over the free degrees of freedom; the former check is kept with `convergence = 'relative'`
     - `lb` returns the negative load multipliers closest to zero after the positive ones, and a tensile reference load no longer needs the dense fallback
     - `freq(sort=True)` sorts and filters `lambda2` together with the eigenvectors, and rigid-body modes no longer fail the verification of the residuals

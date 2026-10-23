@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.8.5 (unreleased)
+## 0.9.0 (unreleased)
 
 ### New default: Crisfield's convergence criterion
 
