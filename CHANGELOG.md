@@ -19,8 +19,8 @@
   and the reference force vectors are measured with the norm scaled by the
   diagonal of the linear stiffness matrix `calc_kC()`, over the free
   degrees of freedom, those whose row or column of `calc_kC()` is not
-  null, and `zeta = ||R||_D/max(||lbd*Fext||_D, ||Fint||_D,
-  ||dlbd*Fext||_D, ||lbd*dR/dlbd||_D) <= relTOL`, the third reference in
+  null, and `zeta = ||R||_d/max(||lbd*Fext||_d, ||Fint||_d,
+  ||dlbd*Fext||_d, ||lbd*dR/dlbd||_d) <= relTOL`, the third reference in
   the arc-length methods only, the fourth when `calc_fext` declares `lbd`.
   The same scaled norm is used by the divergence and too-slow checks and
   by the line search. The criterion does not depend on the units of each

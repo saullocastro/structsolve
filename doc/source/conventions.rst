@@ -23,8 +23,8 @@ with `\{F_{ext}\}` = ``calc_fext(inc=1.)`` and `\{F_{int}\}` =
 with `[K_C]` = ``calc_kC(c, NLgeom=True)`` and `[K_G]` = ``calc_kG(c,
 NLgeom=True)``. A configuration-dependent load `\{F(c)\}` has the load
 stiffness matrix `-\partial F/\partial c`, which enters `[K_T]`, see
-:mod:`.callbacks`. The linear static analysis solves `[K_0]\{c\} =
-\{F_{ext}\}`, with `[K_0]` = ``calc_kC()``.
+:mod:`.callbacks`. The linear static analysis solves `[K_{C0}]\{c\} =
+\{F_{ext}\}`, with `[K_{C0}]` = ``calc_kC()``.
 
 
 Eigenvalue analyses

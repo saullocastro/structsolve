@@ -5,7 +5,7 @@ A linear buckling analysis with :func:`.lb` has three steps, of which only
 the last one is done by ``structsolve``:
 
 1. the linear static solution `\{c_0\}` of a reference load
-   `\{F_{ref}\}`, `[K_0]\{c_0\} = \{F_{ref}\}`, e.g. with :func:`.solve`,
+   `\{F_{ref}\}`, `[K_{C0}]\{c_0\} = \{F_{ref}\}`, e.g. with :func:`.solve`,
    :func:`.static` or ``Analysis.static(NLgeom=False)``;
 2. the geometric stiffness matrix `[K_G(c_0)]` of the prestress of
    `\{c_0\}`, computed by the model, e.g. from the pre-buckling stress
@@ -14,14 +14,14 @@ the last one is done by ``structsolve``:
 
    .. math::
 
-       ([K_0] + \lambda [K_G(c_0)])\{u\} = \{0\}
+       ([K_{C0}] + \lambda [K_G(c_0)])\{u\} = \{0\}
 
    solved by ``lb(K0, KG)``, which returns the load multipliers `\lambda`
    and the buckling modes `\{u\}`.
 
 Since the static solution is linear, `[K_G]` is proportional to the load,
 `[K_G(\lambda c_0)] = \lambda [K_G(c_0)]`, and the eigenvalue problem gives
-the load levels `\lambda \{F_{ref}\}` at which `[K_0] + \lambda [K_G]` is
+the load levels `\lambda \{F_{ref}\}` at which `[K_{C0}] + \lambda [K_G]` is
 singular.
 
 

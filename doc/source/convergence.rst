@@ -16,15 +16,17 @@ The criterion is selected with ``Analysis.convergence``, see
 
 - ``'crisfield'``, the default: Crisfield's criterion. Each component of a
   force-like vector is scaled with the diagonal of the linear stiffness
-  matrix ``calc_kC()``, `D_j = |{K_0}_{jj}|`, over the free degrees of
+  matrix ``calc_kC()``, `d_j = K_{{C0}_{jj}}`, the entries of the
+  diagonal scaling vector `\boldsymbol{d}`, over the free degrees of
   freedom, i.e. those whose row or column of ``calc_kC()`` is not null,
 
   .. math::
 
-      \|v\|_D = \sqrt{\sum_j v_j^2/D_j}, \qquad
-      \zeta = \frac{\|R\|_D}{\max\left(\|\lambda F_{ext}\|_D,
-      \|F_{int}\|_D, \|\Delta\lambda F_{ext}\|_D,
-      \|\lambda \, \partial R/\partial \lambda\|_D\right)}
+      \|v\|_{\boldsymbol{d}} = \sqrt{\sum_j v_j^2/|d_j|}, \qquad
+      \zeta = \frac{\|R\|_{\boldsymbol{d}}}{\max\left(
+      \|\lambda F_{ext}\|_{\boldsymbol{d}}, \|F_{int}\|_{\boldsymbol{d}},
+      \|\Delta\lambda F_{ext}\|_{\boldsymbol{d}},
+      \|\lambda \, \partial R/\partial \lambda\|_{\boldsymbol{d}}\right)}
 
   and the iteration converged when `\zeta \le` ``relTOL``, default
   ``1e-9``. `\Delta\lambda F_{ext}` is a reference of the arc-length

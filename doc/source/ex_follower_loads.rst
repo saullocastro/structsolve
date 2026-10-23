@@ -32,7 +32,7 @@ Linear static analysis
 ----------------------
 
 With a configuration-dependent load, ``Analysis.static(NLgeom=False)`` solves
-the geometrically linear problem `[K_0]\{c\} = \{F(c)\}`:
+the geometrically linear problem `[K_{C0}]\{c\} = \{F(c)\}`:
 
 .. literalinclude:: ../../tests/test_follower_freq_static.py
     :pyobject: test_analysis_linear_static_with_configuration_dependent_load

@@ -43,8 +43,9 @@ def _weights(an, kC0):
 
 
 def _norm(v, w):
-    r"""Norm of the convergence criterion: `\|v\|_D` with the weights ``w``
-    of Crisfield's criterion, the Euclidean norm when ``w`` is ``None``"""
+    r"""Norm of the convergence criterion: `\|v\|_{\boldsymbol{d}}` with the
+    weights ``w`` of Crisfield's criterion, the Euclidean norm when ``w`` is
+    ``None``"""
     if w is None:
         return float(np.linalg.norm(v))
     return scaled_norm(v, w)
@@ -106,7 +107,7 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
     converged : bool
         Whether the convergence criterion is satisfied.
     Rnorm : float
-        Norm of the residual of the criterion, `\|R\|_D` with
+        Norm of the residual of the criterion, `\|R\|_{\boldsymbol{d}}` with
         ``'crisfield'``, the Euclidean norm with ``'relative'``, used by the
         divergence checks and the line search.
     Rrel : float
@@ -464,8 +465,8 @@ def _solver_NR(an, silent=False, initialInc=None):
     Each increment starts from a predictor that extrapolates the previous
     converged increment of the solution, scaled by the ratio between the new
     and the previous load increments. The first increment uses the linear
-    solution as predictor: `\Delta\lambda [K_0]^{-1}\{F_{ext}\}`, with
-    `[K_0]` the linear stiffness matrix ``calc_kC()``.
+    solution as predictor: `\Delta\lambda [K_{C0}]^{-1}\{F_{ext}\}`, with
+    `[K_{C0}]` the linear stiffness matrix ``calc_kC()``.
 
     The callables that accept the keyword argument ``inc`` receive the load
     factor `\lambda` of the step, see :mod:`.callbacks`, which allows
@@ -475,7 +476,7 @@ def _solver_NR(an, silent=False, initialInc=None):
     prescribed displacements imposed exactly, see :mod:`.callbacks`, the
     load vector `\{q\} = \partial R/\partial \lambda` at `c = 0`,
     `\lambda = 0` gives the predictor of the first increment, its linear
-    solution `[K_0]^{-1}\{q\}`, instead of the linear solution of the
+    solution `[K_{C0}]^{-1}\{q\}`, instead of the linear solution of the
     reference vector, which is null under a prescribed displacement alone,
     and `\lambda \|q\|` is an additional reference of the relative
     convergence criterion. `\{q\}` is evaluated together with the tangent
@@ -492,7 +493,7 @@ def _solver_NR(an, silent=False, initialInc=None):
     iterations, and its LU factorization is reused in the other
     iterations, at the cost of a linear convergence rate; at the first step
     with ``an.kT_initial_state = False``, the linear constitutive stiffness
-    matrix `[K_0]` is used instead of the tangent at the first iteration.
+    matrix `[K_{C0}]` is used instead of the tangent at the first iteration.
 
     With ``an.line_search = True``, the full Newton step (``eta = 1``) is tried
     first and it is accepted if it satisfies a sufficient-decrease test on the
