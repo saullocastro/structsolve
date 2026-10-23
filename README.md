@@ -43,7 +43,7 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.9.0 (2026-10-23)
+* version 0.9.0 (2026-10-24)
     - Crisfield's convergence criterion is the default of the non-linear analyses, `Analysis.convergence = 'crisfield'`, with `relTOL = 1e-9`: the residual and the reference forces are measured with the norm scaled by the diagonal of `calc_kC()` over the free degrees of freedom; the former check is kept with `convergence = 'relative'`
     - `lb` returns the negative load multipliers closest to zero after the positive ones, and a tensile reference load no longer needs the dense fallback
     - `freq(sort=True)` sorts and filters `lambda2` together with the eigenvectors, and rigid-body modes no longer fail the verification of the residuals
