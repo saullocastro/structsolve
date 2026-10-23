@@ -338,23 +338,80 @@ def test_shift_search_helpers():
 
 def test_lb_ziegler_sparse_shift_search():
     """Ziegler's double pendulum with decoupled dofs, such that the sparse
-    shift search runs: no positive real load multiplier is found and the
-    dense fallback either finds none, with a warning, or only spurious ones
-    far above the flutter load; without the fallback a RuntimeError"""
+    shift search runs: neither the shift search nor the dense fallback finds
+    a finite load multiplier, the defective null pair of the condensed
+    problem, split into about +-1e-9 by the round-off, being null"""
     from scipy.linalg import block_diag
 
     k, l = 3., 0.5
-    P_flutter = (3.5 - np.sqrt(2))*k/l
     K0 = block_diag(np.array([[2*k, -k], [-k, k]]), np.diag(np.arange(1., 9.)))
     KF = block_diag(np.array([[-l, l], [0., 0.]]), np.zeros((8, 8)))
     with pytest.raises(RuntimeError, match='Attempted: eigs'):
         lb(csr_matrix(K0), csr_matrix(KF), silent=True, max_dense_size=0)
-    try:
-        eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True)[0]
-    except RuntimeError:
-        return
-    finite = np.isfinite(eigvals)
-    assert np.all(np.abs(eigvals[finite]) > 1e6*P_flutter)
+    with pytest.raises(RuntimeError, match='eig.. with condensed dofs: no '
+                       'finite load multiplier'):
+        lb(csr_matrix(K0), csr_matrix(KF), silent=True)
+    eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True,
+                 sparse_solver=False)[0]
+    assert np.all(eigvals == -np.inf)
+
+
+def test_null_mu_pencil():
+    """Regression test: the round-off splits a null eigenvalue of a Jordan
+    block of size m into m eigenvalues of modulus about eps^(1/m) ||a||,
+    e.g. +-9.4e-10 for Ziegler's double pendulum (2.6e-17 and 0 with
+    another LAPACK), which the relative test of _null_mu kept, giving
+    spurious load multipliers of +-1.07e9 (85e6 times the flutter load)
+    from the dense solvers; their first-order perturbation bound is of the
+    order of their modulus, that of genuine eigenvalues much smaller"""
+    from scipy.sparse import load_npz
+    from structsolve.linear_buckling import (_eig_complex, _null_mu,
+                                             _null_mu_pencil)
+
+    def flags(a, b):
+        mu, vl, vr = _eig_complex(a, b, left=True)
+        return mu, _null_mu(mu), _null_mu_pencil(a, b, mu, vl, vr)
+
+    k, l = 3., 0.5
+    mu, old, new = flags(np.array([[-l, l], [0., 0.]]),
+                         np.array([[2*k, -k], [-k, k]]))
+    assert np.all(np.abs(mu) < 1e-8) and np.all(new)
+    # Jordan blocks of size m, B^-1 A = T J T^-1
+    rng = np.random.default_rng(1)
+    for m in (2, 3, 4):
+        J = np.eye(m, k=1)
+        T = rng.standard_normal((m, m)) + m*np.eye(m)
+        B = rng.standard_normal((m, m))
+        B = B @ B.T + m*np.eye(m)
+        mu, old, new = flags(B @ T @ J @ np.linalg.inv(T), B)
+        assert np.all(np.abs(mu) < 1e-3) and np.all(new)
+    # genuine eigenvalues down to 1e-10 times the largest are kept, also
+    # beside a Jordan block in a non-normal pencil, down to 1e-6 times the
+    # largest, above the disc of about 2e-8 of the split null pair, inside
+    # which a genuine eigenvalue is not determined
+    mu, old, new = flags(np.diag([1., -1e-6, 1e-10]), np.eye(3))
+    assert not np.any(new)
+    n = 200
+    D = np.diag(np.concatenate([[0., 0.], np.logspace(0, -6, n - 2)
+                                * rng.choice([-1, 1], n - 2)]))
+    D[0, 1] = 1.
+    T = rng.standard_normal((n, n))/np.sqrt(n) + np.eye(n)
+    B = rng.standard_normal((n, n))/np.sqrt(n)
+    B = B @ B.T + np.eye(n)
+    mu, old, new = flags(B @ T @ D @ np.linalg.inv(T), B)
+    assert np.sum(new) == 2 and np.all(np.abs(mu[new]) < 1e-6)
+    np.testing.assert_allclose(np.sort(np.abs(mu[~new])),
+                               np.sort(np.abs(np.diag(D)[2:])), rtol=1e-4)
+    # follower cantilevers: only multipliers above 1e8 times the lowest
+    # modulus are added to the null ones
+    for name in ('s1B1_m14n8', 's3B2_m14n8'):
+        K = load_npz(os.path.join(DATA, '%s_K.npz' % name)).toarray()
+        KG = load_npz(os.path.join(DATA, '%s_KG.npz' % name)).toarray()
+        mu, old, new = flags(KG, K)
+        assert np.all(old <= new)
+        added = new & ~old
+        assert 0 < added.sum() < 30
+        assert np.all(np.abs(mu[added]) < 1e-8*np.abs(mu).max())
 
 
 def ziegler_decoupled(extra=8):

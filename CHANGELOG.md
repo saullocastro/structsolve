@@ -94,6 +94,24 @@
   restart seed from one call to the next, on the calls made before in the
   same process. They are now all null, and the shift search raises "no
   finite load multiplier was found". New `linear_buckling._norm_estimate`.
+- `lb`, dense solvers (`sparse_solver=False` and the dense fallback, of
+  symmetric and unsymmetric matrices): an eigenvalue `mu` of
+  `KG u = mu K u` is also null when `|mu| <= 10 eps ||KG||_F kappa`, `kappa`
+  its condition number from the left and right eigenvectors, i.e. when
+  the round-off does not determine it, instead of only when
+  `|mu| <= 1e-12 max|mu|`. The round-off splits a defective null
+  eigenvalue, a Jordan block of size `m`, into `m` eigenvalues of modulus
+  about `eps^(1/m)`, e.g. `+-9.4e-10` for Ziegler's double pendulum, where
+  `K^-1 KG` is nilpotent: `lb` returned the spurious load multipliers
+  `+-1.07e9`, about `8.5e7` times the flutter load, instead of none. The
+  null `mu` are set to 0 and their load multipliers are `-inf`, also in
+  complex arrays; the dense fallback then finds no finite load multiplier
+  and fails the verification. Well-conditioned eigenvalues are null only
+  below `2.2e-15 ||KG||_F`; in the follower-pressure cantilevers of the
+  tests, 6 and 22 more eigenvalues are null, all below `2e-9 max|mu|`, and
+  the lowest positive real load multipliers do not change. New
+  `linear_buckling._null_mu_pencil`, `NULL_MU_PERTURBATION_FACTOR`;
+  argument `left` of `_eig_complex`.
 
 ## 0.8.0 (2026-10-14)
 

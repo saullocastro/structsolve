@@ -47,6 +47,11 @@ PARITY_REL_GAP = 1e-4
 #: `[K_G]` is null; also the fraction of the scale of the null `\nu` of
 #: :func:`_eigs_shifted`
 NULL_MU_RTOL = 1e-12
+#: An eigenvalue `\mu` of the dense solvers is also null when `|\mu|` is
+#: not larger than this factor times its first-order perturbation bound
+#: for a backward error of the machine precision, see
+#: :func:`_null_mu_pencil`
+NULL_MU_PERTURBATION_FACTOR = 10.
 #: The load multipliers of each sign are counted with the inertia of
 #: `[K] + s [K_G]` below the modulus `|s|`, this factor divided by the
 #: largest `|\mu|`, i.e. this factor times the lowest modulus that a load
@@ -388,6 +393,7 @@ def _eigh_condensed(K, KG, k):
     definite Schur complement. Returns the first ``k`` eigenvalues `\mu` of
     `K_G u = \mu K u` in the order of :func:`_sort_eigenpairs`, i.e. the
     positive load multipliers first, and the corresponding eigenvectors.
+    The null `\mu` of :func:`_null_mu_pencil` are set to 0.
 
     """
     active = np.asarray(abs(KG).sum(axis=1)).ravel() > 0
@@ -410,7 +416,10 @@ def _eigh_condensed(K, KG, k):
             j1 = min(j0 + chunk, b.size)
             X = lu.solve(Kab[:, j0:j1].toarray())
             S[:, j0:j1] -= Kba @ X
-    mu, ub = eigh(a=0.5*(KGbb + KGbb.T), b=0.5*(S + S.T))
+    KGbb = 0.5*(KGbb + KGbb.T)
+    S = 0.5*(S + S.T)
+    mu, ub = eigh(a=KGbb, b=S)
+    mu[_null_mu_pencil(KGbb, S, mu, ub, ub)] = 0.
     mu, ub = _sort_eigenpairs(mu, ub)
     k = min(k, b.size)
     ub = ub[:, :k]
@@ -509,7 +518,81 @@ def _general_eigenpairs(mu, eigvecs, k=None):
     return mu, eigvecs
 
 
-def _eig_complex(a, b=None):
+def _null_mu_pencil(a, b, mu, vl, vr):
+    r"""Tell which eigenvalues `\mu` of `[a]\{v\} = \mu [b]\{v\}` are null up
+    to the round-off of a dense solver
+
+    An eigenvalue is null when it is null for :func:`_null_mu`, or when
+    `|\mu| \le c\,\epsilon\,\|[a]\|_F\,\kappa`, with `c` =
+    :data:`NULL_MU_PERTURBATION_FACTOR`, `\epsilon` the machine precision
+    and `\kappa = \|\{y\}\| \|\{x\}\| / |\{y\}^H [b] \{x\}|` the condition
+    number of `\mu`, with its left and right eigenvectors `\{y\}` and
+    `\{x\}`.
+
+    Parameters
+    ----------
+    a, b : ndarray
+        Dense matrices, shape ``(n, n)``; ``b=None`` for the identity.
+    mu : ndarray
+        Eigenvalues, shape ``(m,)``.
+    vl, vr : ndarray
+        Left and right eigenvectors, ``vl[:, i]`` and ``vr[:, i]`` those of
+        ``mu[i]``, shape ``(n, m)``. For symmetric matrices ``vl = vr``.
+
+    Returns
+    -------
+    null : ndarray
+        Boolean array, shape ``(m,)``.
+
+    Notes
+    -----
+    A backward stable solver, e.g. the QZ algorithm of LAPACK ``zggev``,
+    returns the exact eigenvalues of `[a] + [\delta a]`, `[b] + [\delta b]`
+    with `\|[\delta a]\| \approx \gamma \epsilon \|[a]\|`, `\gamma` of order
+    one. Multiplying `([a] + [\delta a] - (\mu + \delta\mu)([b] + [\delta
+    b]))(\{x\} + \{\delta x\}) = 0` by `\{y\}^H`, with `\{y\}^H ([a] - \mu
+    [b]) = 0`, gives to first order `\delta\mu = \{y\}^H ([\delta a] - \mu
+    [\delta b]) \{x\} / (\{y\}^H [b] \{x\})`: a null eigenvalue moves by up
+    to `\gamma \epsilon \|[a]\| \kappa`.
+
+    A null eigenvalue of a Jordan block of size `m`, e.g. `m = 2` for the
+    nilpotent `[K]^{-1}[K_G]` of Ziegler's double pendulum, is split by a
+    perturbation of size `\eta` into `m` eigenvalues with `\mu^m \propto
+    \eta`, i.e. `|\mu| \approx (\gamma \epsilon)^{1/m} \|[a]\|`, and
+    `d\mu/d\eta = \mu/(m \eta)`: their condition number gives `\epsilon
+    \|[a]\| \kappa \approx |\mu|/(m \gamma)`, i.e. `|\mu|` is about `m
+    \gamma` times the bound whatever `m`. Measured with ``zggev``: 0.14 for
+    Ziegler's double pendulum, `|\mu| = 9.4 \cdot 10^{-10}`, and 0.005 to
+    2.5 for Jordan blocks of size 2 to 4 in pencils of size 2 to 600,
+    where the genuine eigenvalues down to `10^{-8} \max |\mu|` were at
+    least 73 times their bound, except those within the modulus of the
+    split null eigenvalues, which the round-off does not determine and
+    which are null as well. For the cantilevers under a follower pressure
+    of the tests, the eigenvalues null by this test only are below `2
+    \cdot 10^{-9} \max |\mu|`. A well-conditioned
+    genuine eigenvalue is null only when `|\mu| \le 2.2 \cdot 10^{-15}
+    \|[a]\|`, below the :func:`_null_mu` threshold when `\|[a]\|` is of
+    the order of `\max |\mu|`. For symmetric matrices no Jordan block
+    exists, and `\{x\}^T [b] \{x\} = 1` of :func:`scipy.linalg.eigh` gives
+    `\kappa = \|\{x\}\|^2`.
+
+    """
+    mu = np.asarray(mu)
+    null = _null_mu(mu)
+    a = np.asarray(a)
+    vl = np.asarray(vl)
+    vr = np.asarray(vr)
+    bvr = vr if b is None else np.asarray(b) @ vr
+    den = np.abs(np.einsum('ij,ij->j', vl.conj(), bvr))
+    num = np.linalg.norm(vl, axis=0)*np.linalg.norm(vr, axis=0)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        kappa = np.where(den > 0, num/den, np.inf)
+    bound = (NULL_MU_PERTURBATION_FACTOR*np.finfo(float).eps
+             * np.linalg.norm(a)*kappa)
+    return null | (np.isfinite(mu) & (np.abs(mu) <= bound))
+
+
+def _eig_complex(a, b=None, left=False):
     r"""All eigenpairs of `[a]\{v\} = w [b]\{v\}` with :func:`scipy.linalg.eig`
 
     The matrices are converted to complex, such that LAPACK ``zgeev`` or
@@ -522,15 +605,15 @@ def _eig_complex(a, b=None):
     complex eigenvectors of real eigenvalues are made real by
     :func:`_general_eigenpairs`. In the browser, ``sys.platform ==
     'emscripten'`` (Pyodide), where SciPy is not linked to MKL, the real
-    drivers are used.
+    drivers are used. Returns ``w, vr``, or ``w, vl, vr`` with the left
+    eigenvectors ``vl`` when ``left=True``.
 
     """
-    if sys.platform == 'emscripten':
-        return eig(a=a, b=b)
-    a = np.asarray(a, dtype=complex)
-    if b is not None:
-        b = np.asarray(b, dtype=complex)
-    return eig(a=a, b=b)
+    if sys.platform != 'emscripten':
+        a = np.asarray(a, dtype=complex)
+        if b is not None:
+            b = np.asarray(b, dtype=complex)
+    return eig(a=a, b=b, left=left, right=True)
 
 
 def _eig_condensed(K, KG, k):
@@ -544,7 +627,9 @@ def _eig_condensed(K, KG, k):
     threads of BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL
     2025.0.0. The ``k`` returned eigenpairs, see :func:`_general_eigenpairs`,
     are real when they are all real, and complex eigenvectors are
-    back-substituted with the real factorization of `[K_{aa}]`.
+    back-substituted with the real factorization of `[K_{aa}]`. The null
+    `\mu` of :func:`_null_mu_pencil`, e.g. the round-off splitting of a
+    defective null eigenvalue, are set to 0.
 
     """
     KG = csr_matrix(KG)
@@ -568,7 +653,8 @@ def _eig_condensed(K, KG, k):
             j1 = min(j0 + chunk, b.size)
             X = lu.solve(Kab[:, j0:j1].toarray())
             S[:, j0:j1] -= Kba @ X
-    mu, ub = _eig_complex(a=KGbb, b=S)
+    mu, vl, ub = _eig_complex(a=KGbb, b=S, left=True)
+    mu[_null_mu_pencil(KGbb, S, mu, vl, ub)] = 0.
     mu, ub = _general_eigenpairs(mu, ub, k)
     eigvecs = np.zeros((K.shape[0], mu.shape[0]), dtype=ub.dtype)
     eigvecs[b, :] = ub
@@ -1236,7 +1322,9 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         complex, which come after the real ones by increasing modulus. The
         load multipliers of the null ``eigval``, ``|eigval|`` not larger
         than ``NULL_MU_RTOL`` times the largest ``|eigval|``, infinite up to
-        the round-off, come last.
+        the round-off, come last; the dense solvers also take as null the
+        ``eigval`` not determined by the round-off, see
+        ``linear_buckling._null_mu_pencil``, returned as ``-inf``.
     eigvecs : ndarray
         The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
         original matrices. Only ``num_eigvalues`` eigenvectors are returned.
@@ -1405,6 +1493,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         KG = csr_matrix(KG).toarray()
         msg('eigh() solver...', level=3, silent=silent)
         eigvals, peigvecs = eigh(a=KG, b=K)
+        eigvals[_null_mu_pencil(KG, K, eigvals, peigvecs, peigvecs)] = 0.
         eigvals, peigvecs = _sort_eigenpairs(eigvals, peigvecs)
         msg('finished!', level=3, silent=silent)
 
@@ -1421,7 +1510,9 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         eigvecs = peigvecs[:, :num_eigvecs]
 
     with np.errstate(divide='ignore', invalid='ignore'):
+        null = eigvals == 0
         eigvals = -1./eigvals
+    eigvals[null] = -np.inf
 
     msg('finished!', level=2, silent=silent)
 
@@ -1440,8 +1531,10 @@ def _lb_unsymmetric(K, KG, tol, sparse_solver, silent, num_eigvalues,
     the Notes of :func:`lb`"""
     if not sparse_solver:
         msg('eig() solver...', level=3, silent=silent)
-        mu, eigvecs = _eig_complex(a=csr_matrix(KG).toarray(),
-                                   b=csr_matrix(K).toarray())
+        KG = csr_matrix(KG).toarray()
+        K = csr_matrix(K).toarray()
+        mu, vl, eigvecs = _eig_complex(a=KG, b=K, left=True)
+        mu[_null_mu_pencil(KG, K, mu, vl, eigvecs)] = 0.
         mu, eigvecs = _general_eigenpairs(mu, eigvecs)
         msg('finished!', level=3, silent=silent)
         return mu, eigvecs
