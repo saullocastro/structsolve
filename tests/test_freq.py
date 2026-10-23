@@ -252,8 +252,10 @@ def test_freq_check_penalty():
     w2, u = w2[:1], u[:, :1]
     assert _check_freq(K, M, -w2, u, 1e-6, True) is None
     lambda2 = -w2*(1 - 1e-4)
+    # the residual of the eigenpair of eigh(), up to 2e-3 of 5e-5 with
+    # Apple's LAPACK, adds to the one of the perturbation
     np.testing.assert_allclose(_residuals(K, M, lambda2, u), 1e-4/(2 - 1e-4),
-                               rtol=1e-3)
+                               rtol=1e-2)
     error = _check_freq(K, M, lambda2, u, 1e-6, True)
     assert 'relative residual' in error
 
