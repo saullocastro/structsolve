@@ -275,7 +275,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
 
     With full Newton-Raphson, `[K_T]` is computed and factorized at every
     iteration at `c + \Delta c`, and the convergence is quadratic when it is
-    the exact Jacobian `-\partial R/\partial c` [1]_. With
+    the exact Jacobian `-\partial R/\partial c` ([1]_, Section 1.2.2,
+    p. 9). With
     ``an.modified_NR = True``, `[K_T]` is computed at the first iteration,
     or given as ``kT0``, and then every ``an.compute_every_n`` iterations,
     its LU factorization being reused in the other iterations.
@@ -303,11 +304,14 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     References
     ----------
     .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
-       Structures, Vol. 1: Essentials, Wiley, 1991.
-       TODO(author): confirm this source
+       Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
+       1991.
     .. [2] Dennis, J.E., Schnabel, R.B., Numerical Methods for Unconstrained
-       Optimization and Nonlinear Equations, Prentice-Hall, 1983.
-       TODO(author): confirm this source
+       Optimization and Nonlinear Equations, Prentice-Hall, Englewood
+       Cliffs, NJ, 1983; SIAM, Philadelphia, 1996.
+       https://doi.org/10.1137/1.9781611971200
+       TODO(author): confirm this source (Chapter 6, "Globally Convergent
+       Modifications of Newton's Method", not accessible)
 
     """
 
@@ -474,17 +478,18 @@ def _solver_NR(an, silent=False, initialInc=None):
     residual norm. Otherwise ``eta`` is reduced by backtracking, see
     :func:`._NR_iterations`.
 
-    The full and modified Newton-Raphson methods are described in [1]_.
+    The full and modified Newton-Raphson methods, combined with incremental
+    predictors, are described in [1]_ (Sections 1.2.2 and 1.2.3,
+    pp. 8-13), with the quadratic and the linear convergence rates.
 
     The step that would end within ``max(an.minInc, 1e-12)`` of the load
-
     factor 1.0, or beyond it, is replaced by the step to exactly 1.0.
 
     References
     ----------
     .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
-       Structures, Vol. 1: Essentials, Wiley, 1991.
-       TODO(author): confirm this source
+       Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
+       1991.
 
     """
     msg('___________________________________________', level=1, silent=silent)

@@ -431,8 +431,8 @@ def _rayleigh_ritz(A, M, V):
 
     References
     ----------
-    .. [1] Parlett, B.N., The Symmetric Eigenvalue Problem, SIAM, 1998.
-       TODO(author): confirm this source
+    .. [1] Parlett, B.N., The Symmetric Eigenvalue Problem, SIAM,
+       Philadelphia, 1998. https://doi.org/10.1137/1.9781611971163
 
     """
     MV = M @ V
@@ -502,7 +502,8 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     -----
     In the shift-invert mode ARPACK computes the eigenvalues
     `\nu = 1/(w - \sigma)` of largest modulus of the operator
-    `([A] - \sigma [M])^{-1}[M]`, i.e. the `w` nearest `\sigma` [1]_.
+    `([A] - \sigma [M])^{-1}[M]`, i.e. the `w` nearest `\sigma` ([1]_,
+    Chapter 3, Section 3.2, Eq. (3.2.2)).
     The passes keep ``k <= (max_ncv - 1)//2``, i.e. ``ncv >= 2 k + 1``.
     With ``k`` close to ``ncv`` ARPACK converges very slowly, not at all, or
     misses eigenvalues, e.g. ``k=31`` and ``ncv=32``.
@@ -530,8 +531,8 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     ----------
     .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
        Solution of Large-Scale Eigenvalue Problems with Implicitly
-       Restarted Arnoldi Methods, SIAM, 1998.
-       TODO(author): confirm this source
+       Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+       https://doi.org/10.1137/1.9780898719628
 
     """
 

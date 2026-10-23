@@ -86,8 +86,11 @@ def _solver_arc_length(an, method, silent=False):
     where `\{\Delta c\}` and `\Delta\lambda` are the increments of the current
     step and `\{u_{ref}\}` is the linear solution for `\lambda=1`, which makes
     the arc length `\Delta s` independent of the units of the model. In the
-    linear regime `\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda`, see
-    [4]_ for the arc-length methods. `\psi` is the constant ``PSI``,
+    linear regime `\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda`. It is
+    the spherical arc-length constraint of [4]_ (Section 9.3.2, Eq. (9.19),
+    p. 271), where the displacement term is not scaled and the load term is
+    `\psi^2 \Delta\lambda^2 \{F_{ext}\}^T\{F_{ext}\}`. `\psi` is the
+    constant ``PSI``,
     and `\{u_{ref}\}^T\{u_{ref}\}` is
     replaced by 1 when it is null. With the inner product
 
@@ -129,8 +132,12 @@ def _solver_arc_length(an, method, silent=False):
 
     - ``method='riks'``: the constraint is linearized at the current
       increment (updated normal plane), which is Newton-Raphson applied to
-      the augmented system and gives quadratic convergence, see [1]_ and
-      [3]_:
+      the augmented system of the equilibrium equations and the constraint,
+      as proposed by Riks [1]_ ([4]_, Section 9.3.2, p. 272), and gives
+      quadratic convergence. Without the mismatch `g` of the constraint, it
+      is the updated normal plane of Ramm [3]_ (p. 75); [4]_ (Section
+      9.3.2.2, Eq. (9.29), pp. 274-275) attributes the mismatch term to
+      Schweizerhof and Wriggers and to Riks:
 
       .. math::
 
@@ -212,8 +219,8 @@ def _solver_arc_length(an, method, silent=False):
     ----------
     .. [1] Riks, E., An incremental approach to the solution of snapping and
        buckling problems, International Journal of Solids and Structures,
-       15(7), 529-551, 1979.
-       TODO(author): confirm this source
+       15(7), 529-551, 1979. https://doi.org/10.1016/0020-7683(79)90081-7
+       TODO(author): confirm this source, cited above through [4]_, p. 272
     .. [2] Crisfield, M.A., A fast incremental/iterative solution procedure
        that handles "snap-through", Computers & Structures, 13(1-3), 55-62,
        1981. https://doi.org/10.1016/0045-7949(81)90108-5
@@ -222,8 +229,8 @@ def _solver_arc_length(an, method, silent=False):
        Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
        63-89, 1981. https://doi.org/10.1007/978-3-642-81589-8_5
     .. [4] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
-       Structures, Vol. 1: Essentials, Wiley, 1991.
-       TODO(author): confirm this source
+       Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
+       1991.
 
     """
     if method not in ('riks', 'crisfield'):

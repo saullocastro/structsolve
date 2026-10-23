@@ -312,7 +312,8 @@ def freq(K, M, tol=0, sparse_solver=True,
     where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
     in rad/s. The sparse solvers solve `[K]\{u\} = \omega_n^2 [M]\{u\}`
     in shift-invert mode, which returns the `\omega_n^2` nearest the shift
-    `\sigma` [1]_. The negative shift is `\sigma = -|\{y\}^T[K]\{y\} /
+    `\sigma` ([1]_, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
+    shift is `\sigma = -|\{y\}^T[K]\{y\} /
     \{y\}^T[M]\{y\}|`, the Rayleigh quotient of `\{y\} = [K]^{-1}[M]\{x\}`
     for a fixed random vector `\{x\}`, i.e. one step of inverse iteration
     towards the lowest `\omega_n^2`, or `\sigma = -1` when ``K`` is
@@ -334,18 +335,20 @@ def freq(K, M, tol=0, sparse_solver=True,
     with ``K`` the tangent stiffness matrix at a load level, including the
     load stiffness, the eigenvalues `\lambda^2` of the general solvers are
     real and negative below the flutter load and become complex conjugate
-    pairs above it, when two natural frequencies coalesce (the kinetic
-    criterion) [2]_. A real positive `\lambda^2` indicates divergence.
+    pairs above it, when two natural frequencies coalesce, a double root of
+    the frequency equation. This is the dynamic method of [2]_
+    (Introduction, Sections 6 and 7, pp. 12-17), where `\lambda` is the
+    characteristic exponent `s = i\Omega`. A real positive `\lambda^2`,
+    i.e. a real positive `\lambda`, indicates divergence ([2]_, p. 17).
 
     References
     ----------
     .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
        Solution of Large-Scale Eigenvalue Problems with Implicitly
-       Restarted Arnoldi Methods, SIAM, 1998.
-       TODO(author): confirm this source
+       Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+       https://doi.org/10.1137/1.9780898719628
     .. [2] Bolotin, V.V., Nonconservative Problems of the Theory of Elastic
-       Stability, Pergamon Press, 1963.
-       TODO(author): confirm this source
+       Stability, Pergamon Press, Oxford, 1963.
 
     """
     msg('Running frequency analysis...', silent=silent)

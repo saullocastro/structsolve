@@ -236,15 +236,19 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
     the number of negative eigenvalues of `[K] + s [K_G]`, equal to its
     number of negative pivots by Sylvester's law of inertia, is the number
     of load multipliers in `(0, s)`. This is the Sturm sequence check of
-    the eigenvalue solvers of structural analysis [1]_. When only one
+    the eigenvalue solvers of structural analysis ([1]_, Section 10.2.2,
+    p. 849, and Section 11.6, p. 954), where the number of negative
+    elements of `[D]` in the factorization `[L][D][L]^T` of `[K] - \mu [M]`
+    is the number of eigenvalues of the pencil `([K], [M])` smaller than
+    `\mu`. When only one
     positive load multiplier was returned, none is expected in `(0, s)` and
     the weaker check is done. The gap ``min_rel_gap`` keeps `s` away from
     `\lambda_n`, where `[K] + s [K_G]` is singular.
 
     References
     ----------
-    .. [1] Bathe, K.J., Finite Element Procedures, Prentice Hall, 1996.
-       TODO(author): confirm this source
+    .. [1] Bathe, K.J., Finite Element Procedures, 2nd ed., K.J. Bathe,
+       Watertown, MA, 2014.
 
     """
 
@@ -954,8 +958,9 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     with `\mu = -1/\lambda`, which requires symmetric matrices and a
     positive definite `[K]`. In the Cayley mode, ARPACK computes the
     eigenvalues `(\mu + \sigma)/(\mu - \sigma)` of the operator
-    `([K_G] - \sigma [K])^{-1}([K_G] + \sigma [K])` [1]_, and ``which='SM'``
-    selects those of smallest modulus. When `\sigma` is larger than `|\mu|`
+    `([K_G] - \sigma [K])^{-1}([K_G] + \sigma [K])` ([1]_, Appendix A,
+    Section A.1, "Cayley Transformation Mode", with `[A] = [K_G]` and
+    `[M] = [K]`), and ``which='SM'`` selects those of smallest modulus. When `\sigma` is larger than `|\mu|`
     of all the eigenvalues, `(\mu + \sigma)/(\mu - \sigma)` increases in
     modulus with `\mu` in `(-\sigma, \sigma)`, such that the most negative
     `\mu`, i.e. the lowest positive load multipliers, are selected, see
@@ -965,8 +970,8 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
     ----------
     .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
        Solution of Large-Scale Eigenvalue Problems with Implicitly
-       Restarted Arnoldi Methods, SIAM, 1998.
-       TODO(author): confirm this source
+       Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+       https://doi.org/10.1137/1.9780898719628
 
     """
 
