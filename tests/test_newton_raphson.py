@@ -6,6 +6,7 @@ quadratically near the solution.
 
 """
 import numpy as np
+import pytest
 
 from analytic_problems import (hardening_springs, von_mises_truss,
                                linear_problem, convergence_orders, Problem)
@@ -233,3 +234,29 @@ def test_nr_jumps_over_limit_point():
     wq = np.array([c[0] for c in q.an.cs])
     assert np.diff(wq).max() < 0.5
     np.testing.assert_allclose(p.an.cs[-1], q.an.cs[-1], rtol=1e-5)
+
+
+@pytest.mark.parametrize('modified_NR', [False, True])
+def test_relative_criterion_assembles_no_extra_linear_stiffness(modified_NR):
+    """The linear stiffness matrix, ``calc_kC()`` without ``c``, gives the
+    weights of Crisfield's criterion and is assembled once per analysis; the
+    relative criterion needs no weights and assembles it as often"""
+    counts = {}
+    for convergence in ('crisfield', 'relative'):
+        problem = hardening_springs()
+        linear_calls = []
+        calc_kC = problem.calc_kC
+
+        def counting_calc_kC(c=None, NLgeom=False, silent=True):
+            if c is None:
+                linear_calls.append(1)
+            return calc_kC(c=c, NLgeom=NLgeom, silent=silent)
+
+        problem.calc_kC = counting_calc_kC
+        an = problem.analysis(initialInc=0.2, convergence=convergence,
+                              modified_NR=modified_NR)
+        increments, cs = an.static(NLgeom=True, silent=True)
+        assert increments[-1] == 1.
+        assert len(increments) > 2
+        counts[convergence] = len(linear_calls)
+    assert counts['relative'] == counts['crisfield']

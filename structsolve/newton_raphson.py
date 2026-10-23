@@ -312,7 +312,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     """
 
     modified_NR = an.modified_NR
-    if w is None:
+    if w is None and an.convergence == 'crisfield':
         w = _weights(an, an.calc_kC(silent=True))
     fext_total = total*fext
     if not lbd_dependent:
