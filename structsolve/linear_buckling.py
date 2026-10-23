@@ -57,9 +57,12 @@ NULL_MU_PERTURBATION_FACTOR = 10.
 #: largest `|\mu|`, i.e. this factor times the lowest modulus that a load
 #: multiplier may have
 INERTIA_COUNT_FACTOR = 1e6
-#: Floor of the scale of the relative residuals of the eigenpairs, as a
-#: fraction of the matrix-norm scale, see :func:`_relative_residuals`
-RESIDUAL_FLOOR = 1e-8
+#: An eigenpair of :func:`.freq` is a rigid-body mode, null up to the
+#: round-off, when `\|[K]\{u\}\| + |\lambda^2| \, \|[M]\{u\}\|` is not larger
+#: than this fraction of the matrix-norm scale `(\|[K]\|_F + |\lambda^2| \,
+#: \|[M]\|_F)\|\{u\}\|`, 100 times the machine precision, see
+#: :func:`_relative_residuals`
+RIGID_BODY_RTOL = 100*np.finfo(float).eps
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -192,9 +195,8 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
 
     - The relative residual
       ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of every
-      eigenpair with a finite load multiplier ``lambda``, with the floor of
-      the denominator of :func:`_relative_residuals`, must not be larger
-      than ``rtol``.
+      eigenpair with a finite load multiplier ``lambda``, see
+      :func:`_relative_residuals`, must not be larger than ``rtol``.
     - With ``check_inertia=True``, only for symmetric matrices, and when
       ``K`` is positive definite: no positive load multiplier is missing
       below the highest positive one of ``eigvals``, checked with the
@@ -296,31 +298,83 @@ def _frobenius(A):
     return float(np.sqrt(np.sum(np.abs(data)**2)))
 
 
-def _relative_residuals(A, B, lam, u):
+def _relative_residuals(A, B, lam, u, rigid_rtol=None):
     r"""Relative residuals of the eigenpairs of `([A] + \lambda [B])\{u\}
     = \{0\}`, used by :func:`_check_eigenpairs` and :func:`.freq`
 
-    .. math::
+    Parameters
+    ----------
+    A, B : sparse_matrix or ndarray
+        Matrices, shape ``(n, n)``.
+    lam : array_like
+        Finite eigenvalues, real or complex, shape ``(k,)``.
+    u : ndarray
+        Eigenvectors, ``u[:, i]`` that of ``lam[i]``, shape ``(n, k)``.
+    rigid_rtol : float or None, optional
+        ``None`` gives the relative residual
+        ``||A u + lam B u|| / (||A u|| + |lam| ||B u||)`` of every eigenpair.
+        Otherwise the eigenpairs with
+        ``||A u|| + |lam| ||B u|| <= rigid_rtol (||A||_F + |lam| ||B||_F)
+        ||u||``, null up to the round-off, e.g. the rigid-body modes of
+        :func:`.freq` with ``rigid_rtol=RIGID_BODY_RTOL``, give
+        ``||A u + lam B u|| / ((||A||_F + |lam| ||B||_F) ||u||)``, not larger
+        than ``rigid_rtol``.
 
-        \frac{\|[A]\{u\} + \lambda [B]\{u\}\|}{\max\left(\|[A]\{u\}\|
-        + |\lambda| \, \|[B]\{u\}\|, \;
-        \epsilon_f (\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|\right)}
-
-    with `\epsilon_f` = ``RESIDUAL_FLOOR``, one value per column of ``u``.
+    Returns
+    -------
+    residual : ndarray
+        One relative residual per eigenpair, shape ``(k,)``, ``inf`` when
+        the denominator is null.
 
     Notes
     -----
-    The first scale of the denominator compares the residual with the
-    terms of the eigenvalue problem for the eigenvector itself. For an
-    eigenvector in the null space of `[A]` with a null eigenvalue, e.g. a
-    rigid-body mode of :func:`.freq`, both the residual and this scale are
-    round-off errors, and their ratio is meaningless, of the order of 1.
-    The second scale, a fraction ``RESIDUAL_FLOOR`` of the matrix-norm scale
-    of the backward error `\|r\|/((\|[A]\| + |\lambda| \, \|[B]\|)
-    \|\{u\}\|)`, is then the reference. It does not change the check of the
-    other eigenpairs, whose first scale is larger, unless
-    `\|[A]\{u\}\| + |\lambda| \, \|[B]\{u\}\|` is smaller than
-    ``RESIDUAL_FLOOR`` times the matrix-norm scale.
+    The relative residual
+
+    .. math::
+
+        \frac{\|[A]\{u\} + \lambda [B]\{u\}\|}{\|[A]\{u\}\|
+        + |\lambda| \, \|[B]\{u\}\|}
+
+    compares the residual with the terms of the eigenvalue problem for the
+    eigenvector itself. For an eigenvector in the null space of `[A]` with
+    a null eigenvalue, e.g. a rigid-body mode of :func:`.freq`, both the
+    residual and the denominator are round-off errors, and their ratio is
+    meaningless, of the order of 1. With ``rigid_rtol`` `= \epsilon_r`, an
+    eigenpair with
+
+    .. math::
+
+        \|[A]\{u\}\| + |\lambda| \, \|[B]\{u\}\| \le \epsilon_r
+        (\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|
+
+    is null up to the round-off: its residual is relative to the
+    matrix-norm scale, i.e. it is the normwise backward error
+    `\|r\|/((\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|)`, with `r` the
+    residual vector, not larger than `\epsilon_r`. Every other eigenpair
+    keeps the relative residual, such that the check of a genuine eigenpair
+    is never loosened.
+
+    A backward error at the round-off does not tell that a genuine
+    eigenpair is accurate when `\|[A]\|_F` is set by stiff springs, e.g. the
+    penalty connections of multi-domain models: the eigenpairs that satisfy
+    the connections give `\|[A]\{u\}\|` many orders of magnitude smaller
+    than `\|[A]\|_F \|\{u\}\|`. Measured with ``eigsh`` for the lowest load
+    multipliers of a blade-stiffened panel with penalty connections,
+    `\|[K]\|_F = 5.1 \cdot 10^{12}` and `5.1 \cdot 10^{13}`, the inaccurate
+    eigenpairs, with relative residuals of 1 to 5 % and eigenvalues up to 1 %
+    too low, have backward errors of `3 \cdot 10^{-15}` to `3 \cdot
+    10^{-13}` and `(\|[K]\{u\}\| + |\lambda| \, \|[K_G]\{u\}\|)/((\|[K]\|_F
+    + |\lambda| \, \|[K_G]\|_F)\|\{u\}\|) = 1.6 \cdot 10^{-13}` to `1.6 \cdot
+    10^{-11}`, i.e. 720 times the machine precision and more. A floor
+    `\epsilon_f (\|[A]\|_F + |\lambda| \, \|[B]\|_F)\|\{u\}\|` of the
+    denominator with `\epsilon_f = 10^{-8}` would accept them. The
+    rigid-body modes of :func:`.freq`, with the sparse and the dense
+    solvers, give at most 19 times the machine precision for the chains of
+    springs of the tests and for free plates of ``panels`` with penalty
+    connections up to `10^4` times the penalty constants of ``calc_kt_kr``,
+    against at least 540 times for the genuine eigenpairs of these plates,
+    inaccurate ones included, hence ``RIGID_BODY_RTOL``. :func:`lb` uses the
+    relative residual only: a finite load multiplier is never null.
 
     """
     Au = A @ u
@@ -328,9 +382,10 @@ def _relative_residuals(A, B, lam, u):
     lam = np.asarray(lam)
     num = np.linalg.norm(Au + Bu*lam, axis=0)
     den = np.linalg.norm(Au, axis=0) + np.abs(lam)*np.linalg.norm(Bu, axis=0)
-    floor = RESIDUAL_FLOOR*(_frobenius(A) + np.abs(lam)*_frobenius(B)
-                            )*np.linalg.norm(u, axis=0)
-    den = np.maximum(den, floor)
+    if rigid_rtol is not None:
+        scale = (_frobenius(A) + np.abs(lam)*_frobenius(B)
+                 )*np.linalg.norm(u, axis=0)
+        den = np.where(den <= rigid_rtol*scale, scale, den)
     residual = np.full(lam.shape, np.inf)
     np.divide(num, den, out=residual, where=den > 0)
     return residual
@@ -1304,9 +1359,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     check_rtol : float, optional
         Maximum relative residual
         ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of the
-        eigenpairs of the sparse solver, see above. The denominator is at
-        least ``RESIDUAL_FLOOR`` times the matrix-norm scale
-        ``(||K||_F + |lambda| ||KG||_F) ||u||``, see
+        eigenpairs of the sparse solver, see above and
         :func:`_relative_residuals`.
     symmetric : bool or None, optional
         Whether ``K`` and ``KG`` are symmetric. ``None`` checks it with
@@ -1373,9 +1426,8 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
     - the relative residual
       `||K u + \lambda K_G u|| / (||K u|| + |\lambda| ||K_G u||)` of each
-      eigenpair must not be larger than ``check_rtol``, the denominator
-      being at least ``RESIDUAL_FLOOR`` times the matrix-norm scale of the
-      backward error, see :func:`_relative_residuals`;
+      eigenpair must not be larger than ``check_rtol``, see
+      :func:`_relative_residuals`;
     - when ``K`` is positive definite, no load multiplier below the highest
       positive one returned may be missing: the number of negative pivots of
       `[K] + s [K_G]`, for `s` slightly below that multiplier, is the number

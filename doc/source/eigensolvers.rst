@@ -19,12 +19,17 @@ Solver policy
   and, for symmetric matrices, the inertia of a shifted matrix, which tells
   whether an eigenvalue was missed (Sylvester's law of inertia). The
   residual `\|[K]\{u\} + \lambda [B]\{u\}\|` is relative to
-  `\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|`, with `[B] = [K_G]` or `[M]`,
-  but at least ``RESIDUAL_FLOOR`` `= 10^{-8}` times the matrix-norm scale
-  `(\|[K]\|_F + |\lambda| \, \|[B]\|_F)\|\{u\}\|`, such that the residual of
-  a rigid-body mode of :func:`.freq`, whose eigenvalue and `[K]\{u\}` are
-  both null up to the round-off, is meaningful, see
-  :func:`.linear_buckling._relative_residuals`.
+  `\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|`, with `[B] = [K_G]` or `[M]`.
+  Only for a rigid-body mode of :func:`.freq`, whose eigenvalue and
+  `[K]\{u\}` are both null up to the round-off, i.e. `\|[K]\{u\}\| +
+  |\lambda| \, \|[M]\{u\}\|` not larger than ``RIGID_BODY_RTOL`` `= 100
+  \epsilon`, `\epsilon` the machine precision, times the matrix-norm scale
+  `(\|[K]\|_F + |\lambda| \, \|[M]\|_F)\|\{u\}\|`, is the residual relative
+  to this scale, see
+  :func:`.linear_buckling._relative_residuals`. The check of the other
+  eigenpairs, e.g. of models with stiff penalty springs, whose
+  `\|[K]\|_F` is many orders of magnitude larger than `\|[K]\{u\}\|`, is
+  not loosened.
 - When all the sparse solvers failed (verification, ARPACK error or no
   convergence, singular factorization, no positive real load multiplier
   for unsymmetric matrices...), a dense solver is used as a last resort, if

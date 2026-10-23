@@ -14,9 +14,9 @@ from scipy.sparse.linalg import eigs, spsolve
 from scipy.linalg import eigh, LinAlgError
 
 from .arpackutils import capped_eigsh, release_memory, start_kwargs
-from .linear_buckling import (_eig_complex, _negative_pivots,
-                              _relative_residuals, _sparse_first,
-                              is_symmetric)
+from .linear_buckling import (RIGID_BODY_RTOL, _eig_complex,
+                              _negative_pivots, _relative_residuals,
+                              _sparse_first, is_symmetric)
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
@@ -43,12 +43,14 @@ def _estimate_sigma(K, M):
 
 def _residuals(K, M, lambda2, eigvecs):
     r"""Relative residuals `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2|
-    ||M u||)` of the finite eigenpairs, with the floor of the denominator
-    of :func:`.linear_buckling._relative_residuals`, which is meaningful
-    for the rigid-body modes, `\lambda^2 = 0` up to the round-off"""
+    ||M u||)` of the finite eigenpairs, relative to the matrix-norm scale
+    `(||K||_F + |\lambda^2| ||M||_F) ||u||` instead for the rigid-body
+    modes, see :func:`.linear_buckling._relative_residuals` with
+    ``rigid_rtol=RIGID_BODY_RTOL``"""
     lambda2 = np.asarray(lambda2)
     finite = np.isfinite(lambda2)
-    return _relative_residuals(K, M, lambda2[finite], eigvecs[:, finite])
+    return _relative_residuals(K, M, lambda2[finite], eigvecs[:, finite],
+                               rigid_rtol=RIGID_BODY_RTOL)
 
 
 def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
@@ -263,13 +265,12 @@ def freq(K, M, tol=0, sparse_solver=True,
         true for both matrices.
     check_rtol : float or None, optional
         Maximum relative residual of an eigenpair,
-        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`, the
-        denominator being at least
-        ``linear_buckling.RESIDUAL_FLOOR`` times the matrix-norm scale
-        `(||K||_F + |\lambda^2| ||M||_F) ||u||`, such that the residual of a
-        rigid-body mode, `\lambda^2 = 0` up to the round-off, is meaningful,
-        see :func:`.linear_buckling._relative_residuals`. A larger
-        residual of the sparse solver is a failed verification, see
+        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`. For a
+        rigid-body mode, whose `||K u|| + |\lambda^2| ||M u||` is not larger
+        than ``linear_buckling.RIGID_BODY_RTOL`` times the matrix-norm scale
+        `(||K||_F + |\lambda^2| ||M||_F) ||u||`, the residual is relative to
+        this scale, see :func:`.linear_buckling._relative_residuals`. A
+        larger residual of the sparse solver is a failed verification, see
         above. For ``sparse_solver=False``, a warning is issued. ``None``
         skips the check.
     max_dense_size : int, optional

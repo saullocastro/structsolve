@@ -200,8 +200,8 @@ def test_freq_prestressed_plate():
 def test_freq_rigid_body_modes(symmetric):
     """A free-free chain of springs has a rigid-body mode, lambda2 = 0 up to
     the round-off, which passes the residual check of the sparse solvers
-    without the dense fallback, the matrix-norm floor of the relative
-    residual being meaningful when lambda2 vanishes"""
+    without the dense fallback, its residual being relative to the
+    matrix-norm scale ``(||K||_F + |lambda2| ||M||_F) ||u||``"""
     import warnings
     from structsolve import DenseFallbackWarning
     from structsolve.freq import _residuals
@@ -225,3 +225,72 @@ def test_freq_rigid_body_modes(symmetric):
     lambda2_s, eigvecs_s = freq(K, M, silent=True, num_eigvalues=5,
                                 symmetric=symmetric)
     assert lambda2_s.shape == (4,) and eigvecs_s.shape == (n, 4)
+
+
+def penalty_chains(n=20, kp=1e8, free=False):
+    """Two chains of ``n`` unit springs, each fixed at its outer end unless
+    ``free=True``, connected by a penalty spring ``kp``, which sets
+    ``||K||_F``, and a unit mass matrix"""
+    K = 2*np.eye(2*n) - np.eye(2*n, k=1) - np.eye(2*n, k=-1)
+    K[n - 1, n] = K[n, n - 1] = -kp
+    K[n - 1, n - 1] = K[n, n] = 1 + kp
+    if free:
+        K[0, 0] = K[-1, -1] = 1.
+    return csc_matrix(K), csc_matrix(np.eye(2*n))
+
+
+def test_freq_check_penalty():
+    """Regression test: with a penalty spring setting ``||K||_F``, an
+    eigenvalue ``omega**2`` 0.01 % too low, relative residual 5e-5, is
+    rejected with ``check_rtol=1e-6``. A floor of the denominator of 1e-8
+    times the matrix-norm scale ``(||K||_F + |lambda2| ||M||_F) ||u||``,
+    about 170 times ``||K u|| + |lambda2| ||M u||`` here, accepted it"""
+    from structsolve.freq import _check_freq, _residuals
+
+    K, M = penalty_chains()
+    w2, u = np.linalg.eigh(K.toarray())
+    w2, u = w2[:1], u[:, :1]
+    assert _check_freq(K, M, -w2, u, 1e-6, True) is None
+    lambda2 = -w2*(1 - 1e-4)
+    np.testing.assert_allclose(_residuals(K, M, lambda2, u), 1e-4/(2 - 1e-4),
+                               rtol=1e-3)
+    error = _check_freq(K, M, lambda2, u, 1e-6, True)
+    assert 'relative residual' in error
+
+
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_freq_rigid_body_mode_penalty(symmetric):
+    """Two free-free chains of springs connected by a penalty spring: the
+    rigid-body mode, whose ``||K u|| + |lambda2| ||M u||`` is at the
+    round-off of the matrix-norm scale, passes the residual check without
+    the dense fallback, while the other eigenpairs keep the relative
+    residual"""
+    import warnings
+    from structsolve import DenseFallbackWarning
+    from structsolve.freq import _residuals
+    from structsolve.linear_buckling import RIGID_BODY_RTOL, _frobenius
+
+    K, M = penalty_chains(kp=1e6, free=True)
+    w2_ref = np.linalg.eigvalsh(K.toarray())
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
+                                symmetric=symmetric, sort=False,
+                                max_dense_size=0)
+    order = np.argsort((-lambda2).real)
+    w2 = (-lambda2).real[order]
+    u = eigvecs[:, order]
+    # null up to the round-off of ||K||_F
+    assert abs(w2[0]) <= RIGID_BODY_RTOL*_frobenius(K)
+    np.testing.assert_allclose(w2[1:], w2_ref[1:5], rtol=1e-8)
+    Ku = K @ u
+    Mu = M @ u
+    scale = (_frobenius(K) + np.abs(w2)*_frobenius(M))*np.linalg.norm(u,
+                                                                       axis=0)
+    d = np.linalg.norm(Ku, axis=0) + np.abs(w2)*np.linalg.norm(Mu, axis=0)
+    rigid = d <= RIGID_BODY_RTOL*scale
+    assert rigid.tolist() == [True, False, False, False, False]
+    res = _residuals(K, M, -w2, u)
+    assert np.all(res <= 1e-6)
+    plain = np.linalg.norm(Ku - Mu*w2, axis=0)/d
+    np.testing.assert_allclose(res[1:], plain[1:], rtol=1e-12)

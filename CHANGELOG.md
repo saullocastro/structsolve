@@ -73,12 +73,26 @@
   the order of the solver. `omega_n**2` breaks the ties of `omega_n`
   after the square root, e.g. of `100` and `100` minus one unit in the
   last place, both `omega_n = 10.0`.
-- `freq` and `lb`: the relative residual of the verification is at least
-  `linear_buckling.RESIDUAL_FLOOR = 1e-8` times the matrix-norm scale
-  `(||K||_F + |lambda| ||B||_F) ||u||` in its denominator, see
-  `linear_buckling._relative_residuals`. The rigid-body modes of `freq`,
-  whose relative residual was about 1, failed the verification of the
-  sparse solvers and of the dense fallback, raising a `RuntimeError`.
+- `freq`: the residual of a rigid-body mode, whose `||K u|| + |lambda2|
+  ||M u||` is not larger than `linear_buckling.RIGID_BODY_RTOL = 100 eps`
+  times the matrix-norm scale `(||K||_F + |lambda2| ||M||_F) ||u||`, is
+  relative to this scale, i.e. the backward error, see
+  `linear_buckling._relative_residuals(rigid_rtol)`. The rigid-body modes,
+  `lambda2 = 0` and `K u = 0` up to the round-off, whose relative residual
+  `||K u + lambda2 M u||/(||K u|| + |lambda2| ||M u||)` was about 1, failed
+  the verification of the sparse solvers and of the dense fallback,
+  raising a `RuntimeError`.
+- `lb` and the other eigenpairs of `freq` keep the relative residual of
+  0.8.0, without any floor of its denominator. The floor of `1e-8` times
+  the matrix-norm scale for every eigenpair, in the development version of
+  0.9.0, loosened the check about 1000 times for models with stiff penalty
+  springs, whose `||K||_F` is many orders of magnitude larger than
+  `||K u||`: inaccurate eigenpairs of `eigsh` were accepted without
+  warning, e.g. lowest load multipliers of blade-stiffened plates of
+  `panels` with penalty connections from 1.3 % below to 0.26 % above those
+  of the null-space method, which the penalty values approach from below;
+  they are now rejected and computed with the dense fallback. New test data
+  `tests/data/blade_stiffened_penalty_K.npz` and `_KG.npz`.
 - `lb`, `freq` and `arpackutils.capped_eigsh`: the calls of ARPACK are
   reproducible with SciPy 1.17 or newer. When the Krylov subspace is
   invariant, e.g. with a nilpotent `K^-1 KG`, ARPACK draws new starting
