@@ -6,6 +6,10 @@
 
 - Python 3.9 is no longer supported, it reached its end of life in October 2025: Python 3.10 or newer is required, and the tests and wheels cover Python 3.10 to 3.14.
 
+### Packaging
+
+- Packaging: the license is given as the SPDX expression `BSD-3-Clause` with `license-files` (PEP 639), replacing the TOML table and the license classifier that setuptools deprecates, hence `setuptools>=77`; wheel is no longer a build requirement; link to the documentation in the project URLs.
+
 ### New default: Crisfield's convergence criterion
 
 - The non-linear analyses of `Analysis`, Newton-Raphson, arc-length and
