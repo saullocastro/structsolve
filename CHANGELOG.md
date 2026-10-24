@@ -161,6 +161,7 @@
 ### Documentation
 
 - The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+- `structsolve.convergence`: the origin of the scaled norm is cited as the sources state it: Crisfield (1981, p. 58) attributes the scaling to Peano and Riccioni and uses it in his arc-length procedure, and Crisfield (1991, Sec. 9.5.4, Eq. 9.48) presents it as an alternative to the Euclidean norm of the residual, not as a recommendation.
 
 ## 0.8.0 (2026-10-14)
 
