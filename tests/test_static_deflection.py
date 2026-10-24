@@ -1,7 +1,4 @@
-"""Tests for static deflection using structsolve.solve()
-
-Reference: Static-deflection-plate-CLPT.ipynb from the buckling repository.
-"""
+"""Tests for static deflection using structsolve.solve()"""
 import numpy as np
 import pytest
 from scipy.sparse import csc_matrix

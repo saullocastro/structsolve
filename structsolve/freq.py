@@ -1,3 +1,10 @@
+"""Frequency analysis (:func:`freq`)
+
+Natural frequencies and modes from the stiffness and mass matrices, computed
+with the sparse eigenvalue solvers first and with a dense solver as a last
+resort, with a :class:`.linear_buckling.DenseFallbackWarning`.
+
+"""
 import warnings
 
 import numpy as np
@@ -6,9 +13,10 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import eigs, spsolve
 from scipy.linalg import eigh, LinAlgError
 
-from .arpackutils import capped_eigsh, release_memory, start_vector
-from .linear_buckling import (_eig_complex, _negative_pivots, _sparse_first,
-                              is_symmetric)
+from .arpackutils import capped_eigsh, release_memory, start_kwargs
+from .linear_buckling import (RIGID_BODY_RTOL, _eig_complex,
+                              _negative_pivots, _relative_residuals,
+                              _sparse_first, is_symmetric)
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
@@ -35,40 +43,54 @@ def _estimate_sigma(K, M):
 
 def _residuals(K, M, lambda2, eigvecs):
     r"""Relative residuals `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2|
-    ||M u||)` of the finite eigenpairs"""
+    ||M u||)` of the finite eigenpairs, relative to the matrix-norm scale
+    `(||K||_F + |\lambda^2| ||M||_F) ||u||` instead for the rigid-body
+    modes, see :func:`.linear_buckling._relative_residuals` with
+    ``rigid_rtol=RIGID_BODY_RTOL``"""
+    lambda2 = np.asarray(lambda2)
     finite = np.isfinite(lambda2)
-    u = eigvecs[:, finite]
-    lam = lambda2[finite]
-    Ku = K @ u
-    Mu = M @ u
-    num = np.linalg.norm(Ku + Mu*lam, axis=0)
-    den = np.linalg.norm(Ku, axis=0) + np.abs(lam)*np.linalg.norm(Mu, axis=0)
-    out = np.zeros(num.shape)
-    np.divide(num, den, out=out, where=den > 0)
-    return out
+    return _relative_residuals(K, M, lambda2[finite], eigvecs[:, finite],
+                               rigid_rtol=RIGID_BODY_RTOL)
 
 
 def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
                 min_rel_gap=1e-4):
-    r"""Verify the eigenpairs of `([K] + \lambda^2 [M])\{u\} = \{0\}`
+    r"""Verify the eigenpairs of ``(K + lambda2*M) @ u = 0``
+
 
     - The relative residuals of :func:`_residuals` must not be larger than
       ``check_rtol``, unless it is ``None``.
-    - With ``symmetric=True``, no eigenvalue `\omega^2 = -\lambda^2` is
-      missing below the highest one returned, `\omega^2_n`: the number of
-      negative pivots of `[K] - s [M]`, with
-      `s = \omega^2_n - min\_rel\_gap |\omega^2_n|`, i.e. the number of
-      eigenvalues lower than `s` by Sylvester's law of inertia for a
-      positive definite ``M``, must be the number of returned eigenvalues
-      lower than `s`. The check is skipped when the count is unknown, see
-      :func:`.linear_buckling._negative_pivots`.
+    - With ``symmetric=True``, no eigenvalue ``omega**2 = -lambda2`` is
+      missing below the highest one returned, checked with the number of
+      negative pivots of ``K - s M`` for ``s`` slightly lower, by the
+      relative gap ``min_rel_gap``. The check is skipped
+      when the count is unknown, see
+      :func:`.linear_buckling._negative_pivots`, or when ``s`` is zero.
 
     Returns
     -------
     error : str or None
         Description of the failed check, ``None`` when all checks passed.
 
+    Notes
+    -----
+    With ``symmetric=True``, no eigenvalue `\omega^2 = -\lambda^2` is
+    missing below the highest one returned, `\omega^2_n`: the number of
+    negative pivots of `[K] - s [M]`, with
+    `s = \omega^2_n - min\_rel\_gap |\omega^2_n|`, i.e. the number of
+    eigenvalues lower than `s` by Sylvester's law of inertia for a
+    positive definite ``M``, must be the number of returned eigenvalues
+    lower than `s`.
+
+    For symmetric `[K]` and `[M]` with a positive definite `[M]`, `[K] -
+    s [M]` is congruent to `[M]^{-1/2}[K][M]^{-1/2} - s [I]`, whose
+    eigenvalues are `\omega_i^2 - s`; its number of negative eigenvalues,
+    equal to its number of negative pivots by Sylvester's law of inertia,
+    is therefore the number of `\omega_i^2 < s`. ``K`` need not be positive
+    definite.
+
     """
+
     lambda2 = np.asarray(lambda2)
     if not eigvecs.shape[1]:
         return 'no eigenpair was found'
@@ -102,7 +124,7 @@ def _eigsh_freq(K, M, k, tol, sigma):
 def _eigs_freq(K, M, k, tol, sigma):
     """:func:`scipy.sparse.linalg.eigs` in shift-invert mode"""
     eigvals, eigvecs = eigs(A=K, M=M, k=k, which='LM', tol=tol, sigma=sigma,
-                            v0=start_vector(K.shape[0]))
+                            **start_kwargs(K.shape[0]))
     release_memory()
     #NOTE eigs solves: [K] {u} = eigval [M] {u}
     #     therefore we must correct he sign of lambda^2 here:
@@ -152,17 +174,35 @@ def freq(K, M, tol=0, sparse_solver=True,
         check_rtol=1e-6, max_dense_size=2000):
     r"""Frequency analysis
 
-    Calculates the eigenvalues `\lambda^2` and eigenvectors `\{u\}` of the
-    free-vibration eigenvalue problem:
+    Calculates the eigenvalues ``lambda2`` and eigenvectors ``u`` of the
+    free-vibration problem of ``K`` and ``M``, i.e. the eigenpairs with
+    ``(K + lambda2*M) @ u = 0``, where ``lambda2 = -omega_n**2`` and
+    ``omega_n`` is the natural frequency in rad/s. The null rows and columns
+    of ``K`` are removed from both matrices before solving the eigenvalue
+    problem, unless ``skip_null_cols=True``.
 
-    .. math::
+    **Solver policy.** As in :func:`.lb`, with ``sparse_solver=True`` the
+    sparse solver runs first for every problem size, and its eigenpairs are
+    verified:
 
-        ([K] + \lambda^2 [M])\{u\} = \{0\}
+    - the relative residual of each eigenpair must not be larger than
+      ``check_rtol``;
+    - with ``symmetric=True``, no eigenvalue ``omega_n**2`` lower than the
+      highest one returned may be missing, see :func:`_check_freq`.
 
-    where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
-    in rad/s. The null rows and columns of ``K`` are removed from both
-    matrices before solving the eigenvalue problem, unless
-    ``skip_null_cols=True``.
+    When the verification fails or the sparse solver raises an error, e.g.
+    ARPACK did not converge, the dense solver is used as a last resort if
+    the problem has at most ``max_dense_size`` dofs, with a
+    :class:`.linear_buckling.DenseFallbackWarning` giving the reasons. It
+    returns the ``num_eigvalues`` lowest eigenvalues with ``symmetric=True``,
+    otherwise the ``num_eigvalues`` eigenvalues closest to the shift, as the
+    sparse solver, and its eigenpairs are verified as well. Otherwise a
+    ``RuntimeError`` is raised. Until version 0.5.3, the sparse solver
+    only issued a warning when the residual check failed.
+
+    With Intel MKL 2024.2.0 to 2025.0.0, ``ncv`` of
+    :func:`scipy.sparse.linalg.eigsh` is capped, see :func:`.lb` and
+    :mod:`structsolve.arpackutils`.
 
     Parameters
     ----------
@@ -181,7 +221,7 @@ def freq(K, M, tol=0, sparse_solver=True,
         shift-invert mode with a negative shift estimated from the matrices,
         calculating the ``num_eigvalues`` eigenvalues closest to the shift.
         Its eigenpairs are verified, and a dense solver is only used as a
-        last resort, see the Notes. With ``False``, the full problem is
+        last resort, see above. With ``False``, the full problem is
         explicitly solved with a dense solver, :func:`scipy.linalg.eig`, or
         :func:`scipy.linalg.eigh` with ``symmetric=True``, without trying the
         sparse solver, which calculates all eigenvalues, e.g. for the
@@ -190,9 +230,21 @@ def freq(K, M, tol=0, sparse_solver=True,
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
     sort : bool, optional
-        Sort the eigenvectors by increasing natural frequency, keeping only
-        those with a natural frequency larger than ``1e-6`` rad/s. The
-        returned eigenvalues are not affected by this option.
+        Sort the eigenvalues and the eigenvectors together by increasing
+        natural frequency, keeping only those with a natural frequency
+        larger than ``1e-6`` rad/s, e.g. without the rigid-body modes. The
+        sort key is the real part of `\omega_n = \sqrt{-\lambda^2}` rounded
+        to one decimal, then its imaginary part rounded to one decimal, then,
+        between equal rounded keys, the exact real and imaginary parts of
+        `\omega_n`, then those of `\omega_n^2 = -\lambda^2`, which separate
+        two `\omega_n^2` differing at the round-off that have the same
+        `\omega_n` after the square root. Only identical eigenvalues keep
+        the order of the solver, such that a multiple eigenvalue returned
+        with round-off differences, in an order that may depend on the
+        LAPACK build, is sorted by increasing exact value. With ``False``
+        the eigenpairs are returned in the order of the solver. Until
+        version 0.8.0, only the eigenvectors were sorted and filtered, and
+        the eigenpairs with equal rounded keys kept the order of the solver.
     num_eigvalues : int, optional
         Number of calculated eigenvalues with the sparse solver, limited to
         the size of ``M`` minus 2.
@@ -213,29 +265,30 @@ def freq(K, M, tol=0, sparse_solver=True,
         true for both matrices.
     check_rtol : float or None, optional
         Maximum relative residual of an eigenpair,
-        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`. A larger
-        residual of the sparse solver is a failed verification, see the
-        Notes. For ``sparse_solver=False``, a warning is issued. ``None``
+        `||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)`. For a
+        rigid-body mode, whose `||K u|| + |\lambda^2| ||M u||` is not larger
+        than ``linear_buckling.RIGID_BODY_RTOL`` times the matrix-norm scale
+        `(||K||_F + |\lambda^2| ||M||_F) ||u||`, the residual is relative to
+        this scale, see :func:`.linear_buckling._relative_residuals`. A
+        larger residual of the sparse solver is a failed verification, see
+        above. For ``sparse_solver=False``, a warning is issued. ``None``
         skips the check.
     max_dense_size : int, optional
         Maximum size of the dense problem solved as a last resort when the
-        sparse solver failed, see the Notes. Larger problems raise a
+        sparse solver failed, see above. Larger problems raise a
         ``RuntimeError`` instead, and ``0`` disables the dense fallback.
 
     Returns
     -------
     lambda2 : ndarray
-        Complex array with the eigenvalues `\lambda^2 = -\omega_n^2`, in the
-        order returned by the eigenvalue solver, real with
-        ``symmetric=True``.
+        Complex array with the eigenvalues `\lambda^2 = -\omega_n^2`, real
+        with ``symmetric=True``, sorted and filtered as described in
+        ``sort``, otherwise in the order returned by the eigenvalue solver.
     eigvecs : ndarray
-        The `i^{th}` eigenvector is ``eigvecs[:, i]``, with the size of the
-        original matrices. The sparse solver returns eigenvectors normalized
-        with respect to ``M``, the dense solver returns eigenvectors with
-        unit Euclidean norm. If ``sort=True`` the columns are sorted and
-        filtered as described above, in which case they correspond to the
-        eigenvalues in ``lambda2`` only if the solver already returned them
-        in the order of increasing natural frequency.
+        The `i^{th}` eigenvector is ``eigvecs[:, i]``, the eigenvector of
+        ``lambda2[i]``, with the size of the original matrices. The sparse
+        solver returns eigenvectors normalized with respect to ``M``, the
+        dense solver returns eigenvectors with unit Euclidean norm.
 
     Raises
     ------
@@ -251,26 +304,27 @@ def freq(K, M, tol=0, sparse_solver=True,
 
     Notes
     -----
-    **Solver policy.** As in :func:`.lb`, with ``sparse_solver=True`` the
-    sparse solver runs first for every problem size, and its eigenpairs are
-    verified:
+    The free-vibration eigenvalue problem is
 
-    - the relative residual of each eigenpair must not be larger than
-      ``check_rtol``;
-    - with ``symmetric=True``, no eigenvalue `\omega_n^2` lower than the
-      highest one returned may be missing: the number of negative pivots of
-      `[K] - s [M]`, for `s` slightly lower than this eigenvalue, is the
-      number of eigenvalues below `s` (Sylvester's law of inertia).
+    .. math::
 
-    When the verification fails or the sparse solver raises an error, e.g.
-    ARPACK did not converge, the dense solver is used as a last resort if
-    the problem has at most ``max_dense_size`` dofs, with a
-    :class:`.linear_buckling.DenseFallbackWarning` giving the reasons. It
-    returns the ``num_eigvalues`` lowest eigenvalues with ``symmetric=True``,
-    otherwise the ``num_eigvalues`` eigenvalues closest to the shift, as the
-    sparse solver, and its eigenpairs are verified as well. Otherwise a
-    ``RuntimeError`` is raised. Until version 0.5.3, the sparse solver
-    only issued a warning when the residual check failed.
+        ([K] + \lambda^2 [M])\{u\} = \{0\}
+
+    where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
+    in rad/s. The sparse solvers solve `[K]\{u\} = \omega_n^2 [M]\{u\}`
+    in shift-invert mode, which returns the `\omega_n^2` nearest the shift
+    `\sigma` ([1]_, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
+    shift is `\sigma = -|\{y\}^T[K]\{y\} /
+    \{y\}^T[M]\{y\}|`, the Rayleigh quotient of `\{y\} = [K]^{-1}[M]\{x\}`
+    for a fixed random vector `\{x\}`, i.e. one step of inverse iteration
+    towards the lowest `\omega_n^2`, or `\sigma = -1` when ``K`` is
+    singular or the solution is inaccurate. With all `\omega_n^2 \ge 0`,
+    the eigenvalues nearest a negative shift are the lowest ones.
+
+    **Verification.** With ``symmetric=True``, the number of negative
+    pivots of `[K] - s [M]`, for `s` slightly lower than the highest
+    `\omega_n^2` returned, is the number of eigenvalues below `s`
+    (Sylvester's law of inertia), see :func:`_check_freq`.
 
     :func:`scipy.sparse.linalg.eigsh` uses ARPACK's symmetric drivers, which
     return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
@@ -282,8 +336,20 @@ def freq(K, M, tol=0, sparse_solver=True,
     with ``K`` the tangent stiffness matrix at a load level, including the
     load stiffness, the eigenvalues `\lambda^2` of the general solvers are
     real and negative below the flutter load and become complex conjugate
-    pairs above it, when two natural frequencies coalesce (the kinetic
-    criterion). A real positive `\lambda^2` indicates divergence.
+    pairs above it, when two natural frequencies coalesce, a double root of
+    the frequency equation. This is the dynamic method of [2]_
+    (Introduction, Sections 6 and 7, pp. 12-17), where `\lambda` is the
+    characteristic exponent `s = i\Omega`. A real positive `\lambda^2`,
+    i.e. a real positive `\lambda`, indicates divergence ([2]_, p. 17).
+
+    References
+    ----------
+    .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
+       Solution of Large-Scale Eigenvalue Problems with Implicitly
+       Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+       https://doi.org/10.1137/1.9780898719628
+    .. [2] Bolotin, V.V., Nonconservative Problems of the Theory of Elastic
+       Stability, Pergamon Press, Oxford, 1963.
 
     """
     msg('Running frequency analysis...', silent=silent)
@@ -370,16 +436,25 @@ def freq(K, M, tol=0, sparse_solver=True,
     msg('finished!', level=3, silent=silent)
 
     if sort:
-        omegan = np.sqrt(-lambda2)
-        sort_ind = np.lexsort((np.round(omegan.imag, 1),
+        #NOTE complex square root, a positive real lambda2 (divergence) has
+        #     an imaginary natural frequency and is filtered out
+        omegan2 = -np.asarray(lambda2, dtype=complex)
+        omegan = np.sqrt(omegan2)
+        #NOTE np.lexsort: the last key is the primary one. The exact
+        #     omega_n, then the exact omega_n**2, break the ties of the
+        #     rounded keys, e.g. a double eigenvalue returned with a
+        #     round-off difference in an order that depends on the LAPACK
+        #     build. omega_n**2 = 100 and 100 minus one unit in the last
+        #     place have the same omega_n = 10.0 after the square root
+        sort_ind = np.lexsort((omegan2.imag, omegan2.real,
+                               omegan.imag, omegan.real,
+                               np.round(omegan.imag, 1),
                                np.round(omegan.real, 1)))
         omegan = omegan[sort_ind]
-        eigvecs = eigvecs[:, sort_ind]
-
         higher_zero = omegan.real > 1e-6
-
-        omegan = omegan[higher_zero]
-        eigvecs = eigvecs[:, higher_zero]
+        # the eigenvalues are sorted and filtered with their eigenvectors
+        lambda2 = lambda2[sort_ind][higher_zero]
+        eigvecs = eigvecs[:, sort_ind][:, higher_zero]
 
     msg('finished!', level=2, silent=silent)
 

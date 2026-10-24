@@ -17,7 +17,19 @@ Solver policy
   for every problem size, symmetric or unsymmetric. Every result is
   verified before it is returned: the relative residual of each eigenpair
   and, for symmetric matrices, the inertia of a shifted matrix, which tells
-  whether an eigenvalue was missed (Sylvester's law of inertia).
+  whether an eigenvalue was missed (Sylvester's law of inertia). The
+  residual `\|[K]\{u\} + \lambda [B]\{u\}\|` is relative to
+  `\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|`, with `[B] = [K_G]` or `[M]`.
+  Only for a rigid-body mode of :func:`.freq`, whose eigenvalue and
+  `[K]\{u\}` are both null up to the round-off, i.e. `\|[K]\{u\}\| +
+  |\lambda| \, \|[M]\{u\}\|` not larger than ``RIGID_BODY_RTOL`` `= 100
+  \epsilon`, `\epsilon` the machine precision, times the matrix-norm scale
+  `(\|[K]\|_F + |\lambda| \, \|[M]\|_F)\|\{u\}\|`, is the residual relative
+  to this scale, see
+  :func:`.linear_buckling._relative_residuals`. The check of the other
+  eigenpairs, e.g. of models with stiff penalty springs, whose
+  `\|[K]\|_F` is many orders of magnitude larger than `\|[K]\{u\}\|`, is
+  not loosened.
 - When all the sparse solvers failed (verification, ARPACK error or no
   convergence, singular factorization, no positive real load multiplier
   for unsymmetric matrices...), a dense solver is used as a last resort, if
@@ -47,7 +59,10 @@ Linear buckling, symmetric matrices
 
 :func:`scipy.sparse.linalg.eigsh` in Cayley mode, with a shift estimated by
 power iterations on `[K]^{-1}[K_G]`, retried with a 10 times larger shift.
-The dense fallback condenses out the degrees of freedom where `[K_G]` has
+It gives the lowest positive load multipliers; when fewer than
+``num_eigvalues`` exist, the same solver with `-[K_G]` gives the negative
+ones closest to zero, i.e. the critical load multipliers of the reversed
+load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where `[K_G]` has
 null rows and solves the condensed problem with :func:`scipy.linalg.eigh`.
 
 

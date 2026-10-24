@@ -94,16 +94,14 @@ def test_lb_ziegler_finds_no_divergence():
     K1, _ = ziegler(1.)
     KF = K1 - K0
     # K0^-1 KF is nilpotent: the eigenvalues mu of KF u = mu K0 u are zero,
-    # a defective pair that the round-off splits into +-sqrt(eps), i.e. load
-    # multipliers that are infinite or 1e8 times the flutter load
-    for sparse_solver in (False, True):
-        try:
-            eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True,
-                         sparse_solver=sparse_solver)[0]
-        except RuntimeError:
-            continue
-        finite = np.isfinite(eigvals)
-        assert np.all(np.abs(eigvals[finite]) > 1e6*P_FLUTTER)
+    # a defective pair that the round-off splits into about +-1e-9, taken
+    # as null: all the load multipliers are infinite
+    eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True,
+                 sparse_solver=False)[0]
+    assert np.all(eigvals == -np.inf)
+    # the dense fallback finds no finite load multiplier either
+    with pytest.raises(RuntimeError, match='no finite load multiplier'):
+        lb(csr_matrix(K0), csr_matrix(KF), silent=True)
 
 
 def test_freq_symmetric_option():

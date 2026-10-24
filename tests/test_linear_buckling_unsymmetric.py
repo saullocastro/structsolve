@@ -338,20 +338,171 @@ def test_shift_search_helpers():
 
 def test_lb_ziegler_sparse_shift_search():
     """Ziegler's double pendulum with decoupled dofs, such that the sparse
-    shift search runs: no positive real load multiplier is found and the
-    dense fallback either finds none, with a warning, or only spurious ones
-    far above the flutter load; without the fallback a RuntimeError"""
+    shift search runs: neither the shift search nor the dense fallback finds
+    a finite load multiplier, the defective null pair of the condensed
+    problem, split into about +-1e-9 by the round-off, being null"""
     from scipy.linalg import block_diag
 
     k, l = 3., 0.5
-    P_flutter = (3.5 - np.sqrt(2))*k/l
     K0 = block_diag(np.array([[2*k, -k], [-k, k]]), np.diag(np.arange(1., 9.)))
     KF = block_diag(np.array([[-l, l], [0., 0.]]), np.zeros((8, 8)))
     with pytest.raises(RuntimeError, match='Attempted: eigs'):
         lb(csr_matrix(K0), csr_matrix(KF), silent=True, max_dense_size=0)
-    try:
-        eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True)[0]
-    except RuntimeError:
-        return
-    finite = np.isfinite(eigvals)
-    assert np.all(np.abs(eigvals[finite]) > 1e6*P_flutter)
+    with pytest.raises(RuntimeError, match='eig.. with condensed dofs: no '
+                       'finite load multiplier'):
+        lb(csr_matrix(K0), csr_matrix(KF), silent=True)
+    eigvals = lb(csr_matrix(K0), csr_matrix(KF), silent=True,
+                 sparse_solver=False)[0]
+    assert np.all(eigvals == -np.inf)
+
+
+def test_null_mu_pencil():
+    """Regression test: the round-off splits a null eigenvalue of a Jordan
+    block of size m into m eigenvalues of modulus about eps^(1/m) ||a||,
+    e.g. +-9.4e-10 for Ziegler's double pendulum (2.6e-17 and 0 with
+    another LAPACK), which the relative test of _null_mu kept, giving
+    spurious load multipliers of +-1.07e9 (85e6 times the flutter load)
+    from the dense solvers; their first-order perturbation bound is of the
+    order of their modulus, that of genuine eigenvalues much smaller"""
+    from scipy.sparse import load_npz
+    from structsolve.linear_buckling import (_eig_complex, _null_mu,
+                                             _null_mu_pencil)
+
+    def flags(a, b):
+        mu, vl, vr = _eig_complex(a, b, left=True)
+        return mu, _null_mu(mu), _null_mu_pencil(a, b, mu, vl, vr)
+
+    k, l = 3., 0.5
+    mu, old, new = flags(np.array([[-l, l], [0., 0.]]),
+                         np.array([[2*k, -k], [-k, k]]))
+    assert np.all(np.abs(mu) < 1e-8) and np.all(new)
+    # Jordan blocks of size m, B^-1 A = T J T^-1
+    rng = np.random.default_rng(1)
+    for m in (2, 3, 4):
+        J = np.eye(m, k=1)
+        T = rng.standard_normal((m, m)) + m*np.eye(m)
+        B = rng.standard_normal((m, m))
+        B = B @ B.T + m*np.eye(m)
+        mu, old, new = flags(B @ T @ J @ np.linalg.inv(T), B)
+        assert np.all(np.abs(mu) < 1e-3) and np.all(new)
+    # genuine eigenvalues down to 1e-10 times the largest are kept, also
+    # beside a Jordan block in a non-normal pencil, down to 1e-6 times the
+    # largest, above the disc of about 2e-8 of the split null pair, inside
+    # which a genuine eigenvalue is not determined
+    mu, old, new = flags(np.diag([1., -1e-6, 1e-10]), np.eye(3))
+    assert not np.any(new)
+    n = 200
+    D = np.diag(np.concatenate([[0., 0.], np.logspace(0, -6, n - 2)
+                                * rng.choice([-1, 1], n - 2)]))
+    D[0, 1] = 1.
+    T = rng.standard_normal((n, n))/np.sqrt(n) + np.eye(n)
+    B = rng.standard_normal((n, n))/np.sqrt(n)
+    B = B @ B.T + np.eye(n)
+    mu, old, new = flags(B @ T @ D @ np.linalg.inv(T), B)
+    assert np.sum(new) == 2 and np.all(np.abs(mu[new]) < 1e-6)
+    np.testing.assert_allclose(np.sort(np.abs(mu[~new])),
+                               np.sort(np.abs(np.diag(D)[2:])), rtol=1e-4)
+    # follower cantilevers: only multipliers above 1e8 times the lowest
+    # modulus are added to the null ones
+    for name in ('s1B1_m14n8', 's3B2_m14n8'):
+        K = load_npz(os.path.join(DATA, '%s_K.npz' % name)).toarray()
+        KG = load_npz(os.path.join(DATA, '%s_KG.npz' % name)).toarray()
+        mu, old, new = flags(KG, K)
+        assert np.all(old <= new)
+        added = new & ~old
+        assert 0 < added.sum() < 30
+        assert np.all(np.abs(mu[added]) < 1e-8*np.abs(mu).max())
+
+
+def ziegler_decoupled(extra=8):
+    """``K0`` and ``KF`` of Ziegler's double pendulum, see
+    ``test_follower_freq_static.py``, with ``extra`` decoupled dofs:
+    ``K0^-1 KF`` has rank 1 and is nilpotent, of norm 1/3"""
+    from scipy.sparse import block_diag
+
+    k, l = 3., 0.5
+    K0 = block_diag([csr_matrix([[2*k, -k], [-k, k]]),
+                     diags(np.arange(1., extra + 1))], format='csc')
+    KF = block_diag([csr_matrix([[-l, l], [0., 0.]]),
+                     csr_matrix((extra, extra))], format='csr')
+    return K0, KF
+
+
+def test_eigs_shifted_roundoff_nu_are_null(monkeypatch):
+    """Regression test: when all the nu returned by eigs are round-off, here
+    those of SciPy 1.17.1 for Ziegler's double pendulum at s = 0, they are
+    all null, instead of null relative to the largest one only, which left
+    four spurious load multipliers of about +-1e33 that lb() returned unless
+    the parity check rejected them; eigs is replaced, such that the test
+    does not depend on the restarts of ARPACK"""
+    import structsolve.linear_buckling as lbm
+
+    K0, KF = ziegler_decoupled()
+    nu = np.array([1.10e-33, -5.93e-34, 2.95e-34, -1.44e-34, 2.57e-49,
+                   -8.55e-50, 6.0e-51, -2.3e-51])
+
+    def eigs_roundoff(OP, k, **kwargs):
+        return nu[:k].astype(complex), np.eye(OP.shape[0], k, dtype=complex)
+
+    monkeypatch.setattr(lbm, 'eigs', eigs_roundoff)
+    for s in (0., 1e3):
+        lu = lbm._splu(K0 + s*KF)
+        mu, eigvecs, radius = lbm._eigs_shifted(K0, KF, s, 6, 0, lu)
+        assert mu.size == 0 and eigvecs.shape == (10, 0)
+        assert radius == np.inf
+    with pytest.raises(RuntimeError,
+                       match='shift 0: no finite load multiplier'):
+        lb(K0, KF, silent=True, max_dense_size=0)
+
+
+@pytest.mark.parametrize('seed', range(8))
+def test_eigs_shift_search_ziegler_any_start(monkeypatch, seed):
+    """Ziegler's double pendulum, K0^-1 KF nilpotent: whatever the starting
+    vector and, with SciPy 1.17 or newer, the restart vectors of ARPACK,
+    which give round-off nu of 0, about 1e-33 or 1e-17 with SciPy 1.17.1,
+    the shift search finds no finite load multiplier"""
+    import structsolve.linear_buckling as lbm
+    from structsolve import arpackutils
+
+    def start_kwargs(n):
+        kwargs = {'v0': np.random.RandomState(seed).uniform(-1., 1., n)}
+        if arpackutils._arpack_takes_rng():
+            kwargs['rng'] = np.random.default_rng(seed)
+        return kwargs
+
+    monkeypatch.setattr(lbm, 'start_kwargs', start_kwargs)
+    K0, KF = ziegler_decoupled()
+    for s in (0., 1e3, 1e8):
+        lu = lbm._splu(K0 + s*KF)
+        mu, eigvecs, radius = lbm._eigs_shifted(K0, KF, s, 8, 0, lu)
+        assert mu.size == 0 and radius == np.inf
+    with pytest.raises(RuntimeError, match='no finite load multiplier'):
+        lbm._eigs_shift_search(K0, KF, 6, 0, 1e-3, True)
+
+
+def test_norm_estimate():
+    """_norm_estimate is between ||O v||/||v|| and ||O||_2, O = A^-1 KG,
+    and exact for the rank-one O of Ziegler's double pendulum, whatever the
+    number of dofs where KG is null"""
+    from scipy.sparse.linalg import splu
+    from structsolve.linear_buckling import _norm_estimate
+    from structsolve.arpackutils import start_vector
+
+    rng = np.random.default_rng(0)
+    for trial in range(10):
+        A = rng.standard_normal((15, 15)) + 15*np.eye(15)
+        KG = rng.standard_normal((15, 15))
+        KG[:, rng.permutation(15)[:10]] = 0.
+        O = np.linalg.solve(A, KG)
+        v = rng.uniform(-1., 1., 15)
+        est = _norm_estimate(splu(csr_matrix(A).tocsc()), csr_matrix(KG), v)
+        lower = np.linalg.norm(O @ v)/np.linalg.norm(v)
+        assert lower*(1 - 1e-12) <= est <= np.linalg.norm(O, 2)*(1 + 1e-12)
+    for extra in (8, 1000, 100000):
+        K0, KF = ziegler_decoupled(extra)
+        v = start_vector(extra + 2)
+        est = _norm_estimate(splu(K0), KF, v)
+        np.testing.assert_allclose(est, 1/3, rtol=1e-12)
+        O_v = splu(K0).solve(KF @ v)
+        assert np.linalg.norm(O_v)/np.linalg.norm(v) < 0.2
+    assert _norm_estimate(splu(K0), csr_matrix(KF.shape), v) == 0.

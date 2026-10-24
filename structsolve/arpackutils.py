@@ -1,14 +1,10 @@
 r"""Utilities for ARPACK, against the Intel MKL bug of ``dsteqr``
 
-The symmetric drivers of ARPACK, used by :func:`scipy.sparse.linalg.eigsh`,
-compute the Ritz vectors with the LAPACK routine ``dsteqr`` applied to the
-``ncv x ncv`` tridiagonal matrix of the Lanczos process. The ``dsteqr`` of
-Intel MKL 2024.2.0 to 2025.0.0 returns wrong eigenvectors for matrices
-larger than 32 x 32, such that :func:`scipy.sparse.linalg.eigsh` returns
-wrong eigenpairs, without any error, or raises ``ArpackError -8``, whenever
-``ncv > 32``, e.g. with SciPy's default ``ncv = 2 k + 1`` for ``k >= 16``.
-MKL 2025.0.1 or newer is not affected, neither are the non-symmetric drivers
-of :func:`scipy.sparse.linalg.eigs`, which do not call ``dsteqr``.
+With Intel MKL 2024.2.0 to 2025.0.0, :func:`scipy.sparse.linalg.eigsh`
+returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
+whenever its number of Lanczos vectors is ``ncv > 32``, e.g. with SciPy's
+default ``ncv = 2 k + 1`` for ``k >= 16`` eigenpairs. MKL 2025.0.1 or newer
+is not affected, neither is :func:`scipy.sparse.linalg.eigs`.
 
 :func:`capped_eigsh` keeps ``ncv <= 32`` when :func:`arpack_max_ncv` says so,
 computing more than 15 eigenpairs in several calls with deflation, whose
@@ -22,6 +18,16 @@ be identified as such::
 
     import structsolve.arpackutils
     structsolve.arpackutils.ARPACK_MAX_NCV = 0  # no cap
+
+Notes
+-----
+The symmetric drivers of ARPACK, used by :func:`scipy.sparse.linalg.eigsh`,
+compute the Ritz vectors with the LAPACK routine ``dsteqr`` applied to the
+``ncv x ncv`` tridiagonal matrix of the Lanczos process. The ``dsteqr`` of
+Intel MKL 2024.2.0 to 2025.0.0 returns wrong eigenvectors for matrices
+larger than 32 x 32, hence the wrong eigenpairs whenever ``ncv > 32``. The
+non-symmetric drivers of :func:`scipy.sparse.linalg.eigs` do not call
+``dsteqr``.
 
 """
 import contextlib
@@ -210,6 +216,17 @@ def arpack_max_ncv():
 
     The detection runs once per process.
 
+    Returns
+    -------
+    max_ncv : int or None
+        The cap of ``ncv``, at least ``3``, or ``None`` when ``ncv`` is not
+        capped.
+
+    Raises
+    ------
+    ValueError
+        When the value given is an integer lower than ``3`` and not ``0``.
+
     """
     value = ARPACK_MAX_NCV
     if value is None:
@@ -236,6 +253,18 @@ def arpack_ncv(k, n):
     SciPy's default ``min(n, max(2 k + 1, 20))``, capped at
     :func:`arpack_max_ncv`. With a cap, ``k`` should not exceed
     ``(max_ncv - 1)//2``, see :func:`capped_eigsh`.
+
+    Parameters
+    ----------
+    k : int
+        Number of eigenpairs.
+    n : int
+        Size of the problem, the number of rows of the matrices.
+
+    Returns
+    -------
+    ncv : int
+        Number of Lanczos vectors.
 
     """
     ncv = min(n, max(2*k + 1, 20))
@@ -264,16 +293,90 @@ def release_memory():
 
 def start_vector(n):
     """Fixed starting vector of ARPACK, uniform in ``[-1, 1]`` as ARPACK's
-    random one, such that the results are reproducible"""
+    random one, such that the results are reproducible
+
+    The vector is drawn from :class:`numpy.random.RandomState` with the seed
+    ``42``, so that the same ``n`` always gives the same vector. The
+    calls of ARPACK use :func:`start_kwargs`, which also fixes the vectors
+    drawn when ARPACK restarts.
+
+    Parameters
+    ----------
+    n : int
+        Size of the problem.
+
+    Returns
+    -------
+    v0 : ndarray
+        1-D array of size ``n``.
+
+    """
     return np.random.RandomState(42).uniform(-1., 1., n)
+
+
+@functools.lru_cache(maxsize=None)
+def _arpack_takes_rng():
+    """Tell whether :func:`scipy.sparse.linalg.eigs` and
+    :func:`scipy.sparse.linalg.eigsh` accept the argument ``rng``, i.e.
+    SciPy 1.17 or newer"""
+    import inspect
+    from scipy.sparse.linalg import eigs
+    try:
+        return 'rng' in inspect.signature(eigs).parameters
+    except (TypeError, ValueError):
+        return False
+
+
+def start_kwargs(n):
+    """Arguments of :func:`scipy.sparse.linalg.eigs` and
+    :func:`scipy.sparse.linalg.eigsh` such that the results are
+    reproducible
+
+    ``v0`` is :func:`start_vector` and, with SciPy 1.17 or newer, ``rng``
+    is a :class:`numpy.random.Generator` with the seed ``42``, from which
+    ARPACK draws a new starting vector whenever the Krylov subspace is
+    invariant, e.g. when the operator is nilpotent.
+
+    Parameters
+    ----------
+    n : int
+        Size of the problem.
+
+    Returns
+    -------
+    kwargs : dict
+        ``{'v0': start_vector(n)}``, with the key ``'rng'`` when supported.
+
+    Notes
+    -----
+    Since SciPy 1.17, ARPACK asks the caller for a random vector when the
+    Arnoldi or Lanczos process breaks down, i.e. finds an invariant
+    subspace, and SciPy draws it from ``rng``. With ``rng=None`` it comes
+    from the entropy of the operating system: with the same ``v0`` the
+    results then differ from one call to the next. Older versions of SciPy
+    draw it inside ARPACK, with a seed kept from one call to the next in
+    the same process, which ``rng`` cannot fix.
+
+    """
+    kwargs = {'v0': start_vector(n)}
+    if _arpack_takes_rng():
+        kwargs['rng'] = np.random.default_rng(42)
+    return kwargs
 
 
 def _deflation_shift(w, far_shift):
     """Shift of the passes after the first one of :func:`capped_eigsh`
 
     The middle of the largest gap between the last five eigenvalues found,
-    sorted by increasing value, i.e. close to the next eigenvalues and away
-    from the deflated ones. ``far_shift`` when they are all equal.
+    sorted by increasing value. ``far_shift`` when they are all equal, i.e.
+    when their largest gap is not larger than ``1e-8`` times their largest
+    modulus.
+
+    Notes
+    -----
+    The shift-invert mode finds first the eigenvalues nearest the shift.
+    The middle of the largest gap is close to the next eigenvalues and away
+    from the deflated ones.
 
     """
     last = np.sort(w)[-5:]
@@ -285,8 +388,24 @@ def _deflation_shift(w, far_shift):
 
 
 def _rayleigh_ritz(A, M, V):
-    r"""Rayleigh-Ritz projection of `[A]\{x\} = w [M]\{x\}` onto `[V]`
+    r"""Rayleigh-Ritz projection of ``A x = w M x`` onto the columns of ``V``
 
+
+    Returns the Ritz values and the ``M``-orthonormal Ritz vectors of the
+    eigenvalue problem of the symmetric ``A`` and the positive definite
+    ``M`` in the subspace spanned by the columns of ``V``, which must be
+    linearly independent. Used by :func:`capped_eigsh` to combine the
+    eigenvectors of its passes. The projected problem is solved with the
+    LAPACK driver ``dsyevr`` (``driver='evr'``) of
+    :func:`scipy.linalg.eigh`.
+
+    Returns
+    -------
+    w, x : ndarray
+        The Ritz values by increasing value and the Ritz vectors.
+
+    Notes
+    -----
     The eigenvectors of different passes of :func:`capped_eigsh` are only
     `[M]`-orthogonal to the accuracy of ARPACK, e.g. `10^{-6}` between
     close eigenvalues of different passes. `[V]` is `[M]`-orthonormalized
@@ -296,12 +415,24 @@ def _rayleigh_ritz(A, M, V):
     not use the ``dsteqr`` of Intel MKL broken above 32 x 32 matrices, see
     :func:`dsteqr_is_faulty`. The returned eigenvectors `[W]\{y\}` are
     `[M]`-orthonormal to the rounding errors, and the Ritz values are at
-    least as accurate as the eigenvalues of the passes.
+    least as accurate as the eigenvalues of the passes. `[V]^T[M][V]` and
+    `[W]^T[A][W]` are symmetrized, `\frac{1}{2}([B] + [B]^T)`, before the
+    Cholesky factorization and the eigenvalue solution.
 
-    Returns
-    -------
-    w, x : ndarray
-        The Ritz values by increasing value and the Ritz vectors.
+    The Ritz values are the optimal approximations of the eigenvalues that
+    can be obtained from the subspace spanned by the columns of `[V]`
+    ([1]_, Chapter 11, "Approximations from a Subspace", Section 11.4,
+    "Optimality", Eq. (11.5) and Theorem 11.4.1, p. 236): the `j`-th
+    Ritz value is the minimum over the `j`-dimensional subspaces of the span
+    of the maximum of the Rayleigh quotient, so it can only improve when the
+    span grows, and the span contains the eigenvectors of every pass. The
+    theorem is stated for the standard problem; it holds for the pencil in
+    the `[M]` inner product, through the Cholesky factor of `[V]^T[M][V]`.
+
+    References
+    ----------
+    .. [1] Parlett, B.N., The Symmetric Eigenvalue Problem, SIAM,
+       Philadelphia, 1998. https://doi.org/10.1137/1.9781611971163
 
     """
     MV = M @ V
@@ -325,12 +456,62 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     When ``ncv`` is capped at ``max_ncv``, see :func:`arpack_max_ncv`, and
     ``k`` is larger than ``(max_ncv - 1)//2``, i.e. 15, the eigenpairs are
     computed in passes of at most 15 eigenpairs, each with ``ncv=max_ncv``.
+    The first pass is a call in the requested mode. The following passes
+    use the shift-invert mode about the shift ``sigma_d`` given by
+    :func:`_deflation_shift`, with the eigenvectors of the previous passes
+    deflated from the operator, and each of them returns the next
+    eigenvalues by increasing `w`. Each pass factorizes ``A - sigma_d*M``
+    with SuperLU, and every call starts from :func:`start_kwargs`. The
+    eigenvectors of all the passes are finally combined with a
+    Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`, such that they are
+    ``M``-orthonormal also across the passes.
+
+    Parameters
+    ----------
+    A : sparse matrix
+        Square matrix of the left-hand side, of size ``n x n``.
+    k : int
+        Number of eigenpairs.
+    M : sparse matrix
+        Positive definite matrix of the right-hand side, of size ``n x n``.
+    sigma : float
+        Shift of the shift-invert or Cayley mode, in the units of `w`.
+    which : str
+        Eigenvalues to find, passed to :func:`scipy.sparse.linalg.eigsh`, e.g.
+        ``'LM'`` or ``'SM'``.
+    mode : str, optional
+        ``'normal'`` (shift-invert, default) or ``'cayley'``, passed to
+        :func:`scipy.sparse.linalg.eigsh`.
+    tol : float, optional
+        Relative accuracy of the eigenvalues, passed to
+        :func:`scipy.sparse.linalg.eigsh`; ``0`` (default) means the machine
+        precision.
+
+    Returns
+    -------
+    w, x : ndarray
+        The eigenvalues and the `[M]`-orthonormal eigenvectors, by
+        increasing `w` when computed in passes. ``w`` is a 1-D array of size
+        ``k`` and ``x`` an array of shape ``(n, k)``.
+
+    See Also
+    --------
+    arpack_max_ncv, arpack_ncv, start_kwargs, start_vector
+
+    Notes
+    -----
+    In the shift-invert mode ARPACK computes the eigenvalues
+    `\nu = 1/(w - \sigma)` of largest modulus of the operator
+    `([A] - \sigma [M])^{-1}[M]`, i.e. the `w` nearest `\sigma` ([1]_,
+    Chapter 3, Section 3.2, Eq. (3.2.2)).
+    The passes keep ``k <= (max_ncv - 1)//2``, i.e. ``ncv >= 2 k + 1``.
     With ``k`` close to ``ncv`` ARPACK converges very slowly, not at all, or
-    misses eigenvalues, e.g. ``k=31`` and ``ncv=32``. The first pass is a
-    call in the requested mode. The following passes use the shift-invert
-    mode about `\sigma_d`, the middle of the largest gap between the last
-    five eigenvalues found, with the eigenvectors `[V]` of the previous
-    passes deflated from the operator:
+    misses eigenvalues, e.g. ``k=31`` and ``ncv=32``.
+
+    The passes after the first one use the shift-invert mode about
+    `\sigma_d`, the middle of the largest gap between the last five
+    eigenvalues found, with the eigenvectors `[V]` of the previous passes
+    deflated from the operator:
 
     .. math::
 
@@ -341,33 +522,34 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     `\sigma_d` among those not found yet, i.e. the next ones by increasing
     `w`. A shift close to them, instead of ``sigma``, separates them better:
     in the study of the panels cylinders it was 30 to 45% faster and gave
-    eigenvalues 5 to 10 times more accurate. Each pass factorizes
-    `[A] - \sigma_d [M]` with SuperLU, and every call starts from
-    :func:`start_vector`. The eigenvectors of all the passes are finally
-    combined with a Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`,
-    such that they are `[M]`-orthonormal also across the passes.
+    eigenvalues 5 to 10 times more accurate. ARPACK applies the operator
+    to `[M]\{x\}`; for an eigenvector `\{v_i\}` of `[V]`,
+    `([A] - \sigma_d [M])^{-1}[M]\{v_i\} = \{v_i\}/(w_i - \sigma_d)` and,
+    `[V]` being `[M]`-orthonormal, `([I] - [V][V]^T[M])\{v_i\} = \{0\}`.
 
-    Returns
-    -------
-    w, x : ndarray
-        The eigenvalues and the `[M]`-orthonormal eigenvectors, by
-        increasing `w` when computed in passes.
+    References
+    ----------
+    .. [1] Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users' Guide:
+       Solution of Large-Scale Eigenvalue Problems with Implicitly
+       Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+       https://doi.org/10.1137/1.9780898719628
 
     """
+
     n = A.shape[0]
     max_ncv = arpack_max_ncv()
     max_k = n if max_ncv is None else (max_ncv - 1)//2
     if k <= max_k or min(n, max(2*k + 1, 20)) <= max_ncv:
         result = _scipy_eigsh(A=A, k=k, M=M, sigma=sigma, which=which,
                               mode=mode, tol=tol, ncv=arpack_ncv(k, n),
-                              v0=start_vector(n))
+                              **start_kwargs(n))
         release_memory()
         return result
     num_passes = -(-k//max_k)
     k_pass = -(-k//num_passes)
     ncv = min(n, max_ncv)
     w, V = _scipy_eigsh(A=A, k=k_pass, M=M, sigma=sigma, which=which,
-                        mode=mode, tol=tol, ncv=ncv, v0=start_vector(n))
+                        mode=mode, tol=tol, ncv=ncv, **start_kwargs(n))
     release_memory()
     far_shift = -sigma if mode == 'cayley' else sigma
     dtype = np.result_type(A.dtype, M.dtype)
@@ -388,7 +570,7 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
         wi, Vi = _scipy_eigsh(A=A, k=min(k_pass, k - w.shape[0]), M=M,
                               sigma=sigma_d, which='LM', mode='normal',
                               tol=tol, ncv=ncv, OPinv=OPinv,
-                              v0=start_vector(n))
+                              **start_kwargs(n))
         w = np.concatenate((w, wi))
         V = np.hstack((V, Vi))
         release_memory()

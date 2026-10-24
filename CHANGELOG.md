@@ -1,5 +1,140 @@
 # Changelog
 
+## 0.9.0 (2026-10-24)
+
+### Python versions
+
+- Python 3.9 is no longer supported, it reached its end of life in October 2025: Python 3.10 or newer is required, and the tests and wheels cover Python 3.10 to 3.14.
+
+### Packaging
+
+- Packaging: the license is given as the SPDX expression `BSD-3-Clause` with `license-files` (PEP 639), replacing the TOML table and the license classifier that setuptools deprecates, hence `setuptools>=77`; wheel is no longer a build requirement; link to the documentation in the project URLs.
+
+### New default: Crisfield's convergence criterion
+
+- The non-linear analyses of `Analysis`, Newton-Raphson, arc-length and
+  the load correction iterations of the linear static analysis with a
+  configuration-dependent load, check the convergence by default with
+  Crisfield's criterion, `Analysis.convergence = 'crisfield'`: the residual
+  and the reference force vectors are measured with the norm scaled by the
+  diagonal of the linear stiffness matrix `calc_kC()`, over the free
+  degrees of freedom, those whose row or column of `calc_kC()` is not
+  null, and `zeta = ||R||_d/max(||lbd*Fext||_d, ||Fint||_d,
+  ||dlbd*Fext||_d, ||lbd*dR/dlbd||_d) <= relTOL`, the third reference in
+  the arc-length methods only, the fourth when `calc_fext` declares `lbd`.
+  The same scaled norm is used by the divergence and too-slow checks and
+  by the line search. The criterion does not depend on the units of each
+  degree of freedom, e.g. translations and rotations, and ignores the
+  residual at the constrained degrees of freedom, e.g. support reactions.
+  The same implementation as `pyfe3d.solver`.
+- The default `relTOL` is `1e-9`, instead of `1e-6`. The former check,
+  the Euclidean norm over all the degrees of freedom, is kept with
+  `Analysis.convergence = 'relative'`; `absTOL` is accepted with both. A
+  null diagonal entry of `calc_kC()` at a free degree of freedom raises a
+  `ValueError` with `'crisfield'`.
+- New module `structsolve.convergence`: `crisfield_weights`, `scaled_norm`,
+  `crisfield_zeta`, `check_convergence`, `CRITERIA`. New
+  `newton_raphson._weights`, `_norm`, `_log_iteration`; argument `w` of
+  `newton_raphson._check_convergence` and `_NR_iterations`. The log of the
+  iterations prints `zeta` with `'crisfield'`.
+
+### Bug fixes
+
+- `lb`: the negative load multipliers returned after the positive ones are
+  those closest to zero, i.e. the critical load multipliers of the reversed
+  load, instead of those of largest modulus, for the sparse and the dense
+  solvers, symmetric or unsymmetric. The sparse solver of symmetric
+  matrices computes them with `-KG` when fewer than `num_eigvalues`
+  positive load multipliers exist, and verifies them with the same
+  residual and inertia checks, such that a reference load without any
+  positive load multiplier, e.g. a tensile load, no longer needs the dense
+  fallback. The infinite load multipliers, e.g. of the null rows of `KG`,
+  come last, and the sparse solver of symmetric matrices does not return
+  them. The load multipliers of each sign are counted with the inertia of
+  `K + s KG` before requesting them from ARPACK, which does not converge
+  when it must return eigenvalues of the cluster of the null ones, e.g.
+  for the tensile reference load of a plate. New
+  `linear_buckling._eigsh_both_signs`, `_count_multipliers`,
+  `_check_both_signs`, `_lb_order`, `_null_mu`, `NULL_MU_RTOL` and
+  `INERTIA_COUNT_FACTOR`.
+- `freq(sort=True)`, the default, sorts and filters `lambda2` together with
+  the eigenvectors, instead of the eigenvectors only, such that
+  `eigvecs[:, i]` is always the eigenvector of `lambda2[i]`. The eigenpairs
+  with a natural frequency not larger than `1e-6` rad/s, e.g. rigid-body
+  modes, are removed from both arrays, which may then have fewer than
+  `num_eigvalues` entries.
+- `freq(sort=True)`: the eigenpairs with the same rounded sort key, the
+  real then the imaginary part of `omega_n` rounded to one decimal, are
+  sorted by the exact `omega_n`, real then imaginary part, then by the
+  exact `omega_n**2 = -lambda2`, instead of keeping the order of the
+  solver. A double eigenvalue returned with a round-off difference in an
+  order that depends on the LAPACK build, e.g. `omega_n**2 = 100` by the
+  dense `eig()` with OpenBLAS, is returned in increasing order whatever
+  the order of the solver. `omega_n**2` breaks the ties of `omega_n`
+  after the square root, e.g. of `100` and `100` minus one unit in the
+  last place, both `omega_n = 10.0`.
+- `freq`: the residual of a rigid-body mode, whose `||K u|| + |lambda2|
+  ||M u||` is not larger than `linear_buckling.RIGID_BODY_RTOL = 100 eps`
+  times the matrix-norm scale `(||K||_F + |lambda2| ||M||_F) ||u||`, is
+  relative to this scale, i.e. the backward error, see
+  `linear_buckling._relative_residuals(rigid_rtol)`. The rigid-body modes,
+  `lambda2 = 0` and `K u = 0` up to the round-off, whose relative residual
+  `||K u + lambda2 M u||/(||K u|| + |lambda2| ||M u||)` was about 1, failed
+  the verification of the sparse solvers and of the dense fallback,
+  raising a `RuntimeError`.
+- `lb` and the other eigenpairs of `freq` keep the relative residual of
+  0.8.0, without any floor of its denominator. The floor of `1e-8` times
+  the matrix-norm scale for every eigenpair, in the development version of
+  0.9.0, loosened the check about 1000 times for models with stiff penalty
+  springs, whose `||K||_F` is many orders of magnitude larger than
+  `||K u||`: inaccurate eigenpairs of `eigsh` were accepted without
+  warning, e.g. lowest load multipliers of blade-stiffened plates of
+  `panels` with penalty connections from 1.3 % below to 0.26 % above those
+  of the null-space method, which the penalty values approach from below;
+  they are now rejected and computed with the dense fallback. New test data
+  `tests/data/blade_stiffened_penalty_K.npz` and `_KG.npz`.
+- `lb`, `freq` and `arpackutils.capped_eigsh`: the calls of ARPACK are
+  reproducible with SciPy 1.17 or newer. When the Krylov subspace is
+  invariant, e.g. with a nilpotent `K^-1 KG`, ARPACK draws new starting
+  vectors from the argument `rng` of `eigs` and `eigsh`, by default from
+  the entropy of the operating system: with the same `v0` the results
+  differed between calls, e.g. `lb` on Ziegler's double pendulum raised a
+  `RuntimeError` or returned a spurious load multiplier of about `1e33`
+  at random. New `arpackutils.start_kwargs(n)`, the arguments `v0` and,
+  when supported, `rng` with the seed `42`, used by every call of ARPACK.
+- `lb` with unsymmetric matrices, sparse shift search: the eigenvalues
+  `nu` of `(K + s KG)^-1 KG` found by `eigs` at each shift are null when
+  `|nu| <= NULL_MU_RTOL max(max|nu|, ||(K + s KG)^-1 KG||)`, the norm
+  estimated with one step of the power iteration from the starting vector
+  of ARPACK, instead of `|nu| <= 1e-12 max|nu|`. When `K^-1 KG` has no
+  non-null eigenvalue, e.g. nilpotent as with the follower load of
+  Ziegler's double pendulum, all the `nu` are round-off and `max|nu|` is
+  not a scale: spurious load multipliers of about `1e33` (SciPy 1.17.1)
+  or `1e17` (SciPy 1.15.3) were found, and `lb(max_dense_size=0)` raised
+  the expected `RuntimeError` only when the parity check rejected them,
+  depending on the platform and, with SciPy < 1.17, whose ARPACK keeps its
+  restart seed from one call to the next, on the calls made before in the
+  same process. They are now all null, and the shift search raises "no
+  finite load multiplier was found". New `linear_buckling._norm_estimate`.
+- `lb`, dense solvers (`sparse_solver=False` and the dense fallback, of
+  symmetric and unsymmetric matrices): an eigenvalue `mu` of
+  `KG u = mu K u` is also null when `|mu| <= 10 eps ||KG||_F kappa`, `kappa`
+  its condition number from the left and right eigenvectors, i.e. when
+  the round-off does not determine it, instead of only when
+  `|mu| <= 1e-12 max|mu|`. The round-off splits a defective null
+  eigenvalue, a Jordan block of size `m`, into `m` eigenvalues of modulus
+  about `eps^(1/m)`, e.g. `+-9.4e-10` for Ziegler's double pendulum, where
+  `K^-1 KG` is nilpotent: `lb` returned the spurious load multipliers
+  `+-1.07e9`, about `8.5e7` times the flutter load, instead of none. The
+  null `mu` are set to 0 and their load multipliers are `-inf`, also in
+  complex arrays; the dense fallback then finds no finite load multiplier
+  and fails the verification. Well-conditioned eigenvalues are null only
+  below `2.2e-15 ||KG||_F`; in the follower-pressure cantilevers of the
+  tests, 6 and 22 more eigenvalues are null, all below `2e-9 max|mu|`, and
+  the lowest positive real load multipliers do not change. New
+  `linear_buckling._null_mu_pencil`, `NULL_MU_PERTURBATION_FACTOR`;
+  argument `left` of `_eig_complex`.
+
 ## 0.8.0 (2026-10-14)
 
 ### Performance: fewer evaluations and factorizations, same solutions

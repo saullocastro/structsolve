@@ -190,13 +190,15 @@ def test_calc_load_vector_passes_lbd_only_when_declared():
 
 @pytest.mark.parametrize('method', ['NR', 'arc_length_riks',
                                     'arc_length_crisfield'])
-def test_displacement_control_relative_criterion(method):
-    r"""The prescribed displacement alone, with the relative convergence
-    criterion only: every converged increment is the exact solution, and
-    ``calc_fext`` receives the load factor of the configuration"""
+@pytest.mark.parametrize('convergence', ['crisfield', 'relative'])
+def test_displacement_control_relative_criterion(method, convergence):
+    r"""The prescribed displacement alone, with the tolerance of the relative
+    force imbalance only, ``absTOL=None``: every converged increment is the
+    exact solution, and ``calc_fext`` receives the load factor of the
+    configuration"""
     pb = SpringsProblem(d1=0.8)
     an = pb.analysis(NL_method=method, initialInc=0.2, relTOL=1e-10,
-                     absTOL=None)
+                     absTOL=None, convergence=convergence)
     an.static(NLgeom=True, silent=True)
     assert np.isclose(an.increments[-1], 1.)
     assert len(an.increments) > 2
@@ -229,7 +231,7 @@ def test_displacement_control_without_lbd_does_not_converge():
 
 def test_newton_raphson_first_predictor_is_linear_solution():
     r"""With linear springs the predictor of the first increment,
-    `[K_0]^{-1} \partial R/\partial \lambda`, is the solution: each
+    `[K_{C0}]^{-1} \partial R/\partial \lambda`, is the solution: each
     increment converges at its first evaluation of the residual"""
     pb = SpringsProblem(a=(0., 0., 0.), d1=0.5)
     an = pb.analysis(initialInc=0.3, relTOL=1e-12)

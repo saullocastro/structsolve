@@ -1,7 +1,13 @@
 """Approximation functions and plate properties of the Ritz models of the tests
 
-They replace ``buckling.legendre`` and ``composites.isotropic_plate``, such
-that the tests only depend on NumPy and SciPy.
+The Legendre-based approximation functions of Castro and Donadon (2017) and
+a NumPy version of ``composites.isotropic_plate``, such that the tests only
+depend on NumPy and SciPy.
+
+Reference: Saullo G. P. Castro, Maurício V. Donadon. "Assembly of
+Semi-Analytical models to Address Linear Buckling and Vibration of Stiffened
+Composite Panels with Debonding Defect". Composite Structures, 2017.
+https://doi.org/10.1016/j.compstruct.2016.10.026
 
 """
 from functools import lru_cache
@@ -41,8 +47,7 @@ def vecf(n, xi, d1t, d1r, d2t, d2r):
     rotation at `\xi=-1` and `\xi=+1` are controlled by the flags ``d1t``,
     ``d1r``, ``d2t`` and ``d2r``. The following ones are the Legendre
     polynomials `P_{i-2}` integrated twice from `-1`, which vanish with
-    their first derivative at both extremities. Same as
-    ``buckling.legendre.vecf``.
+    their first derivative at both extremities.
 
     """
     return legendre.legval(xi, _coefficients(n, d1t, d1r, d2t, d2r, 0))

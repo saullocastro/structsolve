@@ -87,3 +87,44 @@ class TestMakeSkewSymmetric:
         np.testing.assert_allclose(result[1, 0], -2.0)
         np.testing.assert_allclose(result[0, 2], 3.0)
         np.testing.assert_allclose(result[2, 0], -3.0)
+
+
+def test_assembly_upper_triangle():
+    """Assembly of a symmetric matrix from the upper triangle of element
+    matrices, with repeated entries summed, and of an unsymmetric matrix
+    from its symmetric and skew-symmetric parts"""
+    from structsolve.sparseutils import finalize_symmetric_matrix
+
+    # chain of springs, element e connects the dofs e and e + 1
+    k = np.array([1., 2., 3., 4.])
+    n = k.size + 1
+    rows, cols, vals = [], [], []
+    for e, ke in enumerate(k):
+        # upper triangle of ke*[[1, -1], [-1, 1]]
+        rows += [e, e, e + 1]
+        cols += [e, e + 1, e + 1]
+        vals += [ke, -ke, ke]
+    K_upper = coo_matrix((vals, (rows, cols)), shape=(n, n))
+    K = finalize_symmetric_matrix(K_upper)
+    assert isinstance(K, csr_matrix)
+    K_ref = np.zeros((n, n))
+    for e, ke in enumerate(k):
+        K_ref[e:e+2, e:e+2] += ke*np.array([[1., -1.], [-1., 1.]])
+    np.testing.assert_allclose(K.toarray(), K_ref)
+    # the terms below the diagonal are ignored
+    np.testing.assert_allclose(make_symmetric(csr_matrix(K_ref)).toarray(),
+                               K_ref)
+
+    # general matrix from the upper triangles of its two parts
+    rng = np.random.default_rng(0)
+    A = rng.standard_normal((n, n))
+    sym = np.triu(0.5*(A + A.T))
+    skew = np.triu(0.5*(A - A.T))
+    A_rebuilt = make_symmetric(coo_matrix(sym)) + make_skew_symmetric(
+        coo_matrix(skew))
+    np.testing.assert_allclose(A_rebuilt.toarray(), A)
+
+    # nan values are detected
+    K_upper.data[0] = np.nan
+    with pytest.raises(AssertionError):
+        finalize_symmetric_matrix(K_upper)

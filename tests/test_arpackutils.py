@@ -1,5 +1,6 @@
 """Tests for structsolve.arpackutils: ncv <= 32 against the dsteqr bug of
 Intel MKL 2024.2.0 to 2025.0.0"""
+import inspect
 import os
 
 import numpy as np
@@ -280,3 +281,49 @@ def test_release_memory(monkeypatch):
     monkeypatch.setattr(sys, 'platform', 'emscripten')
     arpackutils.release_memory()
     assert calls == [1]
+
+
+def test_start_kwargs():
+    """v0 is start_vector(n) and, with SciPy 1.17 or newer, rng a
+    Generator with the seed 42, a new one at each call"""
+    kwargs = arpackutils.start_kwargs(10)
+    np.testing.assert_array_equal(kwargs['v0'], arpackutils.start_vector(10))
+    if arpackutils._arpack_takes_rng():
+        assert set(kwargs) == {'v0', 'rng'}
+        other = arpackutils.start_kwargs(10)['rng']
+        assert other is not kwargs['rng']
+        np.testing.assert_array_equal(kwargs['rng'].uniform(size=5),
+                                      np.random.default_rng(42).uniform(size=5))
+    else:
+        assert set(kwargs) == {'v0'}
+
+
+@pytest.mark.skipif('rng' not in inspect.signature(eigs).parameters,
+                    reason='ARPACK of SciPy < 1.17 draws the restart vectors '
+                           'with its own seed')
+def test_eigs_restart_reproducible():
+    """Regression test: with a nilpotent operator ARPACK finds an invariant
+    subspace after two Arnoldi vectors and, since SciPy 1.17, draws the new
+    starting vectors from rng, by default from the entropy of the operating
+    system, such that the same v0 gave different eigenvalues at each call,
+    e.g. a spurious real load multiplier of about 1e33 or none, and lb()
+    on Ziegler's double pendulum raised or not at random"""
+    from scipy.linalg import block_diag
+    from scipy.sparse import csr_matrix
+    from structsolve.linear_buckling import _eigs_shifted, _splu
+
+    k, l = 3., 0.5
+    K = csc_matrix(block_diag(np.array([[2*k, -k], [-k, k]]),
+                              np.diag(np.arange(1., 9.))))
+    KG = csr_matrix(block_diag(np.array([[-l, l], [0., 0.]]),
+                               np.zeros((8, 8))))
+    lu = _splu(K)
+    v0 = arpackutils.start_vector(10)
+    OPv0 = lu.solve(KG @ v0)
+    assert np.linalg.norm(OPv0) > 0 and np.all(lu.solve(KG @ OPv0) == 0)
+    mu, eigvecs, radius = _eigs_shifted(K, KG, 0., 6, 0, lu)
+    for trial in range(10):
+        mu_i, eigvecs_i, radius_i = _eigs_shifted(K, KG, 0., 6, 0, lu)
+        np.testing.assert_array_equal(mu_i, mu)
+        np.testing.assert_array_equal(eigvecs_i, eigvecs)
+        assert radius_i == radius

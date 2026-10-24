@@ -113,15 +113,21 @@ def test_arc_length_snap_through(method):
                                rtol=1e-6)
 
 
+@pytest.mark.parametrize('convergence, relTOL', [('relative', 1.e-6),
+                                                  ('crisfield', 1.e-9)])
 @pytest.mark.parametrize('method', METHODS)
-def test_arc_length_snap_back(method):
+def test_arc_length_snap_back(method, convergence, relTOL):
     """A soft spring in series with the truss causes snap-back
 
     The displacement of the loaded point decreases along part of the path.
+    The relative criterion with its former default tolerance,
+    ``relTOL=1e-6``, and Crisfield's criterion with its default, ``1e-9``,
+    both at the default ``maxInc=1``.
 
     """
     p = von_mises_truss(frac=1.5, ks=0.5)
-    p.analysis(NL_method=method, initialInc=0.05)
+    p.analysis(NL_method=method, initialInc=0.05, convergence=convergence,
+               relTOL=relTOL)
     p.an.static(NLgeom=True, silent=True)
     check_equilibrium(p)
     inc = np.asarray(p.an.increments)
@@ -189,3 +195,84 @@ def test_units_independence(method):
         assert calls == calls0
         np.testing.assert_allclose(inc, inc0, rtol=1e-6, atol=1e-9)
         np.testing.assert_allclose(cs, cs0, rtol=1e-6, atol=1e-9)
+
+
+def rescaled_dof_problem(p, s):
+    """Same problem with the degree of freedom 1 measured in other units,
+    ``c1' = s c1``, e.g. a rotation: its force is ``F1' = F1/s`` and the
+    stiffness matrices ``K' = S^-1 K S^-1``, ``S = diag(1, s)``"""
+    Sinv = np.array([1., 1./s])
+    return Problem(Sinv*p.fext,
+                   lambda c: Sinv*p.fint(Sinv*c),
+                   Sinv[:, None]*p.kC*Sinv[None, :],
+                   lambda c: Sinv[:, None]*p.kG(Sinv*c)*Sinv[None, :])
+
+
+def test_crisfield_criterion_units_invariance():
+    r"""Measuring one degree of freedom in other units does not change
+    Crisfield's `\zeta`, hence neither the number of iterations nor the
+    increments of the Newton-Raphson method, whereas it changes the relative
+    criterion, whose Euclidean norm adds the squares of forces of different
+    units. The arc-length constraint, with the Euclidean norm of the
+    displacements, is not invariant, see :func:`.arc_length._solver_arc_length`"""
+    method, frac = 'NR', 0.99
+    scales = [1., 1.e3, 1.e-3]
+    results = {}
+    for convergence in ('crisfield', 'relative'):
+        for s in scales:
+            p = rescaled_dof_problem(von_mises_truss(frac=frac), s)
+            p.analysis(NL_method=method, initialInc=0.05,
+                       convergence=convergence, relTOL=1e-9)
+            p.an.static(NLgeom=True, silent=True)
+            cs = np.asarray(p.an.cs)/np.array([1., s])
+            results[convergence, s] = (np.asarray(p.an.increments), cs,
+                                       len(p.fint_calls))
+    inc0, cs0, calls0 = results['crisfield', 1.]
+    assert inc0[-1] == 1.
+    for s in scales[1:]:
+        inc, cs, calls = results['crisfield', s]
+        assert calls == calls0
+        np.testing.assert_allclose(inc, inc0, rtol=1e-12)
+        np.testing.assert_allclose(cs, cs0, rtol=1e-9, atol=1e-12)
+    calls = [results['relative', s][2] for s in scales]
+    assert len(set(calls)) > 1, calls
+
+
+@pytest.mark.parametrize('method', METHODS + ['NR'])
+def test_crisfield_criterion_free_dofs_only(method):
+    r"""A support as a null row and column of the stiffness matrices, with
+    the internal force vector of all the degrees of freedom, including the
+    support reaction: Crisfield's criterion measures the free degrees of
+    freedom only and gives the solution of the model without the support
+    degree of freedom, whereas the reaction keeps the relative criterion
+    from converging"""
+    p = hardening_springs()
+    n = p.kC.shape[0]
+    # dof 0 is the support, connected to the dof 1 by the first spring
+    K = np.zeros((n + 1, n + 1))
+    K[1:, 1:] = p.kC
+
+    def fint(c):
+        f = np.zeros(n + 1)
+        f[1:] = p.fint(c[1:])
+        f[0] = -100.*c[1]
+        return f
+
+    def kG(c):
+        G = np.zeros((n + 1, n + 1))
+        G[1:, 1:] = p.kG(c[1:])
+        return G
+
+    q = Problem(np.concatenate(([0.], p.fext)), fint, K, kG)
+    q.analysis(NL_method=method, initialInc=0.1, minInc=1e-3)
+    q.an.static(NLgeom=True, silent=True)
+    assert q.an.increments[-1] == 1.
+    np.testing.assert_allclose(q.an.cs[-1][1:], p.solve_reference(),
+                               rtol=1e-8)
+    assert q.an.cs[-1][0] == 0.
+
+    r = Problem(q.fext, fint, K, kG)
+    r.analysis(NL_method=method, initialInc=0.1, minInc=1e-3,
+               convergence='relative')
+    r.an.static(NLgeom=True, silent=True)
+    assert not r.an.increments or r.an.increments[-1] < 1.

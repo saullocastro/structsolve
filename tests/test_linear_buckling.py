@@ -163,6 +163,33 @@ def test_lb_check_eigenpairs():
     assert 'missing' in error
 
 
+def test_lb_repeated_load_multipliers():
+    """Two equal critical load multipliers: the sparse and the dense solvers
+    agree on the load multipliers and on the eigenspace of the pair, but
+    not necessarily on the individual eigenvectors, any basis of the
+    eigenspace being valid. With num_eigvalues=1 only one of them is
+    returned"""
+    from scipy.linalg import subspace_angles
+
+    K, KG = load_saved_matrices('cylinder_5panels')
+    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=4)
+    eig_dense, eigvecs_dense = lb(K, KG, silent=True, sparse_solver=False,
+                                  num_eigvalues=4)
+    np.testing.assert_allclose(eigvals, eig_dense[:4], rtol=1e-7)
+    np.testing.assert_allclose(eigvals[0], eigvals[1], rtol=1e-7)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-3)
+    # same eigenspace of the pair
+    assert subspace_angles(eigvecs[:, :2], eigvecs_dense[:, :2]).max() < 1e-4
+    # the individual eigenvectors of both solvers are equally valid
+    assert np.all(relative_residuals(K, KG, eig_dense[:2],
+                                     eigvecs_dense[:, :2]) < 1e-8)
+
+    eigvals1, eigvecs1 = lb(K, KG, silent=True, num_eigvalues=1)
+    assert eigvals1.shape == (1,)
+    assert eigvecs1.shape == (K.shape[0], 1)
+    np.testing.assert_allclose(eigvals1[0], eigvals[0], rtol=1e-7)
+
+
 def test_lb_sparse_raises_when_verification_fails(monkeypatch):
     """A RuntimeError is raised instead of returning wrong eigenpairs"""
     import structsolve.linear_buckling as linear_buckling
@@ -209,6 +236,70 @@ def test_lb_sparse_sorted_as_dense(max_dense_size):
     assert np.all(relative_residuals(K, KG, eig_sparse, eigvecs) < 1e-8)
 
 
+def mixed_sign_problem(lambdas, num_null=0):
+    """Diagonal ``K`` and ``KG`` with the load multipliers ``lambdas``,
+    coupled by a sparse congruence, and ``num_null`` dofs where ``KG`` is
+    null, e.g. in-plane dofs"""
+    from scipy.sparse import diags, identity, random as sprandom, tril
+
+    lambdas = np.concatenate([lambdas, np.full(num_null, np.inf)])
+    n = lambdas.size
+    k = np.linspace(1., 3., n)
+    T = (identity(n) + 0.1*tril(sprandom(n, n, density=2/n, random_state=1),
+                                -1)).tocsc()
+    K = (T.T @ diags(k) @ T).tocsr()
+    KG = (T.T @ diags(-k/lambdas) @ T).tocsr()
+    return K, KG
+
+
+@pytest.mark.parametrize('max_dense_size', [0, 2000])
+def test_lb_negative_multipliers_closest_to_zero(max_dense_size):
+    """After the positive load multipliers, the negative ones closest to
+    zero, i.e. the critical load multipliers of the reversed load, for the
+    sparse and the dense solvers"""
+    positive = np.linspace(1., 20., 5)
+    negative = -np.linspace(2., 40., 35)
+    K, KG = mixed_sign_problem(np.concatenate([positive, negative]),
+                               num_null=10)
+    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=10,
+                          max_dense_size=max_dense_size)
+    np.testing.assert_allclose(eigvals[:5], positive, rtol=1e-8)
+    np.testing.assert_allclose(eigvals[5:], negative[:5], rtol=1e-8)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+    eig_dense, _ = lb(K, KG, silent=True, sparse_solver=False)
+    np.testing.assert_allclose(eig_dense[:10], eigvals, rtol=1e-8)
+    # the infinite load multipliers of the null rows of KG come last
+    assert np.all(np.abs(eig_dense[-10:]) > 1e8)
+    # the same order with the solvers of unsymmetric matrices
+    eig_gen, _ = lb(K, KG, silent=True, num_eigvalues=10, symmetric=False,
+                    max_dense_size=max_dense_size)
+    pos, neg = eig_gen[eig_gen > 0], eig_gen[eig_gen < 0]
+    np.testing.assert_allclose(pos, positive[:pos.size], rtol=1e-8)
+    np.testing.assert_allclose(neg, negative[:neg.size], rtol=1e-8)
+    np.testing.assert_array_equal(eig_gen, np.concatenate((pos, neg)))
+
+
+def test_lb_tensile_reference_load():
+    """No positive load multiplier, e.g. a tensile reference load: the
+    sparse solver returns the negative load multipliers closest to zero,
+    without the dense fallback"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
+    negative = -np.linspace(2., 40., 40)
+    K, KG = mixed_sign_problem(negative, num_null=10)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=10,
+                              max_dense_size=0)
+    np.testing.assert_allclose(eigvals, negative[:10], rtol=1e-8)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+    # the reversed load
+    eigvals_rev, _ = lb(K, -KG, silent=True, num_eigvalues=10,
+                        max_dense_size=0)
+    np.testing.assert_allclose(eigvals_rev, -negative[:10], rtol=1e-8)
+
+
 def test_lb_sparse_null_KG_rows_and_null_cols():
     """Condensed solution with null rows of KG and null rows of K, returning
     eigenvectors with the size of the original matrices"""
@@ -244,8 +335,9 @@ def test_lb_sparse_singular_K():
 def test_lb_plate_buckling_fsdt():
     """Test plate buckling (FSDT) based on semi-analytical Ritz method.
 
-    Reference: notebook BucklingPlates-FSDT.ipynb from the buckling repository.
     Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.
+    Compares the critical load with the classical solution ``4*pi**2*D/b**2``,
+    with a relative tolerance of 2 %.
     """
     from scipy.special import roots_legendre
 
@@ -377,3 +469,104 @@ def test_lb_sparse_mixed_spectrum_coupled(ratio):
     np.testing.assert_allclose(eigvals, np.sort(lambdas[lambdas > 0])[:25],
                                rtol=1e-8)
     assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-6)
+
+
+def test_lb_reference_load():
+    """The load multipliers multiply the reference load of KG: a reference
+    load twice as large halves them, a constant preload belongs to K, and
+    the reversed, tensile, reference load gives the negative load
+    multipliers closest to zero, without the dense fallback. Plate of
+    panels under a uniaxial compression, saved in tests/data"""
+    import warnings
+    from structsolve.linear_buckling import DenseFallbackWarning
+
+    K, KG = load_saved_matrices('plate_ssss_Nxx')
+    ref = np.array([157.5386, 226.3470, 232.5623])
+    eigvals, _ = lb(K, KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals[:3], ref, rtol=1e-5)
+    lambda_1 = eigvals[0]
+
+    # a reference load twice as large
+    eigvals2, _ = lb(K, 2*KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals2, eigvals/2, rtol=1e-8)
+
+    # a constant preload of 0.4 lambda_1 times the reference load
+    eigvals_pre, _ = lb(K + 0.4*lambda_1*KG, KG, silent=True,
+                        num_eigvalues=5)
+    np.testing.assert_allclose(eigvals_pre[0], 0.6*lambda_1, rtol=1e-8)
+
+    # the reversed reference load: no positive load multiplier
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        eigvals_rev, eigvecs_rev = lb(K, -KG, silent=True, num_eigvalues=5)
+    np.testing.assert_allclose(eigvals_rev, -eigvals, rtol=1e-8)
+    assert np.all(relative_residuals(K, -KG, eigvals_rev, eigvecs_rev)
+                  < 1e-3)
+
+
+def penalty_chains(n=20, kp=1e8):
+    """Two chains of ``n`` unit springs, each fixed at its outer end,
+    connected by a penalty spring ``kp``, which sets ``||K||_F``, and
+    ``KG = -I``: the load multipliers are the eigenvalues of ``K``"""
+    K = 2*np.eye(2*n) - np.eye(2*n, k=1) - np.eye(2*n, k=-1)
+    K[n - 1, n] = K[n, n - 1] = -kp
+    K[n - 1, n - 1] = K[n, n] = 1 + kp
+    return csc_matrix(K), csc_matrix(-np.eye(2*n))
+
+
+def test_lb_check_eigenpairs_penalty():
+    """Regression test: with a penalty spring setting ``||K||_F``, load
+    multipliers 2 % too low, relative residuals of 1 %, are rejected. A
+    floor of the denominator of 1e-8 times the matrix-norm scale
+    ``(||K||_F + |lambda| ||KG||_F) ||u||``, about 170 times
+    ``||K u|| + |lambda| ||KG u||`` here, accepted them"""
+    from structsolve.linear_buckling import (_check_eigenpairs,
+                                             _relative_residuals)
+
+    K, KG = penalty_chains()
+    lam, u = np.linalg.eigh(K.toarray())
+    lam, u = lam[:4], u[:, :4]
+    assert _check_eigenpairs(K, KG, lam, u, 1e-3) is None
+    res = _relative_residuals(K, KG, 0.98*lam, u)
+    np.testing.assert_allclose(res, 0.02/1.98, rtol=1e-3)
+    error = _check_eigenpairs(K, KG, 0.98*lam, u, 1e-3)
+    assert 'relative residual' in error
+
+
+def test_lb_penalty_connections():
+    """Regression test: blade-stiffened plate of panels with penalty
+    connections, saved in tests/data, whose stiff penalty springs set
+    ``||K||_F = 5.1e12``. The lowest load multiplier is that certified by
+    the inertia of ``K + s KG``. eigsh() returned eigenpairs with relative
+    residuals of 1 to 2 % and a lowest load multiplier 0.08 % too low,
+    which a floor of the denominator of the relative residual, 1e-8 times
+    the matrix-norm scale ``(||K||_F + |lambda| ||KG||_F) ||u||``, accepted;
+    they fail the verification, and the dense fallback is used
+
+    The model of panels for Figure 7 (Section 3.2.2) of Stamatelos and
+    Labeas (2023): a square plate, ``a = b = 0.5`` m, of 11 ``[0_3/90_3]s``
+    skin strips, ply thickness 0.134 mm, with 10 ``[0/90]s`` blades of
+    height 2 mm, every domain a ``plate_clpt_donnell`` with 12 x 6 (skin)
+    and 12 x 4 (blades) terms, connected by penalty springs 100 times those
+    of ``calc_kt_kr``, under a uniform compression of 1 N/m.
+
+    Reference: Stamatelos, D.G. and Labeas, G.N., Buckling analysis of
+    laminated stiffened plates with material anisotropy using the
+    Rayleigh-Ritz approach, Computation, 11(6), 110, 2023,
+    doi:10.3390/computation11060110.
+
+    """
+    import warnings
+    from structsolve.linear_buckling import (DenseFallbackWarning,
+                                             _negative_pivots)
+
+    K, KG = load_saved_matrices('blade_stiffened_penalty')
+    lambda_1 = 2583.916728
+    # one load multiplier between lambda_1 (1 -/+ 1e-6)
+    assert _negative_pivots(K + lambda_1*(1 - 1e-6)*KG) == 0
+    assert _negative_pivots(K + lambda_1*(1 + 1e-6)*KG) == 1
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DenseFallbackWarning)
+        eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=4)
+    np.testing.assert_allclose(eigvals[0], lambda_1, rtol=1e-6)
+    assert np.all(relative_residuals(K, KG, eigvals, eigvecs) < 1e-3)

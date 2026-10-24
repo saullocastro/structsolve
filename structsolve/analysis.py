@@ -1,3 +1,13 @@
+"""Static analyses of a model given by callables (:class:`Analysis`)
+
+The class :class:`Analysis` receives the callables that compute the force
+vectors and the stiffness matrices of a model and runs a linear static
+analysis, or a non-linear static analysis with the Newton-Raphson solver of
+:mod:`.newton_raphson` or the arc-length solvers of :mod:`.arc_length`. The
+optional keyword arguments of the callables are described in
+:mod:`.callbacks`.
+
+"""
 from __future__ import absolute_import
 
 import numpy as np
@@ -5,7 +15,7 @@ import numpy as np
 from .static import solve, _factorize
 from .logger import msg, warn
 from . import callbacks
-from .newton_raphson import _check_convergence
+from .newton_raphson import _check_convergence, _weights
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -19,18 +29,11 @@ class Analysis(object):
     static analysis, linear or non-linear, is run with :meth:`.static`, whose
     solution is stored in the attributes ``increments`` and ``cs``.
 
-    For non-linear analyses, the internal force vector
-    `\{F_{int}(c)\}` must be in equilibrium with the external force
-    vector scaled by the load factor `\lambda`:
-
-    .. math::
-
-        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
-
-    and the tangent stiffness matrix `[K_T] = [K_C] + [K_G]`, given by the
-    callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
-    `\{F_{int}\}` with respect to `\{c\}`, such that the Newton-Raphson
-    iterations converge quadratically.
+    The non-linear analyses find the solution vectors ``c`` for which the
+    internal force vector ``calc_fint(c)`` balances the external force
+    vector ``calc_fext(inc=1.)`` scaled by the load factor, using the
+    tangent stiffness matrix ``calc_kC(c, NLgeom=True) + calc_kG(c,
+    NLgeom=True)``.
 
     The analysis parameters are attributes of this class, described in the
     following tables together with their default values:
@@ -46,10 +49,9 @@ class Analysis(object):
                               methods, see
                               :func:`.arc_length._solver_arc_length`
     ``line_search``           ``bool``, activates a safeguarding line-search,
-                              for the Newton-Raphson method only. The full
-                              step is tried first and only reduced when it
-                              fails a sufficient-decrease test on the
-                              residual norm. Default is ``False``
+                              for the Newton-Raphson method only, see
+                              :func:`.newton_raphson._NR_iterations`. Default
+                              is ``False``
     ``max_iter_line_search``  ``int``, maximum number of iterations of the
                               line-search. Default is ``20``
     ``modified_NR``           ``bool``, activates the modified Newton-Raphson
@@ -84,22 +86,30 @@ class Analysis(object):
                        increment for the arc-length methods. Default is
                        ``1.``
     ``maxArcLength``   maximum cumulative arc length covered by the
-                       arc-length methods. The arc length is
-                       dimensionless, with displacements scaled by the
-                       linear solution for a load factor of 1, such
-                       that in the linear regime an arc length of
-                       about ``sqrt(2)`` corresponds to a load factor
-                       increment of 1. Default is ``18``
+                       arc-length methods, dimensionless. Default is
+                       ``18``
     ================   =================================================
 
     ====================    ============================================
     Convergence Criteria    Description
     ====================    ============================================
-    ``relTOL``              the convergence is achieved when the norm of
-                            the residual force vector is smaller than
-                            ``relTOL`` times the largest norm between the
-                            external and internal force vectors. Not used
-                            if ``None``. Default is ``1.e-6``
+    ``convergence``         ``str``, ``'crisfield'`` (default) for
+                            Crisfield's criterion, the residual scaled
+                            with the diagonal of the linear stiffness
+                            matrix over the free degrees of freedom, or
+                            ``'relative'`` for the Euclidean norm of the
+                            residual, see :mod:`.convergence`
+    ``relTOL``              tolerance `\epsilon` of the relative force
+                            imbalance: Crisfield's `\zeta \le` ``relTOL``,
+                            or, with ``'relative'``, the norm of the
+                            residual force vector smaller than ``relTOL``
+                            times the largest norm between the external
+                            and internal force vectors. Not used if
+                            ``None``. Default is ``1.e-9``, the tight
+                            tolerance of Crisfield's criterion with a
+                            consistent tangent; until version 0.8.0 the
+                            relative criterion was the only one, with the
+                            default ``1.e-6``
     ``absTOL``              the convergence is also achieved when the
                             maximum absolute residual force is smaller
                             than this value, which depends on the units of
@@ -121,24 +131,75 @@ class Analysis(object):
         external force vector. Required for linear and non-linear static
         analyses. The non-linear solvers call it with ``inc=1.`` and scale the
         returned vector by the load factor. It may declare the optional
-        keyword arguments ``c`` and ``lbd``, see the notes below.
+        keyword arguments ``c``, the current configuration, and ``lbd``, the
+        current load factor, and must then return the load vector of that
+        configuration and load factor for a unit load factor, ``inc=1.``,
+        see :mod:`.callbacks`. The linear static analysis never passes
+        ``lbd``.
     calc_fint : callable, optional
         ``calc_fint(c, silent=False)``, must return a 1-D array with the
         internal force vector for the solution vector ``c``. Required for
-        non-linear analyses.
+        non-linear analyses. It may declare the optional keyword argument
+        ``inc``, which then receives the current load factor, see
+        :mod:`.callbacks`.
     calc_kC : callable, optional
         ``calc_kC(c=None, NLgeom=False, silent=False)``, must return a sparse
         matrix with the constitutive stiffness matrix. With ``c=None`` and
         ``NLgeom=False`` it must return the linear stiffness matrix, and with
         ``NLgeom=True`` the constitutive part of the tangent stiffness matrix
-        at ``c``. Required for linear and non-linear static analyses.
+        at ``c``. Required for linear and non-linear static analyses. It may
+        declare the optional keyword argument ``inc``, which then receives
+        the current load factor in the calls with ``NLgeom=True``, see
+        :mod:`.callbacks`.
     calc_kG : callable, optional
         ``calc_kG(c=None, NLgeom=False, silent=False)``, must return a sparse
         matrix with the geometric stiffness matrix at ``c``. It is called
-        with ``NLgeom=True``. Required for non-linear analyses.
+        with ``NLgeom=True``. Required for non-linear analyses. It may
+        declare the optional keyword argument ``inc``, which then receives
+        the current load factor, see :mod:`.callbacks`. The sum of
+        ``calc_kC`` and ``calc_kG`` may be unsymmetric.
+
+    Attributes
+    ----------
+    increments : list
+        Load factors of the converged increments, filled by :meth:`.static`.
+    cs : list
+        Solution vectors of the converged increments, filled by
+        :meth:`.static`.
+    last_analysis : str
+        Type of the last analysis run, ``'static'`` after :meth:`.static`.
 
     Notes
     -----
+    For non-linear analyses, the internal force vector
+    `\{F_{int}(c)\}` must be in equilibrium with the external force
+    vector scaled by the load factor `\lambda`:
+
+    .. math::
+
+        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
+
+    and the tangent stiffness matrix `[K_T] = [K_C] + [K_G]`, given by the
+    callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
+    `\{F_{int}\}` with respect to `\{c\}`, such that the Newton-Raphson
+    iterations converge quadratically. The convergence is checked by
+    default with Crisfield's criterion, the residual and the reference
+    force vectors scaled with the diagonal of the linear stiffness matrix
+    ``calc_kC()`` over the free degrees of freedom, such that it does not
+    depend on the units of each degree of freedom, e.g. translations and
+    rotations, see :mod:`.convergence`; ``convergence = 'relative'`` keeps
+    the Euclidean norm of the versions up to 0.8.0.
+
+    The line-search tries the full step first and only reduces it when it
+    fails a sufficient-decrease test on the norm of the residual of the
+    convergence criterion, see
+    :func:`.newton_raphson._NR_iterations`.
+
+    The arc length is dimensionless, with displacements scaled by the
+    linear solution for a load factor of 1, such that in the linear regime
+    an arc length of about ``sqrt(2)`` corresponds to a load factor
+    increment of 1, see :func:`.arc_length._solver_arc_length`.
+
     Configuration-dependent loads, e.g. follower pressures, are supported
     through optional keyword arguments, passed only to the callables that
     declare them explicitly, see :mod:`.callbacks`:
@@ -158,28 +219,19 @@ class Analysis(object):
       reference vector ``calc_fext(inc=1.)`` may be null. The solvers then
       use `\partial R/\partial \lambda` for the displacement scale of the
       arc-length methods, for the predictor of the first Newton-Raphson
-      increment and as a reference of the relative convergence criterion,
-      see :mod:`.callbacks`. The linear static analysis never passes
+      increment and as a reference of the convergence criterion, see
+      :mod:`.callbacks`. The linear static analysis never passes
       ``lbd``.
 
     The tangent stiffness matrix may then be unsymmetric, which the solvers
     support, since they use LU factorizations.
 
-    Attributes
-    ----------
-    increments : list
-        Load factors of the converged increments, filled by :meth:`.static`.
-    cs : list
-        Solution vectors of the converged increments, filled by
-        :meth:`.static`.
-    last_analysis : str
-        Type of the last analysis run, ``'static'`` after :meth:`.static`.
-
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
-            'maxArcLength', 'absTOL', 'relTOL', 'maxNumIter', 'too_slow_TOL',
+            'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
+            'too_slow_TOL',
             'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
             'calc_fint', 'calc_kG']
 
@@ -199,8 +251,9 @@ class Analysis(object):
         self.maxInc = 1.
         self.maxArcLength = 18
         # convergence criteria
+        self.convergence = 'crisfield'
         self.absTOL = None
-        self.relTOL = 1.e-6
+        self.relTOL = 1.e-9
         self.maxNumIter = 30
         self.too_slow_TOL = 0.005
 
@@ -221,28 +274,17 @@ class Analysis(object):
     def static(self, NLgeom=False, silent=False):
         r"""General solver for static analyses
 
-        The linear analysis solves `[K_C]\{c\} = \{F_{ext}\}` using
+        The linear analysis solves the system of the linear stiffness matrix
+        ``calc_kC()`` and the external force vector ``calc_fext()`` using
         :func:`.solve`. When the load depends on the configuration, i.e.
         ``calc_fext`` declares the keyword argument ``c``, see
-        :mod:`.callbacks`, the structure is still geometrically linear but
-        the load is evaluated in the current configuration,
-        `[K_C]\{c\} = \{F_{ext}(c)\}`, which is solved by the load
-        correction iterations
-
-        .. math::
-
-            \{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
-                          - [K_C]\{c_k\})
-
-        starting from the solution of the reference load, until the relative
-        criterion ``relTOL`` is satisfied, see
-        :func:`.newton_raphson._check_convergence`, or ``maxNumIter``
-        iterations are done. For a follower load whose force vector is
-        affine in `c`, `\{F(c)\} = \{F_0\} - [K_f]\{c\}`, this is the
-        solution of `([K_C] + [K_f])\{c\} = \{F_0\}`, with the
-        convergence rate of the spectral radius of `[K_C]^{-1}[K_f]`, i.e.
-        of the ratio of the load to the lowest critical load of the
-        linearized problem; beyond it the iterations diverge. The non-linear
+        :mod:`.callbacks`, the load is evaluated in the current configuration
+        and corrected by iterations that reuse one factorization of the
+        linear stiffness matrix, starting from the solution of the reference
+        load, until the convergence criteria ``relTOL`` and ``absTOL`` are
+        satisfied, see :func:`.newton_raphson._check_convergence`, or
+        ``maxNumIter`` iterations are done; a warning is printed when they do
+        not converge and the last iterate is returned. The non-linear
         analysis uses the solver selected by the ``NL_method`` attribute.
 
         Parameters
@@ -262,6 +304,39 @@ class Analysis(object):
             documentation of each solver.
         cs : list
             Solution vectors of the converged increments.
+
+        Raises
+        ------
+        ValueError
+            When ``NLgeom=True`` and the ``NL_method`` attribute is not
+            ``'NR'``, ``'arc_length_riks'`` or ``'arc_length_crisfield'``.
+
+        Notes
+        -----
+        The linear analysis solves `[K_C]\{c\} = \{F_{ext}\}`. When the load
+        depends on the configuration, the structure is still geometrically
+        linear but the load is evaluated in the current configuration,
+        `[K_C]\{c\} = \{F_{ext}(c)\}`, which is solved by the load
+        correction iterations
+
+        .. math::
+
+            \{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
+                          - [K_C]\{c_k\})
+
+        starting from `\{c_0\} = [K_C]^{-1}\{F_{ext}\}`, the solution of the
+        reference load ``calc_fext()``, with `\{F_{ext}(c_k)\}` given by
+        ``calc_fext(inc=1., c=c_k)``. This is a fixed-point iteration
+        without the load stiffness in the iteration matrix. For a follower
+        load whose force vector is affine in `c`, `\{F(c)\} = \{F_0\} -
+        [K_f]\{c\}`, this is the solution of `([K_C] + [K_f])\{c\} =
+        \{F_0\}`, with the convergence rate of the spectral radius of
+        `[K_C]^{-1}[K_f]`, i.e. of the ratio of the load to the lowest
+        critical load of the linearized problem; beyond it the iterations
+        diverge. The error is multiplied by `-[K_C]^{-1}[K_f]` at each
+        iteration, whose spectral radius is `1/\min|\lambda|` over the load
+        multipliers `\lambda` of `([K_C] + \lambda [K_f])\{u\} = \{0\}`,
+        including the negative and complex ones.
 
         """
         self.increments = []
@@ -302,14 +377,16 @@ class Analysis(object):
         configuration-dependent load, see :meth:`.static`"""
         msg('Configuration-dependent load: load correction iterations',
             level=2, silent=silent)
+        w = _weights(self, k0)
         # k0 is factorized once for all the corrections
         solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
             R = fext - fint
-            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext)
-            msg('Iteration: %d, relative ||R|| = %1.3e' % (iteration, Rrel),
+            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext, w=w)
+            msg('Iteration: %d, %s = %1.3e' % (iteration, 'zeta' if
+                self.convergence == 'crisfield' else 'relative ||R||', Rrel),
                 level=3, silent=silent)
             if conv:
                 return c
