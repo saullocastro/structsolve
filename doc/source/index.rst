@@ -130,7 +130,7 @@ License
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 In BibTeX:
 
@@ -141,7 +141,7 @@ In BibTeX:
       title     = {Structural analysis solvers tailored for semi-analytical
                    models},
       year      = {2026},
-      version   = {0.9.1},
+      version   = {0.9.2},
       publisher = {Zenodo},
       doi       = {10.5281/zenodo.2581212},
       url       = {https://doi.org/10.5281/zenodo.2581212}

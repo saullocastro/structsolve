@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.9.2 (2026-10-24)
+
+### Bug fixes
+
+- Arc-length solvers, `arc_length_riks` and `arc_length_crisfield`: a
+  converged step whose increment points against the tangent predictor,
+  i.e. a negative or null inner product of the arc-length constraint, is
+  rejected and repeated with a shorter arc length. The previous converged
+  point is at the distance of the arc length from the last one, and the
+  iterations could converge to it and then trace the path backwards
+  ("doubling back"), e.g. the von Mises truss at 10 times its limit load
+  with `initialInc=0.2`, with both convergence criteria, and the hinged roof
+  of Sze et al. (2004), `[90/0/90]`, thickness 12.7, third-order shear
+  deformation theory, of the notebooks of `panels`, with Crisfield's
+  criterion: the step through the limit point returned exactly to the
+  converged point before the last one. Paths without such a step are
+  unchanged.
+
 ## 0.9.1 (2026-10-24)
 
 ### Documentation
