@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; structsolve 0.9.1 documentation</title>
+    <title>Changelog &#8212; structsolve 0.9.2 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=9dc39874"></script>
+    <script src="_static/documentation_options.js?v=aa3b121e"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -49,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.1" />
+  <meta name="docsearch:version" content="0.9.2" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.1 documentation</p>
+    <p class="title logo__title">structsolve 0.9.2 documentation</p>
   
 </a></div>
     
@@ -561,13 +561,9 @@
 <a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
 
-<span class="gu">## 0.9.1 (2026-10-24)</span>
+<span class="gu">## 0.9.2 (2026-10-24)</span>
 
-<span class="gu">### Documentation</span>
-
-<span class="k">-</span><span class="w"> </span>The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
-
-<span class="gu">## 0.9.0 (2026-10-24)</span>
+Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
 
 <span class="gu">### Python versions</span>
 
@@ -701,6 +697,23 @@
   the lowest positive real load multipliers do not change. New
   <span class="sb">`linear_buckling._null_mu_pencil`</span>, <span class="sb">`NULL_MU_PERTURBATION_FACTOR`</span>;
   argument <span class="sb">`left`</span> of <span class="sb">`_eig_complex`</span>.
+<span class="k">-</span><span class="w"> </span>Arc-length solvers, <span class="sb">`arc_length_riks`</span> and <span class="sb">`arc_length_crisfield`</span>: a
+  converged step whose increment points against the tangent predictor,
+  i.e. a negative or null inner product of the arc-length constraint, is
+  rejected and repeated with a shorter arc length. The previous converged
+  point is at the distance of the arc length from the last one, and the
+  iterations could converge to it and then trace the path backwards
+  ("doubling back"), e.g. the von Mises truss at 10 times its limit load
+  with <span class="sb">`initialInc=0.2`</span>, with both convergence criteria, and the hinged roof
+  of Sze et al. (2004), <span class="sb">`[90/0/90]`</span>, thickness 12.7, third-order shear
+  deformation theory, of the notebooks of <span class="sb">`panels`</span>, with Crisfield's
+  criterion: the step through the limit point returned exactly to the
+  converged point before the last one. Paths without such a step are
+  unchanged.
+
+<span class="gu">### Documentation</span>
+
+<span class="k">-</span><span class="w"> </span>The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
 
 <span class="gu">## 0.8.0 (2026-10-14)</span>
 

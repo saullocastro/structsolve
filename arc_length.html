@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.9.1 documentation</title>
+    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.9.2 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=9dc39874"></script>
+    <script src="_static/documentation_options.js?v=aa3b121e"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.1" />
+  <meta name="docsearch:version" content="0.9.2" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.1 documentation</p>
+    <p class="title logo__title">structsolve 0.9.2 documentation</p>
   
 </a></div>
     
@@ -715,8 +715,20 @@ current one <span class="math notranslate nohighlight">\((\Delta c, \Delta\lambd
 angle, since both have the length <span class="math notranslate nohighlight">\(\Delta s\)</span>.</p></li>
 </ul>
 <p>The step fails when <span class="math notranslate nohighlight">\(\delta\lambda\)</span> cannot be computed or is not
-finite. With full Newton-Raphson, <span class="math notranslate nohighlight">\([K_T]\)</span> is updated at every iteration
-at the current iterate <span class="math notranslate nohighlight">\((c + \Delta c, \lambda + \Delta\lambda)\)</span>; with
+finite, and when the converged increment points against the tangent
+predictor <span class="math notranslate nohighlight">\((\Delta c_{pred}, \Delta\lambda_{pred})\)</span> of the step,
+<span class="math notranslate nohighlight">\(\langle (\Delta c, \Delta\lambda), (\Delta c_{pred},
+\Delta\lambda_{pred}) \rangle \le 0\)</span>. The previous converged point is
+also at the distance <span class="math notranslate nohighlight">\(\Delta s\)</span> from the last one, and with long steps
+or near a limit point the iterations may converge to it and then trace
+the path backwards, the “doubling back” that <a class="reference internal" href="#rdc0da8cb83d2-2" id="id7">[2]</a> (p. 56) avoids with
+the choice of the root. The accepted points are thus on the side of the
+tangent predictor of the hyperplane normal to it, in the inner product
+above, through the last converged point, as the points of the plane of
+Riks <a class="reference internal" href="#rdc0da8cb83d2-1" id="id8">[1]</a>, normal to the tangent at the distance <span class="math notranslate nohighlight">\(\Delta s\)</span> from the
+last converged point. With full Newton-Raphson, <span class="math notranslate nohighlight">\([K_T]\)</span> is updated at
+every iteration at the current iterate <span class="math notranslate nohighlight">\((c + \Delta c, \lambda +
+\Delta\lambda)\)</span>; with
 <code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code> the factorization at the last converged state
 is used for the first <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> iterations and the tangent
 is then updated every <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> iterations; at the first
@@ -730,8 +742,8 @@ step that was repeated, and the limit is in fact
 <code class="docutils literal notranslate"><span class="pre">max(an.maxInc,</span> <span class="pre">initial</span> <span class="pre">arc</span> <span class="pre">length)</span></code>. When a step fails, the arc length
 is multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code> and the step is repeated from the
 same tangent predictor direction. The square root of the ratio is the
-rule recommended by Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id7">[3]</a> (p. 76), who found that the ratio itself,
-as used by Crisfield <a class="reference internal" href="#rdc0da8cb83d2-2" id="id8">[2]</a> (Eq. 15), makes the number of iterations
+rule recommended by Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id9">[3]</a> (p. 76), who found that the ratio itself,
+as used by Crisfield <a class="reference internal" href="#rdc0da8cb83d2-2" id="id10">[2]</a> (Eq. 15), makes the number of iterations
 oscillate from step to step.</p>
 <p>When the load factor 1.0 is exceeded within a converged step, from
 <span class="math notranslate nohighlight">\(\lambda &lt; 1\)</span> to <span class="math notranslate nohighlight">\(\lambda + \Delta\lambda &gt; 1\)</span>, the step is replaced by
@@ -764,21 +776,22 @@ stiffness matrix when the step is repeated with a shorter arc length.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="rdc0da8cb83d2-1" role="doc-biblioentry">
-<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id8">2</a>)</span>
 <p>Riks, E., An incremental approach to the solution of snapping and
 buckling problems, International Journal of Solids and Structures,
 15(7), 529-551, 1979. <a class="reference external" href="https://doi.org/10.1016/0020-7683(79)90081-7">https://doi.org/10.1016/0020-7683(79)90081-7</a></p>
 </div>
 <div class="citation" id="rdc0da8cb83d2-2" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id8">2</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id7">2</a>,<a role="doc-backlink" href="#id10">3</a>)</span>
 <p>Crisfield, M.A., A fast incremental/iterative solution procedure
 that handles “snap-through”, Computers &amp; Structures, 13(1-3), 55-62,
 1981. <a class="reference external" href="https://doi.org/10.1016/0045-7949(81)90108-5">https://doi.org/10.1016/0045-7949(81)90108-5</a></p>
 </div>
 <div class="citation" id="rdc0da8cb83d2-3" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id7">2</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id9">2</a>)</span>
 <p>Ramm, E., Strategies for tracing the nonlinear response near
 limit points, in: Wunderlich, W., Stein, E., Bathe, K.J. (eds.),
 Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
