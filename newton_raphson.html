@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,9 +37,11 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'newton_raphson';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
@@ -50,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -133,6 +135,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -140,29 +163,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -174,6 +176,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -195,9 +239,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -285,8 +343,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -340,9 +440,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -395,6 +509,7 @@
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -472,49 +587,29 @@ and they are shared with the arc-length solvers of
 <span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_solver_NR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initialInc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._solver_NR" title="Link to this definition">#</a></dt>
 <dd><p>Newton-Raphson solver with load control</p>
 <p>Used by <a class="reference internal" href="analysis.html#structsolve.Analysis.static" title="structsolve.Analysis.static"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Analysis.static()</span></code></a> when <code class="docutils literal notranslate"><span class="pre">NL_method='NR'</span></code>. The load factor
-<span class="math notranslate nohighlight">\(\lambda\)</span> goes from zero to one in increments, solving at each increment</p>
-<div class="math notranslate nohighlight">
-\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\]</div>
-<p>Each increment starts from a predictor that extrapolates the previous
-converged increment of the solution, scaled by the ratio between the new
-and the previous load increments. The first increment uses the linear
-solution as predictor.</p>
-<p>The callables that accept the keyword argument <code class="docutils literal notranslate"><span class="pre">inc</span></code> receive the load
-factor <span class="math notranslate nohighlight">\(\lambda\)</span> of the step, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, which allows
-configuration-dependent loads such as follower pressures.</p>
-<p>When <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts the keyword argument <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, e.g. for
-prescribed displacements imposed exactly, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, the
-load vector <span class="math notranslate nohighlight">\(\{q\} = \partial R/\partial \lambda\)</span> at <span class="math notranslate nohighlight">\(c = 0\)</span>,
-<span class="math notranslate nohighlight">\(\lambda = 0\)</span> gives the predictor of the first increment, its linear
-solution <span class="math notranslate nohighlight">\([K_0]^{-1}\{q\}\)</span>, instead of the linear solution of the
-reference vector, which is null under a prescribed displacement alone,
-and <span class="math notranslate nohighlight">\(\lambda \|q\|\)</span> is an additional reference of the relative
-convergence criterion. <span class="math notranslate nohighlight">\(\{q\}\)</span> is evaluated together with the tangent
-stiffness matrix, at the same iterate, i.e. <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> is called once
-per update of the tangent stiffness matrix, and the last <span class="math notranslate nohighlight">\(\{q\}\)</span>
-evaluated is the reference of the next convergence checks, also in the
-next step.</p>
-<p>By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
-<code class="docutils literal notranslate"><span class="pre">kT</span> <span class="pre">=</span> <span class="pre">kC</span> <span class="pre">+</span> <span class="pre">kG</span></code> is rebuilt at every iteration, which gives quadratic
-convergence when <code class="docutils literal notranslate"><span class="pre">kT</span></code> is the exact Jacobian of <code class="docutils literal notranslate"><span class="pre">fint</span></code>. With
-<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code> the tangent stiffness matrix is rebuilt only at
-the first iteration of each step and every <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code>
-iterations, and its LU factorization is reused in the other
-iterations.</p>
-<p>With <code class="docutils literal notranslate"><span class="pre">an.line_search</span> <span class="pre">=</span> <span class="pre">True</span></code>, the full Newton step (<code class="docutils literal notranslate"><span class="pre">eta</span> <span class="pre">=</span> <span class="pre">1</span></code>) is tried
-first and it is accepted if it satisfies a sufficient-decrease test on the
-residual norm. Otherwise <code class="docutils literal notranslate"><span class="pre">eta</span></code> is reduced by backtracking.</p>
-<p>See <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a> for the convergence criteria. A step that
-does not converge within <code class="docutils literal notranslate"><span class="pre">an.maxNumIter</span></code> iterations, that diverges or
-that converges too slowly is repeated with the load increment multiplied
-by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>. The divergence and too-slow checks are only
-activated after <code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code> iterations, see
+goes from zero to one in increments; at each increment the equilibrium
+of the internal force vector with the external force vector scaled by
+the load factor is solved with the iterations of <a class="reference internal" href="#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">_NR_iterations()</span></code></a>,
+starting from a predictor extrapolated from the previous converged
+increment, and the converged load factors and solutions are appended to
+<code class="docutils literal notranslate"><span class="pre">an.increments</span></code> and <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>.</p>
+<p>The variant of the iterations is selected by <code class="docutils literal notranslate"><span class="pre">an.modified_NR</span></code>,
+<code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code>, <code class="docutils literal notranslate"><span class="pre">an.kT_initial_state</span></code>, <code class="docutils literal notranslate"><span class="pre">an.line_search</span></code> and
+<code class="docutils literal notranslate"><span class="pre">an.max_iter_line_search</span></code>. See <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a> for the
+convergence criteria. A step that does not converge within
+<code class="docutils literal notranslate"><span class="pre">an.maxNumIter</span></code> iterations, that diverges or that converges too slowly
+is repeated with the load increment multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>.
+The divergence and too-slow checks are only activated after
+<code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code> iterations, see
 <a class="reference internal" href="#structsolve.newton_raphson._check_divergence" title="structsolve.newton_raphson._check_divergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_divergence()</span></code></a>.</p>
 <p>After a step that converged without being cut, the load increment is
 multiplied by <code class="docutils literal notranslate"><span class="pre">INC_GROWTH_FACTOR</span></code>, limited by <code class="docutils literal notranslate"><span class="pre">an.maxInc</span></code>. The last
 step is adjusted such that the analysis finishes at a load factor of
 exactly <code class="docutils literal notranslate"><span class="pre">1.0</span></code>. The analysis stops earlier, keeping the converged
 increments, when the load increment becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code>.</p>
+<p>The callables of <code class="docutils literal notranslate"><span class="pre">an</span></code> that declare the optional keyword arguments
+<code class="docutils literal notranslate"><span class="pre">inc</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">lbd</span></code> receive the current load factor and
+configuration, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -528,55 +623,136 @@ to <code class="docutils literal notranslate"><span class="pre">an.increments</s
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>The load factor <span class="math notranslate nohighlight">\(\lambda\)</span> goes from zero to one in increments, solving
+at each increment</p>
+<div class="math notranslate nohighlight">
+\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\]</div>
+<p>Each increment starts from a predictor that extrapolates the previous
+converged increment of the solution, scaled by the ratio between the new
+and the previous load increments. The first increment uses the linear
+solution as predictor: <span class="math notranslate nohighlight">\(\Delta\lambda [K_{C0}]^{-1}\{F_{ext}\}\)</span>, with
+<span class="math notranslate nohighlight">\([K_{C0}]\)</span> the linear stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code>.</p>
+<p>The callables that accept the keyword argument <code class="docutils literal notranslate"><span class="pre">inc</span></code> receive the load
+factor <span class="math notranslate nohighlight">\(\lambda\)</span> of the step, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, which allows
+configuration-dependent loads such as follower pressures.</p>
+<p>When <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts the keyword argument <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, e.g. for
+prescribed displacements imposed exactly, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, the
+load vector <span class="math notranslate nohighlight">\(\{q\} = \partial R/\partial \lambda\)</span> at <span class="math notranslate nohighlight">\(c = 0\)</span>,
+<span class="math notranslate nohighlight">\(\lambda = 0\)</span> gives the predictor of the first increment, its linear
+solution <span class="math notranslate nohighlight">\([K_{C0}]^{-1}\{q\}\)</span>, instead of the linear solution of the
+reference vector, which is null under a prescribed displacement alone,
+and <span class="math notranslate nohighlight">\(\lambda \|q\|\)</span> is an additional reference of the relative
+convergence criterion. <span class="math notranslate nohighlight">\(\{q\}\)</span> is evaluated together with the tangent
+stiffness matrix, at the same iterate, i.e. <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> is called once
+per update of the tangent stiffness matrix, and the last <span class="math notranslate nohighlight">\(\{q\}\)</span>
+evaluated is the reference of the next convergence checks, also in the
+next step.</p>
+<p>By default full Newton-Raphson is used, i.e. the tangent stiffness matrix
+<code class="docutils literal notranslate"><span class="pre">kT</span> <span class="pre">=</span> <span class="pre">kC</span> <span class="pre">+</span> <span class="pre">kG</span></code> is rebuilt at every iteration, which gives quadratic
+convergence when <code class="docutils literal notranslate"><span class="pre">kT</span></code> is the exact Jacobian of <code class="docutils literal notranslate"><span class="pre">fint</span></code>. With
+<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code> the tangent stiffness matrix is rebuilt only at
+the first iteration of each step and every <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code>
+iterations, and its LU factorization is reused in the other
+iterations, at the cost of a linear convergence rate; at the first step
+with <code class="docutils literal notranslate"><span class="pre">an.kT_initial_state</span> <span class="pre">=</span> <span class="pre">False</span></code>, the linear constitutive stiffness
+matrix <span class="math notranslate nohighlight">\([K_{C0}]\)</span> is used instead of the tangent at the first iteration.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.line_search</span> <span class="pre">=</span> <span class="pre">True</span></code>, the full Newton step (<code class="docutils literal notranslate"><span class="pre">eta</span> <span class="pre">=</span> <span class="pre">1</span></code>) is tried
+first and it is accepted if it satisfies a sufficient-decrease test on the
+residual norm. Otherwise <code class="docutils literal notranslate"><span class="pre">eta</span></code> is reduced by backtracking, see
+<a class="reference internal" href="#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">_NR_iterations()</span></code></a>.</p>
+<p>The full and modified Newton-Raphson methods, combined with incremental
+predictors, are described in <a class="reference internal" href="#r8758224270d5-1" id="id1">[1]</a> (Sections 1.2.2 and 1.2.3,
+pp. 8-13), with the quadratic and the linear convergence rates.</p>
+<p>The step that would end within <code class="docutils literal notranslate"><span class="pre">max(an.minInc,</span> <span class="pre">1e-12)</span></code> of the load
+factor 1.0, or beyond it, is replaced by the step to exactly 1.0.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="r8758224270d5-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+Structures, Volume 1: Essentials, John Wiley &amp; Sons, Chichester,
+1991.</p>
+</div>
+</div>
 </dd></dl>
 
 <section id="convergence-and-divergence-checks">
 <h2>Convergence and divergence checks<a class="headerlink" href="#convergence-and-divergence-checks" title="Link to this heading">#</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.newton_raphson._check_convergence">
-<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_check_convergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._check_convergence" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_check_convergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">R</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fint</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext_total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._check_convergence" title="Link to this definition">#</a></dt>
 <dd><p>Check the convergence of the residual force vector</p>
-<p>The convergence is achieved when either:</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.convergence</span> <span class="pre">=</span> <span class="pre">'crisfield'</span></code>, the default, the convergence is
+achieved when Crisfield’s <span class="math notranslate nohighlight">\(\zeta \le\)</span> <code class="docutils literal notranslate"><span class="pre">an.relTOL</span></code>, the residual and
+the reference force vectors being measured with the scaled norm of the
+weights <code class="docutils literal notranslate"><span class="pre">w</span></code> over the free degrees of freedom. With <code class="docutils literal notranslate"><span class="pre">an.convergence</span> <span class="pre">=</span>
+<span class="pre">'relative'</span></code> it is achieved when either:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">||R||</span> <span class="pre">&lt;=</span> <span class="pre">relTOL*max(||fext_total||,</span> <span class="pre">||fint||,</span> <span class="pre">||fext_ref||,</span>
 <span class="pre">||q_ref||)</span></code>, using the Euclidean norm, if <code class="docutils literal notranslate"><span class="pre">an.relTOL</span></code> is not
 <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">max(|R|)</span> <span class="pre">&lt;=</span> <span class="pre">absTOL</span></code>, if <code class="docutils literal notranslate"><span class="pre">an.absTOL</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code></p></li>
 </ul>
+<p><code class="docutils literal notranslate"><span class="pre">an.absTOL</span></code> is also accepted as an additional criterion with
+<code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>. See <a class="reference internal" href="convergence_api.html#structsolve.convergence.check_convergence" title="structsolve.convergence.check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">convergence.check_convergence()</span></code></a>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
-<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object with the convergence criteria.</p>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object with the attributes <code class="docutils literal notranslate"><span class="pre">convergence</span></code>, <code class="docutils literal notranslate"><span class="pre">relTOL</span></code> and
+<code class="docutils literal notranslate"><span class="pre">absTOL</span></code>.</p>
 </dd>
 <dt><strong>R</strong><span class="classifier">array-like</span></dt><dd><p>Residual force vector.</p>
 </dd>
-<dt><strong>fint</strong><span class="classifier">array-like</span></dt><dd><p>Internal force vector.</p>
+<dt><strong>fint</strong><span class="classifier">array-like</span></dt><dd><p>Internal force vector, of the same evaluation as <code class="docutils literal notranslate"><span class="pre">R</span></code>.</p>
 </dd>
 <dt><strong>fext_total</strong><span class="classifier">array-like</span></dt><dd><p>External force vector at the current load factor.</p>
 </dd>
 <dt><strong>fext_ref</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>Additional reference force vector, e.g. the external force vector of
-the current increment, useful when the load factor is close to zero.</p>
+the current increment of the arc-length solvers.</p>
 </dd>
 <dt><strong>q_ref</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>Additional reference force vector, the load factor times
 <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> when <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts <code class="docutils literal notranslate"><span class="pre">lbd</span></code>,
-see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. Under a prescribed displacement alone, the
-external and the internal force vectors of the reduced problem both
-vanish at equilibrium and cannot be the reference.</p>
+see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
+</dd>
+<dt><strong>w</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>Weights of Crisfield’s criterion, see
+<a class="reference internal" href="convergence_api.html#structsolve.convergence.crisfield_weights" title="structsolve.convergence.crisfield_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">convergence.crisfield_weights()</span></code></a>, required with
+<code class="docutils literal notranslate"><span class="pre">an.convergence</span> <span class="pre">=</span> <span class="pre">'crisfield'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>converged</strong><span class="classifier">bool</span></dt><dd><p>Whether the convergence criteria are satisfied.</p>
+<dt><strong>converged</strong><span class="classifier">bool</span></dt><dd><p>Whether the convergence criterion is satisfied.</p>
 </dd>
-<dt><strong>Rnorm</strong><span class="classifier">float</span></dt><dd><p>Euclidean norm of the residual.</p>
+<dt><strong>Rnorm</strong><span class="classifier">float</span></dt><dd><p>Norm of the residual of the criterion, <span class="math notranslate nohighlight">\(\|R\|_{\boldsymbol{d}}\)</span> with
+<code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>, the Euclidean norm with <code class="docutils literal notranslate"><span class="pre">'relative'</span></code>, used by the
+divergence checks and the line search.</p>
 </dd>
-<dt><strong>Rrel</strong><span class="classifier">float</span></dt><dd><p>Relative residual <code class="docutils literal notranslate"><span class="pre">||R||/max(||fext_total||,</span> <span class="pre">||fint||,</span> <span class="pre">||fext_ref||,</span>
-<span class="pre">||q_ref||)</span></code>.</p>
+<dt><strong>Rrel</strong><span class="classifier">float</span></dt><dd><p>Relative residual, Crisfield’s <span class="math notranslate nohighlight">\(\zeta\)</span> with <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">||R||/max(||fext_total||,</span> <span class="pre">||fint||,</span> <span class="pre">||fext_ref||,</span> <span class="pre">||q_ref||)</span></code>
+with <code class="docutils literal notranslate"><span class="pre">'relative'</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">an.convergence</span></code> is not <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code> or <code class="docutils literal notranslate"><span class="pre">'relative'</span></code>,
+when <code class="docutils literal notranslate"><span class="pre">an.relTOL</span></code> and <code class="docutils literal notranslate"><span class="pre">an.absTOL</span></code> are both <code class="docutils literal notranslate"><span class="pre">None</span></code>, or when
+<code class="docutils literal notranslate"><span class="pre">w</span></code> is missing with <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>Crisfield’s criterion, see <a class="reference internal" href="convergence_api.html#module-structsolve.convergence" title="structsolve.convergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">convergence</span></code></a>, does not depend on the
+units of each degree of freedom, e.g. translations and rotations,
+whereas the Euclidean norm of the relative criterion adds the squares
+of forces and of moments. The reference <code class="docutils literal notranslate"><span class="pre">fext_ref</span></code> is useful when the
+load factor is close to zero, where <code class="docutils literal notranslate"><span class="pre">fext_total</span></code> and <code class="docutils literal notranslate"><span class="pre">fint</span></code> are
+small. The reference <code class="docutils literal notranslate"><span class="pre">q_ref</span></code> is needed under a prescribed displacement
+alone, where the external and the internal force vectors of the reduced
+problem both vanish at equilibrium and cannot be the reference.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -592,7 +768,8 @@ diverges or when the convergence is too slow.</p>
 <dd class="field-odd"><dl>
 <dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object with the convergence criteria.</p>
 </dd>
-<dt><strong>Rnorm</strong><span class="classifier">float</span></dt><dd><p>Norm of the residual at the current iteration.</p>
+<dt><strong>Rnorm</strong><span class="classifier">float</span></dt><dd><p>Norm of the residual at the current iteration, the norm of the
+convergence criterion, see <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a>.</p>
 </dd>
 <dt><strong>Rnorms</strong><span class="classifier">list</span></dt><dd><p>Norms of the residual at the previous iterations of the step, the
 current norm is appended to it.</p>
@@ -610,12 +787,39 @@ current norm is appended to it.</p>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>With <span class="math notranslate nohighlight">\(r_i\)</span> the residual norm at the iteration <span class="math notranslate nohighlight">\(i\)</span> of the step, <span class="math notranslate nohighlight">\(r_1\)</span>
+being the residual of the predictor, the iterations are stopped at the
+iteration <span class="math notranslate nohighlight">\(j\)</span> when:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(r_j\)</span> is not finite;</p></li>
+<li><p><span class="math notranslate nohighlight">\(j &gt;\)</span> <code class="docutils literal notranslate"><span class="pre">an.maxNumIter</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">an.maxNumIter</span></code> corrections were done;</p></li>
+<li><p><span class="math notranslate nohighlight">\(j &gt;\)</span> <code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code> and <span class="math notranslate nohighlight">\(r_j &gt;\)</span>
+<code class="docutils literal notranslate"><span class="pre">DIVERGENCE_FACTOR</span></code> <span class="math notranslate nohighlight">\(r_1\)</span> (divergence);</p></li>
+<li><p><span class="math notranslate nohighlight">\(j &gt;\)</span> <code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code>, <span class="math notranslate nohighlight">\(j &gt; W\)</span> and
+<span class="math notranslate nohighlight">\(\min(r_{j-W+1}, ..., r_j) &gt; (1 -\)</span> <code class="docutils literal notranslate"><span class="pre">an.too_slow_TOL</span></code>
+<span class="math notranslate nohighlight">\() \min(r_1, ..., r_{j-W})\)</span>, with <span class="math notranslate nohighlight">\(W\)</span> = <code class="docutils literal notranslate"><span class="pre">TOO_SLOW_WINDOW</span></code> (too slow
+convergence).</p></li>
+</ul>
+<p>The divergence and too-slow checks are delayed because a non-monotonic
+residual in the first iterations is normal, especially in
+postbuckling. The checks only compare norms of the same step with each
+other, and with the scaled norm of Crisfield’s criterion they do not
+depend on the units of the degrees of freedom.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.newton_raphson._NR_iterations">
-<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_NR_iterations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd_dependent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._NR_iterations" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_NR_iterations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd_dependent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._NR_iterations" title="Link to this definition">#</a></dt>
 <dd><p>Newton-Raphson iterations at a fixed load factor</p>
+<p>Corrects the predictor <code class="docutils literal notranslate"><span class="pre">dc</span></code> at the load factor <code class="docutils literal notranslate"><span class="pre">total</span></code> until the
+convergence criteria of <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a> are satisfied, or
+until the iterations are stopped by <a class="reference internal" href="#structsolve.newton_raphson._check_divergence" title="structsolve.newton_raphson._check_divergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_divergence()</span></code></a> or by a
+singular tangent stiffness matrix. The tangent stiffness matrix is
+<code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> at the current iterate, see
+<a class="reference internal" href="callbacks.html#structsolve.callbacks.calc_kT" title="structsolve.callbacks.calc_kT"><code class="xref py py-func docutils literal notranslate"><span class="pre">callbacks.calc_kT()</span></code></a>; its updates and the line search are
+controlled by <code class="docutils literal notranslate"><span class="pre">an.modified_NR</span></code>, <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code>,
+<code class="docutils literal notranslate"><span class="pre">an.line_search</span></code> and <code class="docutils literal notranslate"><span class="pre">an.max_iter_line_search</span></code>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -636,7 +840,7 @@ current norm is appended to it.</p>
 </dd>
 <dt><strong>lbd_dependent</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>;
 <code class="docutils literal notranslate"><span class="pre">total*q</span></code>, with <span class="math notranslate nohighlight">\(\{q\} = \partial R/\partial \lambda\)</span>, is then an
-additional reference of the relative convergence criterion, see
+additional reference of the convergence criterion, see
 <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a>. <span class="math notranslate nohighlight">\(\{q\}\)</span> is evaluated together with the
 tangent stiffness matrix, at the same iterate, and the last one
 evaluated is the reference until the next update of the tangent.</p>
@@ -644,6 +848,10 @@ evaluated is the reference until the next update of the tangent.</p>
 <dt><strong>q</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>The last <span class="math notranslate nohighlight">\(\{q\}\)</span> evaluated before these iterations, the reference
 until the first update of the tangent stiffness matrix, used only
 when <code class="docutils literal notranslate"><span class="pre">lbd_dependent=True</span></code>.</p>
+</dd>
+<dt><strong>w</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>Weights of Crisfield’s criterion, see
+<a class="reference internal" href="convergence_api.html#structsolve.convergence.crisfield_weights" title="structsolve.convergence.crisfield_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">convergence.crisfield_weights()</span></code></a>, computed from <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code>
+when <code class="docutils literal notranslate"><span class="pre">None</span></code> and <code class="docutils literal notranslate"><span class="pre">an.convergence</span> <span class="pre">=</span> <span class="pre">'crisfield'</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -658,6 +866,74 @@ when <code class="docutils literal notranslate"><span class="pre">lbd_dependent=
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>At each iteration, with the load factor <span class="math notranslate nohighlight">\(\lambda\)</span> = <code class="docutils literal notranslate"><span class="pre">total</span></code> fixed,</p>
+<div class="math notranslate nohighlight">
+\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c + \Delta c, \lambda)\},
+\qquad \{\delta c\} = [K_T]^{-1}\{R\}, \qquad
+\{\Delta c\} \leftarrow \{\Delta c\} + \eta \{\delta c\}\]</div>
+<p>With full Newton-Raphson, <span class="math notranslate nohighlight">\([K_T]\)</span> is computed and factorized at every
+iteration at <span class="math notranslate nohighlight">\(c + \Delta c\)</span>, and the convergence is quadratic when it is
+the exact Jacobian <span class="math notranslate nohighlight">\(-\partial R/\partial c\)</span> (<a class="reference internal" href="#r3381b6cc1bb2-1" id="id3">[1]</a>, Section 1.2.2,
+p. 9). With
+<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code>, <span class="math notranslate nohighlight">\([K_T]\)</span> is computed at the first iteration,
+or given as <code class="docutils literal notranslate"><span class="pre">kT0</span></code>, and then every <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> iterations,
+its LU factorization being reused in the other iterations.</p>
+<p><span class="math notranslate nohighlight">\(\eta = 1\)</span> without line search. With <code class="docutils literal notranslate"><span class="pre">an.line_search</span> <span class="pre">=</span> <span class="pre">True</span></code>, with
+<span class="math notranslate nohighlight">\(\phi(\eta) = \|R(c + \Delta c + \eta \, \delta c)\|^2\)</span>, the step <span class="math notranslate nohighlight">\(\eta\)</span>
+is accepted when it satisfies the sufficient-decrease (Armijo) test</p>
+<div class="math notranslate nohighlight">
+\[\phi(\eta) \le (1 - 2 \alpha \eta) \phi(0)\]</div>
+<p>with <span class="math notranslate nohighlight">\(\alpha\)</span> = <code class="docutils literal notranslate"><span class="pre">LINE_SEARCH_ALPHA</span></code>, which assumes <span class="math notranslate nohighlight">\(\phi'(0) =
+-2\phi(0)\)</span>, exact for a Newton direction, i.e. when <span class="math notranslate nohighlight">\([K_T]\)</span> is the exact
+Jacobian at <span class="math notranslate nohighlight">\(c + \Delta c\)</span>; with <code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code> it is an
+approximation. The full step <span class="math notranslate nohighlight">\(\eta = 1\)</span> is tried first. Otherwise <span class="math notranslate nohighlight">\(\eta\)</span>
+is replaced by the minimizer <span class="math notranslate nohighlight">\(\phi(0)/A\)</span> of the quadratic interpolation
+of <span class="math notranslate nohighlight">\(\phi(0)\)</span>, <span class="math notranslate nohighlight">\(\phi'(0)\)</span> and <span class="math notranslate nohighlight">\(\phi(\eta)\)</span>, with <span class="math notranslate nohighlight">\(A = (\phi(\eta) -
+\phi(0) + 2\phi(0)\eta)/\eta^2\)</span>, or by <span class="math notranslate nohighlight">\(\eta/2\)</span> when <span class="math notranslate nohighlight">\(A\)</span> is not
+finite or not positive, safeguarded in <span class="math notranslate nohighlight">\([0.1 \eta, 0.5 \eta]\)</span>. After
+<code class="docutils literal notranslate"><span class="pre">an.max_iter_line_search</span></code> reductions the last <span class="math notranslate nohighlight">\(\eta\)</span> is accepted. The
+internal force vector of the accepted point is reused in the residual
+of the next iteration.</p>
+<p>The line search is adapted from the backtracking line search of <a class="reference internal" href="#r3381b6cc1bb2-2" id="id4">[2]</a>
+(Section 6.3.2, Algorithm 6.3.5, pp. 126-129, and Algorithm A6.3.1,
+pp. 325-327), applied to nonlinear equations with the merit function
+<span class="math notranslate nohighlight">\(f = \frac{1}{2}\|D_F F\|^2\)</span> (<a class="reference internal" href="#r3381b6cc1bb2-2" id="id5">[2]</a>, Section 6.5, Eq. (6.5.3), p. 147,
+and Algorithm NEFN, p. 303), whose directional derivative along the
+Newton step is <span class="math notranslate nohighlight">\(-F^T F = -2f\)</span> (p. 148, with <span class="math notranslate nohighlight">\(D_F\)</span> the identity). With
+<span class="math notranslate nohighlight">\(F = R\)</span> and <span class="math notranslate nohighlight">\(\phi = 2f\)</span>, <span class="math notranslate nohighlight">\(D_F\)</span> being the identity with the Euclidean
+norm or <span class="math notranslate nohighlight">\(\mathrm{diag}(\sqrt{w_j})\)</span> with Crisfield’s criterion, the test
+above is their condition (6.3.3) (p. 118) with their <span class="math notranslate nohighlight">\(\alpha = 10^{-4}\)</span>
+(p. 126), and the first reduction is their quadratic backtrack,
+Eq. (6.3.17) (p. 127). It differs from Algorithm A6.3.1 in that: the
+quadratic interpolation through the last trial <span class="math notranslate nohighlight">\(\eta\)</span> is used at every
+reduction, whereas <a class="reference internal" href="#r3381b6cc1bb2-2" id="id6">[2]</a> uses, from the second backtrack on, the cubic
+interpolation of <span class="math notranslate nohighlight">\(f(0)\)</span>, <span class="math notranslate nohighlight">\(f'(0)\)</span> and the last two trial values,
+Eq. (6.3.18) (p. 128); the bound <span class="math notranslate nohighlight">\(0.5 \eta\)</span> is also imposed at the
+first reduction, where <a class="reference internal" href="#r3381b6cc1bb2-2" id="id7">[2]</a> imposes only the lower bound <span class="math notranslate nohighlight">\(0.1\)</span>, the
+quadratic backtrack being then smaller than <span class="math notranslate nohighlight">\(1/(2(1 - \alpha))\)</span>
+(p. 127; Algorithm A6.3.1, steps 10.3c.1E.4 and 10.3c.4); and <a class="reference internal" href="#r3381b6cc1bb2-2" id="id8">[2]</a> has
+no maximum number of reductions, but limits the length of the step to
+<code class="docutils literal notranslate"><span class="pre">maxstep</span></code> and stops when the step length becomes smaller than a
+minimum, returning the current point.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="r3381b6cc1bb2-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
+<p>Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+Structures, Volume 1: Essentials, John Wiley &amp; Sons, Chichester,
+1991.</p>
+</div>
+<div class="citation" id="r3381b6cc1bb2-2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id5">2</a>,<a role="doc-backlink" href="#id6">3</a>,<a role="doc-backlink" href="#id7">4</a>,<a role="doc-backlink" href="#id8">5</a>)</span>
+<p>Dennis, J.E., Jr., Schnabel, R.B., Numerical Methods for
+Unconstrained Optimization and Nonlinear Equations, SIAM,
+Philadelphia, 1996 (first published by Prentice-Hall, Englewood
+Cliffs, NJ, 1983), pages of the SIAM edition.
+<a class="reference external" href="https://doi.org/10.1137/1.9781611971200">https://doi.org/10.1137/1.9781611971200</a></p>
+</div>
+</div>
 </dd></dl>
 
 </section>

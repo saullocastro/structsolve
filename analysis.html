@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,9 +37,11 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'analysis';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
@@ -50,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -133,6 +135,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -140,29 +163,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -174,6 +176,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -195,9 +239,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -285,8 +343,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -340,9 +440,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -395,6 +509,7 @@
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -469,15 +584,11 @@
 constructor, which return the force vectors and stiffness matrices. The
 static analysis, linear or non-linear, is run with <a class="reference internal" href="#structsolve.Analysis.static" title="structsolve.Analysis.static"><code class="xref py py-meth docutils literal notranslate"><span class="pre">static()</span></code></a>, whose
 solution is stored in the attributes <code class="docutils literal notranslate"><span class="pre">increments</span></code> and <code class="docutils literal notranslate"><span class="pre">cs</span></code>.</p>
-<p>For non-linear analyses, the internal force vector
-<span class="math notranslate nohighlight">\(\{F_{int}(c)\}\)</span> must be in equilibrium with the external force
-vector scaled by the load factor <span class="math notranslate nohighlight">\(\lambda\)</span>:</p>
-<div class="math notranslate nohighlight">
-\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\]</div>
-<p>and the tangent stiffness matrix <span class="math notranslate nohighlight">\([K_T] = [K_C] + [K_G]\)</span>, given by the
-callables <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>, should be the exact derivative of
-<span class="math notranslate nohighlight">\(\{F_{int}\}\)</span> with respect to <span class="math notranslate nohighlight">\(\{c\}\)</span>, such that the Newton-Raphson
-iterations converge quadratically.</p>
+<p>The non-linear analyses find the solution vectors <code class="docutils literal notranslate"><span class="pre">c</span></code> for which the
+internal force vector <code class="docutils literal notranslate"><span class="pre">calc_fint(c)</span></code> balances the external force
+vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> scaled by the load factor, using the
+tangent stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC(c,</span> <span class="pre">NLgeom=True)</span> <span class="pre">+</span> <span class="pre">calc_kG(c,</span>
+<span class="pre">NLgeom=True)</span></code>.</p>
 <p>The analysis parameters are attributes of this class, described in the
 following tables together with their default values:</p>
 <div class="pst-scrollable-table-container"><table class="table">
@@ -498,10 +609,9 @@ methods, see
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">line_search</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">bool</span></code>, activates a safeguarding line-search,
-for the Newton-Raphson method only. The full
-step is tried first and only reduced when it
-fails a sufficient-decrease test on the
-residual norm. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+for the Newton-Raphson method only, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._NR_iterations()</span></code></a>. Default
+is <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">max_iter_line_search</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">int</span></code>, maximum number of iterations of the
@@ -557,12 +667,8 @@ increment for the arc-length methods. Default is
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">maxArcLength</span></code></p></td>
 <td><p>maximum cumulative arc length covered by the
-arc-length methods. The arc length is
-dimensionless, with displacements scaled by the
-linear solution for a load factor of 1, such
-that in the linear regime an arc length of
-about <code class="docutils literal notranslate"><span class="pre">sqrt(2)</span></code> corresponds to a load factor
-increment of 1. Default is <code class="docutils literal notranslate"><span class="pre">18</span></code></p></td>
+arc-length methods, dimensionless. Default is
+<code class="docutils literal notranslate"><span class="pre">18</span></code></p></td>
 </tr>
 </tbody>
 </table>
@@ -574,26 +680,40 @@ increment of 1. Default is <code class="docutils literal notranslate"><span clas
 </tr>
 </thead>
 <tbody>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">relTOL</span></code></p></td>
-<td><p>the convergence is achieved when the norm of
-the residual force vector is smaller than
-<code class="docutils literal notranslate"><span class="pre">relTOL</span></code> times the largest norm between the
-external and internal force vectors. Not used
-if <code class="docutils literal notranslate"><span class="pre">None</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">1.e-6</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">convergence</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code> (default) for
+Crisfield’s criterion, the residual scaled
+with the diagonal of the linear stiffness
+matrix over the free degrees of freedom, or
+<code class="docutils literal notranslate"><span class="pre">'relative'</span></code> for the Euclidean norm of the
+residual, see <a class="reference internal" href="convergence_api.html#module-structsolve.convergence" title="structsolve.convergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">convergence</span></code></a></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">absTOL</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">relTOL</span></code></p></td>
+<td><p>tolerance <span class="math notranslate nohighlight">\(\epsilon\)</span> of the relative force
+imbalance: Crisfield’s <span class="math notranslate nohighlight">\(\zeta \le\)</span> <code class="docutils literal notranslate"><span class="pre">relTOL</span></code>,
+or, with <code class="docutils literal notranslate"><span class="pre">'relative'</span></code>, the norm of the
+residual force vector smaller than <code class="docutils literal notranslate"><span class="pre">relTOL</span></code>
+times the largest norm between the external
+and internal force vectors. Not used if
+<code class="docutils literal notranslate"><span class="pre">None</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">1.e-9</span></code>, the tight
+tolerance of Crisfield’s criterion with a
+consistent tangent; until version 0.8.0 the
+relative criterion was the only one, with the
+default <code class="docutils literal notranslate"><span class="pre">1.e-6</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">absTOL</span></code></p></td>
 <td><p>the convergence is also achieved when the
 maximum absolute residual force is smaller
 than this value, which depends on the units of
 the model. Not used if <code class="docutils literal notranslate"><span class="pre">None</span></code>. Default is
 <code class="docutils literal notranslate"><span class="pre">None</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">maxNumIter</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">maxNumIter</span></code></p></td>
 <td><p>maximum number of iterations (corrections) of a
 step; if achieved the increment is reduced.
 Default is <code class="docutils literal notranslate"><span class="pre">30</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">too_slow_TOL</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">too_slow_TOL</span></code></p></td>
 <td><p>a step is considered too slow when the smallest
 residual norm is not reduced by this fraction
 over the last iterations; the increment is then
@@ -609,21 +729,33 @@ reduced. Default is <code class="docutils literal notranslate"><span class="pre"
 external force vector. Required for linear and non-linear static
 analyses. The non-linear solvers call it with <code class="docutils literal notranslate"><span class="pre">inc=1.</span></code> and scale the
 returned vector by the load factor. It may declare the optional
-keyword arguments <code class="docutils literal notranslate"><span class="pre">c</span></code> and <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, see the notes below.</p>
+keyword arguments <code class="docutils literal notranslate"><span class="pre">c</span></code>, the current configuration, and <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, the
+current load factor, and must then return the load vector of that
+configuration and load factor for a unit load factor, <code class="docutils literal notranslate"><span class="pre">inc=1.</span></code>,
+see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis never passes
+<code class="docutils literal notranslate"><span class="pre">lbd</span></code>.</p>
 </dd>
 <dt><strong>calc_fint</strong><span class="classifier">callable, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">calc_fint(c,</span> <span class="pre">silent=False)</span></code>, must return a 1-D array with the
 internal force vector for the solution vector <code class="docutils literal notranslate"><span class="pre">c</span></code>. Required for
-non-linear analyses.</p>
+non-linear analyses. It may declare the optional keyword argument
+<code class="docutils literal notranslate"><span class="pre">inc</span></code>, which then receives the current load factor, see
+<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
 </dd>
 <dt><strong>calc_kC</strong><span class="classifier">callable, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">calc_kC(c=None,</span> <span class="pre">NLgeom=False,</span> <span class="pre">silent=False)</span></code>, must return a sparse
 matrix with the constitutive stiffness matrix. With <code class="docutils literal notranslate"><span class="pre">c=None</span></code> and
 <code class="docutils literal notranslate"><span class="pre">NLgeom=False</span></code> it must return the linear stiffness matrix, and with
 <code class="docutils literal notranslate"><span class="pre">NLgeom=True</span></code> the constitutive part of the tangent stiffness matrix
-at <code class="docutils literal notranslate"><span class="pre">c</span></code>. Required for linear and non-linear static analyses.</p>
+at <code class="docutils literal notranslate"><span class="pre">c</span></code>. Required for linear and non-linear static analyses. It may
+declare the optional keyword argument <code class="docutils literal notranslate"><span class="pre">inc</span></code>, which then receives
+the current load factor in the calls with <code class="docutils literal notranslate"><span class="pre">NLgeom=True</span></code>, see
+<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
 </dd>
 <dt><strong>calc_kG</strong><span class="classifier">callable, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">calc_kG(c=None,</span> <span class="pre">NLgeom=False,</span> <span class="pre">silent=False)</span></code>, must return a sparse
 matrix with the geometric stiffness matrix at <code class="docutils literal notranslate"><span class="pre">c</span></code>. It is called
-with <code class="docutils literal notranslate"><span class="pre">NLgeom=True</span></code>. Required for non-linear analyses.</p>
+with <code class="docutils literal notranslate"><span class="pre">NLgeom=True</span></code>. Required for non-linear analyses. It may
+declare the optional keyword argument <code class="docutils literal notranslate"><span class="pre">inc</span></code>, which then receives
+the current load factor, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The sum of
+<code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code> may be unsymmetric.</p>
 </dd>
 </dl>
 </dd>
@@ -640,6 +772,29 @@ with <code class="docutils literal notranslate"><span class="pre">NLgeom=True</s
 </dd>
 </dl>
 <p class="rubric">Notes</p>
+<p>For non-linear analyses, the internal force vector
+<span class="math notranslate nohighlight">\(\{F_{int}(c)\}\)</span> must be in equilibrium with the external force
+vector scaled by the load factor <span class="math notranslate nohighlight">\(\lambda\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\]</div>
+<p>and the tangent stiffness matrix <span class="math notranslate nohighlight">\([K_T] = [K_C] + [K_G]\)</span>, given by the
+callables <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>, should be the exact derivative of
+<span class="math notranslate nohighlight">\(\{F_{int}\}\)</span> with respect to <span class="math notranslate nohighlight">\(\{c\}\)</span>, such that the Newton-Raphson
+iterations converge quadratically. The convergence is checked by
+default with Crisfield’s criterion, the residual and the reference
+force vectors scaled with the diagonal of the linear stiffness matrix
+<code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> over the free degrees of freedom, such that it does not
+depend on the units of each degree of freedom, e.g. translations and
+rotations, see <a class="reference internal" href="convergence_api.html#module-structsolve.convergence" title="structsolve.convergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">convergence</span></code></a>; <code class="docutils literal notranslate"><span class="pre">convergence</span> <span class="pre">=</span> <span class="pre">'relative'</span></code> keeps
+the Euclidean norm of the versions up to 0.8.0.</p>
+<p>The line-search tries the full step first and only reduces it when it
+fails a sufficient-decrease test on the norm of the residual of the
+convergence criterion, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._NR_iterations()</span></code></a>.</p>
+<p>The arc length is dimensionless, with displacements scaled by the
+linear solution for a load factor of 1, such that in the linear regime
+an arc length of about <code class="docutils literal notranslate"><span class="pre">sqrt(2)</span></code> corresponds to a load factor
+increment of 1, see <a class="reference internal" href="arc_length.html#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
 <p>Configuration-dependent loads, e.g. follower pressures, are supported
 through optional keyword arguments, passed only to the callables that
 declare them explicitly, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>:</p>
@@ -659,8 +814,8 @@ displacements imposed exactly as linear constraints, where the
 reference vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> may be null. The solvers then
 use <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> for the displacement scale of the
 arc-length methods, for the predictor of the first Newton-Raphson
-increment and as a reference of the relative convergence criterion,
-see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis never passes
+increment and as a reference of the convergence criterion, see
+<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis never passes
 <code class="docutils literal notranslate"><span class="pre">lbd</span></code>.</p></li>
 </ul>
 <p>The tangent stiffness matrix may then be unsymmetric, which the solvers
@@ -669,25 +824,17 @@ support, since they use LU factorizations.</p>
 <dt class="sig sig-object py" id="structsolve.Analysis.static">
 <span class="sig-name descname"><span class="pre">static</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">NLgeom</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.Analysis.static" title="Link to this definition">#</a></dt>
 <dd><p>General solver for static analyses</p>
-<p>The linear analysis solves <span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}\}\)</span> using
+<p>The linear analysis solves the system of the linear stiffness matrix
+<code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> and the external force vector <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code> using
 <a class="reference internal" href="static.html#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a>. When the load depends on the configuration, i.e.
 <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> declares the keyword argument <code class="docutils literal notranslate"><span class="pre">c</span></code>, see
-<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, the structure is still geometrically linear but
-the load is evaluated in the current configuration,
-<span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}(c)\}\)</span>, which is solved by the load
-correction iterations</p>
-<div class="math notranslate nohighlight">
-\[\{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
-              - [K_C]\{c_k\})\]</div>
-<p>starting from the solution of the reference load, until the relative
-criterion <code class="docutils literal notranslate"><span class="pre">relTOL</span></code> is satisfied, see
-<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">maxNumIter</span></code>
-iterations are done. For a follower load whose force vector is
-affine in <span class="math notranslate nohighlight">\(c\)</span>, <span class="math notranslate nohighlight">\(\{F(c)\} = \{F_0\} - [K_f]\{c\}\)</span>, this is the
-solution of <span class="math notranslate nohighlight">\(([K_C] + [K_f])\{c\} = \{F_0\}\)</span>, with the
-convergence rate of the spectral radius of <span class="math notranslate nohighlight">\([K_C]^{-1}[K_f]\)</span>, i.e.
-of the ratio of the load to the lowest critical load of the
-linearized problem; beyond it the iterations diverge. The non-linear
+<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>, the load is evaluated in the current configuration
+and corrected by iterations that reuse one factorization of the
+linear stiffness matrix, starting from the solution of the reference
+load, until the convergence criteria <code class="docutils literal notranslate"><span class="pre">relTOL</span></code> and <code class="docutils literal notranslate"><span class="pre">absTOL</span></code> are
+satisfied, see <a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a>, or
+<code class="docutils literal notranslate"><span class="pre">maxNumIter</span></code> iterations are done; a warning is printed when they do
+not converge and the last iterate is returned. The non-linear
 analysis uses the solver selected by the <code class="docutils literal notranslate"><span class="pre">NL_method</span></code> attribute.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -710,7 +857,36 @@ documentation of each solver.</p>
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">NLgeom=True</span></code> and the <code class="docutils literal notranslate"><span class="pre">NL_method</span></code> attribute is not
+<code class="docutils literal notranslate"><span class="pre">'NR'</span></code>, <code class="docutils literal notranslate"><span class="pre">'arc_length_riks'</span></code> or <code class="docutils literal notranslate"><span class="pre">'arc_length_crisfield'</span></code>.</p>
+</dd>
 </dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The linear analysis solves <span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}\}\)</span>. When the load
+depends on the configuration, the structure is still geometrically
+linear but the load is evaluated in the current configuration,
+<span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}(c)\}\)</span>, which is solved by the load
+correction iterations</p>
+<div class="math notranslate nohighlight">
+\[\{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
+              - [K_C]\{c_k\})\]</div>
+<p>starting from <span class="math notranslate nohighlight">\(\{c_0\} = [K_C]^{-1}\{F_{ext}\}\)</span>, the solution of the
+reference load <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code>, with <span class="math notranslate nohighlight">\(\{F_{ext}(c_k)\}\)</span> given by
+<code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c_k)</span></code>. This is a fixed-point iteration
+without the load stiffness in the iteration matrix. For a follower
+load whose force vector is affine in <span class="math notranslate nohighlight">\(c\)</span>, <span class="math notranslate nohighlight">\(\{F(c)\} = \{F_0\} -
+[K_f]\{c\}\)</span>, this is the solution of <span class="math notranslate nohighlight">\(([K_C] + [K_f])\{c\} =
+\{F_0\}\)</span>, with the convergence rate of the spectral radius of
+<span class="math notranslate nohighlight">\([K_C]^{-1}[K_f]\)</span>, i.e. of the ratio of the load to the lowest
+critical load of the linearized problem; beyond it the iterations
+diverge. The error is multiplied by <span class="math notranslate nohighlight">\(-[K_C]^{-1}[K_f]\)</span> at each
+iteration, whose spectral radius is <span class="math notranslate nohighlight">\(1/\min|\lambda|\)</span> over the load
+multipliers <span class="math notranslate nohighlight">\(\lambda\)</span> of <span class="math notranslate nohighlight">\(([K_C] + \lambda [K_f])\{u\} = \{0\}\)</span>,
+including the negative and complex ones.</p>
 </dd></dl>
 
 </dd></dl>

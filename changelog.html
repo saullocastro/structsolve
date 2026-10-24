@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Changelog &#8212; structsolve 0.9.1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'changelog';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Logging (structsolve.logger)" href="logger.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.9.1" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Changelog
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Changelog
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Changelog</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading">#</a></h1>
+<p>The changes of each version, from the file <code class="docutils literal notranslate"><span class="pre">CHANGELOG.md</span></code> of the
+<a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
+<div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
+
+<span class="gu">## 0.9.1 (2026-10-24)</span>
+
+<span class="gu">### Documentation</span>
+
+<span class="k">-</span><span class="w"> </span>The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+
+<span class="gu">## 0.9.0 (2026-10-24)</span>
+
+<span class="gu">### Python versions</span>
+
+<span class="k">-</span><span class="w"> </span>Python 3.9 is no longer supported, it reached its end of life in October 2025: Python 3.10 or newer is required, and the tests and wheels cover Python 3.10 to 3.14.
+
+<span class="gu">### Packaging</span>
+
+<span class="k">-</span><span class="w"> </span>Packaging: the license is given as the SPDX expression <span class="sb">`BSD-3-Clause`</span> with <span class="sb">`license-files`</span> (PEP 639), replacing the TOML table and the license classifier that setuptools deprecates, hence <span class="sb">`setuptools&gt;=77`</span>; wheel is no longer a build requirement; link to the documentation in the project URLs.
+
+<span class="gu">### New default: Crisfield's convergence criterion</span>
+
+<span class="k">-</span><span class="w"> </span>The non-linear analyses of <span class="sb">`Analysis`</span>, Newton-Raphson, arc-length and
+  the load correction iterations of the linear static analysis with a
+  configuration-dependent load, check the convergence by default with
+  Crisfield's criterion, <span class="sb">`Analysis.convergence = 'crisfield'`</span>: the residual
+  and the reference force vectors are measured with the norm scaled by the
+  diagonal of the linear stiffness matrix <span class="sb">`calc_kC()`</span>, over the free
+  degrees of freedom, those whose row or column of <span class="sb">`calc_kC()`</span> is not
+  null, and `zeta = ||R||_d/max(||lbd*Fext||_d, ||Fint||_d,
+  ||dlbd*Fext||_d, ||lbd*dR/dlbd||_d) &lt;= relTOL`, the third reference in
+  the arc-length methods only, the fourth when <span class="sb">`calc_fext`</span> declares <span class="sb">`lbd`</span>.
+  The same scaled norm is used by the divergence and too-slow checks and
+  by the line search. The criterion does not depend on the units of each
+  degree of freedom, e.g. translations and rotations, and ignores the
+  residual at the constrained degrees of freedom, e.g. support reactions.
+  The same implementation as <span class="sb">`pyfe3d.solver`</span>.
+<span class="k">-</span><span class="w"> </span>The default <span class="sb">`relTOL`</span> is <span class="sb">`1e-9`</span>, instead of <span class="sb">`1e-6`</span>. The former check,
+  the Euclidean norm over all the degrees of freedom, is kept with
+  <span class="sb">`Analysis.convergence = 'relative'`</span>; <span class="sb">`absTOL`</span> is accepted with both. A
+  null diagonal entry of <span class="sb">`calc_kC()`</span> at a free degree of freedom raises a
+  <span class="sb">`ValueError`</span> with <span class="sb">`'crisfield'`</span>.
+<span class="k">-</span><span class="w"> </span>New module <span class="sb">`structsolve.convergence`</span>: <span class="sb">`crisfield_weights`</span>, <span class="sb">`scaled_norm`</span>,
+  <span class="sb">`crisfield_zeta`</span>, <span class="sb">`check_convergence`</span>, <span class="sb">`CRITERIA`</span>. New
+  <span class="sb">`newton_raphson._weights`</span>, <span class="sb">`_norm`</span>, <span class="sb">`_log_iteration`</span>; argument <span class="sb">`w`</span> of
+  <span class="sb">`newton_raphson._check_convergence`</span> and <span class="sb">`_NR_iterations`</span>. The log of the
+  iterations prints <span class="sb">`zeta`</span> with <span class="sb">`'crisfield'`</span>.
+
+<span class="gu">### Bug fixes</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span>: the negative load multipliers returned after the positive ones are
+  those closest to zero, i.e. the critical load multipliers of the reversed
+  load, instead of those of largest modulus, for the sparse and the dense
+  solvers, symmetric or unsymmetric. The sparse solver of symmetric
+  matrices computes them with <span class="sb">`-KG`</span> when fewer than <span class="sb">`num_eigvalues`</span>
+  positive load multipliers exist, and verifies them with the same
+  residual and inertia checks, such that a reference load without any
+  positive load multiplier, e.g. a tensile load, no longer needs the dense
+  fallback. The infinite load multipliers, e.g. of the null rows of <span class="sb">`KG`</span>,
+  come last, and the sparse solver of symmetric matrices does not return
+  them. The load multipliers of each sign are counted with the inertia of
+  <span class="sb">`K + s KG`</span> before requesting them from ARPACK, which does not converge
+  when it must return eigenvalues of the cluster of the null ones, e.g.
+  for the tensile reference load of a plate. New
+  <span class="sb">`linear_buckling._eigsh_both_signs`</span>, <span class="sb">`_count_multipliers`</span>,
+  <span class="sb">`_check_both_signs`</span>, <span class="sb">`_lb_order`</span>, <span class="sb">`_null_mu`</span>, <span class="sb">`NULL_MU_RTOL`</span> and
+  <span class="sb">`INERTIA_COUNT_FACTOR`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq(sort=True)`</span>, the default, sorts and filters <span class="sb">`lambda2`</span> together with
+  the eigenvectors, instead of the eigenvectors only, such that
+  <span class="sb">`eigvecs[:, i]`</span> is always the eigenvector of <span class="sb">`lambda2[i]`</span>. The eigenpairs
+  with a natural frequency not larger than <span class="sb">`1e-6`</span> rad/s, e.g. rigid-body
+  modes, are removed from both arrays, which may then have fewer than
+  <span class="sb">`num_eigvalues`</span> entries.
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq(sort=True)`</span>: the eigenpairs with the same rounded sort key, the
+  real then the imaginary part of <span class="sb">`omega_n`</span> rounded to one decimal, are
+  sorted by the exact <span class="sb">`omega_n`</span>, real then imaginary part, then by the
+  exact <span class="sb">`omega_n**2 = -lambda2`</span>, instead of keeping the order of the
+  solver. A double eigenvalue returned with a round-off difference in an
+  order that depends on the LAPACK build, e.g. <span class="sb">`omega_n**2 = 100`</span> by the
+  dense <span class="sb">`eig()`</span> with OpenBLAS, is returned in increasing order whatever
+  the order of the solver. <span class="sb">`omega_n**2`</span> breaks the ties of <span class="sb">`omega_n`</span>
+  after the square root, e.g. of <span class="sb">`100`</span> and <span class="sb">`100`</span> minus one unit in the
+  last place, both <span class="sb">`omega_n = 10.0`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq`</span>: the residual of a rigid-body mode, whose `||K u|| + |lambda2|
+  ||M u||` is not larger than <span class="sb">`linear_buckling.RIGID_BODY_RTOL = 100 eps`</span>
+  times the matrix-norm scale <span class="sb">`(||K||_F + |lambda2| ||M||_F) ||u||`</span>, is
+  relative to this scale, i.e. the backward error, see
+  <span class="sb">`linear_buckling._relative_residuals(rigid_rtol)`</span>. The rigid-body modes,
+  <span class="sb">`lambda2 = 0`</span> and <span class="sb">`K u = 0`</span> up to the round-off, whose relative residual
+  <span class="sb">`||K u + lambda2 M u||/(||K u|| + |lambda2| ||M u||)`</span> was about 1, failed
+  the verification of the sparse solvers and of the dense fallback,
+  raising a <span class="sb">`RuntimeError`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span> and the other eigenpairs of <span class="sb">`freq`</span> keep the relative residual of
+  0.8.0, without any floor of its denominator. The floor of <span class="sb">`1e-8`</span> times
+  the matrix-norm scale for every eigenpair, in the development version of
+  0.9.0, loosened the check about 1000 times for models with stiff penalty
+  springs, whose <span class="sb">`||K||_F`</span> is many orders of magnitude larger than
+  <span class="sb">`||K u||`</span>: inaccurate eigenpairs of <span class="sb">`eigsh`</span> were accepted without
+  warning, e.g. lowest load multipliers of blade-stiffened plates of
+  <span class="sb">`panels`</span> with penalty connections from 1.3 % below to 0.26 % above those
+  of the null-space method, which the penalty values approach from below;
+  they are now rejected and computed with the dense fallback. New test data
+  <span class="sb">`tests/data/blade_stiffened_penalty_K.npz`</span> and <span class="sb">`_KG.npz`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span>, <span class="sb">`freq`</span> and <span class="sb">`arpackutils.capped_eigsh`</span>: the calls of ARPACK are
+  reproducible with SciPy 1.17 or newer. When the Krylov subspace is
+  invariant, e.g. with a nilpotent <span class="sb">`K^-1 KG`</span>, ARPACK draws new starting
+  vectors from the argument <span class="sb">`rng`</span> of <span class="sb">`eigs`</span> and <span class="sb">`eigsh`</span>, by default from
+  the entropy of the operating system: with the same <span class="sb">`v0`</span> the results
+  differed between calls, e.g. <span class="sb">`lb`</span> on Ziegler's double pendulum raised a
+  <span class="sb">`RuntimeError`</span> or returned a spurious load multiplier of about <span class="sb">`1e33`</span>
+  at random. New <span class="sb">`arpackutils.start_kwargs(n)`</span>, the arguments <span class="sb">`v0`</span> and,
+  when supported, <span class="sb">`rng`</span> with the seed <span class="sb">`42`</span>, used by every call of ARPACK.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span> with unsymmetric matrices, sparse shift search: the eigenvalues
+  <span class="sb">`nu`</span> of <span class="sb">`(K + s KG)^-1 KG`</span> found by <span class="sb">`eigs`</span> at each shift are null when
+  <span class="sb">`|nu| &lt;= NULL_MU_RTOL max(max|nu|, ||(K + s KG)^-1 KG||)`</span>, the norm
+  estimated with one step of the power iteration from the starting vector
+  of ARPACK, instead of <span class="sb">`|nu| &lt;= 1e-12 max|nu|`</span>. When <span class="sb">`K^-1 KG`</span> has no
+  non-null eigenvalue, e.g. nilpotent as with the follower load of
+  Ziegler's double pendulum, all the <span class="sb">`nu`</span> are round-off and <span class="sb">`max|nu|`</span> is
+  not a scale: spurious load multipliers of about <span class="sb">`1e33`</span> (SciPy 1.17.1)
+  or <span class="sb">`1e17`</span> (SciPy 1.15.3) were found, and <span class="sb">`lb(max_dense_size=0)`</span> raised
+  the expected <span class="sb">`RuntimeError`</span> only when the parity check rejected them,
+  depending on the platform and, with SciPy &lt; 1.17, whose ARPACK keeps its
+  restart seed from one call to the next, on the calls made before in the
+  same process. They are now all null, and the shift search raises "no
+  finite load multiplier was found". New <span class="sb">`linear_buckling._norm_estimate`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span>, dense solvers (<span class="sb">`sparse_solver=False`</span> and the dense fallback, of
+  symmetric and unsymmetric matrices): an eigenvalue <span class="sb">`mu`</span> of
+  <span class="sb">`KG u = mu K u`</span> is also null when <span class="sb">`|mu| &lt;= 10 eps ||KG||_F kappa`</span>, <span class="sb">`kappa`</span>
+  its condition number from the left and right eigenvectors, i.e. when
+  the round-off does not determine it, instead of only when
+  <span class="sb">`|mu| &lt;= 1e-12 max|mu|`</span>. The round-off splits a defective null
+  eigenvalue, a Jordan block of size <span class="sb">`m`</span>, into <span class="sb">`m`</span> eigenvalues of modulus
+  about <span class="sb">`eps^(1/m)`</span>, e.g. <span class="sb">`+-9.4e-10`</span> for Ziegler's double pendulum, where
+  <span class="sb">`K^-1 KG`</span> is nilpotent: <span class="sb">`lb`</span> returned the spurious load multipliers
+  <span class="sb">`+-1.07e9`</span>, about <span class="sb">`8.5e7`</span> times the flutter load, instead of none. The
+  null <span class="sb">`mu`</span> are set to 0 and their load multipliers are <span class="sb">`-inf`</span>, also in
+  complex arrays; the dense fallback then finds no finite load multiplier
+  and fails the verification. Well-conditioned eigenvalues are null only
+  below <span class="sb">`2.2e-15 ||KG||_F`</span>; in the follower-pressure cantilevers of the
+  tests, 6 and 22 more eigenvalues are null, all below <span class="sb">`2e-9 max|mu|`</span>, and
+  the lowest positive real load multipliers do not change. New
+  <span class="sb">`linear_buckling._null_mu_pencil`</span>, <span class="sb">`NULL_MU_PERTURBATION_FACTOR`</span>;
+  argument <span class="sb">`left`</span> of <span class="sb">`_eig_complex`</span>.
+
+<span class="gu">## 0.8.0 (2026-10-14)</span>
+
+<span class="gu">### Performance: fewer evaluations and factorizations, same solutions</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`dR/dlbd`</span> of a <span class="sb">`calc_fext`</span> that declares <span class="sb">`lbd`</span> is evaluated together with
+  the tangent stiffness matrix, at the same iterate, instead of before every
+  convergence check. The last one evaluated is the reference
+  <span class="sb">`lbd*dR/dlbd`</span> of the relative criterion until the next update of the
+  tangent, also across steps (the one of a failed step is not kept).
+  Newton-Raphson no longer evaluates it at the converged iterate of each
+  step, where the tangent is not needed, and with <span class="sb">`modified_NR=True`</span> it is
+  evaluated once per update of the tangent instead of once per iteration.
+  The arc-length methods keep the one of the converged state with its
+  tangent when a step is repeated, and reuse the one of the origin in the
+  first step. <span class="sb">`calc_fext(c=c, lbd=lbd)`</span> is always called right after
+  <span class="sb">`calc_kC`</span> and <span class="sb">`calc_kG`</span> at the same configuration and load factor, such
+  that the callables can share their computations. When <span class="sb">`dR/dlbd`</span>
+  requires the tangent stiffness matrix, e.g. <span class="sb">`[K_T] {c_p1}`</span>, this removes
+  one assembly per increment with full Newton-Raphson and most of them with
+  modified Newton-Raphson. The convergence histories change slightly, the
+  reference norm being lagged by at most one update of the tangent.
+<span class="k">-</span><span class="w"> </span>Newton-Raphson reuses the LU factorization of the tangent stiffness
+  matrix while it is not updated (<span class="sb">`modified_NR=True`</span>), as the arc-length
+  methods already did; a singular tangent stops the iterations of the step
+  with a warning, instead of a non-finite residual. <span class="sb">`_factorize`</span> moved
+  from <span class="sb">`arc_length`</span> to <span class="sb">`static`</span>.
+<span class="k">-</span><span class="w"> </span>The load correction iterations of the linear static analysis with a
+  configuration-dependent load, <span class="sb">`Analysis.static(NLgeom=False)`</span> with a
+  <span class="sb">`calc_fext`</span> that declares <span class="sb">`c`</span>, factorize <span class="sb">`K0`</span> once.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span>: the estimate of the Cayley shift (power iterations, with one
+  factorization of <span class="sb">`K`</span>) and the positive definiteness of <span class="sb">`K`</span> (one
+  factorization) are computed once for all the attempts, the retry with a
+  10 times larger shift and the dense fallback. New
+  <span class="sb">`linear_buckling._estimate_mu_max`</span>; <span class="sb">`_estimate_sigma`</span> and <span class="sb">`_eigsh_cayley`</span>
+  accept a precomputed <span class="sb">`mu_max`</span>, and <span class="sb">`_check_eigenpairs`</span> a precomputed
+  <span class="sb">`K_positive_definite`</span>, a boolean or a function.
+
+<span class="gu">### Tests</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`tests/test_reuse.py`</span>: number of calls to <span class="sb">`calc_fext`</span>, <span class="sb">`calc_kC`</span> and of
+  factorizations in Newton-Raphson (full and modified) and in the arc-length
+  methods, and the reuse in <span class="sb">`lb`</span> and in the linear static analysis with a
+  configuration-dependent load.
+
+<span class="gu">## 0.7.0 (2026-10-13)</span>
+
+<span class="gu">### New: load vectors that depend on the load factor</span>
+
+For prescribed displacements imposed exactly as linear constraints, e.g. by
+the null-space method of <span class="sb">`panels`</span>, <span class="sb">`c = T c_r + c_p0 + lbd*c_p1`</span>, the
+derivative of the reduced residual with respect to the load factor,
+<span class="sb">`dR_r/dlbd = T^T (F_ext - K_T(c) c_p1)`</span>, depends on the configuration and on
+the load factor. All the changes apply only when <span class="sb">`calc_fext`</span> declares the
+new keyword argument <span class="sb">`lbd`</span> (a <span class="sb">`**kwargs`</span> does not count); the callables that
+do not declare it are called exactly as before and give the same results.
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`callbacks.calc_load_vector(an, c, fext, lbd=None)`</span> passes <span class="sb">`lbd`</span> to
+  <span class="sb">`calc_fext`</span> when it declares it, together with <span class="sb">`c`</span> when it declares <span class="sb">`c`</span>.
+  New <span class="sb">`callbacks.is_load_factor_dependent(an)`</span>. <span class="sb">`inc`</span> keeps its meaning, the
+  factor that multiplies the returned vector, and the solvers keep calling
+  <span class="sb">`calc_fext(inc=1., ...)`</span>.
+<span class="k">-</span><span class="w"> </span>Arc-length methods (Riks and Crisfield): the tangent predictor and the
+  bordered solutions use <span class="sb">`calc_fext(inc=1., c=c, lbd=lbd)`</span> at the current
+  configuration and load factor, and the displacement scale <span class="sb">`u_ref`</span> is the
+  linear solution of <span class="sb">`dR/dlbd`</span> at <span class="sb">`c = 0`</span>, <span class="sb">`lbd = 0`</span>, since the reference
+  vector <span class="sb">`calc_fext(inc=1.)`</span> is null under a prescribed displacement alone.
+<span class="k">-</span><span class="w"> </span>Newton-Raphson: the predictor of the first increment is the linear
+  solution of <span class="sb">`dR/dlbd`</span> at <span class="sb">`c = 0`</span>, <span class="sb">`lbd = 0`</span>, instead of the linear
+  solution of the null reference vector; the next increments keep the
+  extrapolation of the previous one.
+<span class="k">-</span><span class="w"> </span>Relative convergence criterion: <span class="sb">`lbd*dR/dlbd`</span>, evaluated at the current
+  iterate before each convergence check, is an additional reference, new
+  keyword <span class="sb">`q_ref`</span> of <span class="sb">`newton_raphson._check_convergence`</span>; it remains
+  meaningful when <span class="sb">`dR/dlbd`</span> vanishes at the origin, e.g. a prescribed
+  displacement whose coupling with the free degrees of freedom starts
+  quadratically. The arc-length methods reuse it in the bordered solution
+  at the same iterate; with <span class="sb">`modified_NR=True`</span> it costs one call to
+  <span class="sb">`calc_fext`</span> per iteration. Under a prescribed displacement
+  alone, the reference vector and the reduced internal force vector both
+  vanish at equilibrium and the criterion could not be satisfied without
+  <span class="sb">`absTOL`</span>.
+<span class="k">-</span><span class="w"> </span>The linear static analysis, <span class="sb">`Analysis.static(NLgeom=False)`</span>, never passes
+  <span class="sb">`lbd`</span>.
+<span class="k">-</span><span class="w"> </span>Tests: <span class="sb">`tests/test_load_factor_dependent_load.py`</span>, three hardening springs
+  in series with the displacement of the last node prescribed, reduced to two
+  degrees of freedom, compared with the exact solution, including a constant
+  and an incremented prescribed displacement with a load, and the quadratic
+  convergence of the Riks method, and <span class="sb">`dR/dlbd = 0`</span> at the origin. Docs: <span class="sb">`ex_prescribed_displacements.rst`</span>,
+  <span class="sb">`callbacks`</span> and <span class="sb">`Analysis`</span>.
+
+<span class="gu">## 0.6.1 (2026-10-08)</span>
+
+Includes the changes first published as 0.6.0, with the support of Pyodide.
+
+<span class="gu">### Pyodide support</span>
+
+<span class="sb">`structsolve`</span> runs in the browser with Pyodide (WebAssembly): the wheel
+published on PyPI is pure Python and only requires NumPy and SciPy, which
+Pyodide distributes, i.e. <span class="sb">`await micropip.install("structsolve")`</span>.
+
+<span class="k">-</span><span class="w"> </span>The whole test suite runs in Pyodide, in the new GitHub Actions workflow
+  <span class="sb">`pyodide.yml`</span>: the wheel built from the repository is installed with
+  <span class="sb">`micropip`</span> in Pyodide under Node.js (<span class="sb">`ci/pyodide/run_tests.mjs`</span>, with
+  the version of Pyodide pinned in <span class="sb">`ci/pyodide/package.json`</span>).
+<span class="k">-</span><span class="w"> </span><span class="sb">`test_eig_complex_mkl_crash_regression`</span> is skipped in Pyodide, which
+  cannot start the subprocess of the test and whose SciPy is not linked to
+  MKL.
+<span class="k">-</span><span class="w"> </span>New classifier <span class="sb">`Environment :: WebAssembly :: Emscripten`</span>.
+<span class="k">-</span><span class="w"> </span>Installation in Pyodide in the documentation.
+
+<span class="gu">### Continuous integration</span>
+
+<span class="k">-</span><span class="w"> </span>The GitHub Actions run on Node.js 24, whose Node.js 20 versions are
+  deprecated: <span class="sb">`actions/checkout`</span> v7, <span class="sb">`actions/setup-python`</span> v7,
+  <span class="sb">`actions/setup-node`</span> v7, <span class="sb">`codecov/codecov-action`</span> v7 and
+  <span class="sb">`softprops/action-gh-release`</span> v3.
+<span class="k">-</span><span class="w"> </span><span class="sb">`fail-fast: false`</span> in the matrix of <span class="sb">`pytest.yml`</span>, such that a failed job
+  does not cancel the others.
+
+<span class="gu">### Eigenvalue solvers: sparse first, dense only as a last resort</span>
+
+<span class="sb">`lb`</span> and <span class="sb">`freq`</span> will run in the browser through Pyodide (WebAssembly), where
+dense LAPACK is single-threaded and unoptimized: e.g. the dense <span class="sb">`eig`</span> of a
+1,536-dof follower load problem takes 38 s there, against 0.3 s for a sparse
+solver. Natively too, the dense paths are slow for follower loads, whose
+load stiffness couples almost all the dofs, so that the condensation of <span class="sb">`lb`</span>
+keeps almost all of them. The eigenvalue solvers now rely on the sparse
+solvers, robustly: a verified result, or an explicit error, never a silently
+wrong answer.
+
+<span class="k">-</span><span class="w"> </span><span class="gs">**Solver policy.**</span> With <span class="sb">`sparse_solver=True`</span>, the default, <span class="sb">`lb`</span> and <span class="sb">`freq`</span>
+  always run the sparse solvers first, for every problem size, symmetric or
+  unsymmetric, and every result is verified. Only when all the sparse
+  solvers failed (verification, ARPACK error or no convergence, singular
+  factorization, no positive real load multiplier...) a dense solver is used,
+  if the dense problem has at most <span class="sb">`max_dense_size`</span> dofs, with a
+  <span class="sb">`DenseFallbackWarning`</span> (new, <span class="sb">`structsolve.DenseFallbackWarning`</span>) giving
+  the reasons of the failures; the dense result is verified as well.
+  Otherwise a <span class="sb">`RuntimeError`</span> lists every attempted solver and its failure.
+<span class="k">-</span><span class="w"> </span><span class="gs">**ARPACK and Intel MKL.**</span> The <span class="sb">`dsteqr`</span> of Intel MKL 2024.2.0 to 2025.0.0
+  returns wrong eigenvectors for tridiagonal matrices larger than 32 x 32,
+  which ARPACK's symmetric drivers (<span class="sb">`eigsh`</span>) use with the size <span class="sb">`ncv`</span>. The
+  failures start exactly at <span class="sb">`ncv=33`</span>, in every <span class="sb">`eigsh`</span> mode. The new module
+  <span class="sb">`structsolve.arpackutils`</span> caps <span class="sb">`ncv`</span> at 32 when a functional probe of
+  <span class="sb">`dsteqr`</span> fails, or when SciPy's LAPACK is MKL and its version is unknown
+  or within the faulty range (read with the optional <span class="sb">`mkl-service`</span> or
+  <span class="sb">`threadpoolctl`</span>). More than 15 eigenpairs are then computed in passes of
+  at most 15 with deflation, since ARPACK hardly converges with <span class="sb">`k`</span> close to
+  <span class="sb">`ncv`</span>. The eigenvectors of all the passes are combined with a
+  Rayleigh-Ritz projection, solved with the LAPACK driver <span class="sb">`dsyevr`</span>, which
+  does not use <span class="sb">`dsteqr`</span>: the eigenvectors of different passes were only
+  orthogonal to the accuracy of ARPACK, e.g. <span class="sb">`v.T @ K @ v`</span> deviated from
+  the identity by <span class="sb">`1.1e-6`</span> for 25 eigenpairs of a cylinder of panels on
+  Linux, now <span class="sb">`1e-10`</span>, and the eigenvalues are about 10 times more
+  accurate. The cap can be overridden with <span class="sb">`arpackutils.ARPACK_MAX_NCV`</span> or the
+  environment variable <span class="sb">`STRUCTSOLVE_ARPACK_MAX_NCV`</span> (<span class="sb">`0`</span> lifts it). It is
+  not applied without MKL, e.g. in Pyodide, where a larger <span class="sb">`ncv`</span> is faster.
+  <span class="sb">`eigs`</span> (non-symmetric drivers) is not affected. <span class="sb">`freq(symmetric=True)`</span>,
+  added in 0.5.3, was affected and is fixed as well: with MKL 2025.0.0 it
+  silently returned wrong frequencies, e.g. a lowest <span class="sb">`omega**2`</span> 1.3 and 12
+  times too high for a plate and a cylinder of panels.
+<span class="k">-</span><span class="w"> </span><span class="gs">**`lb`, symmetric matrices**</span>: <span class="sb">`eigsh`</span> in Cayley mode with the capped <span class="sb">`ncv`</span>,
+  retried with a 10 times larger shift; the dense condensed <span class="sb">`eigh`</span> is the
+  last resort. The inertia check is stronger: the number of negative pivots
+  of <span class="sb">`K + s KG`</span> (SuperLU without row interchanges, Sylvester's law of
+  inertia) must equal the number of positive load multipliers found below
+  <span class="sb">`s`</span>, slightly below the highest one returned, i.e. none of them is
+  missing, not only the lowest one. The previous check is kept when a row
+  interchange makes the count unknown.
+<span class="k">-</span><span class="w"> </span><span class="gs">**`lb`, unsymmetric matrices**</span>: the sparse fallback of 0.5.3, <span class="sb">`eigs`</span> on
+  <span class="sb">`K^-1 KG`</span>, returned the multipliers of smallest modulus. With follower
+  loads, e.g. a reversed (internal) pressure, none of them may be positive
+  real, and <span class="sb">`lb`</span> silently returned negative or complex multipliers. It is
+  replaced by a search of shifts along the positive real axis: <span class="sb">`eigs`</span> on
+  <span class="sb">`(K + s KG)^-1 KG`</span> finds the multipliers nearest each shift <span class="sb">`s`</span>, the
+  union of the discs of the steps covers <span class="sb">`(0, lambda_cr)`</span>, and a parity
+  check of the sign of <span class="sb">`det(K + 0.9999 lambda_cr KG)`</span> confirms an even
+  number of real multipliers below <span class="sb">`lambda_cr`</span>. The condensed dense <span class="sb">`eig`</span> is
+  the last resort; when it finds no positive real multiplier either, i.e. no
+  divergence load exists, its multipliers are returned with a
+  <span class="sb">`RuntimeWarning`</span>.
+<span class="k">-</span><span class="w"> </span><span class="gs">**`freq`**</span>: new argument <span class="sb">`max_dense_size=2000`</span>. A failed verification of
+  the sparse solver (residual, and for <span class="sb">`symmetric=True`</span> the inertia of
+  <span class="sb">`K - s M`</span>, i.e. no lower mode missing) or an ARPACK error leads to the
+  dense fallback, instead of a warning only. The symmetric dense fallback
+  solves <span class="sb">`M u = (1/omega**2) K u`</span>, accurate for the lowest frequencies.
+<span class="k">-</span><span class="w"> </span>The ARPACK starting vector is fixed, results are reproducible.
+<span class="k">-</span><span class="w"> </span>In Pyodide, <span class="sb">`gc.collect()`</span> is called after each ARPACK call
+  (<span class="sb">`arpackutils.release_memory`</span>): SciPy's <span class="sb">`eigs`</span> and <span class="sb">`eigsh`</span> keep the SuperLU
+  factorization of the shift-invert mode in reference cycles, which exhausted
+  the WebAssembly heap, e.g. <span class="sb">`MemoryError`</span> at the 10th <span class="sb">`freq`</span> call on a
+  1,012-dof model.
+<span class="k">-</span><span class="w"> </span>In Pyodide (<span class="sb">`sys.platform == 'emscripten'`</span>) the explicit dense <span class="sb">`eig`</span> uses
+  the real LAPACK drivers, the complex ones are only needed against MKL.
+<span class="k">-</span><span class="w"> </span>The static and non-linear solvers were audited: they only use sparse LU
+  factorizations, no dense operation on full-size matrices.
+
+<span class="gu">### Behavioural changes</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`sparse_solver=True`</span> now always means that the sparse solver runs first,
+  whatever the size of the problem. In 0.5.3, <span class="sb">`lb`</span> solved the condensed
+  problem with a dense solver first when it had at most <span class="sb">`max_dense_size`</span>
+  dofs, i.e. most panels models. These problems now take the sparse path:
+  natively, small and medium symmetric models can be slower than with the
+  dense condensed solution, large models, follower loads and the browser
+  are much faster.
+<span class="k">-</span><span class="w"> </span><span class="sb">`max_dense_size`</span> keeps its default <span class="sb">`2000`</span> but is now the maximum size of
+  the dense <span class="gs">**fallback**</span> problem; <span class="sb">`0`</span> disables the fallback.
+<span class="k">-</span><span class="w"> </span>A dense solution only happens as a fallback, with a
+  <span class="sb">`DenseFallbackWarning`</span>.
+<span class="k">-</span><span class="w"> </span>Where <span class="sb">`lb`</span> silently returned only negative or complex multipliers for
+  unsymmetric matrices, it now finds the positive real one, falls back to
+  the dense solver, or raises a <span class="sb">`RuntimeError`</span>.
+<span class="k">-</span><span class="w"> </span>For unsymmetric matrices, when the search needed several shifts, the
+  returned eigenpairs are the <span class="sb">`num_eigvalues`</span> multipliers nearest the final
+  shift, sorted with the lowest positive real one first, not the ones of
+  smallest modulus.
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq(sparse_solver=True)`</span> raises a <span class="sb">`RuntimeError`</span> instead of a warning
+  when its eigenpairs fail the verification and the dense fallback is not
+  possible or fails too.
+<span class="k">-</span><span class="w"> </span><span class="sb">`sparse_solver=False`</span> is unchanged: the explicit full dense solution,
+  returning all the eigenvalues, without trying the sparse solvers.
+
+<span class="gu">### Tests</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`tests/test_arpackutils.py`</span>: the detection of MKL mocked both ways, the
+  override, the <span class="sb">`ncv=32`</span>/<span class="sb">`ncv=33`</span> boundary, the passes, <span class="sb">`eigs`</span> unaffected,
+  <span class="sb">`freq(symmetric=True)`</span> with a faulty <span class="sb">`dsteqr`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`tests/test_sparse_first.py`</span>: spies showing that the sparse solver runs
+  first for any <span class="sb">`max_dense_size`</span>, also for small problems, and that no dense
+  solver is called when it succeeds; the explicit dense path; the dense
+  fallback with its warning and the <span class="sb">`RuntimeError`</span> without it; the cap
+  disabled with a faulty <span class="sb">`dsteqr`</span>, where the dense fallback gives the
+  correct result.
+<span class="k">-</span><span class="w"> </span>Follower load regression tests with the cantilevers of Schweizerhof and
+  Ramm (1984) from panels (new <span class="sb">`tests/data/s1B1_m14n8_*`</span>,
+  <span class="sb">`tests/data/s3B2_m14n8_*`</span>), original and reversed, and harder mixed
+  spectra for the symmetric solver.
+<span class="k">-</span><span class="w"> </span>The test dependencies <span class="sb">`buckling`</span> and <span class="sb">`composites`</span> are removed: the
+  hierarchical Legendre functions of Bardell (<span class="sb">`vecf`</span>, <span class="sb">`vecfxi`</span>, <span class="sb">`vecfxixi`</span>)
+  and the stiffnesses of an isotropic plate (<span class="sb">`isotropic_plate`</span>) of the Ritz
+  models of the tests are in the new <span class="sb">`tests/ritz.py`</span>, with NumPy only. The
+  test extra <span class="sb">`.[test]`</span> no longer requires a pre-release (<span class="sb">`buckling`</span> is only
+  published as <span class="sb">`2026bN`</span>) nor a compiled package (<span class="sb">`composites`</span>), whose wheels
+  are not available for every platform, e.g. Pyodide.
+
+<span class="gu">## 0.5.3 (2026-10-06)</span>
+
+<span class="gu">### New: configuration-dependent loads and unsymmetric eigenproblems</span>
+
+<span class="k">-</span><span class="w"> </span>The non-linear solvers pass the current load factor as <span class="sb">`inc=lbd`</span> to the
+  callables <span class="sb">`calc_fint`</span>, <span class="sb">`calc_kC`</span> and <span class="sb">`calc_kG`</span> that declare a keyword
+  argument <span class="sb">`inc`</span>, such that configuration-dependent loads, e.g. follower
+  pressures, can enter the residual and the tangent stiffness matrix. The
+  callables that do not declare it are called exactly as before (a
+  <span class="sb">`**kwargs`</span> does not count). See the new module <span class="sb">`structsolve.callbacks`</span>.
+<span class="k">-</span><span class="w"> </span>The arc-length methods (Riks and Crisfield) use <span class="sb">`calc_fext(inc=1., c=c)`</span>,
+  the load vector of the current configuration, i.e. <span class="sb">`dR/dlbd`</span>, in the
+  tangent predictor and in the bordered solutions, when <span class="sb">`calc_fext`</span> declares
+  <span class="sb">`c`</span>. This restores the quadratic convergence of the Riks method for such
+  loads.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb(..., symmetric=None)`</span>: with <span class="sb">`None`</span>, <span class="sb">`K`</span> and <span class="sb">`KG`</span> are checked with the
+  new <span class="sb">`linear_buckling.is_symmetric`</span> (<span class="sb">`||A - A^T|| &lt;= 1e-10 ||A||`</span>); <span class="sb">`True`</span>
+  keeps the previous solvers without the check, <span class="sb">`False`</span> forces the solvers of
+  unsymmetric matrices: <span class="sb">`scipy.linalg.eig`</span> on the condensed problem (keeping
+  the dofs with a non-null row or column of <span class="sb">`KG`</span>), <span class="sb">`scipy.sparse.linalg.eigs`</span>
+  on <span class="sb">`K^-1 KG`</span>, or <span class="sb">`scipy.linalg.eig`</span> on the full problem with
+  <span class="sb">`sparse_solver=False`</span>. The residual of the eigenpairs is verified, the
+  inertia check requires symmetric matrices and is skipped. Eigenvalues with a
+  relative imaginary part below <span class="sb">`1e-8`</span> are returned as real, otherwise the
+  complex ones come last. The arrays are real when the returned eigenpairs
+  are real, even if other eigenvalues of the solver are complex, and a solver
+  that raises an error is skipped, as one that fails the verification.
+<span class="k">-</span><span class="w"> </span>The solvers of unsymmetric matrices in <span class="sb">`lb`</span> and <span class="sb">`freq`</span> call
+  <span class="sb">`scipy.linalg.eig`</span> with complex matrices, i.e. the LAPACK drivers <span class="sb">`zgeev`</span>
+  and <span class="sb">`zggev`</span>: with Intel MKL 2025.0.0 the real drivers <span class="sb">`dgeev`</span> and <span class="sb">`dggev`</span>
+  crash the Python process for some matrices when computing the
+  eigenvectors, with any number of threads.
+<span class="k">-</span><span class="w"> </span>The Newton-Raphson and arc-length solvers already used LU factorizations
+  (<span class="sb">`spsolve`</span>, <span class="sb">`splu`</span>), valid for unsymmetric tangent stiffness matrices.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.static(NLgeom=False)`</span>: when <span class="sb">`calc_fext`</span> declares <span class="sb">`c`</span>, the
+  geometrically linear problem with the load in the current configuration,
+  <span class="sb">`K0 c = F(c)`</span>, is solved by load correction iterations, `c += K0^-1 (F(c) -
+  K0 c)`, up to <span class="sb">`relTOL`</span>; for a follower load affine in <span class="sb">`c`</span> this is `(K0 +
+  Kf) c = F0`. A warning is issued when they do not converge, beyond the
+  critical load of the linearized problem. Callables without <span class="sb">`c`</span> are solved
+  as before.
+<span class="k">-</span><span class="w"> </span><span class="sb">`solve`</span>, <span class="sb">`remove_null_cols`</span>: a degree of freedom is removed only when both
+  its row and its column of the first matrix are null, such that an
+  unsymmetric matrix never loses an equation with a non-null row; unchanged
+  for matrices with a symmetric pattern. <span class="sb">`static(K, fext)`</span> documents
+  unsymmetric <span class="sb">`K`</span>, e.g. <span class="sb">`K0 + kCfollower`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq(..., symmetric=False, check_rtol=1e-6)`</span>: the default keeps the
+  general solvers (<span class="sb">`eigs`</span>, <span class="sb">`eig`</span>), valid for unsymmetric <span class="sb">`K`</span>, e.g. with the
+  load stiffness of follower loads or aerodynamic matrices; <span class="sb">`symmetric=True`</span>
+  uses <span class="sb">`eigsh`</span> (shift-invert) or <span class="sb">`eigh`</span>, with real results, and <span class="sb">`None`</span>
+  selects them with <span class="sb">`is_symmetric`</span>. The relative residual of the eigenpairs
+  is checked, with a warning above <span class="sb">`check_rtol`</span>. The Notes document the
+  kinetic criterion (flutter: complex <span class="sb">`lambda**2`</span>). The printed eigenvalues
+  are formatted as complex numbers when complex.
+
+<span class="gu">## 0.4.3 (2026-09-17)</span>
+
+<span class="gu">### Breaking: new defaults of the non-linear solvers</span>
+
+The Newton-Raphson defaults were tuned around models whose tangent stiffness
+matrix was not the exact derivative of the internal force vector, and the
+convergence check depended on the units of the model. With an exact tangent
+matrix, full Newton-Raphson now converges quadratically. The attribute names
+of <span class="sb">`Analysis`</span> and the signatures of the callables <span class="sb">`calc_fext`</span>, <span class="sb">`calc_fint`</span>,
+<span class="sb">`calc_kC`</span> and <span class="sb">`calc_kG`</span> did not change, but the following defaults did:
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.modified_NR`</span>: <span class="sb">`True`</span> -&gt; <span class="sb">`False`</span>, i.e. full Newton-Raphson, with the
+  tangent stiffness matrix updated at every iteration.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.line_search`</span>: <span class="sb">`True`</span> -&gt; <span class="sb">`False`</span>. When activated, the line-search
+  is now a safeguard: the full Newton step is tried first and only reduced when
+  it fails a sufficient-decrease test on the residual norm.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.relTOL`</span>: <span class="sb">`1e-3`</span> (unused) -&gt; <span class="sb">`1e-6`</span>, now used by all non-linear
+  solvers: the convergence is achieved when
+  <span class="sb">`||R|| &lt;= relTOL*max(||fext||, ||fint||)`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.absTOL`</span>: <span class="sb">`1e-3`</span> -&gt; <span class="sb">`None`</span>. When defined, it is an additional
+  absolute criterion on <span class="sb">`max(|R|)`</span>, which depends on the units of the model.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.maxNumIter`</span> now counts the number of corrections (linear solutions)
+  of each step, and a step can converge at its first residual evaluation.
+<span class="k">-</span><span class="w"> </span>A failed step is repeated with the load increment multiplied by <span class="sb">`0.5`</span> (was
+  <span class="sb">`0.9`</span>). The increment grows by <span class="sb">`1.1111`</span> only after a step that converged
+  without being cut.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.kT_initial_state`</span> is only used when <span class="sb">`modified_NR=True`</span>.
+
+<span class="gu">### Breaking: arc-length solvers rewritten</span>
+
+The solvers <span class="sb">`NL_method='arc_length_riks'`</span> and <span class="sb">`NL_method='arc_length_crisfield'`</span>
+did not converge in practice. They now share one implementation,
+<span class="sb">`structsolve.arc_length._solver_arc_length`</span>:
+
+<span class="k">-</span><span class="w"> </span>The arc length is dimensionless, with displacements scaled by the linear
+  solution for a load factor of 1, so the analysis no longer depends on the
+  units of the model. <span class="sb">`initialInc`</span> is the load factor increment of the first
+  step along the initial tangent, <span class="sb">`maxInc`</span> and <span class="sb">`minInc`</span> are the maximum and
+  minimum arc-length increments, and <span class="sb">`maxArcLength`</span> is the maximum cumulative
+  arc length.
+<span class="k">-</span><span class="w"> </span>Tangent predictor whose direction follows the previous increment, allowing
+  limit points, snap-through and snap-back to be traced.
+<span class="k">-</span><span class="w"> </span>Riks: the arc-length constraint is linearized at every iteration (updated
+  normal plane), giving quadratic convergence. Crisfield: the quadratic
+  constraint is solved exactly, choosing the root with the smallest angle to
+  the current increment.
+<span class="k">-</span><span class="w"> </span>The bordered system is solved with two solutions of one sparse LU
+  factorization, instead of a dense matrix.
+<span class="k">-</span><span class="w"> </span>The arc length adapts to the number of iterations of each step.
+<span class="k">-</span><span class="w"> </span><span class="gs">**The analysis stops when the load factor reaches exactly 1.0**</span>, besides the
+  limits given by <span class="sb">`maxArcLength`</span> and <span class="sb">`minInc`</span>. Previously Riks ran until
+  <span class="sb">`maxArcLength`</span>, and Crisfield until 1000 steps or <span class="sb">`minInc`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`modified_NR`</span> and <span class="sb">`compute_every_n`</span> control how often the tangent stiffness
+  matrix is updated, as in the Newton-Raphson solver, so the new default
+  <span class="sb">`modified_NR=False`</span> also applies here.
+
+<span class="gu">### Linear buckling: sparse solver of `lb`</span>
+
+The sparse solver of <span class="sb">`lb`</span> could return wrong load multipliers without any
+warning, for two independent reasons, both fixed:
+
+<span class="k">-</span><span class="w"> </span><span class="gs">**Wrong shift.**</span> The shift <span class="sb">`sigma`</span> of the Cayley mode was a single Rayleigh
+  quotient, in which positive and negative eigenvalues cancel, and could land
+  below the largest <span class="sb">`|mu|`</span> of <span class="sb">`KG u = mu K u`</span>. The eigenvalue solver then
+  returned the eigenvalues nearest to the shift, i.e. load multipliers higher
+  than the critical ones, e.g. for a cylinder model from panels. The shift is
+  now estimated with power iterations on <span class="sb">`K^-1 KG`</span>, giving the largest <span class="sb">`|mu|`</span>,
+  multiplied by a safety factor of 10. When <span class="sb">`K`</span> is singular, not positive
+  definite, or the linear solution is inaccurate, the shift falls back to <span class="sb">`1.`</span>.
+<span class="k">-</span><span class="w"> </span><span class="gs">**Intel MKL bug.**</span> When SciPy is linked against Intel MKL 2024.2.0 to
+  2025.0.0, e.g. the current Anaconda builds of SciPy on Windows, ARPACK
+  returned wrong load multipliers at random, some of them far below the
+  critical load, or raised <span class="sb">`ArpackError -8`</span>. The <span class="sb">`dsteqr`</span> routine of these MKL
+  versions returns wrong eigenvectors for matrices larger than 32 x 32, which
+  ARPACK uses for the Ritz vectors when <span class="sb">`ncv &gt; 32`</span>, e.g. <span class="sb">`num_eigvalues=25`</span>
+  gives <span class="sb">`ncv=51`</span>. SciPy itself is not affected: the PyPI wheels of SciPy 1.16
+  and 1.17 give correct results, and so does the same Anaconda SciPy binary
+  with MKL 2025.0.1 or newer.
+
+The sparse solver was changed accordingly:
+
+<span class="k">-</span><span class="w"> </span>The dofs where <span class="sb">`KG`</span> has null rows, typically the in-plane dofs, are condensed
+  out with a sparse factorization of <span class="sb">`K`</span>. When at most <span class="sb">`max_dense_size`</span> (new
+  argument, default <span class="sb">`2000`</span>) dofs remain, the condensed problem is solved with
+  the dense <span class="sb">`scipy.linalg.eigh`</span>, otherwise with <span class="sb">`eigsh`</span> in Cayley mode.
+<span class="k">-</span><span class="w"> </span>The eigenpairs are verified: the relative residual
+  <span class="sb">`||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`</span> must not exceed
+  <span class="sb">`check_rtol`</span> (new argument, default <span class="sb">`1e-3`</span>), and, when <span class="sb">`K`</span> is positive
+  definite, <span class="sb">`K + s KG`</span> must also be positive definite for <span class="sb">`s`</span> slightly below
+  the lowest positive load multiplier found, i.e. no lower load multiplier
+  was missed. When the condensed solution fails, <span class="sb">`eigsh`</span> is tried, and a
+  <span class="sb">`RuntimeError`</span> is raised when no solution passes the verification.
+<span class="k">-</span><span class="w"> </span>The load multipliers are returned sorted as by the dense solver: the
+  positive ones first in increasing order, followed by the negative ones.
+
+<span class="sb">`freq`</span> was verified not to be affected by either problem: with a negative
+shift, the ordering of the shift-invert mode selects the lowest natural
+frequencies for any shift, and the non-symmetric ARPACK routines do not call
+<span class="sb">`dsteqr`</span>.
+
+<span class="gu">### Fixed</span>
+
+<span class="k">-</span><span class="w"> </span>Newton-Raphson advanced the load factor twice after each converged step and
+  could finish without solving the final load factor, e.g. <span class="sb">`initialInc=0.5`</span>
+  returned <span class="sb">`increments == [0.5]`</span>. Every analysis now finishes at a load factor
+  of exactly 1.0, unless stopped by <span class="sb">`minInc`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`modified_NR=False`</span> updated the tangent stiffness matrix only every other
+  iteration.
+<span class="k">-</span><span class="w"> </span>The predictor of each Newton-Raphson step is scaled by the ratio between the
+  new and the previous load increments. After a failed first step, the
+  predictor was twice the linear solution.
+<span class="k">-</span><span class="w"> </span>The divergence check stopped a step whenever the residual increased after
+  the third iteration, which is normal in postbuckling. The divergence and
+  too-slow checks now start after 5 iterations, comparing against the residual
+  at the start of the step and the smallest residual of the last iterations.
+<span class="k">-</span><span class="w"> </span>The line-search evaluated the internal forces twice per sub-iteration, and
+  looped 20 times with a division by zero when the residual was already zero.
+<span class="k">-</span><span class="w"> </span>Removed debug <span class="sb">`print`</span> calls from the Crisfield solver, which ignored
+  <span class="sb">`silent=True`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.static()`</span> raised a <span class="sb">`ValueError`</span> for an invalid <span class="sb">`NL_method`</span> without
+  the name of the method in the message.
+
+<span class="gu">### Documentation</span>
+
+<span class="k">-</span><span class="w"> </span>New Sphinx documentation in <span class="sb">`doc/`</span>, built from the docstrings, with usage
+  examples taken from the tests.
+<span class="k">-</span><span class="w"> </span>Docstrings updated to describe the current implementation, including the
+  callables required by <span class="sb">`Analysis`</span>, the default value of every parameter, and
+  the return values of <span class="sb">`static`</span>, <span class="sb">`freq`</span> and <span class="sb">`lb`</span>.
+
+<span class="gu">### Tests</span>
+
+<span class="k">-</span><span class="w"> </span>Analytic problems with exact tangent stiffness matrices
+  (<span class="sb">`tests/analytic_problems.py`</span>): hardening springs, a shallow von Mises truss
+  and a linear problem.
+<span class="k">-</span><span class="w"> </span>Newton-Raphson (<span class="sb">`tests/test_newton_raphson.py`</span>): quadratic convergence,
+  load-factor bookkeeping, predictor, step cutting, non-monotonic residual and
+  line-search.
+<span class="k">-</span><span class="w"> </span>Arc-length (<span class="sb">`tests/test_arc_length.py`</span>): snap-through, snap-back, quadratic
+  convergence, step cutting, <span class="sb">`maxArcLength`</span>, <span class="sb">`silent`</span> and independence of the
+  units of the model.
+<span class="k">-</span><span class="w"> </span>Linear buckling (<span class="sb">`tests/test_linear_buckling.py`</span>): sparse and dense solvers
+  for a spectrum with load multipliers of mixed signs, fallback shift for a
+  singular <span class="sb">`K`</span>, and regression tests with <span class="sb">`K`</span> and <span class="sb">`KG`</span> matrices of a plate and
+  a cylinder from panels, saved in <span class="sb">`tests/data/`</span>, for the condensed solution,
+  for <span class="sb">`eigsh`</span> alone (correct results or <span class="sb">`RuntimeError`</span>), for the verification
+  of the eigenpairs, for the order of the load multipliers, and for null rows
+  of <span class="sb">`KG`</span> and <span class="sb">`K`</span>.
+
+<span class="gu">## 0.3.1 (2026-04-09)</span>
+
+<span class="k">-</span><span class="w"> </span>Fixed the estimation of the shift <span class="sb">`sigma`</span> of the eigenvalue solvers in
+  <span class="sb">`freq`</span> and <span class="sb">`lb`</span> for singular matrices, falling back to the default shift
+  when the linear solution is singular or inaccurate.
+<span class="k">-</span><span class="w"> </span>New <span class="sb">`skip_null_cols`</span> argument of <span class="sb">`freq`</span> and <span class="sb">`lb`</span>, to skip the removal of null
+  rows and columns when the matrices are known to be non-singular.
+<span class="k">-</span><span class="w"> </span>The dense solver of <span class="sb">`freq`</span> removes the null rows and columns in the same way
+  as the sparse solver.
+<span class="k">-</span><span class="w"> </span><span class="sb">`lb`</span> no longer retries the sparse solver after removing the null rows and
+  columns; they are removed before solving, unless <span class="sb">`skip_null_cols=True`</span>.
+<span class="k">-</span><span class="w"> </span>Python 3.14 support.
+
+<span class="gu">## 0.3.0 (2026-03-26)</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`freq`</span> and <span class="sb">`lb`</span> estimate the shift <span class="sb">`sigma`</span> of the shift-invert eigenvalue
+  solvers from the matrices, instead of using a fixed value.
+<span class="k">-</span><span class="w"> </span>Fixed the selection of <span class="sb">`NL_method`</span> in <span class="sb">`Analysis.static()`</span>, which compared
+  strings with <span class="sb">`is`</span>.
+<span class="k">-</span><span class="w"> </span>Packaging migrated from <span class="sb">`setup.py`</span> to <span class="sb">`pyproject.toml`</span>, requiring Python 3.8
+  or newer.
+<span class="k">-</span><span class="w"> </span>Continuous integration migrated from Travis CI to GitHub Actions, with
+  workflows for tests, coverage, releases and publishing to PyPI.
+<span class="k">-</span><span class="w"> </span>New test suite for <span class="sb">`Analysis`</span>, <span class="sb">`solve`</span>, <span class="sb">`static`</span>, <span class="sb">`freq`</span>, <span class="sb">`lb`</span> and
+  <span class="sb">`sparseutils`</span>.
+
+<span class="gu">## 0.2.2 (2019-03-02)</span>
+
+<span class="k">-</span><span class="w"> </span>Release of 0.2.1 with an updated distribution.
+
+<span class="gu">## 0.2.1 (2019-03-01)</span>
+
+<span class="k">-</span><span class="w"> </span>Fixed the dense solver of <span class="sb">`freq`</span> (<span class="sb">`sparse_solver=False`</span>), which returned
+  eigenvalues with the wrong sign, and which now also accepts dense arrays.
+
+<span class="gu">## 0.2.0 (2019-03-01)</span>
+
+<span class="k">-</span><span class="w"> </span><span class="gs">**Breaking:**</span> <span class="sb">`freq`</span> returns the eigenvalues <span class="sb">`lambda**2`</span> of
+  <span class="sb">`([K] + lambda**2 [M]){u} = 0`</span>, with <span class="sb">`lambda**2 = -omega**2`</span>, instead of the
+  natural frequencies <span class="sb">`omega`</span>.
+<span class="k">-</span><span class="w"> </span><span class="gs">**Breaking:**</span> removed the <span class="sb">`reduced_dof`</span> argument of <span class="sb">`freq`</span>.
+
+<span class="gu">## 0.1.0 (2018-06-23)</span>
+
+<span class="k">-</span><span class="w"> </span>First release, with the solvers originally in <span class="sb">`compmech.analysis`</span> and
+  <span class="sb">`compmech.sparse`</span>: linear static analysis (<span class="sb">`static`</span>, <span class="sb">`solve`</span>), linear
+  buckling (<span class="sb">`lb`</span>), frequency analysis (<span class="sb">`freq`</span>), non-linear static analysis
+  with the <span class="sb">`Analysis`</span> class using the Newton-Raphson and the arc-length
+  methods, and utilities for sparse matrices (<span class="sb">`sparseutils`</span>).
+</pre></div>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="logger.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Logging (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.logger</span></code>)</p>
+      </div>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="_sources/changelog.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2012-2026, Saullo G. P. Castro.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -26,7 +26,7 @@ both when it declares the keyword arguments ``c`` and ``lbd``, see
 reference vector ``calc_fext(inc=1.)`` and the reduced internal force vector
 both vanish at equilibrium, and the solvers use `\partial R/\partial
 \lambda` for the displacement scale of the arc-length methods, the predictor
-of the first Newton-Raphson increment and the relative convergence
+of the first Newton-Raphson increment and the convergence
 criterion.
 
 Three hardening springs in series, with the displacement of the last node

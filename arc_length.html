@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,20 +37,22 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'arc_length';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Configuration-dependent loads (structsolve.callbacks)" href="callbacks.html" />
+    <link rel="next" title="Convergence criteria (structsolve.convergence)" href="convergence_api.html" />
     <link rel="prev" title="Newton-Raphson solver (structsolve.newton_raphson)" href="newton_raphson.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -133,6 +135,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -140,29 +163,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -174,6 +176,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -195,9 +239,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -285,8 +343,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -340,9 +440,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -395,6 +509,7 @@
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -471,6 +586,49 @@ control the arc-length scaling and adaptation.</p>
 <dt class="sig sig-object py" id="structsolve.arc_length._solver_arc_length">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">_solver_arc_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length._solver_arc_length" title="Link to this definition">#</a></dt>
 <dd><p>Arc-length solver</p>
+<p>Traces the equilibrium path of the model of <code class="docutils literal notranslate"><span class="pre">an</span></code> with an arc-length
+method, in which the load factor is an unknown of each step besides the
+solution vector, such that limit points can be passed. <code class="docutils literal notranslate"><span class="pre">method</span></code> selects
+how the load factor of each iteration is computed, see
+<a class="reference internal" href="#structsolve.arc_length_riks._solver_arc_length_riks" title="structsolve.arc_length_riks._solver_arc_length_riks"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length_riks._solver_arc_length_riks()</span></code></a> and
+<a class="reference internal" href="#structsolve.arc_length_crisfield._solver_arc_length_crisfield" title="structsolve.arc_length_crisfield._solver_arc_length_crisfield"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length_crisfield._solver_arc_length_crisfield()</span></code></a>.</p>
+<p>The steps are controlled by the attributes <code class="docutils literal notranslate"><span class="pre">initialInc</span></code>, <code class="docutils literal notranslate"><span class="pre">minInc</span></code>,
+<code class="docutils literal notranslate"><span class="pre">maxInc</span></code> and <code class="docutils literal notranslate"><span class="pre">maxArcLength</span></code> of <code class="docutils literal notranslate"><span class="pre">an</span></code>, and by the module-level
+constants; the iterations of each step by <code class="docutils literal notranslate"><span class="pre">convergence</span></code>, <code class="docutils literal notranslate"><span class="pre">relTOL</span></code>,
+<code class="docutils literal notranslate"><span class="pre">absTOL</span></code>, <code class="docutils literal notranslate"><span class="pre">maxNumIter</span></code> and <code class="docutils literal notranslate"><span class="pre">too_slow_TOL</span></code>, with the checks of
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a> and
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_divergence" title="structsolve.newton_raphson._check_divergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_divergence()</span></code></a>, where the convergence
+criterion also considers the external force vector of the increment of
+the load factor of the current step; and
+<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span></code>, <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> and <code class="docutils literal notranslate"><span class="pre">an.kT_initial_state</span></code>
+control how often the tangent stiffness matrix is updated. A step that
+fails is repeated with the arc length multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>.
+The analysis stops when:</p>
+<ul class="simple">
+<li><p>the load factor reaches 1.0, the last solution being computed at a load
+factor of exactly 1.0</p></li>
+<li><p>the cumulative arc length reaches <code class="docutils literal notranslate"><span class="pre">an.maxArcLength</span></code></p></li>
+<li><p>the arc length becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MAX_NUM_STEPS</span></code> steps converged</p></li>
+<li><p>the tangent stiffness matrix at the last converged state is singular</p></li>
+</ul>
+<p>The callables of <code class="docutils literal notranslate"><span class="pre">an</span></code> that declare the optional keyword arguments
+<code class="docutils literal notranslate"><span class="pre">inc</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">lbd</span></code> receive the current load factor and
+configuration, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object, the converged load factors and solutions are appended
+to <code class="docutils literal notranslate"><span class="pre">an.increments</span></code> and <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>.</p>
+</dd>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'riks'</span></code> or <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>.</p>
+</dd>
+<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
 <p>The equilibrium path <span class="math notranslate nohighlight">\(\{F_{int}(c)\} = \lambda \{F_{ext}\}\)</span> is traced with
 the arc-length constraint</p>
 <div class="math notranslate nohighlight">
@@ -479,34 +637,109 @@ the arc-length constraint</p>
 <p>where <span class="math notranslate nohighlight">\(\{\Delta c\}\)</span> and <span class="math notranslate nohighlight">\(\Delta\lambda\)</span> are the increments of the current
 step and <span class="math notranslate nohighlight">\(\{u_{ref}\}\)</span> is the linear solution for <span class="math notranslate nohighlight">\(\lambda=1\)</span>, which makes
 the arc length <span class="math notranslate nohighlight">\(\Delta s\)</span> independent of the units of the model. In the
-linear regime <span class="math notranslate nohighlight">\(\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda\)</span>.</p>
+linear regime <span class="math notranslate nohighlight">\(\Delta s \approx \sqrt{1 + \psi^2} \Delta\lambda\)</span>. It is
+the spherical arc-length constraint of <a class="reference internal" href="#rdc0da8cb83d2-4" id="id1">[4]</a> (Section 9.3.2, Eq. (9.19),
+p. 271), where the displacement term is not scaled and the load term is
+<span class="math notranslate nohighlight">\(\psi^2 \Delta\lambda^2 \{F_{ext}\}^T\{F_{ext}\}\)</span>. <span class="math notranslate nohighlight">\(\psi\)</span> is the
+constant <code class="docutils literal notranslate"><span class="pre">PSI</span></code>,
+and <span class="math notranslate nohighlight">\(\{u_{ref}\}^T\{u_{ref}\}\)</span> is
+replaced by 1 when it is null. With the inner product</p>
+<div class="math notranslate nohighlight">
+\[\langle (a, \alpha), (b, \beta) \rangle =
+\frac{\{a\}^T\{b\}}{\{u_{ref}\}^T\{u_{ref}\}} + \psi^2 \alpha \beta\]</div>
+<p>the constraint reads <span class="math notranslate nohighlight">\(g = \frac{1}{2}(\langle (\Delta c, \Delta\lambda),
+(\Delta c, \Delta\lambda) \rangle - \Delta s^2) = 0\)</span>.</p>
 <p>Each step starts from a tangent predictor, whose direction follows the
-previous increment, allowing limit points to be passed. At each
-iteration, the bordered system is solved with two solutions of the
-tangent stiffness matrix, <span class="math notranslate nohighlight">\(\{\delta c_R\} = [K_T]^{-1}\{R\}\)</span> and
-<span class="math notranslate nohighlight">\(\{\delta c_q\} = [K_T]^{-1}\{F_{ext}\}\)</span>, and the correction of the load
-factor <span class="math notranslate nohighlight">\(\delta\lambda\)</span> comes from the constraint:</p>
-<ul class="simple">
+previous increment, allowing limit points to be passed. With
+<span class="math notranslate nohighlight">\(\{\delta c_q\} = [K_T]^{-1}\{F_{ext}\}\)</span> at the last converged state,
+the predictor</p>
+<div class="math notranslate nohighlight">
+\[\Delta\lambda = \pm \frac{\Delta s}{\sqrt{\langle (\delta c_q, 1),
+(\delta c_q, 1) \rangle}}, \qquad
+\{\Delta c\} = \Delta\lambda \{\delta c_q\}\]</div>
+<p>satisfies the constraint, with the sign of <span class="math notranslate nohighlight">\(\langle (\delta c_q, 1),
+(\Delta c_{prev}, \Delta\lambda_{prev}) \rangle\)</span>, where
+<span class="math notranslate nohighlight">\((\Delta c_{prev}, \Delta\lambda_{prev})\)</span> is the increment of the
+previous converged step, and a positive sign at the first step. The
+initial arc length, <span class="math notranslate nohighlight">\(\Delta s_0 = initialInc \sqrt{\langle (\delta c_q,
+1), (\delta c_q, 1) \rangle}\)</span> at the origin, corresponds to a load factor
+increment of <code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code> along the initial tangent.</p>
+<p>At each iteration, the residual is <span class="math notranslate nohighlight">\(\{R\} = (\lambda + \Delta\lambda)
+\{F_{ext}\} - \{F_{int}(c + \Delta c)\}\)</span>, and the bordered system is
+solved with two solutions of the tangent stiffness matrix,
+<span class="math notranslate nohighlight">\(\{\delta c_R\} = [K_T]^{-1}\{R\}\)</span> and <span class="math notranslate nohighlight">\(\{\delta c_q\} =
+[K_T]^{-1}\{F_{ext}\}\)</span>; the increment is updated to <span class="math notranslate nohighlight">\((\Delta c +
+\delta c_R + \delta\lambda \, \delta c_q, \Delta\lambda +
+\delta\lambda)\)</span>, where the correction of the load factor
+<span class="math notranslate nohighlight">\(\delta\lambda\)</span> comes from the constraint:</p>
+<ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">method='riks'</span></code>: the constraint is linearized at the current
 increment (updated normal plane), which is Newton-Raphson applied to
-the augmented system and gives quadratic convergence.</p></li>
+the augmented system of the equilibrium equations and the constraint
+(<a class="reference internal" href="#rdc0da8cb83d2-4" id="id2">[4]</a>, Section 9.3.2, p. 272), with quadratic convergence when <span class="math notranslate nohighlight">\([K_T]\)</span>
+is updated at every iteration and is the exact Jacobian. It follows
+Riks <a class="reference internal" href="#rdc0da8cb83d2-1" id="id3">[1]</a>, who applies Newton’s method to the equilibrium equations
+augmented with an equation that controls the arc length, and states
+its quadratic convergence (Sections 3.2 and 3.3, Eqs. (3.7), (3.11)
+and (3.17), pp. 537-539). The equation of Riks is linear (Section 3.1,
+Eqs. (3.4) and (3.9), pp. 537-538): the plane normal to the unit
+tangent of the path at the last converged point, at the distance
+<span class="math notranslate nohighlight">\(\Delta s\)</span> from it, in the unscaled Euclidean space of the load
+parameter and the generalized coordinates; the plane is fixed during
+the iterations of a step and redefined at each converged point.
+Without the mismatch <span class="math notranslate nohighlight">\(g\)</span> of the constraint, it
+is the updated normal plane of Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id4">[3]</a> (p. 75); <a class="reference internal" href="#rdc0da8cb83d2-4" id="id5">[4]</a> (Section
+9.3.2.2, Eq. (9.29), pp. 274-275) attributes the mismatch term to
+Schweizerhof and Wriggers and to Riks:</p>
+<div class="math notranslate nohighlight">
+\[\delta\lambda = -\frac{g + \langle (\Delta c, \Delta\lambda),
+(\delta c_R, 0) \rangle}{\langle (\Delta c, \Delta\lambda),
+(\delta c_q, 1) \rangle}\]</div>
+</li>
 <li><p><code class="docutils literal notranslate"><span class="pre">method='crisfield'</span></code>: the quadratic (spherical) constraint is solved
 exactly, choosing the root with the smallest angle to the current
 increment. When the roots are complex, the linearized constraint is
-used.</p></li>
+used, see <a class="reference internal" href="#rdc0da8cb83d2-2" id="id6">[2]</a>. With <span class="math notranslate nohighlight">\(\{u\} = \{\Delta c\} + \{\delta c_R\}\)</span>, the
+constraint
+<span class="math notranslate nohighlight">\(\langle (u + \delta\lambda \, \delta c_q, \Delta\lambda +
+\delta\lambda), (u + \delta\lambda \, \delta c_q, \Delta\lambda +
+\delta\lambda) \rangle = \Delta s^2\)</span> is the quadratic equation
+<span class="math notranslate nohighlight">\(a \, \delta\lambda^2 + b \, \delta\lambda + c = 0\)</span> with
+<span class="math notranslate nohighlight">\(a = \langle (\delta c_q, 1), (\delta c_q, 1) \rangle\)</span>,
+<span class="math notranslate nohighlight">\(b = 2 \langle (u, \Delta\lambda), (\delta c_q, 1) \rangle\)</span> and
+<span class="math notranslate nohighlight">\(c = \langle (u, \Delta\lambda), (u, \Delta\lambda) \rangle -
+\Delta s^2\)</span>. Its roots are computed as <span class="math notranslate nohighlight">\(q/a\)</span> and <span class="math notranslate nohighlight">\(c/q\)</span>, with
+<span class="math notranslate nohighlight">\(q = -\frac{1}{2}(b + \mathrm{sign}(b) \sqrt{b^2 - 4 a c})\)</span>, and the
+root that maximizes the inner product of the new increment with the
+current one <span class="math notranslate nohighlight">\((\Delta c, \Delta\lambda)\)</span> is chosen, i.e. the smallest
+angle, since both have the length <span class="math notranslate nohighlight">\(\Delta s\)</span>.</p></li>
 </ul>
+<p>The step fails when <span class="math notranslate nohighlight">\(\delta\lambda\)</span> cannot be computed or is not
+finite. With full Newton-Raphson, <span class="math notranslate nohighlight">\([K_T]\)</span> is updated at every iteration
+at the current iterate <span class="math notranslate nohighlight">\((c + \Delta c, \lambda + \Delta\lambda)\)</span>; with
+<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span> <span class="pre">=</span> <span class="pre">True</span></code> the factorization at the last converged state
+is used for the first <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> iterations and the tangent
+is then updated every <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> iterations; at the first
+step with <code class="docutils literal notranslate"><span class="pre">an.kT_initial_state</span> <span class="pre">=</span> <span class="pre">False</span></code> the linear constitutive
+stiffness matrix replaces the tangent of the initial state.</p>
 <p>After each converged step, the arc length is multiplied by
 <code class="docutils literal notranslate"><span class="pre">sqrt(DESIRED_NUM_ITER/num_iter)</span></code>, bounded by <code class="docutils literal notranslate"><span class="pre">MIN_GROWTH_FACTOR</span></code> and
 <code class="docutils literal notranslate"><span class="pre">MAX_GROWTH_FACTOR</span></code> and limited by <code class="docutils literal notranslate"><span class="pre">an.maxInc</span></code>, where <code class="docutils literal notranslate"><span class="pre">num_iter</span></code> is
-the number of corrections of the step. When a step fails, the arc length
-is multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>. The analysis stops when:</p>
-<ul class="simple">
-<li><p>the load factor reaches 1.0, the step where it is exceeded is replaced
-by Newton-Raphson iterations at exactly <span class="math notranslate nohighlight">\(\lambda = 1\)</span></p></li>
-<li><p>the cumulative arc length reaches <code class="docutils literal notranslate"><span class="pre">an.maxArcLength</span></code></p></li>
-<li><p>the arc length becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">MAX_NUM_STEPS</span></code> steps converged</p></li>
-</ul>
+the number of corrections of the step. The factor is at most 1 after a
+step that was repeated, and the limit is in fact
+<code class="docutils literal notranslate"><span class="pre">max(an.maxInc,</span> <span class="pre">initial</span> <span class="pre">arc</span> <span class="pre">length)</span></code>. When a step fails, the arc length
+is multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code> and the step is repeated from the
+same tangent predictor direction. The square root of the ratio is the
+rule recommended by Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id7">[3]</a> (p. 76), who found that the ratio itself,
+as used by Crisfield <a class="reference internal" href="#rdc0da8cb83d2-2" id="id8">[2]</a> (Eq. 15), makes the number of iterations
+oscillate from step to step.</p>
+<p>When the load factor 1.0 is exceeded within a converged step, from
+<span class="math notranslate nohighlight">\(\lambda &lt; 1\)</span> to <span class="math notranslate nohighlight">\(\lambda + \Delta\lambda &gt; 1\)</span>, the step is replaced by
+Newton-Raphson iterations at exactly <span class="math notranslate nohighlight">\(\lambda = 1\)</span>, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._NR_iterations()</span></code></a>, from the predictor
+<span class="math notranslate nohighlight">\(t \{\Delta c\}\)</span> with <span class="math notranslate nohighlight">\(t = (1 - \lambda)/\Delta\lambda\)</span>. When these
+iterations do not converge, the step is repeated with a shorter arc
+length.</p>
 <p>When the load depends on the configuration, i.e. <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> accepts
 the keyword argument <code class="docutils literal notranslate"><span class="pre">c</span></code>, <span class="math notranslate nohighlight">\(\{F_{ext}\}\)</span> in <span class="math notranslate nohighlight">\(\{\delta c_q\}\)</span> and in the
 tangent predictor is the load vector of the current configuration
@@ -528,27 +761,37 @@ once per update of the tangent stiffness matrix, and used in the
 bordered solution; the last one evaluated is the reference of the next
 convergence checks. At the converged state it is kept with the tangent
 stiffness matrix when the step is repeated with a shorter arc length.</p>
-<p>The initial arc length corresponds to a load factor increment of
-<code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code> along the initial tangent. The convergence and
-divergence checks are the same as in the Newton-Raphson solver, see
-<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a> and
-<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_divergence" title="structsolve.newton_raphson._check_divergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_divergence()</span></code></a>, where the relative criterion
-also considers the external force vector of the current increment, and
-<code class="docutils literal notranslate"><span class="pre">an.modified_NR</span></code> and <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code> control how often the
-tangent stiffness matrix is updated.</p>
-<dl class="field-list">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl>
-<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object, the converged load factors and solutions are appended
-to <code class="docutils literal notranslate"><span class="pre">an.increments</span></code> and <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>.</p>
-</dd>
-<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'riks'</span></code> or <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>.</p>
-</dd>
-<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
-</dd>
-</dl>
-</dd>
-</dl>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="rdc0da8cb83d2-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
+<p>Riks, E., An incremental approach to the solution of snapping and
+buckling problems, International Journal of Solids and Structures,
+15(7), 529-551, 1979. <a class="reference external" href="https://doi.org/10.1016/0020-7683(79)90081-7">https://doi.org/10.1016/0020-7683(79)90081-7</a></p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id8">2</a>)</span>
+<p>Crisfield, M.A., A fast incremental/iterative solution procedure
+that handles “snap-through”, Computers &amp; Structures, 13(1-3), 55-62,
+1981. <a class="reference external" href="https://doi.org/10.1016/0045-7949(81)90108-5">https://doi.org/10.1016/0045-7949(81)90108-5</a></p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-3" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id7">2</a>)</span>
+<p>Ramm, E., Strategies for tracing the nonlinear response near
+limit points, in: Wunderlich, W., Stein, E., Bathe, K.J. (eds.),
+Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
+63-89, 1981. <a class="reference external" href="https://doi.org/10.1007/978-3-642-81589-8_5">https://doi.org/10.1007/978-3-642-81589-8_5</a></p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-4" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>4<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>,<a role="doc-backlink" href="#id5">3</a>)</span>
+<p>Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
+Structures, Volume 1: Essentials, John Wiley &amp; Sons, Chichester,
+1991.</p>
+</div>
+</div>
 </dd></dl>
 
 <section id="riks-and-crisfield-methods">
@@ -557,6 +800,8 @@ to <code class="docutils literal notranslate"><span class="pre">an.increments</s
 <dt class="sig sig-object py" id="structsolve.arc_length_riks._solver_arc_length_riks">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length_riks.</span></span><span class="sig-name descname"><span class="pre">_solver_arc_length_riks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length_riks._solver_arc_length_riks" title="Link to this definition">#</a></dt>
 <dd><p>Arc-Length solver using the Riks method</p>
+<p>Runs <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">method='riks'</span></code>.</p>
+<p class="rubric">Notes</p>
 <p>The arc-length constraint is linearized at every iteration (updated
 normal plane), see <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
 </dd></dl>
@@ -565,6 +810,9 @@ normal plane), see <a class="reference internal" href="#structsolve.arc_length._
 <dt class="sig sig-object py" id="structsolve.arc_length_crisfield._solver_arc_length_crisfield">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length_crisfield.</span></span><span class="sig-name descname"><span class="pre">_solver_arc_length_crisfield</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length_crisfield._solver_arc_length_crisfield" title="Link to this definition">#</a></dt>
 <dd><p>Arc-Length solver using Crisfield`s method</p>
+<p>Runs <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a> with
+<code class="docutils literal notranslate"><span class="pre">method='crisfield'</span></code>.</p>
+<p class="rubric">Notes</p>
 <p>The quadratic (spherical) arc-length constraint is solved exactly at
 every iteration, see <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
 </dd></dl>
@@ -625,11 +873,11 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
       </div>
     </a>
     <a class="right-next"
-       href="callbacks.html"
+       href="convergence_api.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</p>
+        <p class="prev-next-title">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

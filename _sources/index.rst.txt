@@ -34,7 +34,8 @@ can run:
   static analyses, see :mod:`.callbacks`
 
 The constrained degrees of freedom of the models, i.e. the null rows and
-columns of the matrices, are removed before solving.
+columns of the matrices, are removed before solving, see
+:doc:`boundary_conditions`.
 
 
 Code repository
@@ -43,19 +44,19 @@ Code repository
 https://github.com/saullocastro/structsolve
 
 
-Citing this library
--------------------
-
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.8.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
-
-
-Eigenvalue solvers
-------------------
+User guide
+----------
 
 .. toctree::
     :maxdepth: 1
 
+    conventions.rst
+    boundary_conditions.rst
+    lb_prestress.rst
     eigensolvers.rst
+    eigen_accuracy.rst
+    convergence.rst
+    sparse_assembly.rst
 
 
 Usage examples
@@ -71,6 +72,15 @@ Usage examples
     ex_arc_length.rst
     ex_follower_loads.rst
     ex_prescribed_displacements.rst
+
+
+Tutorials
+---------
+
+.. toctree::
+    :maxdepth: 1
+
+    tutorial_von_mises_truss.ipynb
 
 
 structsolve API
@@ -104,7 +114,10 @@ distributes NumPy and SciPy, the wheel published on PyPI is installed with
 Changelog
 ---------
 
-https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md
+.. toctree::
+    :maxdepth: 1
+
+    changelog.rst
 
 
 License
@@ -112,6 +125,30 @@ License
 
 .. literalinclude:: ../../LICENSE
     :encoding: latin-1
+
+
+Citing this library
+-------------------
+
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+
+In BibTeX:
+
+.. code-block:: bibtex
+
+    @misc{castro_structsolve,
+      author    = {Castro, Saullo G. P.},
+      title     = {Structural analysis solvers tailored for semi-analytical
+                   models},
+      year      = {2026},
+      version   = {0.9.1},
+      publisher = {Zenodo},
+      doi       = {10.5281/zenodo.2581212},
+      url       = {https://doi.org/10.5281/zenodo.2581212}
+    }
+
+The DOI represents all the versions and resolves to the latest one. The
+repository also has a ``CITATION.cff`` file with the same data.
 
 
 Indices and tables

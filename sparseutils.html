@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Sparse matrix utilities (structsolve.sparseutils) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Sparse matrix utilities (structsolve.sparseutils) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,9 +37,10 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'sparseutils';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -49,7 +50,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -132,6 +133,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -139,29 +161,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -173,6 +174,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -194,9 +237,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -284,8 +341,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -339,9 +438,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -394,6 +507,7 @@
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -461,10 +575,16 @@
   <section id="module-structsolve.sparseutils">
 <span id="sparse-matrix-utilities-structsolve-sparseutils"></span><h1>Sparse matrix utilities (<a class="reference internal" href="#module-structsolve.sparseutils" title="structsolve.sparseutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code></a>)<a class="headerlink" href="#module-structsolve.sparseutils" title="Link to this heading">#</a></h1>
 <p>Utilities for sparse matrices</p>
+<p>Removal of the null rows and columns of the system matrices, assembly of
+symmetric and skew-symmetric matrices from their upper triangle, and a check
+of symmetry.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.sparseutils.finalize_symmetric_matrix">
 <span class="sig-prename descclassname"><span class="pre">structsolve.sparseutils.</span></span><span class="sig-name descname"><span class="pre">finalize_symmetric_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">M</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.sparseutils.finalize_symmetric_matrix" title="Link to this definition">#</a></dt>
 <dd><p>Check for nan and inf values and make a matrix symmetric</p>
+<p>The stored values of <code class="docutils literal notranslate"><span class="pre">M</span></code> are checked with <code class="docutils literal notranslate"><span class="pre">assert</span></code> statements, which
+are skipped when Python runs with optimizations (<code class="docutils literal notranslate"><span class="pre">-O</span></code>), and the matrix
+is completed with <a class="reference internal" href="#structsolve.sparseutils.make_symmetric" title="structsolve.sparseutils.make_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_symmetric()</span></code></a> and converted to CSR format.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -479,6 +599,12 @@
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>AssertionError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">M</span></code> contains <code class="docutils literal notranslate"><span class="pre">nan</span></code> or <code class="docutils literal notranslate"><span class="pre">inf</span></code> values.</p>
+</dd>
+</dl>
+</dd>
 </dl>
 </dd></dl>
 
@@ -486,6 +612,11 @@
 <dt class="sig sig-object py" id="structsolve.sparseutils.is_symmetric">
 <span class="sig-prename descclassname"><span class="pre">structsolve.sparseutils.</span></span><span class="sig-name descname"><span class="pre">is_symmetric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.sparseutils.is_symmetric" title="Link to this definition">#</a></dt>
 <dd><p>Check if a sparse matrix is symmetric</p>
+<p>The off-diagonal non-zero entries below the diagonal are compared with
+their transposed entries above it with <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.allclose()</span></code>, i.e. with
+its default tolerances. <code class="docutils literal notranslate"><span class="pre">False</span></code> is returned without comparing the
+values when the numbers of stored entries below and above the diagonal
+differ.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -499,7 +630,20 @@
 </dd>
 </dl>
 </dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">m</span></code> is not square.</p>
+</dd>
 </dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="linear_buckling.html#structsolve.linear_buckling.is_symmetric" title="structsolve.linear_buckling.is_symmetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">structsolve.linear_buckling.is_symmetric</span></code></a></dt><dd><p>check with a relative norm.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -512,7 +656,8 @@ the terms above the diagonal. Only the upper triagle of matrix <code class="docu
 to be defined.</p>
 <p>The rows, cols and values are evaluated such that where <code class="docutils literal notranslate"><span class="pre">rows</span> <span class="pre">&gt;</span> <span class="pre">cols</span></code>
 the values will be ignored and recreated from the region where <code class="docutils literal notranslate"><span class="pre">cols</span> <span class="pre">&gt;</span>
-<span class="pre">rows</span></code>, in order to obtain a symmetric matrix.</p>
+<span class="pre">rows</span></code>, with the opposite sign, in order to obtain a skew-symmetric
+matrix. The diagonal of <code class="docutils literal notranslate"><span class="pre">m</span></code> is kept as given.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -522,11 +667,23 @@ the values will be ignored and recreated from the region where <code class="docu
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>m_sym</strong><span class="classifier">coo_matrix</span></dt><dd><p>The symmetric sparse matrix.</p>
+<dt><strong>m_skew</strong><span class="classifier">coo_matrix</span></dt><dd><p>The skew-symmetric sparse matrix, of the shape and <code class="docutils literal notranslate"><span class="pre">dtype</span></code> of <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">m</span></code> is not square.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#structsolve.sparseutils.make_symmetric" title="structsolve.sparseutils.make_symmetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_symmetric</span></code></a></dt><dd></dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -547,11 +704,23 @@ the values will be ignored and recreated from the region where <code class="docu
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>m_sym</strong><span class="classifier">coo_matrix</span></dt><dd><p>The symmetric sparse matrix.</p>
+<dt><strong>m_sym</strong><span class="classifier">coo_matrix</span></dt><dd><p>The symmetric sparse matrix, of the shape and <code class="docutils literal notranslate"><span class="pre">dtype</span></code> of <code class="docutils literal notranslate"><span class="pre">m</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">m</span></code> is not square.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#structsolve.sparseutils.make_skew_symmetric" title="structsolve.sparseutils.make_skew_symmetric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_skew_symmetric</span></code></a>, <a class="reference internal" href="#structsolve.sparseutils.finalize_symmetric_matrix" title="structsolve.sparseutils.finalize_symmetric_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">finalize_symmetric_matrix</span></code></a></dt><dd></dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -570,7 +739,10 @@ this is the same as removing the null columns.</p>
 columns to be removed from all the other matrices. Use
 <code class="xref py py-class docutils literal notranslate"><span class="pre">csr_matrix</span></code> to obtain a better performance.</p>
 </dd>
-<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>Keyword argument telling whether the log messages should be printed.</p>
+<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>Keyword argument telling whether the log messages should be printed.
+Default <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">keyword arguments, optional</span></dt><dd><p>Only <code class="docutils literal notranslate"><span class="pre">silent</span></code> is read; other keyword arguments are ignored.</p>
 </dd>
 </dl>
 </dd>
@@ -583,6 +755,13 @@ were kept at the last position.</p>
 </dl>
 </dd>
 </dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><code class="xref py py-obj docutils literal notranslate"><span class="pre">structsolve.static.solve</span></code></dt><dd><p>uses it before solving.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 </section>

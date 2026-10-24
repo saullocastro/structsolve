@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,9 +37,11 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'freq';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
@@ -50,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -133,6 +135,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -140,29 +163,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -174,6 +176,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -195,9 +239,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -285,8 +343,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -340,9 +440,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -395,6 +509,7 @@
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -465,14 +580,33 @@
 <dt class="sig sig-object py" id="structsolve.freq">
 <span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">freq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.freq" title="Link to this definition">#</a></dt>
 <dd><p>Frequency analysis</p>
-<p>Calculates the eigenvalues <span class="math notranslate nohighlight">\(\lambda^2\)</span> and eigenvectors <span class="math notranslate nohighlight">\(\{u\}\)</span> of the
-free-vibration eigenvalue problem:</p>
-<div class="math notranslate nohighlight">
-\[([K] + \lambda^2 [M])\{u\} = \{0\}\]</div>
-<p>where <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span> and <span class="math notranslate nohighlight">\(\omega_n\)</span> is the natural frequency
-in rad/s. The null rows and columns of <code class="docutils literal notranslate"><span class="pre">K</span></code> are removed from both
-matrices before solving the eigenvalue problem, unless
-<code class="docutils literal notranslate"><span class="pre">skip_null_cols=True</span></code>.</p>
+<p>Calculates the eigenvalues <code class="docutils literal notranslate"><span class="pre">lambda2</span></code> and eigenvectors <code class="docutils literal notranslate"><span class="pre">u</span></code> of the
+free-vibration problem of <code class="docutils literal notranslate"><span class="pre">K</span></code> and <code class="docutils literal notranslate"><span class="pre">M</span></code>, i.e. the eigenpairs with
+<code class="docutils literal notranslate"><span class="pre">(K</span> <span class="pre">+</span> <span class="pre">lambda2*M)</span> <span class="pre">&#64;</span> <span class="pre">u</span> <span class="pre">=</span> <span class="pre">0</span></code>, where <code class="docutils literal notranslate"><span class="pre">lambda2</span> <span class="pre">=</span> <span class="pre">-omega_n**2</span></code> and
+<code class="docutils literal notranslate"><span class="pre">omega_n</span></code> is the natural frequency in rad/s. The null rows and columns
+of <code class="docutils literal notranslate"><span class="pre">K</span></code> are removed from both matrices before solving the eigenvalue
+problem, unless <code class="docutils literal notranslate"><span class="pre">skip_null_cols=True</span></code>.</p>
+<p><strong>Solver policy.</strong> As in <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, with <code class="docutils literal notranslate"><span class="pre">sparse_solver=True</span></code> the
+sparse solver runs first for every problem size, and its eigenpairs are
+verified:</p>
+<ul class="simple">
+<li><p>the relative residual of each eigenpair must not be larger than
+<code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
+<li><p>with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, no eigenvalue <code class="docutils literal notranslate"><span class="pre">omega_n**2</span></code> lower than the
+highest one returned may be missing, see <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_freq()</span></code>.</p></li>
+</ul>
+<p>When the verification fails or the sparse solver raises an error, e.g.
+ARPACK did not converge, the dense solver is used as a last resort if
+the problem has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> dofs, with a
+<a class="reference internal" href="linear_buckling.html#structsolve.DenseFallbackWarning" title="structsolve.linear_buckling.DenseFallbackWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">linear_buckling.DenseFallbackWarning</span></code></a> giving the reasons. It
+returns the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> lowest eigenvalues with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>,
+otherwise the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues closest to the shift, as the
+sparse solver, and its eigenpairs are verified as well. Otherwise a
+<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> is raised. Until version 0.5.3, the sparse solver
+only issued a warning when the residual check failed.</p>
+<p>With Intel MKL 2024.2.0 to 2025.0.0, <code class="docutils literal notranslate"><span class="pre">ncv</span></code> of
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> is capped, see <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> and
+<a class="reference internal" href="arpackutils.html#module-structsolve.arpackutils" title="structsolve.arpackutils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -490,7 +624,7 @@ or <code class="xref py py-func docutils literal notranslate"><span class="pre">
 shift-invert mode with a negative shift estimated from the matrices,
 calculating the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues closest to the shift.
 Its eigenpairs are verified, and a dense solver is only used as a
-last resort, see the Notes. With <code class="docutils literal notranslate"><span class="pre">False</span></code>, the full problem is
+last resort, see above. With <code class="docutils literal notranslate"><span class="pre">False</span></code>, the full problem is
 explicitly solved with a dense solver, <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code>, or
 <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code> with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, without trying the
 sparse solver, which calculates all eigenvalues, e.g. for the
@@ -498,9 +632,21 @@ kinetic criterion of stability, and is a reference for validations.</p>
 </dd>
 <dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
 </dd>
-<dt><strong>sort</strong><span class="classifier">bool, optional</span></dt><dd><p>Sort the eigenvectors by increasing natural frequency, keeping only
-those with a natural frequency larger than <code class="docutils literal notranslate"><span class="pre">1e-6</span></code> rad/s. The
-returned eigenvalues are not affected by this option.</p>
+<dt><strong>sort</strong><span class="classifier">bool, optional</span></dt><dd><p>Sort the eigenvalues and the eigenvectors together by increasing
+natural frequency, keeping only those with a natural frequency
+larger than <code class="docutils literal notranslate"><span class="pre">1e-6</span></code> rad/s, e.g. without the rigid-body modes. The
+sort key is the real part of <span class="math notranslate nohighlight">\(\omega_n = \sqrt{-\lambda^2}\)</span> rounded
+to one decimal, then its imaginary part rounded to one decimal, then,
+between equal rounded keys, the exact real and imaginary parts of
+<span class="math notranslate nohighlight">\(\omega_n\)</span>, then those of <span class="math notranslate nohighlight">\(\omega_n^2 = -\lambda^2\)</span>, which separate
+two <span class="math notranslate nohighlight">\(\omega_n^2\)</span> differing at the round-off that have the same
+<span class="math notranslate nohighlight">\(\omega_n\)</span> after the square root. Only identical eigenvalues keep
+the order of the solver, such that a multiple eigenvalue returned
+with round-off differences, in an order that may depend on the
+LAPACK build, is sorted by increasing exact value. With <code class="docutils literal notranslate"><span class="pre">False</span></code>
+the eigenpairs are returned in the order of the solver. Until
+version 0.8.0, only the eigenvectors were sorted and filtered, and
+the eigenpairs with equal rounded keys kept the order of the solver.</p>
 </dd>
 <dt><strong>num_eigvalues</strong><span class="classifier">int, optional</span></dt><dd><p>Number of calculated eigenvalues with the sparse solver, limited to
 the size of <code class="docutils literal notranslate"><span class="pre">M</span></code> minus 2.</p>
@@ -521,30 +667,31 @@ real eigenvalues and eigenvectors normalized with respect to <code class="docuti
 true for both matrices.</p>
 </dd>
 <dt><strong>check_rtol</strong><span class="classifier">float or None, optional</span></dt><dd><p>Maximum relative residual of an eigenpair,
-<span class="math notranslate nohighlight">\(||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)\)</span>. A larger
-residual of the sparse solver is a failed verification, see the
-Notes. For <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, a warning is issued. <code class="docutils literal notranslate"><span class="pre">None</span></code>
+<span class="math notranslate nohighlight">\(||K u + \lambda^2 M u||/(||K u|| + |\lambda^2| ||M u||)\)</span>. For a
+rigid-body mode, whose <span class="math notranslate nohighlight">\(||K u|| + |\lambda^2| ||M u||\)</span> is not larger
+than <code class="docutils literal notranslate"><span class="pre">linear_buckling.RIGID_BODY_RTOL</span></code> times the matrix-norm scale
+<span class="math notranslate nohighlight">\((||K||_F + |\lambda^2| ||M||_F) ||u||\)</span>, the residual is relative to
+this scale, see <code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._relative_residuals()</span></code>. A
+larger residual of the sparse solver is a failed verification, see
+above. For <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, a warning is issued. <code class="docutils literal notranslate"><span class="pre">None</span></code>
 skips the check.</p>
 </dd>
 <dt><strong>max_dense_size</strong><span class="classifier">int, optional</span></dt><dd><p>Maximum size of the dense problem solved as a last resort when the
-sparse solver failed, see the Notes. Larger problems raise a
+sparse solver failed, see above. Larger problems raise a
 <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> instead, and <code class="docutils literal notranslate"><span class="pre">0</span></code> disables the dense fallback.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>lambda2</strong><span class="classifier">ndarray</span></dt><dd><p>Complex array with the eigenvalues <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span>, in the
-order returned by the eigenvalue solver, real with
-<code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>.</p>
+<dt><strong>lambda2</strong><span class="classifier">ndarray</span></dt><dd><p>Complex array with the eigenvalues <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span>, real
+with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, sorted and filtered as described in
+<code class="docutils literal notranslate"><span class="pre">sort</span></code>, otherwise in the order returned by the eigenvalue solver.</p>
 </dd>
-<dt><strong>eigvecs</strong><span class="classifier">ndarray</span></dt><dd><p>The <span class="math notranslate nohighlight">\(i^{th}\)</span> eigenvector is <code class="docutils literal notranslate"><span class="pre">eigvecs[:,</span> <span class="pre">i]</span></code>, with the size of the
-original matrices. The sparse solver returns eigenvectors normalized
-with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>, the dense solver returns eigenvectors with
-unit Euclidean norm. If <code class="docutils literal notranslate"><span class="pre">sort=True</span></code> the columns are sorted and
-filtered as described above, in which case they correspond to the
-eigenvalues in <code class="docutils literal notranslate"><span class="pre">lambda2</span></code> only if the solver already returned them
-in the order of increasing natural frequency.</p>
+<dt><strong>eigvecs</strong><span class="classifier">ndarray</span></dt><dd><p>The <span class="math notranslate nohighlight">\(i^{th}\)</span> eigenvector is <code class="docutils literal notranslate"><span class="pre">eigvecs[:,</span> <span class="pre">i]</span></code>, the eigenvector of
+<code class="docutils literal notranslate"><span class="pre">lambda2[i]</span></code>, with the size of the original matrices. The sparse
+solver returns eigenvectors normalized with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>, the
+dense solver returns eigenvectors with unit Euclidean norm.</p>
 </dd>
 </dl>
 </dd>
@@ -564,26 +711,23 @@ failures.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p><strong>Solver policy.</strong> As in <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, with <code class="docutils literal notranslate"><span class="pre">sparse_solver=True</span></code> the
-sparse solver runs first for every problem size, and its eigenpairs are
-verified:</p>
-<ul class="simple">
-<li><p>the relative residual of each eigenpair must not be larger than
-<code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
-<li><p>with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, no eigenvalue <span class="math notranslate nohighlight">\(\omega_n^2\)</span> lower than the
-highest one returned may be missing: the number of negative pivots of
-<span class="math notranslate nohighlight">\([K] - s [M]\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than this eigenvalue, is the
-number of eigenvalues below <span class="math notranslate nohighlight">\(s\)</span> (Sylvester’s law of inertia).</p></li>
-</ul>
-<p>When the verification fails or the sparse solver raises an error, e.g.
-ARPACK did not converge, the dense solver is used as a last resort if
-the problem has at most <code class="docutils literal notranslate"><span class="pre">max_dense_size</span></code> dofs, with a
-<a class="reference internal" href="linear_buckling.html#structsolve.DenseFallbackWarning" title="structsolve.linear_buckling.DenseFallbackWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">linear_buckling.DenseFallbackWarning</span></code></a> giving the reasons. It
-returns the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> lowest eigenvalues with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>,
-otherwise the <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> eigenvalues closest to the shift, as the
-sparse solver, and its eigenpairs are verified as well. Otherwise a
-<code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> is raised. Until version 0.5.3, the sparse solver
-only issued a warning when the residual check failed.</p>
+<p>The free-vibration eigenvalue problem is</p>
+<div class="math notranslate nohighlight">
+\[([K] + \lambda^2 [M])\{u\} = \{0\}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span> and <span class="math notranslate nohighlight">\(\omega_n\)</span> is the natural frequency
+in rad/s. The sparse solvers solve <span class="math notranslate nohighlight">\([K]\{u\} = \omega_n^2 [M]\{u\}\)</span>
+in shift-invert mode, which returns the <span class="math notranslate nohighlight">\(\omega_n^2\)</span> nearest the shift
+<span class="math notranslate nohighlight">\(\sigma\)</span> (<a class="reference internal" href="#r57ae402ba13f-1" id="id1">[1]</a>, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
+shift is <span class="math notranslate nohighlight">\(\sigma = -|\{y\}^T[K]\{y\} /
+\{y\}^T[M]\{y\}|\)</span>, the Rayleigh quotient of <span class="math notranslate nohighlight">\(\{y\} = [K]^{-1}[M]\{x\}\)</span>
+for a fixed random vector <span class="math notranslate nohighlight">\(\{x\}\)</span>, i.e. one step of inverse iteration
+towards the lowest <span class="math notranslate nohighlight">\(\omega_n^2\)</span>, or <span class="math notranslate nohighlight">\(\sigma = -1\)</span> when <code class="docutils literal notranslate"><span class="pre">K</span></code> is
+singular or the solution is inaccurate. With all <span class="math notranslate nohighlight">\(\omega_n^2 \ge 0\)</span>,
+the eigenvalues nearest a negative shift are the lowest ones.</p>
+<p><strong>Verification.</strong> With <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, the number of negative
+pivots of <span class="math notranslate nohighlight">\([K] - s [M]\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than the highest
+<span class="math notranslate nohighlight">\(\omega_n^2\)</span> returned, is the number of eigenvalues below <span class="math notranslate nohighlight">\(s\)</span>
+(Sylvester’s law of inertia), see <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_freq()</span></code>.</p>
 <p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> uses ARPACK’s symmetric drivers, which
 return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
 2025.0.0 and <code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&gt;</span> <span class="pre">32</span></code>, see <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> and
@@ -593,8 +737,27 @@ by flutter, which the static criterion of <a class="reference internal" href="li
 with <code class="docutils literal notranslate"><span class="pre">K</span></code> the tangent stiffness matrix at a load level, including the
 load stiffness, the eigenvalues <span class="math notranslate nohighlight">\(\lambda^2\)</span> of the general solvers are
 real and negative below the flutter load and become complex conjugate
-pairs above it, when two natural frequencies coalesce (the kinetic
-criterion). A real positive <span class="math notranslate nohighlight">\(\lambda^2\)</span> indicates divergence.</p>
+pairs above it, when two natural frequencies coalesce, a double root of
+the frequency equation. This is the dynamic method of <a class="reference internal" href="#r57ae402ba13f-2" id="id2">[2]</a>
+(Introduction, Sections 6 and 7, pp. 12-17), where <span class="math notranslate nohighlight">\(\lambda\)</span> is the
+characteristic exponent <span class="math notranslate nohighlight">\(s = i\Omega\)</span>. A real positive <span class="math notranslate nohighlight">\(\lambda^2\)</span>,
+i.e. a real positive <span class="math notranslate nohighlight">\(\lambda\)</span>, indicates divergence (<a class="reference internal" href="#r57ae402ba13f-2" id="id3">[2]</a>, p. 17).</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="r57ae402ba13f-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>Lehoucq, R.B., Sorensen, D.C., Yang, C., ARPACK Users’ Guide:
+Solution of Large-Scale Eigenvalue Problems with Implicitly
+Restarted Arnoldi Methods, SIAM, Philadelphia, 1998.
+<a class="reference external" href="https://doi.org/10.1137/1.9780898719628">https://doi.org/10.1137/1.9780898719628</a></p>
+</div>
+<div class="citation" id="r57ae402ba13f-2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id2">1</a>,<a role="doc-backlink" href="#id3">2</a>)</span>
+<p>Bolotin, V.V., Nonconservative Problems of the Theory of Elastic
+Stability, Pergamon Press, Oxford, 1963.</p>
+</div>
+</div>
 </dd></dl>
 
 <p>See also <a class="reference internal" href="eigensolvers.html"><span class="doc">Eigenvalue solvers</span></a> for the solver policy.</p>

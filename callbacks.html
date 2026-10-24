@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.8.0 documentation</title>
+    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.9.1 documentation</title>
   
   
   
@@ -37,20 +37,22 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=486e5634"></script>
+    <script src="_static/documentation_options.js?v=9dc39874"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'callbacks';</script>
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Sparse matrix utilities (structsolve.sparseutils)" href="sparseutils.html" />
-    <link rel="prev" title="Arc-length solvers (structsolve.arc_length)" href="arc_length.html" />
+    <link rel="prev" title="Convergence criteria (structsolve.convergence)" href="convergence_api.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.8.0" />
+  <meta name="docsearch:version" content="0.9.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.8.0 documentation</p>
+    <p class="title logo__title">structsolve 0.9.1 documentation</p>
   
 </a></div>
     
@@ -133,6 +135,27 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
   </a>
@@ -140,29 +163,8 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
-    Linear static analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
-    Linear buckling analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
-    Frequency analysis
-  </a>
-</li>
-
-
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
-    Non-linear static analysis with the Newton-Raphson method
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
   </a>
 </li>
 
@@ -174,6 +176,48 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
@@ -195,9 +239,23 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -285,8 +343,50 @@
   <ul class="bd-navbar-elements navbar-nav">
     
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="eigensolvers.html">
     Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="sparse_assembly.html">
+    Assembling matrices with sparseutils
   </a>
 </li>
 
@@ -340,9 +440,23 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="changelog.html">
+    Changelog
   </a>
 </li>
 
@@ -395,6 +509,7 @@
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arc_length.html">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="convergence_api.html">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="sparseutils.html">Sparse matrix utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.sparseutils</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="arpackutils.html">ARPACK utilities (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arpackutils</span></code>)</a></li>
@@ -462,73 +577,131 @@
   <section id="module-structsolve.callbacks">
 <span id="configuration-dependent-loads-structsolve-callbacks"></span><h1>Configuration-dependent loads (<code class="docutils literal notranslate"><span class="pre">structsolve.callbacks</span></code>)<a class="headerlink" href="#module-structsolve.callbacks" title="Link to this heading">#</a></h1>
 <p>Calls to the callables of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> used by the non-linear solvers</p>
-<p>The callables may depend on the load factor <span class="math notranslate nohighlight">\(\lambda\)</span> and on the
-configuration through their optional keyword arguments, which are passed only
-when the callable declares them explicitly in its signature (a <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code>
-does not count), such that the callables written for the previous versions
-are called exactly as before:</p>
+<p>The callables may depend on the load factor and on the configuration
+through their optional keyword arguments, which are passed only when the
+callable declares them explicitly in its signature (a <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> does not
+count), such that the callables written for the previous versions are called
+exactly as before:</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">inc</span></code>: the current load factor <span class="math notranslate nohighlight">\(\lambda\)</span>, passed to <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>,
-<code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>. It allows configuration-dependent loads, e.g.
-follower pressures, whose configuration-dependent part enters
-<code class="docutils literal notranslate"><span class="pre">calc_fint</span></code> and whose load stiffness enters <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> or <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>,
-both scaled by <span class="math notranslate nohighlight">\(\lambda\)</span>. The residual remains</p>
-<div class="math notranslate nohighlight">
-\[\{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}\]</div>
-<p>with <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> its exact Jacobian <span class="math notranslate nohighlight">\(-\partial R/\partial c\)</span>.</p>
-</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inc</span></code>: the current load factor, passed to <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>, <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and
+<code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>. It allows configuration-dependent loads, e.g. follower
+pressures, whose configuration-dependent part enters <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code> and
+whose load stiffness enters <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> or <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>, both scaled by the
+load factor.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">c</span></code>: the current configuration, passed to <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>, which must then
-return the load vector of that configuration for a unit load factor, i.e.
-<span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at <span class="math notranslate nohighlight">\(c\)</span>. The arc-length solvers use it in the
-predictor and in the constraint instead of the constant reference vector
-<code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">lbd</span></code>: the current load factor <span class="math notranslate nohighlight">\(\lambda\)</span>, passed to <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>
-together with <code class="docutils literal notranslate"><span class="pre">c</span></code>, for a load vector <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> that
-depends on the load factor as well, e.g. prescribed displacements imposed
-exactly as linear constraints <span class="math notranslate nohighlight">\(c = [T] c_r + \{c_{p0}\} + \lambda
-\{c_{p1}\}\)</span>, whose reduced residual</p>
-<div class="math notranslate nohighlight">
-\[\{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
-\{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)\]</div>
-<p>has <span class="math notranslate nohighlight">\(\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
-\{c_{p1}\})\)</span>, with <span class="math notranslate nohighlight">\([K_T]\)</span> evaluated at the current configuration and
-load factor. The keyword <code class="docutils literal notranslate"><span class="pre">inc</span></code> keeps its meaning, the factor that
-multiplies the returned vector, and the solvers keep calling
-<code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">...)</span></code>. When <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> declares <code class="docutils literal notranslate"><span class="pre">lbd</span></code>:</p>
+return the load vector of that configuration for a unit load factor. The
+arc-length solvers use it in the predictor and in the constraint instead
+of the constant reference vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lbd</span></code>: the current load factor, passed to <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> together with
+<code class="docutils literal notranslate"><span class="pre">c</span></code>, for a load vector that depends on the load factor as well, e.g.
+prescribed displacements imposed exactly as linear constraints. The
+keyword <code class="docutils literal notranslate"><span class="pre">inc</span></code> keeps its meaning, the factor that multiplies the returned
+vector, and the solvers keep calling <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">...)</span></code>. When
+<code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> declares <code class="docutils literal notranslate"><span class="pre">lbd</span></code>:</p>
 <ul class="simple">
 <li><p>the arc-length solvers pass <code class="docutils literal notranslate"><span class="pre">lbd</span></code> with <code class="docutils literal notranslate"><span class="pre">c</span></code> in the predictor and in
 the constraint;</p></li>
 <li><p>the arc-length solvers scale the displacements with the linear solution
-of <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at <span class="math notranslate nohighlight">\(c = 0, \lambda = 0\)</span>, instead of
-the linear solution of the reference vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code>, and
-the Newton-Raphson solver uses this linear solution as the predictor of
-its first step;</p></li>
-<li><p>the relative convergence criterion also considers the norm of
-<span class="math notranslate nohighlight">\(\lambda \, \partial R/\partial \lambda\)</span>, see
-<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a>, since under a prescribed
-displacement alone the reference vector and the reduced internal force
-vector both vanish at equilibrium;</p></li>
+of the load vector at <code class="docutils literal notranslate"><span class="pre">c</span> <span class="pre">=</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">lbd</span> <span class="pre">=</span> <span class="pre">0</span></code>, instead of the linear
+solution of the reference vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code>, and the
+Newton-Raphson solver uses this linear solution as the predictor of its
+first step;</p></li>
+<li><p>the convergence criterion also considers the norm of the load
+factor times the load vector, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a>;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">calc_fext(c=c,</span> <span class="pre">lbd=lbd)</span></code> is called at the configurations where the
 tangent stiffness matrix is updated, right after <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and
 <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code> at the same <code class="docutils literal notranslate"><span class="pre">c</span></code> and load factor, such that the callables
-may share their computations, and the last <span class="math notranslate nohighlight">\(\partial R/\partial
-\lambda\)</span> evaluated is the reference of the convergence checks until the
-next update.</p></li>
+may share their computations, and the last load vector evaluated is the
+reference of the convergence checks until the next update.</p></li>
 </ul>
 <p><code class="docutils literal notranslate"><span class="pre">lbd</span></code> is never passed by the linear static analysis,
 <code class="docutils literal notranslate"><span class="pre">Analysis.static(NLgeom=False)</span></code>.</p>
 </li>
 </ul>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading">#</a></h2>
+<p>With <code class="docutils literal notranslate"><span class="pre">inc</span></code>, the residual remains</p>
+<div class="math notranslate nohighlight">
+\[\{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}\]</div>
+<p>with <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> its exact Jacobian <span class="math notranslate nohighlight">\(-\partial R/\partial c\)</span>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">c</span></code>, <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c)</span></code> is <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> at
+<span class="math notranslate nohighlight">\(c\)</span>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, prescribed displacements imposed exactly as linear
+constraints <span class="math notranslate nohighlight">\(c = [T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\}\)</span> give the
+reduced residual</p>
+<div class="math notranslate nohighlight">
+\[\{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
+\{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)\]</div>
+<p>which has <span class="math notranslate nohighlight">\(\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
+\{c_{p1}\})\)</span>, with <span class="math notranslate nohighlight">\([K_T]\)</span> evaluated at the current configuration and
+load factor, the vector that <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c,</span> <span class="pre">lbd=lbd)</span></code> must
+return. The convergence criterion also considers the norm of
+<span class="math notranslate nohighlight">\(\lambda \, \partial R/\partial \lambda\)</span>, since under a prescribed
+displacement alone the reference vector and the reduced internal force
+vector both vanish at equilibrium, and the displacements of the arc-length
+solvers are scaled with the linear solution of <span class="math notranslate nohighlight">\(\partial R/\partial
+\lambda\)</span> at <span class="math notranslate nohighlight">\(c = 0, \lambda = 0\)</span>, since the reference vector
+<code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> may then be null.</p>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.accepts_kwarg">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">accepts_kwarg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.accepts_kwarg" title="Link to this definition">#</a></dt>
 <dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">func</span></code> declares the keyword argument <code class="docutils literal notranslate"><span class="pre">name</span></code></p>
+<p>The argument is declared when it is a named parameter of the signature,
+positional-or-keyword or keyword-only; a <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> does not count. A
+callable whose signature cannot be read by <code class="xref py py-func docutils literal notranslate"><span class="pre">inspect.signature()</span></code> does
+not declare it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>func</strong><span class="classifier">callable</span></dt><dd><p>Function or method to inspect.</p>
+</dd>
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the keyword argument.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>accepts</strong><span class="classifier">bool</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">func</span></code> has a parameter <code class="docutils literal notranslate"><span class="pre">name</span></code> that can be passed by
+keyword.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#structsolve.callbacks.calc_fint" title="structsolve.callbacks.calc_fint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_fint</span></code></a>, <a class="reference internal" href="#structsolve.callbacks.calc_kT" title="structsolve.callbacks.calc_kT"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_kT</span></code></a>, <a class="reference internal" href="#structsolve.callbacks.calc_load_vector" title="structsolve.callbacks.calc_load_vector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_load_vector</span></code></a></dt><dd><p>calls that depend on it.</p>
+</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.calc_fint">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_fint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_fint" title="Link to this definition">#</a></dt>
 <dd><p><code class="docutils literal notranslate"><span class="pre">an.calc_fint</span></code> at <code class="docutils literal notranslate"><span class="pre">c</span></code>, with <code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> when accepted</p>
+<p>Calls <code class="docutils literal notranslate"><span class="pre">an.calc_fint(c=c,</span> <span class="pre">silent=True)</span></code>, adding <code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> only when
+<code class="docutils literal notranslate"><span class="pre">an.calc_fint</span></code> declares <code class="docutils literal notranslate"><span class="pre">inc</span></code>, see <a class="reference internal" href="#structsolve.callbacks.accepts_kwarg" title="structsolve.callbacks.accepts_kwarg"><code class="xref py py-func docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object providing <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>.</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">array-like</span></dt><dd><p>Configuration, the vector of the degrees of freedom.</p>
+</dd>
+<dt><strong>lbd</strong><span class="classifier">float</span></dt><dd><p>Current load factor, dimensionless, passed as <code class="docutils literal notranslate"><span class="pre">inc</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>fint</strong><span class="classifier">array-like</span></dt><dd><p>The internal force vector returned by <code class="docutils literal notranslate"><span class="pre">an.calc_fint</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -536,27 +709,42 @@ next update.</p></li>
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_kT</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_kT" title="Link to this definition">#</a></dt>
 <dd><p>Tangent stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> at <code class="docutils literal notranslate"><span class="pre">c</span></code>, with
 <code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> passed to the callables that accept it</p>
+<p>Calls <code class="docutils literal notranslate"><span class="pre">an.calc_kC(c=c,</span> <span class="pre">NLgeom=True,</span> <span class="pre">silent=True)</span></code> and
+<code class="docutils literal notranslate"><span class="pre">an.calc_kG(c=c,</span> <span class="pre">NLgeom=True,</span> <span class="pre">silent=True)</span></code>, each with <code class="docutils literal notranslate"><span class="pre">inc=lbd</span></code> only
+when it declares <code class="docutils literal notranslate"><span class="pre">inc</span></code>, see <a class="reference internal" href="#structsolve.callbacks.accepts_kwarg" title="structsolve.callbacks.accepts_kwarg"><code class="xref py py-func docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a>, and returns their
+sum.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object providing <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>.</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">array-like</span></dt><dd><p>Configuration, the vector of the degrees of freedom.</p>
+</dd>
+<dt><strong>lbd</strong><span class="classifier">float</span></dt><dd><p>Current load factor, dimensionless, passed as <code class="docutils literal notranslate"><span class="pre">inc</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>kT</strong><span class="classifier">sparse matrix or ndarray</span></dt><dd><p>The sum of the matrices returned by <code class="docutils literal notranslate"><span class="pre">an.calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">an.calc_kG</span></code>,
+of the type given by them.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.calc_load_vector">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">calc_load_vector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.calc_load_vector" title="Link to this definition">#</a></dt>
 <dd><p>Derivative of the residual with respect to the load factor</p>
-<p>Returns <span class="math notranslate nohighlight">\(\{q\} = \partial R/\partial \lambda\)</span> at the configuration <code class="docutils literal notranslate"><span class="pre">c</span></code>
-and the load factor <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, used by the solvers in the predictors, in
-the arc-length constraint and in the convergence criterion. It is the
-external load vector only for loads that do not depend on the
-configuration; with prescribed displacements imposed exactly it also
-contains <span class="math notranslate nohighlight">\(-[T]^T [K_T] \{c_{p1}\}\)</span>, see the module docstring.</p>
-<p>With prescribed displacements, <span class="math notranslate nohighlight">\(\{q\}\)</span> is not their reaction force: it
-has the size of the reduced problem and acts on the free degrees of
-freedom. It is the out-of-balance force produced by a unit increment of
-the load factor at the current configuration, with the free degrees of
-freedom held fixed. The reaction is a quantity of the full problem,
-e.g. the generalized reaction work-conjugate to <span class="math notranslate nohighlight">\(\lambda\)</span>, <span class="math notranslate nohighlight">\(P =
-\{c_{p1}\}^T (\{F_{int}(c)\} - \lambda \{F_{ext}\})\)</span>. <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>
-does not compute it; see for instance <code class="docutils literal notranslate"><span class="pre">MultiDomain.reaction_pd</span></code> of
-<span class="math notranslate nohighlight">\(panels\)</span>.</p>
+<p>Returns the load vector <code class="docutils literal notranslate"><span class="pre">q</span></code> given by <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> for a unit load
+factor at the configuration <code class="docutils literal notranslate"><span class="pre">c</span></code> and the load factor <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, used by
+the solvers in the predictors, in the arc-length constraint and in the
+convergence criterion. With prescribed displacements, <code class="docutils literal notranslate"><span class="pre">q</span></code> is not their
+reaction force: it has the size of the reduced problem and acts on the
+free degrees of freedom. <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> does not compute the reaction;
+see for instance <code class="docutils literal notranslate"><span class="pre">MultiDomain.reaction_pd</span></code> of <span class="math notranslate nohighlight">\(panels\)</span>.</p>
 <p><code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> is called with <code class="docutils literal notranslate"><span class="pre">inc=1.</span></code> and only with the keyword
 arguments that it declares:</p>
 <ul class="simple">
@@ -585,18 +773,65 @@ and <code class="docutils literal notranslate"><span class="pre">fext</span></co
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p><span class="math notranslate nohighlight">\(\{q\} = \partial R/\partial \lambda\)</span> is the external load vector only
+for loads that do not depend on the configuration; with prescribed
+displacements imposed exactly it also contains <span class="math notranslate nohighlight">\(-[T]^T [K_T]
+\{c_{p1}\}\)</span>, see the module docstring.</p>
+<p>With prescribed displacements, <span class="math notranslate nohighlight">\(\{q\}\)</span> is the out-of-balance force
+produced by a unit increment of the load factor at the current
+configuration, with the free degrees of freedom held fixed. The reaction
+is a quantity of the full problem, e.g. the generalized reaction
+work-conjugate to <span class="math notranslate nohighlight">\(\lambda\)</span>, <span class="math notranslate nohighlight">\(P = \{c_{p1}\}^T (\{F_{int}(c)\} - \lambda
+\{F_{ext}\})\)</span>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.is_load_configuration_dependent">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">is_load_configuration_dependent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.is_load_configuration_dependent" title="Link to this definition">#</a></dt>
 <dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> accepts the configuration <code class="docutils literal notranslate"><span class="pre">c</span></code></p>
+<p>When it does, the solvers evaluate the load vector at the current
+configuration, see <a class="reference internal" href="#structsolve.callbacks.calc_load_vector" title="structsolve.callbacks.calc_load_vector"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_load_vector()</span></code></a>, and the linear static
+analysis iterates on the load, see <a class="reference internal" href="analysis.html#structsolve.Analysis.static" title="structsolve.Analysis.static"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Analysis.static()</span></code></a>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object providing <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dependent</strong><span class="classifier">bool</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> declares the keyword argument <code class="docutils literal notranslate"><span class="pre">c</span></code>,
+see <a class="reference internal" href="#structsolve.callbacks.accepts_kwarg" title="structsolve.callbacks.accepts_kwarg"><code class="xref py py-func docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.is_load_factor_dependent">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">is_load_factor_dependent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.is_load_factor_dependent" title="Link to this definition">#</a></dt>
 <dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> accepts the load factor <code class="docutils literal notranslate"><span class="pre">lbd</span></code></p>
+<p>When it does, the solvers pass the current load factor to <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>
+together with <code class="docutils literal notranslate"><span class="pre">c</span></code>, see <a class="reference internal" href="#structsolve.callbacks.calc_load_vector" title="structsolve.callbacks.calc_load_vector"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_load_vector()</span></code></a> and the module
+docstring.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object providing <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dependent</strong><span class="classifier">bool</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> declares the keyword argument <code class="docutils literal notranslate"><span class="pre">lbd</span></code>,
+see <a class="reference internal" href="#structsolve.callbacks.accepts_kwarg" title="structsolve.callbacks.accepts_kwarg"><code class="xref py py-func docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -612,12 +847,12 @@ and <code class="docutils literal notranslate"><span class="pre">fext</span></co
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="arc_length.html"
+       href="convergence_api.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Arc-length solvers (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length</span></code>)</p>
+        <p class="prev-next-title">Convergence criteria (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.convergence</span></code>)</p>
       </div>
     </a>
     <a class="right-next"
@@ -648,6 +883,7 @@ and <code class="docutils literal notranslate"><span class="pre">fext</span></co
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#notes">Notes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.accepts_kwarg"><code class="docutils literal notranslate"><span class="pre">accepts_kwarg()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_fint"><code class="docutils literal notranslate"><span class="pre">calc_fint()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_kT"><code class="docutils literal notranslate"><span class="pre">calc_kT()</span></code></a></li>
