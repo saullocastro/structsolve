@@ -1,8 +1,6 @@
 # Changelog
 
-## 0.9.2 (2026-10-24)
-
-Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
+## 0.9.3 (2026-10-25)
 
 ### Python versions
 
@@ -86,8 +84,8 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   raising a `RuntimeError`.
 - `lb` and the other eigenpairs of `freq` keep the relative residual of
   0.8.0, without any floor of its denominator. The floor of `1e-8` times
-  the matrix-norm scale for every eigenpair, in the development version of
-  0.9.0, loosened the check about 1000 times for models with stiff penalty
+  the matrix-norm scale for every eigenpair, in the development version,
+  loosened the check about 1000 times for models with stiff penalty
   springs, whose `||K||_F` is many orders of magnitude larger than
   `||K u||`: inaccurate eigenpairs of `eigsh` were accepted without
   warning, e.g. lowest load multipliers of blade-stiffened plates of
@@ -149,10 +147,20 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   criterion: the step through the limit point returned exactly to the
   converged point before the last one. Paths without such a step are
   unchanged.
+- `lb`, `freq` and `arpackutils.capped_eigsh` no longer reset the registry
+  of the warnings already shown: a warning of the caller under the
+  `'default'` action, shown once per location, was shown again after each
+  call, e.g. in a loop calling `lb`. Seven helpers wrapped
+  `scipy.sparse.linalg.splu`, or `spsolve` in `freq`, in
+  `warnings.catch_warnings()`, whose exit resets this registry of every
+  module. `splu` of a CSC matrix issues no warning, and the blocks are
+  removed; the shift of `freq` detects an exactly singular stiffness matrix
+  with the `RuntimeError` of `splu` instead of the `MatrixRankWarning` of
+  `spsolve`. New test `tests/test_warnings_registry.py`.
 
 ### Documentation
 
-- The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+- The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.
 
 ## 0.8.0 (2026-10-14)
 
