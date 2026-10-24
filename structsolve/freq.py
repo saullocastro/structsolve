@@ -5,12 +5,10 @@ with the sparse eigenvalue solvers first and with a dense solver as a last
 resort, with a :class:`.linear_buckling.DenseFallbackWarning`.
 
 """
-import warnings
-
 import numpy as np
 import scipy
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import eigs, spsolve
+from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse.linalg import eigs, splu
 from scipy.linalg import eigh, LinAlgError
 
 from .arpackutils import capped_eigsh, release_memory, start_kwargs
@@ -24,11 +22,10 @@ from .sparseutils import remove_null_cols
 def _estimate_sigma(K, M):
     try:
         rhs = M @ np.random.RandomState(42).randn(K.shape[0])
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            y = spsolve(K, rhs)
-        if any(issubclass(w.category, (RuntimeWarning, Warning))
-               and "singular" in str(w.message).lower() for w in caught):
+        try:
+            y = splu(csc_matrix(K)).solve(rhs)
+        except RuntimeError:
+            # exactly singular
             return -1.
         residual = np.linalg.norm(K @ y - rhs)
         if residual > 1e-6 * np.linalg.norm(rhs):

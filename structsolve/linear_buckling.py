@@ -71,9 +71,7 @@ def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
     singular, not positive definite, or the linear solution is
     inaccurate"""
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K))
+        lu = splu(csc_matrix(K))
         x = np.random.RandomState(42).randn(K.shape[0])
         Kx = K @ x
         mu_max = 0.
@@ -146,10 +144,8 @@ def _negative_pivots(A):
 
     """
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(A), permc_spec='MMD_AT_PLUS_A',
-                      diag_pivot_thresh=0., options=dict(SymmetricMode=True))
+        lu = splu(csc_matrix(A), permc_spec='MMD_AT_PLUS_A',
+                  diag_pivot_thresh=0., options=dict(SymmetricMode=True))
     except RuntimeError:
         # exactly singular
         return None
@@ -466,9 +462,7 @@ def _eigh_condensed(K, KG, k):
     if a.size:
         Kab = csc_matrix(K[a, :][:, b])
         Kba = K[b, :][:, a]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K[a, :][:, a]))
+        lu = splu(csc_matrix(K[a, :][:, a]))
         # solving blocks of right-hand sides with at most ~1e7 entries
         chunk = max(1, int(1e7) // a.size)
         for j0 in range(0, b.size, chunk):
@@ -704,9 +698,7 @@ def _eig_condensed(K, KG, k):
     if a.size:
         Kab = csc_matrix(K[a, :][:, b])
         Kba = K[b, :][:, a]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K[a, :][:, a]))
+        lu = splu(csc_matrix(K[a, :][:, a]))
         chunk = max(1, int(1e7) // a.size)
         for j0 in range(0, b.size, chunk):
             j1 = min(j0 + chunk, b.size)
@@ -724,10 +716,18 @@ def _eig_condensed(K, KG, k):
 
 def _splu(A):
     """SuperLU factorization of ``A`` with partial pivoting, raising a
-    ``RuntimeError`` when ``A`` is exactly singular"""
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        return splu(csc_matrix(A))
+    ``RuntimeError`` when ``A`` is exactly singular
+
+    :func:`scipy.sparse.linalg.splu` warns only when it converts its input
+    to the CSC format, :class:`scipy.sparse.SparseEfficiencyWarning`, which
+    the conversion here avoids, as in the other calls of this package. No
+    :func:`warnings.catch_warnings` block is used: its exit resets the
+    registry of the warnings already shown, of every module, and the
+    warnings of the caller shown once per location would be shown again
+    after each call.
+
+    """
+    return splu(csc_matrix(A))
 
 
 def _permutation_parity(p):
