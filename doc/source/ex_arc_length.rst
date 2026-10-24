@@ -20,3 +20,12 @@ one of the ``structsolve`` unit tests:
 
 .. literalinclude:: ../../tests/test_arc_length.py
     :pyobject: test_arc_length_snap_through
+
+The previous converged point is at the distance of the arc length from the
+last one, and the iterations of a step may converge to it, especially with
+long steps or near a limit point: such a step, whose increment points against
+the tangent predictor, is repeated with a shorter arc length, such that the
+path is not traced backwards:
+
+.. literalinclude:: ../../tests/test_arc_length.py
+    :pyobject: test_arc_length_no_doubling_back
