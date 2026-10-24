@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 (2026-10-24)
+
+### Documentation
+
+- The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+
 ## 0.9.0 (2026-10-24)
 
 ### Python versions
