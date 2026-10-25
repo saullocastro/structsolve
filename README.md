@@ -46,7 +46,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 * version 0.9.3 (2026-10-25)
     - Crisfield's convergence criterion is the default of the non-linear analyses, `Analysis.convergence = 'crisfield'`, with `relTOL = 1e-9`: the residual and the reference forces are measured with the norm scaled by the diagonal of `calc_kC()` over the free degrees of freedom; the former check is kept with `convergence = 'relative'`
     - `lb` returns the negative load multipliers closest to zero after the positive ones, and a tensile reference load no longer needs the dense fallback
-    - `freq(sort=True)` sorts and filters `lambda2` together with the eigenvectors, and rigid-body modes no longer fail the verification of the residuals
+    - `freq(sort=True)` sorts and filters `lambda2` together with the eigenvectors, and neither rigid-body modes nor eigenpairs with an eigenvalue close to zero whose backward error is at the round-off, e.g. pre-stressed close to buckling, fail the verification of the residuals any more
     - arc-length solvers: a converged step that points back along the path is repeated with half the arc length, instead of being accepted
     - documentation published again: pandoc installed in the documentation workflow
     - `lb` and `freq` no longer reset the registry of the warnings already shown, which made a warning of the caller under the `'default'` action be shown again after each call

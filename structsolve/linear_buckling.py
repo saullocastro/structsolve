@@ -63,6 +63,11 @@ INERTIA_COUNT_FACTOR = 1e6
 #: \|[M]\|_F)\|\{u\}\|`, 100 times the machine precision, see
 #: :func:`_relative_residuals`
 RIGID_BODY_RTOL = 100*np.finfo(float).eps
+#: An eigenpair of :func:`.freq` whose relative residual is larger than
+#: ``check_rtol`` passes the residual check when its normwise backward error
+#: is not larger than this value, the machine precision, i.e. when it is
+#: accurate up to the round-off, see :func:`_backward_errors`
+BACKWARD_ERROR_RTOL = np.finfo(float).eps
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -370,7 +375,10 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
     connections up to `10^4` times the penalty constants of ``calc_kt_kr``,
     against at least 540 times for the genuine eigenpairs of these plates,
     inaccurate ones included, hence ``RIGID_BODY_RTOL``. :func:`lb` uses the
-    relative residual only: a finite load multiplier is never null.
+    relative residual only: a finite load multiplier is never null. The
+    eigenpairs of :func:`.freq` whose relative residual is larger than
+    ``check_rtol`` are also accepted when their backward error is at the
+    round-off, see :func:`_backward_errors`.
 
     """
     Au = A @ u
@@ -385,6 +393,107 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
     residual = np.full(lam.shape, np.inf)
     np.divide(num, den, out=residual, where=den > 0)
     return residual
+
+
+def _backward_errors(A, B, lam, u):
+    r"""Normwise backward errors of the eigenpairs of `([A] + \lambda [B])
+    \{u\} = \{0\}`, used by :func:`.freq`
+
+    Parameters
+    ----------
+    A, B : sparse_matrix or ndarray
+        Matrices, shape ``(n, n)``.
+    lam : array_like
+        Finite eigenvalues, real or complex, shape ``(k,)``.
+    u : ndarray
+        Eigenvectors, ``u[:, i]`` that of ``lam[i]``, shape ``(n, k)``.
+
+    Returns
+    -------
+    backward_error : ndarray
+        ``||A u + lam B u|| / ((||A||_F + |lam| ||B||_F) ||u||)``, one per
+        eigenpair, shape ``(k,)``, ``inf`` when the denominator is null.
+
+    Notes
+    -----
+    The normwise backward error of an approximate eigenpair `(\lambda,
+    \{u\})`
+
+    .. math::
+
+        \eta = \frac{\|[A]\{u\} + \lambda [B]\{u\}\|}{(\|[A]\|_F + |\lambda|
+        \, \|[B]\|_F) \|\{u\}\|}
+
+    is the smallest `\epsilon` such that `(\lambda, \{u\})` is an exact
+    eigenpair of `([A] + [\Delta A]) + \lambda ([B] + [\Delta B])` with
+    `\|[\Delta A]\| \le \epsilon \|[A]\|_F` and `\|[\Delta B]\| \le \epsilon
+    \|[B]\|_F` ([1]_, Theorem 1, Eq. (2.3), with the tolerances `\|[A]\|_F`
+    and `\|[B]\|_F`). The perturbations that attain it are of rank one, so
+    that their Frobenius norm is their 2-norm, and for symmetric matrices and
+    a real `\lambda` the minimum is the same with symmetric perturbations
+    ([1]_, Theorem 2).
+
+    The relative residual of :func:`_relative_residuals` is `\eta` times
+    `(\|[A]\|_F + |\lambda| \, \|[B]\|_F)\|\{u\}\|/(\|[A]\{u\}\| + |\lambda|
+    \, \|[B]\{u\}\|)`, a ratio that is large for an eigenvalue close to zero
+    of a nearly singular `[A]`, e.g. a frequency analysis pre-stressed close
+    to buckling, whose eigenvalue is then sensitive to the round-off of the
+    entries of `[A]`. :func:`.freq` accepts an eigenpair whose relative
+    residual is larger than ``check_rtol`` when `\eta \le`
+    ``BACKWARD_ERROR_RTOL`` `= \epsilon`, the machine precision: the
+    eigenpair is exact for matrices that differ from `[K]` and `[M]` by
+    perturbations of the order of the round-off of their entries, and it is
+    as accurate as the matrices allow.
+
+    Measured with SciPy 1.17.1 and Intel MKL 2025.0.0 for the cantilever of
+    49 ``BeamC`` elements of ``pyfe3d`` pre-stressed to 0.9999 of its
+    buckling load, ``tests/data/beam_cantilever_*.npz``, whose two lowest
+    eigenvalues are `\omega_n^2 = 0.0895`: the relative residuals of these
+    eigenpairs are `2.5 \cdot 10^{-6}` to `9.1 \cdot 10^{-6}`, larger than
+    the default ``check_rtol=1e-6``, with ``eigsh``, ``eigs`` and the dense
+    solvers, and `(\|[K]\{u\}\| + |\lambda^2| \, \|[M]\{u\}\|)/((\|[K]\|_F
+    + |\lambda^2| \, \|[M]\|_F)\|\{u\}\|) = 5.0 \cdot 10^3 \epsilon`, while
+    their backward errors are `0.012 \epsilon` to `0.046 \epsilon`, i.e.
+    ``BACKWARD_ERROR_RTOL`` is 22 times the largest one. The inaccurate
+    eigenpairs of ``eigsh`` for the lowest load multipliers of the
+    blade-stiffened panel with penalty connections of
+    ``tests/data/blade_stiffened_penalty_*.npz``, see
+    :func:`_relative_residuals`, and of six variants with other blade
+    heights, numbers of terms and 1000 times the penalty constants of
+    ``calc_kt_kr``, have relative residuals of `1.6 \cdot 10^{-3}` to
+    `9.7 \cdot 10^{-2}` and backward errors of `14 \epsilon` to `1200
+    \epsilon`: the smallest one is 14 times ``BACKWARD_ERROR_RTOL``, and they
+    are rejected. The backward error of an inaccurate eigenpair is its
+    relative residual times the ratio above, which decreases as the penalty
+    constants increase; the smallest one, `14 \epsilon`, was measured with
+    1000 times the penalty constants of ``calc_kt_kr``.
+
+    :func:`lb` keeps the relative residual only. For the cantilever above,
+    with `[K] = [K_{C0}] + f \lambda_{cr} [K_G]`, the load multipliers
+    `(1 - f) \lambda_{cr}` close to zero of the dense solver have relative
+    residuals from `4.7 \cdot 10^{-7}` for `f = 0.9999` to `5.1 \cdot
+    10^{-4}` for `f = 1 - 10^{-7}`, below its default ``check_rtol=1e-3``.
+    With ``check_rtol=1e-3`` the backward error would only accept eigenpairs
+    whose ratio above is lower than `1000 \epsilon`, the range of the penalty
+    connections with 1000 times the penalty constants, where the inaccurate
+    eigenpairs above lie.
+
+    References
+    ----------
+    .. [1] Tisseur, F., Backward error and condition of polynomial eigenvalue
+       problems, Linear Algebra and its Applications, 309(1-3), 339-361,
+       2000. https://doi.org/10.1016/S0024-3795(99)00063-4
+
+    """
+    Au = A @ u
+    Bu = B @ u
+    lam = np.asarray(lam)
+    num = np.linalg.norm(Au + Bu*lam, axis=0)
+    scale = (_frobenius(A) + np.abs(lam)*_frobenius(B)
+             )*np.linalg.norm(u, axis=0)
+    backward_error = np.full(lam.shape, np.inf)
+    np.divide(num, scale, out=backward_error, where=scale > 0)
+    return backward_error
 
 
 def _null_mu(mu, scale=None):

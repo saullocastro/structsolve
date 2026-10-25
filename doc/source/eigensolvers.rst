@@ -26,10 +26,17 @@ Solver policy
   \epsilon`, `\epsilon` the machine precision, times the matrix-norm scale
   `(\|[K]\|_F + |\lambda| \, \|[M]\|_F)\|\{u\}\|`, is the residual relative
   to this scale, see
-  :func:`.linear_buckling._relative_residuals`. The check of the other
-  eigenpairs, e.g. of models with stiff penalty springs, whose
-  `\|[K]\|_F` is many orders of magnitude larger than `\|[K]\{u\}\|`, is
-  not loosened.
+  :func:`.linear_buckling._relative_residuals`. An eigenpair of
+  :func:`.freq` whose relative residual is larger than ``check_rtol``
+  passes when its normwise backward error, the residual relative to the
+  matrix-norm scale, is not larger than ``BACKWARD_ERROR_RTOL`` `=
+  \epsilon`, i.e. when it is accurate up to the round-off, e.g. an
+  eigenvalue close to zero of a model pre-stressed close to buckling, see
+  :func:`.linear_buckling._backward_errors`. The check of the other
+  eigenpairs, e.g. the inaccurate ones of models with stiff penalty
+  springs, whose `\|[K]\|_F` is many orders of magnitude larger than
+  `\|[K]\{u\}\|`, is not loosened, and :func:`.lb` keeps the relative
+  residual only.
 - When all the sparse solvers failed (verification, ARPACK error or no
   convergence, singular factorization, no positive real load multiplier
   for unsymmetric matrices...), a dense solver is used as a last resort, if
