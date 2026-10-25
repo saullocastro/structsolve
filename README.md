@@ -43,7 +43,7 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.9.3 (2026-10-25)
+* version 0.9.3 (2026-10-26)
     - Crisfield's convergence criterion is the default of the non-linear analyses, `Analysis.convergence = 'crisfield'`, with `relTOL = 1e-9`: the residual and the reference forces are measured with the norm scaled by the diagonal of `calc_kC()` over the free degrees of freedom; the former check is kept with `convergence = 'relative'`
     - With both convergence criteria, an iteration also converges at the round-off floor of its residual, `3 eps ||(|K_C0| |c|)||`: the arc-length methods trace the snap-through of a low arch at `relTOL = 1e-9` through the null load where they stopped
     - `lb` returns the negative load multipliers closest to zero after the positive ones, and a tensile reference load no longer needs the dense fallback
