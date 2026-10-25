@@ -2,22 +2,22 @@ Prescribed displacements imposed exactly
 ========================================
 
 A prescribed displacement can be imposed exactly as a linear constraint on
-the degrees of freedom, `\{c\} = [T]\{c_r\} + \{c_{p0}\} + \lambda
-\{c_{p1}\}`, where `[T]` is a basis of the null space of the constraints and
+the degrees of freedom, `\{c\} = [Z]\{c_r\} + \{c_{p0}\} + \lambda
+\{c_{p1}\}`, where `[Z]` is a basis of the null space of the constraints and
 `\{c_{p0}\}`, `\{c_{p1}\}` are particular solutions for the constant and the
 incremented prescribed values, as done by the null-space method of
 `panels <https://github.com/saullocastro/panels>`_. The reduced residual is
 
 .. math::
 
-    \{R_r(c_r, \lambda)\} = [T]^T \left(\lambda \{F_{ext}\} -
-    \{F_{int}([T]\{c_r\} + \{c_{p0}\} + \lambda \{c_{p1}\})\}\right)
+    \{R_r(c_r, \lambda)\} = [Z]^T \left(\lambda \{F_{ext}\} -
+    \{F_{int}([Z]\{c_r\} + \{c_{p0}\} + \lambda \{c_{p1}\})\}\right)
 
 and its derivative with respect to the load factor,
 
 .. math::
 
-    \frac{\partial R_r}{\partial \lambda} = [T]^T \left(\{F_{ext}\} -
+    \frac{\partial R_r}{\partial \lambda} = [Z]^T \left(\{F_{ext}\} -
     [K_T(c)]\{c_{p1}\}\right)
 
 depends on the configuration and on the load factor. ``calc_fext`` receives

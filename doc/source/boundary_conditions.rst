@@ -49,19 +49,19 @@ Null space of the constraints, reduce and expand
 ------------------------------------------------
 
 General linear constraints `[C]\{c\} = \{0\}`, e.g. multi-point constraints
-or the connection of several domains, are imposed with a basis `[T]` of the
-null space of `[C]`, `\{c\} = [T]\{c_r\}`, which reduces the matrices to
+or the connection of several domains, are imposed with a basis `[Z]` of the
+null space of `[C]`, `\{c\} = [Z]\{c_r\}`, which reduces the matrices to
 
 .. math::
 
-    [K_r] = [T]^T[K][T], \qquad [K_{G_r}] = [T]^T[K_G][T], \qquad
-    [M_r] = [T]^T[M][T], \qquad \{f_r\} = [T]^T\{f\}
+    [K_r] = [Z]^T[K][Z], \qquad [K_{G_r}] = [Z]^T[K_G][Z], \qquad
+    [M_r] = [Z]^T[M][Z], \qquad \{f_r\} = [Z]^T\{f\}
 
 The solvers return the reduced vectors `\{c_r\}` and the eigenvectors in the
-reduced coordinates, expanded by the user with `\{c\} = [T]\{c_r\}`. The
-partition of the free dofs is the particular case where `[T]` contains the
+reduced coordinates, expanded by the user with `\{c\} = [Z]\{c_r\}`. The
+partition of the free dofs is the particular case where `[Z]` contains the
 columns of the identity matrix of the free dofs. Prescribed values different
-from zero add a particular solution, `\{c\} = [T]\{c_r\} + \{c_p\}`, see
+from zero add a particular solution, `\{c\} = [Z]\{c_r\} + \{c_p\}`, see
 :doc:`ex_prescribed_displacements`.
 
 

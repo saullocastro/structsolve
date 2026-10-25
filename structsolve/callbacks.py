@@ -57,15 +57,15 @@ With ``c``, ``calc_fext(inc=1., c=c)`` is `\partial R/\partial \lambda` at
 `c`.
 
 With ``lbd``, prescribed displacements imposed exactly as linear
-constraints `c = [T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\}` give the
+constraints `c = [Z] c_r + \{c_{p0}\} + \lambda \{c_{p1}\}` give the
 reduced residual
 
 .. math::
 
-    \{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
-    \{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
+    \{R_r(c_r, \lambda)\} = [Z]^T \left( \lambda \{F_{ext}\} -
+    \{F_{int}([Z] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
 
-which has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
+which has `\partial R_r/\partial \lambda = [Z]^T(\{F_{ext}\} - [K_T]
 \{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
 load factor, the vector that ``calc_fext(inc=1., c=c, lbd=lbd)`` must
 return. The convergence criterion also considers the norm of
@@ -256,7 +256,7 @@ def calc_load_vector(an, c, fext, lbd=None):
     -----
     `\{q\} = \partial R/\partial \lambda` is the external load vector only
     for loads that do not depend on the configuration; with prescribed
-    displacements imposed exactly it also contains `-[T]^T [K_T]
+    displacements imposed exactly it also contains `-[Z]^T [K_T]
     \{c_{p1}\}`, see the module docstring.
 
     With prescribed displacements, `\{q\}` is the out-of-balance force

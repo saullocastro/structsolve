@@ -178,6 +178,7 @@
 
 - The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.
 - `structsolve.convergence`: the origin of the scaled norm is cited as the sources state it: Crisfield (1981, p. 58) attributes the scaling to Peano and Riccioni and uses it in his arc-length procedure, and Crisfield (1991, Sec. 9.5.4, Eq. 9.48) presents it as an alternative to the Euclidean norm of the residual, not as a recommendation; the dependence of the Euclidean norm on the units is no longer attributed to Crisfield (1991), who says that the scaling matrix could be used to give all parameters the same dimensions.
+- Notation: the basis of the null space of the constraints is `[Z]`, `{c} = [Z]{c_r} + {c_p0} + lbd*{c_p1}`, instead of `[T]`, in `structsolve.callbacks`, the pages on boundary conditions and prescribed displacements, the tests and the 0.7.0 entry of this changelog; no name of the API changes, none contained the basis.
 
 ## 0.8.0 (2026-10-14)
 
@@ -228,9 +229,9 @@
 ### New: load vectors that depend on the load factor
 
 For prescribed displacements imposed exactly as linear constraints, e.g. by
-the null-space method of `panels`, `c = T c_r + c_p0 + lbd*c_p1`, the
+the null-space method of `panels`, `c = Z c_r + c_p0 + lbd*c_p1`, the
 derivative of the reduced residual with respect to the load factor,
-`dR_r/dlbd = T^T (F_ext - K_T(c) c_p1)`, depends on the configuration and on
+`dR_r/dlbd = Z^T (F_ext - K_T(c) c_p1)`, depends on the configuration and on
 the load factor. All the changes apply only when `calc_fext` declares the
 new keyword argument `lbd` (a `**kwargs` does not count); the callables that
 do not declare it are called exactly as before and give the same results.
