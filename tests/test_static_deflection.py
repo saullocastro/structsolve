@@ -5,7 +5,7 @@ from scipy.sparse import csc_matrix
 
 from structsolve import solve
 
-from ritz import isotropic_plate, vecf, vecfxi, vecfxixi
+from ritz import isotropic_plate, vecf, vecf_xi, vecf_xixi
 
 
 def test_static_deflection_plate_clpt():
@@ -39,21 +39,24 @@ def test_static_deflection_plate_clpt():
 
     for xi, wxi in zip(pts1, weights1):
         P_xi = vecf(m1, xi, xit1, xir1, xit2, xir2)
-        Px_xi = vecfxi(m1, xi, xit1, xir1, xit2, xir2)
-        Pxx_xi = vecfxixi(m1, xi, xit1, xir1, xit2, xir2)
+        P_xi_xi = vecf_xi(m1, xi, xit1, xir1, xit2, xir2)
+        P_xi_xixi = vecf_xixi(m1, xi, xit1, xir1, xit2, xir2)
 
         for eta, weta in zip(pts2, weights2):
             P_eta = vecf(m2, eta, etat1, etar1, etat2, etar2)
-            Px_eta = vecfxi(m2, eta, etat1, etar1, etat2, etar2)
-            Pxx_eta = vecfxixi(m2, eta, etat1, etar1, etat2, etar2)
+            P_eta_eta = vecf_xi(m2, eta, etat1, etar1, etat2, etar2)
+            P_eta_etaeta = vecf_xixi(m2, eta, etat1, etar1, etat2, etar2)
 
-            Swxx = (Pxx_xi[:, None] * P_eta[None, :] * (2 / a)**2).ravel()
-            Swyy = (P_xi[:, None] * Pxx_eta[None, :] * (2 / b)**2).ravel()
-            Swxy = (Px_xi[:, None] * Px_eta[None, :] * (2 / a) * (2 / b)).ravel()
+            Sw_xx = (P_xi_xixi[:, None] * P_eta[None, :]
+                     * (2 / a)**2).ravel()
+            Sw_yy = (P_xi[:, None] * P_eta_etaeta[None, :]
+                     * (2 / b)**2).ravel()
+            Sw_xy = (P_xi_xi[:, None] * P_eta_eta[None, :]
+                     * (2 / a) * (2 / b)).ravel()
 
-            e1xx = -Swxx
-            e1yy = -Swyy
-            e1xy = -2 * Swxy
+            e1xx = -Sw_xx
+            e1yy = -Sw_yy
+            e1xy = -2 * Sw_xy
 
             Mxx = prop.D11 * e1xx + prop.D12 * e1yy + prop.D16 * e1xy
             Myy = prop.D12 * e1xx + prop.D22 * e1yy + prop.D26 * e1xy
