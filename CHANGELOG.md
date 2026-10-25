@@ -180,6 +180,10 @@
 - `structsolve.convergence`: the origin of the scaled norm is cited as the sources state it: Crisfield (1981, p. 58) attributes the scaling to Peano and Riccioni and uses it in his arc-length procedure, and Crisfield (1991, Sec. 9.5.4, Eq. 9.48) presents it as an alternative to the Euclidean norm of the residual, not as a recommendation; the dependence of the Euclidean norm on the units is no longer attributed to Crisfield (1991), who says that the scaling matrix could be used to give all parameters the same dimensions.
 - Notation: the basis of the null space of the constraints is `[Z]`, `{c} = [Z]{c_r} + {c_p0} + lbd*{c_p1}`, instead of `[T]`, in `structsolve.callbacks`, the pages on boundary conditions and prescribed displacements, the tests and the 0.7.0 entry of this changelog; no name of the API changes, none contained the basis.
 
+### Tests
+
+- `tests/test_arc_length_fung_kaplan.py`: both arc-length methods, with both convergence criteria, on the modal model of a low sinusoidal arch under a sinusoidal load of Fung and Kaplan (NACA TN 2840, 1952), harmonics 1 and 2: the symmetric path, their Eq. (23), through both limit points, whose loads are those of their Eq. (25) within a tolerance given by the step size, the two null loads and the bifurcation point of their Eq. (31), before the limit point only when `lambda_1**2 > 5.5`, also at the default step sizes and `relTOL = 1e-9`; and the asymmetric path of an imperfect arch, whose extreme loads are those of their Eq. (15).
+
 ## 0.8.0 (2026-10-14)
 
 ### Performance: fewer evaluations and factorizations, same solutions
