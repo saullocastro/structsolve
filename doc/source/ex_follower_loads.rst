@@ -16,8 +16,9 @@ by default.
 Non-linear analyses
 -------------------
 
-Hardening springs under a load `\lambda(\boldsymbol{q}_0 + \boldsymbol{Q} \boldsymbol{c})` with an
-unsymmetric `\boldsymbol{Q}`: the callables receive the load factor and the
+Hardening springs under a load `\lambda(\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})` with an
+unsymmetric load stiffness matrix `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda
+\boldsymbol{K}_{F_{ref}}`: the callables receive the load factor and the
 configuration, and Newton-Raphson and the arc-length methods converge to the
 equilibrium path. The Riks method converges quadratically only with the load
 vector of the current configuration:

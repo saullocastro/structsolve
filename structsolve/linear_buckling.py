@@ -136,7 +136,7 @@ def _negative_pivots(A):
     r"""Number of negative eigenvalues of the symmetric sparse matrix ``A``
 
     ``A`` is factorized with a symmetric permutation and without row
-    interchanges, i.e. `\boldsymbol{P} \boldsymbol{A} \boldsymbol{P}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with the pivots `\boldsymbol{D}` on
+    interchanges, i.e. `\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with the pivots `\boldsymbol{D}` on
     the diagonal of `\boldsymbol{U} = \boldsymbol{D} \boldsymbol{L}^\top`. By Sylvester's law of inertia, the
     number of negative pivots is the number of negative eigenvalues of
     ``A``.
@@ -785,7 +785,7 @@ def _eig_condensed(K, KG, k):
     condensed out with an LU factorization of ``K``, and the condensed
     problem is solved with :func:`scipy.linalg.eig`, through the complex
     LAPACK driver ``zggev``, see :func:`_eig_complex`. Neither converting to
-    the standard problem `\boldsymbol{S}^{-1} \boldsymbol{K}_{G_{bb}}` (``dgeev``) nor limiting the
+    the standard problem `(\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}` (``dgeev``) nor limiting the
     threads of BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL
     2025.0.0. The ``k`` returned eigenpairs, see :func:`_general_eigenpairs`,
     are real when they are all real, and complex eigenvectors are
@@ -859,7 +859,7 @@ def _permutation_parity(p):
 
 def _det_sign(lu):
     r"""Sign of the determinant of a real matrix from its SuperLU
-    factorization `\boldsymbol{P}_r \boldsymbol{A} \boldsymbol{P}_c = \boldsymbol{L} \boldsymbol{U}`, with a unit `\boldsymbol{L}`"""
+    factorization `\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c = \boldsymbol{L} \boldsymbol{U}`, with a unit `\boldsymbol{L}`"""
     d = lu.U.diagonal()
     return (int(np.prod(np.sign(d))) * _permutation_parity(lu.perm_r)
             * _permutation_parity(lu.perm_c))
