@@ -204,6 +204,33 @@
   with the `RuntimeError` of `splu` instead of the `MatrixRankWarning` of
   `spsolve`. New test `tests/test_warnings_registry.py`.
 
+### Sign convention of the residual
+
+- The residual is `R = Fint - lbd*Fext`, instead of `lbd*Fext - Fint`, in
+  the code and the documentation, such that the tangent stiffness matrix is
+  its Jacobian, `K_T = dR/dc`, the Newton-Raphson corrections solve
+  `K_T dc = -R`, and `dR/dlbd = -Fext`; the load vector that
+  `calc_fext(inc=1., c=c)` or `calc_fext(inc=1., c=c, lbd=lbd)` returns,
+  unchanged, is `-dR/dlbd`. The same convention as `pyfe3d.solver` and
+  `panels`. Each changed operation is the exact negation of the former one:
+  `fint - fext` instead of `fext - fint` in
+  `Analysis._linear_static_follower`, `newton_raphson._NR_iterations`
+  (also in the line search) and `arc_length._solver_arc_length`, and
+  `solve_kT(-R)` or `solve_k0(-R)` instead of `solve_kT(R)` or
+  `solve_k0(R)`. Over the test suite, the load factors and the solution
+  vectors of the 139 calls of `Analysis.static`, 2411 vectors, are bitwise
+  identical before and after, the signs of the zeros included. The test
+  helpers that compute residuals follow the same convention; the method
+  `dR_dlbd` of `tests/test_load_factor_dependent_load.py` is renamed
+  `load_vector`.
+- **Breaking**, in the documentation of an argument only: the argument `R`
+  of `convergence.check_convergence` and `convergence.crisfield_zeta`,
+  as released in 0.9.2, and of `newton_raphson._check_convergence`, is
+  `fint - fext` (`fint - fext_total`) instead of `fext - fint`. These
+  functions use only norms of `R` and `max(abs(R))`, and they return the
+  same values for both signs. No callable of `Analysis` receives or returns
+  a residual, and no attribute stores one.
+
 ### Documentation
 
 - The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.

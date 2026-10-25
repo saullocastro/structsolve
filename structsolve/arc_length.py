@@ -121,10 +121,12 @@ def _solver_arc_length(an, method, silent=False):
     1), (\delta \boldsymbol{c}_q, 1) \rangle}` at the origin, corresponds to a load factor
     increment of ``an.initialInc`` along the initial tangent.
 
-    At each iteration, the residual is `\boldsymbol{R} = (\lambda + \Delta\lambda)
-    \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c} + \Delta \boldsymbol{c})`, and the bordered system is
+    At each iteration, the residual is `\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c} +
+    \Delta \boldsymbol{c}) - (\lambda + \Delta\lambda) \boldsymbol{F}_{ext}`, with `\partial
+    \boldsymbol{R}/\partial \lambda = -\boldsymbol{F}_{ext}`, and the bordered system
+    `\boldsymbol{K}_T \delta \boldsymbol{c} - \delta\lambda \, \boldsymbol{F}_{ext} = -\boldsymbol{R}` is
     solved with two solutions of the tangent stiffness matrix,
-    `\delta \boldsymbol{c}_R = \boldsymbol{K}_T^{-1} \boldsymbol{R}` and `\delta \boldsymbol{c}_q =
+    `\delta \boldsymbol{c}_R = -\boldsymbol{K}_T^{-1} \boldsymbol{R}` and `\delta \boldsymbol{c}_q =
     \boldsymbol{K}_T^{-1} \boldsymbol{F}_{ext}`; the increment is updated to `(\Delta \boldsymbol{c} +
     \delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \Delta\lambda +
     \delta\lambda)`, where the correction of the load factor
@@ -217,7 +219,7 @@ def _solver_arc_length(an, method, silent=False):
     When the load depends on the configuration, i.e. ``calc_fext`` accepts
     the keyword argument ``c``, `\boldsymbol{F}_{ext}` in `\delta \boldsymbol{c}_q` and in the
     tangent predictor is the load vector of the current configuration
-    ``calc_fext(inc=1., c=c)``, the derivative `\partial \boldsymbol{R}/\partial
+    ``calc_fext(inc=1., c=c)``, minus the derivative `\partial \boldsymbol{R}/\partial
     \lambda` of the residual, whereas `\boldsymbol{u}_{ref}` remains the linear
     solution of the reference vector. The callables that accept ``inc``
     receive the current load factor, see :mod:`.callbacks`.
@@ -225,12 +227,12 @@ def _solver_arc_length(an, method, silent=False):
     When ``calc_fext`` also accepts the keyword argument ``lbd``, e.g. for
     prescribed displacements imposed exactly, it receives the load factor
     together with the configuration, `\boldsymbol{F}_{ext}` above being then
-    `\partial \boldsymbol{R}/\partial \lambda` at the current `c` and `\lambda`;
-    `\boldsymbol{u}_{ref}` is the linear solution of `\partial \boldsymbol{R}/\partial \lambda`
+    `-\partial \boldsymbol{R}/\partial \lambda` at the current `c` and `\lambda`;
+    `\boldsymbol{u}_{ref}` is the linear solution of `-\partial \boldsymbol{R}/\partial \lambda`
     at `c = 0`, `\lambda = 0`, since the reference vector may be null, e.g.
-    under a prescribed displacement alone; and `\lambda \, \partial
-    R/\partial \lambda` is an additional reference of the relative
-    convergence criterion. `\partial \boldsymbol{R}/\partial \lambda` is evaluated
+    under a prescribed displacement alone; and `-\lambda \, \partial
+    \boldsymbol{R}/\partial \lambda` is an additional reference of the relative
+    convergence criterion. `-\partial \boldsymbol{R}/\partial \lambda` is evaluated
     together with the tangent stiffness matrix, at the same iterate, i.e.
     once per update of the tangent stiffness matrix, and used in the
     bordered solution; the last one evaluated is the reference of the next
@@ -264,7 +266,7 @@ def _solver_arc_length(an, method, silent=False):
     K0_abs = _abs_matrix(kC0)
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
-        # dR/dlbd at c = 0 and lbd = 0
+        # -dR/dlbd at c = 0 and lbd = 0
         q0 = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
         u_ref = solve(kC0, q0, silent=True)
     else:
@@ -306,7 +308,7 @@ def _solver_arc_length(an, method, silent=False):
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
                 break
-            # load vector of the converged configuration, dR/dlbd, kept with
+            # load vector of the converged configuration, -dR/dlbd, kept with
             # the tangent stiffness matrix when the step is repeated
             if step_num == 1 and lbd_dependent:
                 q_conv = q0
@@ -337,7 +339,7 @@ def _solver_arc_length(an, method, silent=False):
         Rnorms = []
         solve_kT = solve_kT_conv
         dc_q = dc_q_conv
-        # the last dR/dlbd evaluated, with the tangent stiffness matrix
+        # the last -dR/dlbd evaluated, with the tangent stiffness matrix
         q_iter = q_conv
         iter_kT = 0
         iteration = 0
@@ -345,7 +347,7 @@ def _solver_arc_length(an, method, silent=False):
             iteration += 1
             fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
-            R = fext_total - fint
+            R = fint - fext_total
             q_ref = None
             if lbd_dependent:
                 q_ref = (lbd + dlbd)*q_iter
@@ -372,7 +374,7 @@ def _solver_arc_length(an, method, silent=False):
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
                 if lbd_dependent:
-                    # dR/dlbd at the iterate of the tangent stiffness matrix
+                    # -dR/dlbd at the iterate of the tangent stiffness matrix
                     q_iter = callbacks.calc_load_vector(an, c + dc, fext,
                                                         lbd + dlbd)
                     dc_q = solve_kT(q_iter)
@@ -380,7 +382,7 @@ def _solver_arc_length(an, method, silent=False):
                     dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
                                                                fext))
                 iter_kT = 1
-            dc_R = solve_kT(R)
+            dc_R = solve_kT(-R)
 
             # linearized constraint
             den = inner(dc, dlbd, dc_q, 1.)

@@ -10,7 +10,7 @@ vectors of ``an.cs``, and `\lambda` the load factor, the values of
 
 .. math::
 
-    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \lambda \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c})
+    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext}
 
 with `\boldsymbol{F}_{ext}` = ``calc_fext(inc=1.)`` and `\boldsymbol{F}_{int}` =
 ``calc_fint(c)``, and the tangent stiffness matrix is
@@ -18,10 +18,12 @@ with `\boldsymbol{F}_{ext}` = ``calc_fext(inc=1.)`` and `\boldsymbol{F}_{int}` =
 .. math::
 
     \boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G = \frac{\partial \boldsymbol{F}_{int}}{\partial \boldsymbol{c}}
-          = -\frac{\partial \boldsymbol{R}}{\partial \boldsymbol{c}}
+          = \frac{\partial \boldsymbol{R}}{\partial \boldsymbol{c}}
 
 with `\boldsymbol{K}_C` = ``calc_kC(c, NLgeom=True)`` and `\boldsymbol{K}_G` = ``calc_kG(c,
-NLgeom=True)``. A configuration-dependent load `\boldsymbol{F}(\boldsymbol{c})` has the load
+NLgeom=True)``, such that the Newton-Raphson corrections solve
+`\boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}`, and `\partial \boldsymbol{R}/\partial
+\lambda = -\boldsymbol{F}_{ext}`. A configuration-dependent load `\boldsymbol{F}(\boldsymbol{c})` has the load
 stiffness matrix `-\partial \boldsymbol{F}/\partial \boldsymbol{c}`, which enters `\boldsymbol{K}_T`, see
 :mod:`.callbacks`. The linear static analysis solves `\boldsymbol{K}_{C0} \boldsymbol{c} =
 \boldsymbol{F}_{ext}`, with `\boldsymbol{K}_{C0}` = ``calc_kC()``.

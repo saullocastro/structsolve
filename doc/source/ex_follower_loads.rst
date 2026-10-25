@@ -6,7 +6,7 @@ pressures, are supported through optional keyword arguments of the callables
 of :class:`.Analysis`, see :mod:`.callbacks`: ``calc_fint``, ``calc_kC`` and
 ``calc_kG`` receive the load factor ``inc`` when they declare it, and
 ``calc_fext`` receives the current configuration ``c``, returning the load
-vector `\partial \boldsymbol{R}/\partial \lambda` used by the arc-length methods. Their
+vector `-\partial \boldsymbol{R}/\partial \lambda` used by the arc-length methods. Their
 load stiffness makes the tangent stiffness matrix unsymmetric in general,
 which the solvers support: :func:`.solve` and the non-linear solvers use LU
 factorizations, :func:`.lb` selects the solvers of unsymmetric matrices when

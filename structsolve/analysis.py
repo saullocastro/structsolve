@@ -177,14 +177,15 @@ class Analysis(object):
 
     .. math::
 
-        \boldsymbol{R} = \lambda \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c}) = \boldsymbol{0}
+        \boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}
 
     and the tangent stiffness matrix `\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G`, given by the
     callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
-    `\boldsymbol{F}_{int}` with respect to `\boldsymbol{c}`, such that the Newton-Raphson
-    iterations converge quadratically. The convergence is checked by
-    default with Crisfield's criterion, the residual and the reference
-    force vectors scaled with the diagonal of the linear stiffness matrix
+    `\boldsymbol{F}_{int}` with respect to `\boldsymbol{c}`, `\boldsymbol{K}_T = \partial
+    \boldsymbol{R}/\partial \boldsymbol{c}`, such that the Newton-Raphson
+    iterations, `\boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}`, converge
+    quadratically. The convergence is checked by default with Crisfield's
+    criterion, the residual and the reference force vectors scaled with the diagonal of the linear stiffness matrix
     ``calc_kC()`` over the free degrees of freedom, such that it does not
     depend on the units of each degree of freedom, e.g. translations and
     rotations, see :mod:`.convergence`; ``convergence = 'relative'`` keeps
@@ -209,15 +210,15 @@ class Analysis(object):
       such that ``calc_fint`` may contain the configuration-dependent part of
       the load, scaled by ``inc``, and ``calc_kC + calc_kG`` its derivative.
     - ``calc_fext(inc=1., c=c)`` must return the load vector of the
-      configuration ``c`` for a unit load factor, the derivative of the
-      residual with respect to the load factor, used by the arc-length
-      solvers.
+      configuration ``c`` for a unit load factor, minus the derivative of
+      the residual with respect to the load factor, `-\partial
+      \boldsymbol{R}/\partial \lambda`, used by the arc-length solvers.
     - ``calc_fext(inc=1., c=c, lbd=lbd)`` also receives the current load
       factor when it declares ``lbd``, for a derivative `\partial
-      R/\partial \lambda` that depends on the load factor, e.g. prescribed
+      \boldsymbol{R}/\partial \lambda` that depends on the load factor, e.g. prescribed
       displacements imposed exactly as linear constraints, where the
       reference vector ``calc_fext(inc=1.)`` may be null. The solvers then
-      use `\partial \boldsymbol{R}/\partial \lambda` for the displacement scale of the
+      use `-\partial \boldsymbol{R}/\partial \lambda` for the displacement scale of the
       arc-length methods, for the predictor of the first Newton-Raphson
       increment and as a reference of the convergence criterion, see
       :mod:`.callbacks`. The linear static analysis never passes
@@ -384,7 +385,7 @@ class Analysis(object):
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
-            R = fext - fint
+            R = fint - fext
             conv, Rnorm, Rrel, roundoff = _check_convergence(self, R, fint,
                     fext, w=w, Kc_abs=k0_abs @ np.abs(c), full_output=True)
             msg('Iteration: %d, %s = %1.3e%s' % (iteration, 'zeta' if
@@ -400,7 +401,7 @@ class Analysis(object):
                     solve_k0 = _factorize(k0)
                 except RuntimeError:
                     break
-            c = c + solve_k0(R)
+            c = c + solve_k0(-R)
         warn('The load correction iterations did not converge, the load may '
              'exceed the critical load of the linearized problem', level=1,
              silent=silent)

@@ -108,11 +108,11 @@ def test_crisfield_weights_and_zeta():
     np.testing.assert_allclose(w, [0.25, 0.5, 0.])
     fext = np.array([2., 0., 7.])
     fint = np.array([1., 1., 0.])
-    R = fext - fint
+    R = fint - fext
     zeta = crisfield_zeta(R, fext, fint, w)
     ref = max(np.sqrt(4*0.25), np.sqrt(0.25 + 0.5))
     np.testing.assert_allclose(zeta, np.sqrt(0.25 + 0.5)/ref)
-    # an additional reference, e.g. lbd*dR/dlbd
+    # an additional reference, e.g. -lbd*dR/dlbd
     assert crisfield_zeta(R, fext, fint, w, q=np.array([10., 0., 0.])) < zeta
     assert crisfield_zeta(np.zeros(3), np.zeros(3), np.zeros(3), w) == 0.
     assert crisfield_zeta(R, np.zeros(3), np.zeros(3), w) == np.inf
@@ -133,7 +133,7 @@ def test_check_convergence_criteria():
     w = np.array([1., 1.e-6])
     fext = np.array([1., 0.])
     fint = np.array([1., 0.5])
-    R = fext - fint
+    R = fint - fext
     # the second component is a moment of a stiff rotation
     conv, Rnorm, zeta = _check_convergence(an, R, fint, fext, w=w)
     assert conv and zeta < 1.e-3

@@ -51,6 +51,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
     - arc-length solvers: a converged step that points back along the path is repeated with half the arc length, instead of being accepted
     - documentation published again: pandoc installed in the documentation workflow
     - `lb` and `freq` no longer reset the registry of the warnings already shown, which made a warning of the caller under the `'default'` action be shown again after each call
+    - The residual is `R = Fint - lbd*Fext`, the convention of `pyfe3d.solver` and `panels`, with `K_T dc = -R` in the Newton-Raphson corrections and `dR/dlbd = -Fext`; the solutions are bitwise identical
 * version 0.8.0 (2026-10-14)
     - Fewer evaluations and factorizations, same solutions: `dR/dlbd` is evaluated together with the tangent stiffness matrix only, Newton-Raphson reuses the factorization of the tangent while it is not updated, the follower linear static analysis factorizes `K0` once, and `lb` estimates its shift and the inertia of `K` once for all its attempts
 * version 0.7.0 (2026-10-13)

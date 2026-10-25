@@ -49,11 +49,11 @@ With ``inc``, the residual remains
 
 .. math::
 
-    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \lambda \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c}, \lambda)
+    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \boldsymbol{F}_{int}(\boldsymbol{c}, \lambda) - \lambda \boldsymbol{F}_{ext}
 
-with ``calc_kC + calc_kG`` its exact Jacobian `-\partial \boldsymbol{R}/\partial \boldsymbol{c}`.
+with ``calc_kC + calc_kG`` its exact Jacobian `\partial \boldsymbol{R}/\partial \boldsymbol{c}`.
 
-With ``c``, ``calc_fext(inc=1., c=c)`` is `\partial \boldsymbol{R}/\partial \lambda` at
+With ``c``, ``calc_fext(inc=1., c=c)`` is `-\partial \boldsymbol{R}/\partial \lambda` at
 `c`.
 
 With ``lbd``, prescribed displacements imposed exactly as linear
@@ -62,17 +62,18 @@ reduced residual
 
 .. math::
 
-    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left( \lambda \boldsymbol{F}_{ext} -
-    \boldsymbol{F}_{int}(\boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}) \right)
+    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left(
+    \boldsymbol{F}_{int}(\boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}) -
+    \lambda \boldsymbol{F}_{ext} \right)
 
-which has `\partial \boldsymbol{R}_r/\partial \lambda = \boldsymbol{Z}^\top(\boldsymbol{F}_{ext} - \boldsymbol{K}_T
+which has `-\partial \boldsymbol{R}_r/\partial \lambda = \boldsymbol{Z}^\top(\boldsymbol{F}_{ext} - \boldsymbol{K}_T
 \boldsymbol{c}_{p1})`, with `\boldsymbol{K}_T` evaluated at the current configuration and
 load factor, the vector that ``calc_fext(inc=1., c=c, lbd=lbd)`` must
 return. The convergence criterion also considers the norm of
-`\lambda \, \partial \boldsymbol{R}/\partial \lambda`, since under a prescribed
+`-\lambda \, \partial \boldsymbol{R}/\partial \lambda`, since under a prescribed
 displacement alone the reference vector and the reduced internal force
 vector both vanish at equilibrium, and the displacements of the arc-length
-solvers are scaled with the linear solution of `\partial \boldsymbol{R}/\partial
+solvers are scaled with the linear solution of `-\partial \boldsymbol{R}/\partial
 \lambda` at `c = 0, \lambda = 0`, since the reference vector
 ``calc_fext(inc=1.)`` may then be null.
 
@@ -217,7 +218,8 @@ def is_load_factor_dependent(an):
 
 
 def calc_load_vector(an, c, fext, lbd=None):
-    r"""Derivative of the residual with respect to the load factor
+    r"""Load vector, minus the derivative of the residual with respect to the
+    load factor
 
     Returns the load vector ``q`` given by ``an.calc_fext`` for a unit load
     factor at the configuration ``c`` and the load factor ``lbd``, used by
@@ -250,11 +252,11 @@ def calc_load_vector(an, c, fext, lbd=None):
     Returns
     -------
     q : array-like
-        `\partial \boldsymbol{R}/\partial \lambda`.
+        `-\partial \boldsymbol{R}/\partial \lambda`.
 
     Notes
     -----
-    `\boldsymbol{q} = \partial \boldsymbol{R}/\partial \lambda` is the external load vector only
+    `\boldsymbol{q} = -\partial \boldsymbol{R}/\partial \lambda` is the external load vector only
     for loads that do not depend on the configuration; with prescribed
     displacements imposed exactly it also contains `-\boldsymbol{Z}^\top \boldsymbol{K}_T
     \boldsymbol{c}_{p1}`, see the module docstring.

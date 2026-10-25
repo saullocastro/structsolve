@@ -2,7 +2,7 @@ Convergence and troubleshooting of non-linear analyses
 ======================================================
 
 The non-linear analyses of :class:`.Analysis` solve the equilibrium
-`\boldsymbol{R} = \lambda \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c}) = \boldsymbol{0}` in increments of the
+`\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}` in increments of the
 load factor (Newton-Raphson) or of the arc length (Riks and Crisfield). The
 attributes of :class:`.Analysis` listed below control the iterations of each
 increment and the size of the increments.
@@ -30,7 +30,7 @@ The criterion is selected with ``Analysis.convergence``, see
 
   and the iteration converged when `\zeta \le` ``relTOL``, default
   ``1e-9``. `\Delta\lambda \boldsymbol{F}_{ext}` is a reference of the arc-length
-  methods only, and `\lambda \, \partial \boldsymbol{R}/\partial \lambda` of load
+  methods only, and `-\lambda \, \partial \boldsymbol{R}/\partial \lambda` of load
   vectors that depend on the load factor, see :mod:`.callbacks`. The
   criterion does not depend on the units of each degree of freedom, e.g.
   translations and rotations, and the residual at the constrained degrees

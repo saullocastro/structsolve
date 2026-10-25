@@ -10,21 +10,22 @@ incremented prescribed values, as done by the null-space method of
 
 .. math::
 
-    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left(\lambda \boldsymbol{F}_{ext} -
-    \boldsymbol{F}_{int}(\boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1})\right)
+    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left(
+    \boldsymbol{F}_{int}(\boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}) -
+    \lambda \boldsymbol{F}_{ext}\right)
 
-and its derivative with respect to the load factor,
+and minus its derivative with respect to the load factor,
 
 .. math::
 
-    \frac{\partial \boldsymbol{R}_r}{\partial \lambda} = \boldsymbol{Z}^\top \left(\boldsymbol{F}_{ext} -
+    -\frac{\partial \boldsymbol{R}_r}{\partial \lambda} = \boldsymbol{Z}^\top \left(\boldsymbol{F}_{ext} -
     \boldsymbol{K}_T(\boldsymbol{c}) \boldsymbol{c}_{p1}\right)
 
 depends on the configuration and on the load factor. ``calc_fext`` receives
 both when it declares the keyword arguments ``c`` and ``lbd``, see
 :mod:`.callbacks`. Under a prescribed displacement alone, `F_{ext} = 0`, the
 reference vector ``calc_fext(inc=1.)`` and the reduced internal force vector
-both vanish at equilibrium, and the solvers use `\partial \boldsymbol{R}/\partial
+both vanish at equilibrium, and the solvers use `-\partial \boldsymbol{R}/\partial
 \lambda` for the displacement scale of the arc-length methods, the predictor
 of the first Newton-Raphson increment and the convergence
 criterion.
