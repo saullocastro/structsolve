@@ -38,6 +38,36 @@
   `newton_raphson._check_convergence` and `_NR_iterations`. The log of the
   iterations prints `zeta` with `'crisfield'`.
 
+### Round-off floor of the convergence criteria
+
+- With both criteria, an iteration has also converged when the norm of its
+  residual, `||R||_d` with `'crisfield'` and the Euclidean norm with
+  `'relative'`, is not larger than `convergence.ROUNDOFF_FACTOR = 3` times
+  the machine precision times the same norm of `|K_C0| |c|`, the product of
+  the elementwise absolute values of `calc_kC()` and of the solution of the
+  iteration, below which the residual cannot be computed. Like `absTOL`, it
+  is an alternative to `relTOL`; `zeta` is unchanged, and the log of the
+  iterations marks those converged at the round-off floor. With
+  `relTOL = 1e-9`, the arc-length methods stopped on a low sinusoidal arch
+  of Fung and Kaplan (NACA TN 2840, 1952) of 40 BeamC elements of pyfe3d at
+  load factors of 0.026 to 0.032, close to the null load between the limit
+  points, where the residual of the large self-equilibrated axial forces
+  stagnates at 0.29 to 0.47 times `eps ||(|K_C0| |c|)||_d`, and with 160
+  elements before the upper limit point; they now reach the load factor
+  1.0. Over the test suite, the floor changes the verdict of no iteration
+  besides those of the new unit test. With load vectors that depend on the
+  load factor, `|K_C0| |c|` omits the prescribed part of the displacements:
+  the floor is then lower, i.e. conservative.
+- New `convergence.ROUNDOFF_FACTOR` and `convergence.roundoff_floor`; new
+  keyword arguments `Kc_abs` and `full_output` of
+  `convergence.check_convergence` and `newton_raphson._check_convergence`,
+  whose defaults keep the former behaviour, `K0_abs` of `_NR_iterations`
+  and `roundoff` of `_log_iteration`; new `newton_raphson._abs_matrix`.
+  `ROUNDOFF_FACTOR = 0` disables the floor, as in
+  `test_nr_unreachable_tolerance_stops_without_increments` and
+  `test_displacement_control_without_lbd_does_not_converge`, which test the
+  behaviour without it; new test `test_check_convergence_roundoff_floor`.
+
 ### Bug fixes
 
 - `lb`: the negative load multipliers returned after the positive ones are
@@ -182,7 +212,7 @@
 
 ### Tests
 
-- `tests/test_arc_length_fung_kaplan.py`: both arc-length methods, with both convergence criteria, on the modal model of a low sinusoidal arch under a sinusoidal load of Fung and Kaplan (NACA TN 2840, 1952), harmonics 1 and 2: the symmetric path, their Eq. (23), through both limit points, whose loads are those of their Eq. (25) within a tolerance given by the step size, the two null loads and the bifurcation point of their Eq. (31), before the limit point only when `lambda_1**2 > 5.5`, also at the default step sizes and `relTOL = 1e-9`; and the asymmetric path of an imperfect arch, whose extreme loads are those of their Eq. (15).
+- `tests/test_arc_length_fung_kaplan.py`: both arc-length methods, with both convergence criteria, on the modal model of a low sinusoidal arch under a sinusoidal load of Fung and Kaplan (NACA TN 2840, 1952), harmonics 1 and 2: the symmetric path, their Eq. (23), through both limit points, whose loads are those of their Eq. (25) within a tolerance given by the step size, the two null loads and the bifurcation point of their Eq. (31), before the limit point only when `lambda_1**2 > 5.5`, also at the default step sizes and `relTOL = 1e-9`; and the asymmetric path of an imperfect arch, whose extreme loads are those of their Eq. (15). The same arch with 40 BeamC elements is a test of `pyfe3d.solver`, `tests/test_solver_arc_length_fung_kaplan.py` of pyfe3d, whose arc-length methods reach the load factor 1.0 at the default tolerances only with the round-off floor of the convergence criteria, see above.
 
 ## 0.8.0 (2026-10-14)
 

@@ -14,7 +14,7 @@ from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
-                             INC_CUT_FACTOR)
+                             _abs_matrix, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -261,6 +261,7 @@ def _solver_arc_length(an, method, silent=False):
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
     w = _weights(an, kC0)
+    K0_abs = _abs_matrix(kC0)
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
         # dR/dlbd at c = 0 and lbd = 0
@@ -348,10 +349,11 @@ def _solver_arc_length(an, method, silent=False):
             q_ref = None
             if lbd_dependent:
                 q_ref = (lbd + dlbd)*q_iter
-            conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
-                                                   fext_ref=dlbd*fext,
-                                                   q_ref=q_ref, w=w)
-            _log_iteration(an, iteration, R, Rrel, silent, lbd=lbd + dlbd)
+            conv, Rnorm, Rrel, roundoff = _check_convergence(an, R, fint,
+                    fext_total, fext_ref=dlbd*fext, q_ref=q_ref, w=w,
+                    Kc_abs=K0_abs @ np.abs(c + dc), full_output=True)
+            _log_iteration(an, iteration, R, Rrel, silent, lbd=lbd + dlbd,
+                           roundoff=roundoff)
             if conv:
                 converged = True
                 break
@@ -421,7 +423,7 @@ def _solver_arc_length(an, method, silent=False):
             t = (1. - lbd)/dlbd
             converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
                     kT0=None, silent=silent, lbd_dependent=lbd_dependent,
-                    q=q_iter, w=w)
+                    q=q_iter, w=w, K0_abs=K0_abs)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())

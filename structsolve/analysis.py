@@ -15,7 +15,7 @@ import numpy as np
 from .static import solve, _factorize
 from .logger import msg, warn
 from . import callbacks
-from .newton_raphson import _check_convergence, _weights
+from .newton_raphson import _check_convergence, _weights, _abs_matrix
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -378,15 +378,18 @@ class Analysis(object):
         msg('Configuration-dependent load: load correction iterations',
             level=2, silent=silent)
         w = _weights(self, k0)
+        k0_abs = _abs_matrix(k0)
         # k0 is factorized once for all the corrections
         solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
             R = fext - fint
-            conv, Rnorm, Rrel = _check_convergence(self, R, fint, fext, w=w)
-            msg('Iteration: %d, %s = %1.3e' % (iteration, 'zeta' if
-                self.convergence == 'crisfield' else 'relative ||R||', Rrel),
+            conv, Rnorm, Rrel, roundoff = _check_convergence(self, R, fint,
+                    fext, w=w, Kc_abs=k0_abs @ np.abs(c), full_output=True)
+            msg('Iteration: %d, %s = %1.3e%s' % (iteration, 'zeta' if
+                self.convergence == 'crisfield' else 'relative ||R||', Rrel,
+                ', converged at the round-off floor' if roundoff else ''),
                 level=3, silent=silent)
             if conv:
                 return c

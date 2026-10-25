@@ -44,9 +44,24 @@ The criterion is selected with ``Analysis.convergence``, see
 With either criterion, ``absTOL``, default ``None``, also accepts an
 iteration whose largest absolute value of `\{R\}` is not larger than
 ``absTOL``, a force in the units of the model. ``None`` disables a
-tolerance, and at least one must be given. A tolerance below the round-off
-error of `\{R\}` cannot be met: every step then fails. The divergence and
-too-slow checks and the line search use the norm of the selected criterion.
+tolerance, and at least one must be given. The divergence and too-slow
+checks and the line search use the norm of the selected criterion.
+
+A tolerance below the round-off error of `\{R\}` cannot be met, and every
+step would then fail, e.g. under large self-equilibrated axial forces near
+a null load. With either criterion, an iteration has therefore also
+converged when its residual is at the round-off floor,
+
+.. math::
+
+    \|R\|_{\boldsymbol{d}} \le C \varepsilon \, \| |K_{C0}| \, |c| \|_{\boldsymbol{d}}
+
+with the Euclidean norm with ``'relative'``, `\varepsilon` the machine
+precision, `|K_{C0}|` and `|c|` the elementwise absolute values of
+``calc_kC()`` and of the solution, and `C` =
+``convergence.ROUNDOFF_FACTOR`` `= 3`, see :func:`.convergence.roundoff_floor`;
+`\zeta` may then be larger than ``relTOL``, and the log messages mark these
+iterations. ``ROUNDOFF_FACTOR = 0`` disables the floor.
 
 
 Increments and iterations
@@ -121,7 +136,8 @@ An inconsistent tangent stiffness matrix:
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_inconsistent_tangent_converges_linearly
 
-A tolerance that cannot be met, and a run stopped by ``maxArcLength``:
+A tolerance that cannot be met, with the round-off floor disabled, and a
+run stopped by ``maxArcLength``:
 
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_nr_unreachable_tolerance_stops_without_increments
