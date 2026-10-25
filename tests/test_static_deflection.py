@@ -38,20 +38,20 @@ def test_static_deflection_plate_clpt():
     detJ = a * b / 4
 
     for xi, wxi in zip(pts1, weights1):
-        P_xi = vecf(m1, xi, xit1, xir1, xit2, xir2)
-        P_xi_xi = vecf_xi(m1, xi, xit1, xir1, xit2, xir2)
-        P_xi_xixi = vecf_xixi(m1, xi, xit1, xir1, xit2, xir2)
+        Pxi = vecf(m1, xi, xit1, xir1, xit2, xir2)
+        Pxi_xi = vecf_xi(m1, xi, xit1, xir1, xit2, xir2)
+        Pxi_xixi = vecf_xixi(m1, xi, xit1, xir1, xit2, xir2)
 
         for eta, weta in zip(pts2, weights2):
-            P_eta = vecf(m2, eta, etat1, etar1, etat2, etar2)
-            P_eta_eta = vecf_xi(m2, eta, etat1, etar1, etat2, etar2)
-            P_eta_etaeta = vecf_xixi(m2, eta, etat1, etar1, etat2, etar2)
+            Peta = vecf(m2, eta, etat1, etar1, etat2, etar2)
+            Peta_eta = vecf_xi(m2, eta, etat1, etar1, etat2, etar2)
+            Peta_etaeta = vecf_xixi(m2, eta, etat1, etar1, etat2, etar2)
 
-            Sw_xx = (P_xi_xixi[:, None] * P_eta[None, :]
+            Sw_xx = (Pxi_xixi[:, None] * Peta[None, :]
                      * (2 / a)**2).ravel()
-            Sw_yy = (P_xi[:, None] * P_eta_etaeta[None, :]
+            Sw_yy = (Pxi[:, None] * Peta_etaeta[None, :]
                      * (2 / b)**2).ravel()
-            Sw_xy = (P_xi_xi[:, None] * P_eta_eta[None, :]
+            Sw_xy = (Pxi_xi[:, None] * Peta_eta[None, :]
                      * (2 / a) * (2 / b)).ravel()
 
             e1xx = -Sw_xx
@@ -70,9 +70,9 @@ def test_static_deflection_plate_clpt():
 
     # Point load at center (xi=0, eta=0 maps to a/2, b/2)
     xi, eta = 0, 0
-    P_xi = vecf(m1, xi, xit1, xir1, xit2, xir2)
-    P_eta = vecf(m2, eta, etat1, etar1, etat2, etar2)
-    Sw = (P_xi[:, None] * P_eta[None, :]).ravel()
+    Pxi = vecf(m1, xi, xit1, xir1, xit2, xir2)
+    Peta = vecf(m2, eta, etat1, etar1, etat2, etar2)
+    Sw = (Pxi[:, None] * Peta[None, :]).ravel()
 
     Pforce = 1.0
     Fext = Pforce * Sw
