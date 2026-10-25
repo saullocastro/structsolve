@@ -41,27 +41,27 @@ Partition of the free dofs, by the user
 The matrices may also be restricted to the free dofs `u` before calling the
 solvers, e.g. ``K[free, :][:, free]``. The solvers then return vectors of
 the size of the free dofs, expanded by the user with ``x_full[free] = x``.
-The prestress that generates `[K_G]`, see :doc:`lb_prestress`, must be
+The prestress that generates `\boldsymbol{K}_G`, see :doc:`lb_prestress`, must be
 computed from the expanded vector.
 
 
 Null space of the constraints, reduce and expand
 ------------------------------------------------
 
-General linear constraints `[C]\{c\} = \{0\}`, e.g. multi-point constraints
-or the connection of several domains, are imposed with a basis `[Z]` of the
-null space of `[C]`, `\{c\} = [Z]\{c_r\}`, which reduces the matrices to
+General linear constraints `\boldsymbol{C} \boldsymbol{c} = \boldsymbol{0}`, e.g. multi-point constraints
+or the connection of several domains, are imposed with a basis `\boldsymbol{Z}` of the
+null space of `\boldsymbol{C}`, `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r`, which reduces the matrices to
 
 .. math::
 
-    [K_r] = [Z]^T[K][Z], \qquad [K_{G_r}] = [Z]^T[K_G][Z], \qquad
-    [M_r] = [Z]^T[M][Z], \qquad \{f_r\} = [Z]^T\{f\}
+    \boldsymbol{K}_r = \boldsymbol{Z}^\top \boldsymbol{K} \boldsymbol{Z}, \qquad \boldsymbol{K}_{G_r} = \boldsymbol{Z}^\top \boldsymbol{K}_G \boldsymbol{Z}, \qquad
+    \boldsymbol{M}_r = \boldsymbol{Z}^\top \boldsymbol{M} \boldsymbol{Z}, \qquad \boldsymbol{f}_r = \boldsymbol{Z}^\top \boldsymbol{f}
 
-The solvers return the reduced vectors `\{c_r\}` and the eigenvectors in the
-reduced coordinates, expanded by the user with `\{c\} = [Z]\{c_r\}`. The
-partition of the free dofs is the particular case where `[Z]` contains the
+The solvers return the reduced vectors `\boldsymbol{c}_r` and the eigenvectors in the
+reduced coordinates, expanded by the user with `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r`. The
+partition of the free dofs is the particular case where `\boldsymbol{Z}` contains the
 columns of the identity matrix of the free dofs. Prescribed values different
-from zero add a particular solution, `\{c\} = [Z]\{c_r\} + \{c_p\}`, see
+from zero add a particular solution, `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_p`, see
 :doc:`ex_prescribed_displacements`.
 
 

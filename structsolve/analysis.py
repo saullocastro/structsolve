@@ -172,16 +172,16 @@ class Analysis(object):
     Notes
     -----
     For non-linear analyses, the internal force vector
-    `\{F_{int}(c)\}` must be in equilibrium with the external force
+    `\boldsymbol{F}_{int}(\boldsymbol{c})` must be in equilibrium with the external force
     vector scaled by the load factor `\lambda`:
 
     .. math::
 
-        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
+        \boldsymbol{R} = \lambda \boldsymbol{F}_{ext} - \boldsymbol{F}_{int}(\boldsymbol{c}) = \boldsymbol{0}
 
-    and the tangent stiffness matrix `[K_T] = [K_C] + [K_G]`, given by the
+    and the tangent stiffness matrix `\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G`, given by the
     callables ``calc_kC`` and ``calc_kG``, should be the exact derivative of
-    `\{F_{int}\}` with respect to `\{c\}`, such that the Newton-Raphson
+    `\boldsymbol{F}_{int}` with respect to `\boldsymbol{c}`, such that the Newton-Raphson
     iterations converge quadratically. The convergence is checked by
     default with Crisfield's criterion, the residual and the reference
     force vectors scaled with the diagonal of the linear stiffness matrix
@@ -217,7 +217,7 @@ class Analysis(object):
       R/\partial \lambda` that depends on the load factor, e.g. prescribed
       displacements imposed exactly as linear constraints, where the
       reference vector ``calc_fext(inc=1.)`` may be null. The solvers then
-      use `\partial R/\partial \lambda` for the displacement scale of the
+      use `\partial \boldsymbol{R}/\partial \lambda` for the displacement scale of the
       arc-length methods, for the predictor of the first Newton-Raphson
       increment and as a reference of the convergence criterion, see
       :mod:`.callbacks`. The linear static analysis never passes
@@ -313,29 +313,29 @@ class Analysis(object):
 
         Notes
         -----
-        The linear analysis solves `[K_C]\{c\} = \{F_{ext}\}`. When the load
+        The linear analysis solves `\boldsymbol{K}_C \boldsymbol{c} = \boldsymbol{F}_{ext}`. When the load
         depends on the configuration, the structure is still geometrically
         linear but the load is evaluated in the current configuration,
-        `[K_C]\{c\} = \{F_{ext}(c)\}`, which is solved by the load
+        `\boldsymbol{K}_C \boldsymbol{c} = \boldsymbol{F}_{ext}(\boldsymbol{c})`, which is solved by the load
         correction iterations
 
         .. math::
 
-            \{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
-                          - [K_C]\{c_k\})
+            \boldsymbol{c}_{k+1} = \boldsymbol{c}_k + \boldsymbol{K}_C^{-1}(\boldsymbol{F}_{ext}(\boldsymbol{c}_k)
+                          - \boldsymbol{K}_C \boldsymbol{c}_k)
 
-        starting from `\{c_0\} = [K_C]^{-1}\{F_{ext}\}`, the solution of the
-        reference load ``calc_fext()``, with `\{F_{ext}(c_k)\}` given by
+        starting from `\boldsymbol{c}_0 = \boldsymbol{K}_C^{-1} \boldsymbol{F}_{ext}`, the solution of the
+        reference load ``calc_fext()``, with `\boldsymbol{F}_{ext}(\boldsymbol{c}_k)` given by
         ``calc_fext(inc=1., c=c_k)``. This is a fixed-point iteration
         without the load stiffness in the iteration matrix. For a follower
-        load whose force vector is affine in `c`, `\{F(c)\} = \{F_0\} -
-        [K_f]\{c\}`, this is the solution of `([K_C] + [K_f])\{c\} =
-        \{F_0\}`, with the convergence rate of the spectral radius of
-        `[K_C]^{-1}[K_f]`, i.e. of the ratio of the load to the lowest
+        load whose force vector is affine in `c`, `\boldsymbol{F}(\boldsymbol{c}) = \boldsymbol{F}_0 -
+        \boldsymbol{K}_f \boldsymbol{c}`, this is the solution of `(\boldsymbol{K}_C + \boldsymbol{K}_f) \boldsymbol{c} =
+        \boldsymbol{F}_0`, with the convergence rate of the spectral radius of
+        `\boldsymbol{K}_C^{-1} \boldsymbol{K}_f`, i.e. of the ratio of the load to the lowest
         critical load of the linearized problem; beyond it the iterations
-        diverge. The error is multiplied by `-[K_C]^{-1}[K_f]` at each
+        diverge. The error is multiplied by `-\boldsymbol{K}_C^{-1} \boldsymbol{K}_f` at each
         iteration, whose spectral radius is `1/\min|\lambda|` over the load
-        multipliers `\lambda` of `([K_C] + \lambda [K_f])\{u\} = \{0\}`,
+        multipliers `\lambda` of `(\boldsymbol{K}_C + \lambda \boldsymbol{K}_f) \boldsymbol{u} = \boldsymbol{0}`,
         including the negative and complex ones.
 
         """

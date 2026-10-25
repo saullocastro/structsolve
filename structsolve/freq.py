@@ -105,14 +105,14 @@ def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
     -----
     With ``symmetric=True``, no eigenvalue `\omega^2 = -\lambda^2` is
     missing below the highest one returned, `\omega^2_n`: the number of
-    negative pivots of `[K] - s [M]`, with
+    negative pivots of `\boldsymbol{K} - s \boldsymbol{M}`, with
     `s = \omega^2_n - min\_rel\_gap |\omega^2_n|`, i.e. the number of
     eigenvalues lower than `s` by Sylvester's law of inertia for a
     positive definite ``M``, must be the number of returned eigenvalues
     lower than `s`.
 
-    For symmetric `[K]` and `[M]` with a positive definite `[M]`, `[K] -
-    s [M]` is congruent to `[M]^{-1/2}[K][M]^{-1/2} - s [I]`, whose
+    For symmetric `\boldsymbol{K}` and `\boldsymbol{M}` with a positive definite `\boldsymbol{M}`, `\boldsymbol{K} -
+    s \boldsymbol{M}` is congruent to `\boldsymbol{M}^{-1/2} \boldsymbol{K} \boldsymbol{M}^{-1/2} - s \boldsymbol{I}`, whose
     eigenvalues are `\omega_i^2 - s`; its number of negative eigenvalues,
     equal to its number of negative pivots by Sylvester's law of inertia,
     is therefore the number of `\omega_i^2 < s`. ``K`` need not be positive
@@ -348,21 +348,21 @@ def freq(K, M, tol=0, sparse_solver=True,
 
     .. math::
 
-        ([K] + \lambda^2 [M])\{u\} = \{0\}
+        (\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}
 
     where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
-    in rad/s. The sparse solvers solve `[K]\{u\} = \omega_n^2 [M]\{u\}`
+    in rad/s. The sparse solvers solve `\boldsymbol{K} \boldsymbol{u} = \omega_n^2 \boldsymbol{M} \boldsymbol{u}`
     in shift-invert mode, which returns the `\omega_n^2` nearest the shift
     `\sigma` ([1]_, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
-    shift is `\sigma = -|\{y\}^T[K]\{y\} /
-    \{y\}^T[M]\{y\}|`, the Rayleigh quotient of `\{y\} = [K]^{-1}[M]\{x\}`
-    for a fixed random vector `\{x\}`, i.e. one step of inverse iteration
+    shift is `\sigma = -|\boldsymbol{y}^\top \boldsymbol{K} \boldsymbol{y} /
+    \boldsymbol{y}^\top \boldsymbol{M} \boldsymbol{y}|`, the Rayleigh quotient of `\boldsymbol{y} = \boldsymbol{K}^{-1} \boldsymbol{M} \boldsymbol{x}`
+    for a fixed random vector `\boldsymbol{x}`, i.e. one step of inverse iteration
     towards the lowest `\omega_n^2`, or `\sigma = -1` when ``K`` is
     singular or the solution is inaccurate. With all `\omega_n^2 \ge 0`,
     the eigenvalues nearest a negative shift are the lowest ones.
 
     **Verification.** With ``symmetric=True``, the number of negative
-    pivots of `[K] - s [M]`, for `s` slightly lower than the highest
+    pivots of `\boldsymbol{K} - s \boldsymbol{M}`, for `s` slightly lower than the highest
     `\omega_n^2` returned, is the number of eigenvalues below `s`
     (Sylvester's law of inertia), see :func:`_check_freq`.
 

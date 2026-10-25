@@ -4,7 +4,7 @@ Non-linear static analysis with the Newton-Raphson method
 A non-linear static analysis with :class:`.Analysis` requires four callables,
 which calculate the external force vector, the internal force vector, the
 constitutive stiffness matrix and the geometric stiffness matrix. The tangent
-stiffness matrix `[K_T] = [K_C] + [K_G]` should be the exact derivative of the
+stiffness matrix `\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G` should be the exact derivative of the
 internal force vector, which gives quadratic convergence to the Newton-Raphson
 method, described in :func:`.newton_raphson._solver_NR`.
 
@@ -15,7 +15,7 @@ problems into these callables:
     :pyobject: Problem
 
 One of these problems is a chain of springs with a cubic hardening, where
-`\{F_{int}\} = [K]\{u\} + a \{u\}^3`:
+`\boldsymbol{F}_{int} = \boldsymbol{K} \boldsymbol{u} + a \boldsymbol{u}^3`:
 
 .. literalinclude:: ../../tests/analytic_problems.py
     :pyobject: hardening_springs

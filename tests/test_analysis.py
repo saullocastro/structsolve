@@ -98,8 +98,8 @@ def test_invalid_convergence_parameters():
 
 def test_crisfield_weights_and_zeta():
     r"""`w_j = 1/|K_{jj}|` at the free degrees of freedom, zero at the null
-    rows and columns; `\zeta = \|R\|_{\boldsymbol{d}}/
-    \max(\|F_{ext}\|_{\boldsymbol{d}}, \|F_{int}\|_{\boldsymbol{d}})`"""
+    rows and columns; `\zeta = \|\boldsymbol{R}\|_{\boldsymbol{d}}/
+    \max(\|\boldsymbol{F}_{ext}\|_{\boldsymbol{d}}, \|\boldsymbol{F}_{int}\|_{\boldsymbol{d}})`"""
     from scipy.sparse import csr_matrix
     from structsolve.convergence import crisfield_weights, crisfield_zeta
 

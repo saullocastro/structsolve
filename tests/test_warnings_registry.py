@@ -37,7 +37,7 @@ def symmetric_matrices(n=40, num_active=20):
 
 
 def unsymmetric_matrices(n=20):
-    """Upper triangular `[K]^{-1}[K_G]`, load multipliers 1 to ``n``"""
+    r"""Upper triangular `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, load multipliers 1 to ``n``"""
     K = diags(np.arange(1., n + 1)).tocsr()
     KG = csr_matrix(-np.eye(n) + 0.05*np.triu(np.ones((n, n)), k=1))
     return K, KG

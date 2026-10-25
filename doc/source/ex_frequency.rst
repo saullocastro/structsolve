@@ -2,7 +2,7 @@ Frequency analysis
 ==================
 
 The function :func:`.freq` solves the eigenvalue problem
-`([K] + \lambda^2 [M])\{u\} = \{0\}`, where `\lambda^2 = -\omega_n^2`
+`(\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}`, where `\lambda^2 = -\omega_n^2`
 and `\omega_n` is the natural frequency in rad/s. The returned ``lambda2``
 are therefore negative for a stable structure, and
 
@@ -27,7 +27,7 @@ Options
   solvers of symmetric matrices, which require a positive definite ``M``,
   and returns real arrays; ``None`` checks the symmetry of the matrices.
 - Normalization: with ``symmetric=True``, the eigenvectors are normalized
-  with respect to ``M``, `\{u_i\}^T[M]\{u_j\} = \delta_{ij}`. Otherwise
+  with respect to ``M``, `\boldsymbol{u}_i^\top \boldsymbol{M} \boldsymbol{u}_j = \delta_{ij}`. Otherwise
   the sparse solver returns eigenvectors normalized with respect to ``M``
   and the dense solver eigenvectors with unit Euclidean norm, see
   :func:`.freq`; an application that needs a given normalization applies it

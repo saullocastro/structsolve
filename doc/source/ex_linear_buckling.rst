@@ -2,7 +2,7 @@ Linear buckling analysis
 ========================
 
 The function :func:`.lb` solves the linear buckling eigenvalue problem
-`([K] + \lambda [K_G])\{u\} = \{0\}`, returning the load multipliers
+`(\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}`, returning the load multipliers
 `\lambda`.
 
 The example below calculates the critical load of a simply supported

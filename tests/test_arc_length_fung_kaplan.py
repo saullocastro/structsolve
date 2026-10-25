@@ -17,11 +17,11 @@ harmonics are
     s = B_1^2 + 4 B_2^2 - \lambda_1^2 - 4 \lambda_2^2
 
 which are their Eqs. (22) with `\lambda_2 = 0`; `\lambda_2 \neq 0` is an
-imperfection of the second harmonic. The degrees of freedom are `\{c\} =
+imperfection of the second harmonic. The degrees of freedom are `\boldsymbol{c} =
 \{\lambda_1 - B_1, B_2 - \lambda_2\}`, null in the unloaded state, the first
 one positive in the direction of the load. The second equation is
 multiplied by `m^2 = 4`, such that the tangent stiffness matrix is
-symmetric, and the load factor is `R/F`, with `\{F_{ext}\} = \{F, 0\}`.
+symmetric, and the load factor is `R/F`, with `\boldsymbol{F}_{ext} = \{F, 0\}`.
 
 The symmetric path, `B_2 = 0`, is their Eq. (23),
 
