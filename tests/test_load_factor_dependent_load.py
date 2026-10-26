@@ -7,18 +7,18 @@ constraint is imposed exactly, as in the null-space method of `panels`:
 
 .. math::
 
-    \{c\} = [T]\{c_r\} + \{c_{p0}\} + \lambda \{c_{p1}\}, \qquad
-    [T] = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 0 & 0 \end{bmatrix}, \qquad
-    \{c_{p0}\} = \{0, 0, d_0\}, \qquad \{c_{p1}\} = \{0, 0, d_1\}
+    \boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}, \qquad
+    \boldsymbol{Z} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 0 & 0 \end{bmatrix}, \qquad
+    \boldsymbol{c}_{p0} = \{0, 0, d_0\}, \qquad \boldsymbol{c}_{p1} = \{0, 0, d_1\}
 
 such that the reduced problem has two degrees of freedom and the residual
 
 .. math::
 
-    \{R_r(c_r, \lambda)\} = [T]^T \left(\lambda \{F_{ext}\} -
-    \{F_{int}(c)\}\right), \qquad
-    \frac{\partial R_r}{\partial \lambda} = [T]^T \left(\{F_{ext}\} -
-    [K_T(c)] \{c_{p1}\}\right)
+    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left(\boldsymbol{F}_{int}(\boldsymbol{c}) -
+    \lambda \boldsymbol{F}_{ext}\right), \qquad
+    -\frac{\partial \boldsymbol{R}_r}{\partial \lambda} = \boldsymbol{Z}^\top \left(\boldsymbol{F}_{ext} -
+    \boldsymbol{K}_T(\boldsymbol{c}) \boldsymbol{c}_{p1}\right)
 
 whose derivative with respect to the load factor depends on the
 configuration and on the load factor, passed to :class:`structsolve.Analysis`
@@ -36,7 +36,7 @@ from structsolve import Analysis
 from structsolve import callbacks
 
 
-T = np.array([[1., 0.], [0., 1.], [0., 0.]])
+Z = np.array([[1., 0.], [0., 1.], [0., 0.]])
 
 
 class SpringsProblem(object):
@@ -55,7 +55,7 @@ class SpringsProblem(object):
         self.fint_calls = []
 
     def full(self, c_r, lbd):
-        return T @ c_r + self.cp0 + lbd*self.cp1
+        return Z @ c_r + self.cp0 + lbd*self.cp1
 
     def elongations(self, c):
         return np.array([c[0], c[1] - c[0], c[2] - c[1]])
@@ -72,15 +72,17 @@ class SpringsProblem(object):
                          [0., -ke[2], ke[2]]])
 
     def residual(self, c_r, lbd):
-        return T.T @ (lbd*self.Fext - self.fint_full(self.full(c_r, lbd)))
+        return Z.T @ (self.fint_full(self.full(c_r, lbd)) - lbd*self.Fext)
 
-    def dR_dlbd(self, c_r, lbd):
+    def load_vector(self, c_r, lbd):
+        """-dR_r/dlbd"""
         c = self.full(c_r, lbd)
-        return T.T @ (self.Fext - self.kT_full(c) @ self.cp1)
+        return Z.T @ (self.Fext - self.kT_full(c) @ self.cp1)
 
     def reaction(self, c_r, lbd):
-        r"""Force of the support on node 3, `c_{p1}^T r / d_1`, with `r =
-        F_{int}(c) - \lambda F_{ext}`"""
+        r"""Force of the support on node 3, `\boldsymbol{c}_{p1}^\top
+        \boldsymbol{r} / d_1`, with `\boldsymbol{r} =
+        \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext}`"""
         c = self.full(c_r, lbd)
         r = self.fint_full(c) - lbd*self.Fext
         return self.cp1 @ r/self.cp1[2]
@@ -88,20 +90,20 @@ class SpringsProblem(object):
     # callables of structsolve.Analysis
     def calc_fext(self, inc=1., silent=True, c=None, lbd=None):
         if c is None:
-            return inc*(T.T @ self.Fext)
+            return inc*(Z.T @ self.Fext)
         self.fext_calls.append((lbd, c.copy()))
-        return inc*self.dR_dlbd(c, lbd)
+        return inc*self.load_vector(c, lbd)
 
     def calc_fint(self, c, inc=1., silent=True):
         step = len(self.an.increments) if self.an is not None else 0
         self.fint_calls.append((inc, np.linalg.norm(self.residual(c, inc)),
                                 step))
-        return T.T @ self.fint_full(self.full(c, inc))
+        return Z.T @ self.fint_full(self.full(c, inc))
 
     def calc_kC(self, c=None, NLgeom=False, inc=1., silent=True):
         if c is None or not NLgeom:
-            return csr_matrix(T.T @ self.kT_full(np.zeros(3)) @ T)
-        return csr_matrix(T.T @ self.kT_full(self.full(c, inc)) @ T)
+            return csr_matrix(Z.T @ self.kT_full(np.zeros(3)) @ Z)
+        return csr_matrix(Z.T @ self.kT_full(self.full(c, inc)) @ Z)
 
     def calc_kG(self, c=None, NLgeom=False, silent=True):
         return csr_matrix((2, 2))
@@ -142,10 +144,10 @@ class SpringsProblem(object):
             for _ in range(100):
                 R = self.residual(c_r, l)
                 if np.linalg.norm(R) <= tol*max(1., np.linalg.norm(
-                        self.dR_dlbd(c_r, l))):
+                        self.load_vector(c_r, l))):
                     break
-                kT = T.T @ self.kT_full(self.full(c_r, l)) @ T
-                c_r = c_r + np.linalg.solve(kT, R)
+                kT = Z.T @ self.kT_full(self.full(c_r, l)) @ Z
+                c_r = c_r + np.linalg.solve(kT, -R)
         return c_r
 
 
@@ -207,8 +209,8 @@ def test_displacement_control_relative_criterion(method, convergence):
         assert np.allclose(c_r, ref, rtol=1e-8, atol=1e-12), (lbd, c_r, ref)
         assert np.isclose(pb.reaction(c_r, lbd), P, rtol=1e-8)
         assert (np.linalg.norm(pb.residual(c_r, lbd))
-                <= 1e-9*np.linalg.norm(lbd*pb.dR_dlbd(c_r, lbd)))
-    # the arc-length solvers evaluate dR/dlbd at the configurations and load
+                <= 1e-9*np.linalg.norm(lbd*pb.load_vector(c_r, lbd)))
+    # the arc-length solvers evaluate -dR/dlbd at the configurations and load
     # factors of their iterations
     if method != 'NR':
         assert len(pb.fext_calls) > len(an.increments)
@@ -218,10 +220,13 @@ def test_displacement_control_relative_criterion(method, convergence):
         assert len(set(lbds)) > 2
 
 
-def test_displacement_control_without_lbd_does_not_converge():
+def test_displacement_control_without_lbd_does_not_converge(monkeypatch):
     r"""The reason for ``lbd``: without it, the reference vector and the
     reduced internal force vector vanish at equilibrium, and the relative
-    criterion cannot be satisfied"""
+    criterion cannot be satisfied; only the round-off floor of the
+    convergence criteria, disabled here, would accept the residual"""
+    from structsolve import convergence
+    monkeypatch.setattr(convergence, 'ROUNDOFF_FACTOR', 0.)
     pb = SpringsProblem(d1=0.8, with_lbd=False)
     an = pb.analysis(initialInc=0.2, relTOL=1e-10, absTOL=None,
                      maxNumIter=10, minInc=0.01)
@@ -231,7 +236,7 @@ def test_displacement_control_without_lbd_does_not_converge():
 
 def test_newton_raphson_first_predictor_is_linear_solution():
     r"""With linear springs the predictor of the first increment,
-    `[K_{C0}]^{-1} \partial R/\partial \lambda`, is the solution: each
+    `-\boldsymbol{K}_{C0}^{-1} \partial \boldsymbol{R}/\partial \lambda`, is the solution: each
     increment converges at its first evaluation of the residual"""
     pb = SpringsProblem(a=(0., 0., 0.), d1=0.5)
     an = pb.analysis(initialInc=0.3, relTOL=1e-12)
@@ -252,7 +257,7 @@ def orders(errors, floor=1e-12):
 
 def test_riks_quadratic_with_load_factor_dependent_load_vector():
     r"""The bordered system of Riks is Newton-Raphson applied to the
-    augmented system with the exact `\partial R/\partial \lambda`"""
+    augmented system with the exact `\partial \boldsymbol{R}/\partial \lambda`"""
     pb = SpringsProblem(k=(10., 15., 20.), a=(200., 400., 600.), d1=1.)
     an = pb.analysis(NL_method='arc_length_riks', initialInc=0.5,
                      relTOL=1e-13, maxNumIter=60)
@@ -286,11 +291,12 @@ def test_constant_and_incremented_prescriptions(method):
                                     'arc_length_crisfield'])
 def test_null_load_vector_at_the_origin(method):
     r"""The last spring is purely cubic, `f_3 = a_3 e^3`, such that
-    `\partial R/\partial \lambda = 0` at `c = 0`, `\lambda = 0`: the
-    reference of the relative criterion is `\lambda \partial R/\partial
+    `\partial \boldsymbol{R}/\partial \lambda = \boldsymbol{0}` at
+    `\boldsymbol{c} = \boldsymbol{0}`, `\lambda = 0`: the
+    reference of the relative criterion is `-\lambda \partial \boldsymbol{R}/\partial
     \lambda` at the current iterate, not at the origin"""
     pb = SpringsProblem(k=(100., 150., 0.), a=(20., 40., 600.), d1=0.5)
-    assert np.linalg.norm(pb.dR_dlbd(np.zeros(2), 0.)) == 0.
+    assert np.linalg.norm(pb.load_vector(np.zeros(2), 0.)) == 0.
     an = pb.analysis(NL_method=method, initialInc=0.2, relTOL=1e-10,
                      absTOL=None)
     an.static(NLgeom=True, silent=True)

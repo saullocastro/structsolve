@@ -5,16 +5,15 @@ with the sparse eigenvalue solvers first and with a dense solver as a last
 resort, with a :class:`.linear_buckling.DenseFallbackWarning`.
 
 """
-import warnings
-
 import numpy as np
 import scipy
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import eigs, spsolve
+from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse.linalg import eigs, splu
 from scipy.linalg import eigh, LinAlgError
 
 from .arpackutils import capped_eigsh, release_memory, start_kwargs
-from .linear_buckling import (RIGID_BODY_RTOL, _eig_complex,
+from .linear_buckling import (BACKWARD_ERROR_RTOL, RIGID_BODY_RTOL,
+                              _backward_errors, _eig_complex,
                               _negative_pivots, _relative_residuals,
                               _sparse_first, is_symmetric)
 from .logger import msg, warn
@@ -24,11 +23,10 @@ from .sparseutils import remove_null_cols
 def _estimate_sigma(K, M):
     try:
         rhs = M @ np.random.RandomState(42).randn(K.shape[0])
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            y = spsolve(K, rhs)
-        if any(issubclass(w.category, (RuntimeWarning, Warning))
-               and "singular" in str(w.message).lower() for w in caught):
+        try:
+            y = splu(csc_matrix(K)).solve(rhs)
+        except RuntimeError:
+            # exactly singular
             return -1.
         residual = np.linalg.norm(K @ y - rhs)
         if residual > 1e-6 * np.linalg.norm(rhs):
@@ -53,13 +51,44 @@ def _residuals(K, M, lambda2, eigvecs):
                                rigid_rtol=RIGID_BODY_RTOL)
 
 
+def _failed_residuals(K, M, lambda2, eigvecs, check_rtol):
+    r"""Finite eigenpairs that fail the residual check of :func:`freq`
+
+    An eigenpair passes when its relative residual of :func:`_residuals` is
+    not larger than ``check_rtol``, or when its normwise backward error of
+    :func:`.linear_buckling._backward_errors` is not larger than
+    ``linear_buckling.BACKWARD_ERROR_RTOL``, the machine precision, i.e.
+    when it is accurate up to the round-off, e.g. an eigenvalue close to
+    zero of a model pre-stressed close to buckling.
+
+    Returns
+    -------
+    failed : ndarray
+        Boolean array, ``True`` for the finite eigenpairs that fail, shape
+        ``(k,)`` with ``k`` the number of finite ``lambda2``.
+    res, backward_error : ndarray
+        Relative residuals and backward errors of the finite eigenpairs,
+        shape ``(k,)``.
+
+    """
+    lambda2 = np.asarray(lambda2)
+    finite = np.isfinite(lambda2)
+    res = _residuals(K, M, lambda2, eigvecs)
+    backward_error = _backward_errors(K, M, lambda2[finite],
+                                      eigvecs[:, finite])
+    failed = ~((res <= check_rtol) | (backward_error <= BACKWARD_ERROR_RTOL))
+    return failed, res, backward_error
+
+
 def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
                 min_rel_gap=1e-4):
     r"""Verify the eigenpairs of ``(K + lambda2*M) @ u = 0``
 
 
     - The relative residuals of :func:`_residuals` must not be larger than
-      ``check_rtol``, unless it is ``None``.
+      ``check_rtol``, unless it is ``None``, or the backward errors not
+      larger than ``linear_buckling.BACKWARD_ERROR_RTOL``, see
+      :func:`_failed_residuals`.
     - With ``symmetric=True``, no eigenvalue ``omega**2 = -lambda2`` is
       missing below the highest one returned, checked with the number of
       negative pivots of ``K - s M`` for ``s`` slightly lower, by the
@@ -76,14 +105,14 @@ def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
     -----
     With ``symmetric=True``, no eigenvalue `\omega^2 = -\lambda^2` is
     missing below the highest one returned, `\omega^2_n`: the number of
-    negative pivots of `[K] - s [M]`, with
+    negative pivots of `\boldsymbol{K} - s \boldsymbol{M}`, with
     `s = \omega^2_n - min\_rel\_gap |\omega^2_n|`, i.e. the number of
     eigenvalues lower than `s` by Sylvester's law of inertia for a
     positive definite ``M``, must be the number of returned eigenvalues
     lower than `s`.
 
-    For symmetric `[K]` and `[M]` with a positive definite `[M]`, `[K] -
-    s [M]` is congruent to `[M]^{-1/2}[K][M]^{-1/2} - s [I]`, whose
+    For symmetric `\boldsymbol{K}` and `\boldsymbol{M}` with a positive definite `\boldsymbol{M}`, `\boldsymbol{K} -
+    s \boldsymbol{M}` is congruent to `\boldsymbol{M}^{-1/2} \boldsymbol{K} \boldsymbol{M}^{-1/2} - s \boldsymbol{I}`, whose
     eigenvalues are `\omega_i^2 - s`; its number of negative eigenvalues,
     equal to its number of negative pivots by Sylvester's law of inertia,
     is therefore the number of `\omega_i^2 < s`. ``K`` need not be positive
@@ -95,12 +124,16 @@ def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
     if not eigvecs.shape[1]:
         return 'no eigenpair was found'
     if check_rtol is not None:
-        res = _residuals(K, M, lambda2, eigvecs)
-        if not np.all(res <= check_rtol):
-            i = np.argmax(np.nan_to_num(res, nan=np.inf))
-            return ('relative residual {0:.2e} > {1:.1e} for the eigenvalue '
-                    'lambda**2={2}'.format(res[i], check_rtol,
-                                           lambda2[np.isfinite(lambda2)][i]))
+        failed, res, backward_error = _failed_residuals(K, M, lambda2,
+                                                        eigvecs, check_rtol)
+        if np.any(failed):
+            i = np.argmax(np.where(failed, np.nan_to_num(res, nan=np.inf),
+                                   -np.inf))
+            return ('relative residual {0:.2e} > {1:.1e} and backward error '
+                    '{2:.1e} > {3:.1e} for the eigenvalue lambda**2={4}'
+                    .format(res[i], check_rtol, backward_error[i],
+                            BACKWARD_ERROR_RTOL,
+                            lambda2[np.isfinite(lambda2)][i]))
     if symmetric:
         w2 = -np.real(lambda2[np.isfinite(lambda2)])
         if not w2.size:
@@ -186,6 +219,7 @@ def freq(K, M, tol=0, sparse_solver=True,
     verified:
 
     - the relative residual of each eigenpair must not be larger than
+      ``check_rtol``, unless its backward error is at the round-off, see
       ``check_rtol``;
     - with ``symmetric=True``, no eigenvalue ``omega_n**2`` lower than the
       highest one returned may be missing, see :func:`_check_freq`.
@@ -269,7 +303,13 @@ def freq(K, M, tol=0, sparse_solver=True,
         rigid-body mode, whose `||K u|| + |\lambda^2| ||M u||` is not larger
         than ``linear_buckling.RIGID_BODY_RTOL`` times the matrix-norm scale
         `(||K||_F + |\lambda^2| ||M||_F) ||u||`, the residual is relative to
-        this scale, see :func:`.linear_buckling._relative_residuals`. A
+        this scale, see :func:`.linear_buckling._relative_residuals`. An
+        eigenpair with a larger relative residual is also accepted when its
+        normwise backward error `||K u + \lambda^2 M u||/((||K||_F +
+        |\lambda^2| ||M||_F) ||u||)` is not larger than
+        ``linear_buckling.BACKWARD_ERROR_RTOL``, the machine precision, e.g.
+        an eigenvalue close to zero of a model pre-stressed close to
+        buckling, see :func:`.linear_buckling._backward_errors`. Any other
         larger residual of the sparse solver is a failed verification, see
         above. For ``sparse_solver=False``, a warning is issued. ``None``
         skips the check.
@@ -308,21 +348,21 @@ def freq(K, M, tol=0, sparse_solver=True,
 
     .. math::
 
-        ([K] + \lambda^2 [M])\{u\} = \{0\}
+        (\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}
 
     where `\lambda^2 = -\omega_n^2` and `\omega_n` is the natural frequency
-    in rad/s. The sparse solvers solve `[K]\{u\} = \omega_n^2 [M]\{u\}`
+    in rad/s. The sparse solvers solve `\boldsymbol{K} \boldsymbol{u} = \omega_n^2 \boldsymbol{M} \boldsymbol{u}`
     in shift-invert mode, which returns the `\omega_n^2` nearest the shift
     `\sigma` ([1]_, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
-    shift is `\sigma = -|\{y\}^T[K]\{y\} /
-    \{y\}^T[M]\{y\}|`, the Rayleigh quotient of `\{y\} = [K]^{-1}[M]\{x\}`
-    for a fixed random vector `\{x\}`, i.e. one step of inverse iteration
+    shift is `\sigma = -|\boldsymbol{y}^\top \boldsymbol{K} \boldsymbol{y} /
+    \boldsymbol{y}^\top \boldsymbol{M} \boldsymbol{y}|`, the Rayleigh quotient of `\boldsymbol{y} = \boldsymbol{K}^{-1} \boldsymbol{M} \boldsymbol{x}`
+    for a fixed random vector `\boldsymbol{x}`, i.e. one step of inverse iteration
     towards the lowest `\omega_n^2`, or `\sigma = -1` when ``K`` is
     singular or the solution is inaccurate. With all `\omega_n^2 \ge 0`,
     the eigenvalues nearest a negative shift are the lowest ones.
 
     **Verification.** With ``symmetric=True``, the number of negative
-    pivots of `[K] - s [M]`, for `s` slightly lower than the highest
+    pivots of `\boldsymbol{K} - s \boldsymbol{M}`, for `s` slightly lower than the highest
     `\omega_n^2` returned, is the number of eigenvalues below `s`
     (Sylvester's law of inertia), see :func:`_check_freq`.
 
@@ -421,11 +461,13 @@ def freq(K, M, tol=0, sparse_solver=True,
             lambda2 = -1./eigvals
 
         if check_rtol is not None and peigvecs.shape[1]:
-            res = _residuals(Keff, Meff, lambda2, peigvecs)
-            if res.size and res.max() > check_rtol:
+            failed, res, _ = _failed_residuals(Keff, Meff, lambda2, peigvecs,
+                                               check_rtol)
+            if np.any(failed):
                 warn('freq: relative residual {0:.1e} of an eigenpair is '
-                     'larger than check_rtol={1:.1e}'.format(res.max(),
-                         check_rtol), level=2, silent=silent)
+                     'larger than check_rtol={1:.1e}'.format(
+                         res[failed].max(), check_rtol), level=2,
+                     silent=silent)
 
     if used_cols is not None:
         eigvecs = np.zeros((size, peigvecs.shape[1]), dtype=peigvecs.dtype)

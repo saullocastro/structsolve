@@ -296,3 +296,103 @@ def test_freq_rigid_body_mode_penalty(symmetric):
     assert np.all(res <= 1e-6)
     plain = np.linalg.norm(Ku - Mu*w2, axis=0)/d
     np.testing.assert_allclose(res[1:], plain[1:], rtol=1e-12)
+
+
+def beam_cantilever():
+    """Cantilever of pyfe3d, saved in tests/data: 49 ``BeamC`` elements of
+    a steel beam of length 3 m with a 0.05 x 0.05 m square cross-section,
+    clamped at one end, ``K`` and ``M`` (consistent, ``mtype=0``) of the
+    free dofs, and ``KG`` of a unit axial compression at the tip, as in
+    pyfe3d's tests/test_beamc_natural_freq_cantilever_pre_stress.py"""
+    import os
+    from scipy.sparse import load_npz
+
+    data = os.path.join(os.path.dirname(__file__), 'data')
+    return [load_npz(os.path.join(data, 'beam_cantilever_%s.npz' % name)
+                     ).tocsr() for name in ('K', 'KG', 'M')]
+
+
+@pytest.mark.parametrize('symmetric', [True, False])
+def test_freq_near_buckling(symmetric):
+    """Regression test: the cantilever pre-stressed to 0.9999 of its
+    buckling load has a nearly singular ``K``. Its two lowest eigenpairs,
+    ``omega**2 = 0.0895``, a double eigenvalue of the square cross-section,
+    have relative residuals of 2.5e-6 to 9.1e-6 with the sparse and the
+    dense solvers, larger than the default ``check_rtol=1e-6``, but backward
+    errors at the round-off, and pass the verification of the sparse solver
+    without the dense fallback and without a larger ``check_rtol``"""
+    import warnings
+    from scipy.linalg import eigh
+    from structsolve import DenseFallbackWarning, lb
+    from structsolve.freq import _residuals
+    from structsolve.linear_buckling import (BACKWARD_ERROR_RTOL,
+                                             _backward_errors, _frobenius)
+
+    K0, KG, M = beam_cantilever()
+    lambda_cr = lb(K0, KG, silent=True, num_eigvalues=1)[0][0]
+    K = (K0 + 0.9999*lambda_cr*KG).tocsr()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=3,
+                                symmetric=symmetric, max_dense_size=0)
+    w2 = (-lambda2).real
+    # reference: M u = (1/omega**2) K u, accurate for the lowest omega**2
+    mu = eigh(M.toarray(), K.toarray(), eigvals_only=True)
+    w2_ref = np.sort(1/mu[mu > 0])[:3]
+    np.testing.assert_allclose(w2, w2_ref, rtol=1e-4)
+    assert np.all(w2[:2] < 1e-5*w2[2])
+    # ||K u|| + omega**2 ||M u|| is about 5000 eps times the matrix-norm
+    # scale, which amplifies the relative residual of the lowest eigenpairs
+    u = eigvecs[:, :2]
+    d = (np.linalg.norm(K @ u, axis=0)
+         + w2[:2]*np.linalg.norm(M @ u, axis=0))
+    scale = (_frobenius(K) + w2[:2]*_frobenius(M))*np.linalg.norm(u, axis=0)
+    assert np.all(d < 1e4*np.finfo(float).eps*scale)
+    res = _residuals(K, M, lambda2, eigvecs)
+    be = _backward_errors(K, M, lambda2, eigvecs)
+    assert np.all((res <= 1e-6) | (be <= BACKWARD_ERROR_RTOL))
+
+
+def test_freq_check_backward_error():
+    """The residual check of freq on both sides of
+    ``BACKWARD_ERROR_RTOL``, with eigenvalues perturbed from the dense
+    eigenpairs: the lowest eigenpair of the cantilever pre-stressed to
+    0.9999 of its buckling load, ``omega**2`` 1e-5 too large, relative
+    residual about 5e-6, backward error about 0.03 eps, is accepted; the
+    lowest eigenpairs of the blade-stiffened plate with penalty connections
+    of tests/data, ``lambda`` 0.1 % too low as the inaccurate eigenpairs of
+    eigsh, relative residuals about 5e-4, backward errors of 16 eps and
+    more, are rejected"""
+    from scipy.linalg import eigh
+    from scipy.sparse import load_npz
+    import os
+    from structsolve.freq import _check_freq, _residuals
+    from structsolve.linear_buckling import (BACKWARD_ERROR_RTOL,
+                                             _backward_errors,
+                                             _eigh_condensed)
+
+    K0, KG, M = beam_cantilever()
+    mu, u = eigh(KG.toarray(), K0.toarray())
+    lambda_cr = -1/mu[0]
+    K = (K0 + 0.9999*lambda_cr*KG).tocsr()
+    mu, u = eigh(M.toarray(), K.toarray())
+    w2, u = 1/mu[-1:], u[:, -1:]
+    lambda2 = -w2*(1 + 1e-5)
+    res = _residuals(K, M, lambda2, u)
+    be = _backward_errors(K, M, lambda2, u)
+    assert np.all(res > 1e-6) and np.all(be <= 0.1*BACKWARD_ERROR_RTOL)
+    assert _check_freq(K, M, lambda2, u, 1e-6, True) is None
+
+    data = os.path.join(os.path.dirname(__file__), 'data')
+    K = load_npz(os.path.join(data, 'blade_stiffened_penalty_K.npz')).tocsr()
+    KG = load_npz(os.path.join(data, 'blade_stiffened_penalty_KG.npz')).tocsr()
+    mu, u = _eigh_condensed(K, KG, 4)
+    lam = -1/mu
+    # (K + lam KG) u = 0 checked as (K + lambda2 M) u = 0
+    assert _check_freq(K, KG, lam, u, 1e-6, False) is None
+    lam = lam*(1 - 1e-3)
+    res = _residuals(K, KG, lam, u)
+    be = _backward_errors(K, KG, lam, u)
+    assert np.all(res > 1e-4) and np.all(be >= 10*BACKWARD_ERROR_RTOL)
+    error = _check_freq(K, KG, lam, u, 1e-6, False)
+    assert 'relative residual' in error and 'backward error' in error

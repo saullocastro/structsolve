@@ -49,30 +49,31 @@ With ``inc``, the residual remains
 
 .. math::
 
-    \{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c, \lambda)\}
+    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \boldsymbol{F}_{int}(\boldsymbol{c}, \lambda) - \lambda \boldsymbol{F}_{ext}
 
-with ``calc_kC + calc_kG`` its exact Jacobian `-\partial R/\partial c`.
+with ``calc_kC + calc_kG`` its exact Jacobian `\partial \boldsymbol{R}/\partial \boldsymbol{c}`.
 
-With ``c``, ``calc_fext(inc=1., c=c)`` is `\partial R/\partial \lambda` at
+With ``c``, ``calc_fext(inc=1., c=c)`` is `-\partial \boldsymbol{R}/\partial \lambda` at
 `c`.
 
 With ``lbd``, prescribed displacements imposed exactly as linear
-constraints `c = [T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\}` give the
+constraints `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}` give the
 reduced residual
 
 .. math::
 
-    \{R_r(c_r, \lambda)\} = [T]^T \left( \lambda \{F_{ext}\} -
-    \{F_{int}([T] c_r + \{c_{p0}\} + \lambda \{c_{p1}\})\} \right)
+    \boldsymbol{R}_r(\boldsymbol{c}_r, \lambda) = \boldsymbol{Z}^\top \left(
+    \boldsymbol{F}_{int}(\boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}) -
+    \lambda \boldsymbol{F}_{ext} \right)
 
-which has `\partial R_r/\partial \lambda = [T]^T(\{F_{ext}\} - [K_T]
-\{c_{p1}\})`, with `[K_T]` evaluated at the current configuration and
+which has `-\partial \boldsymbol{R}_r/\partial \lambda = \boldsymbol{Z}^\top(\boldsymbol{F}_{ext} - \boldsymbol{K}_T
+\boldsymbol{c}_{p1})`, with `\boldsymbol{K}_T` evaluated at the current configuration and
 load factor, the vector that ``calc_fext(inc=1., c=c, lbd=lbd)`` must
 return. The convergence criterion also considers the norm of
-`\lambda \, \partial R/\partial \lambda`, since under a prescribed
+`-\lambda \, \partial \boldsymbol{R}/\partial \lambda`, since under a prescribed
 displacement alone the reference vector and the reduced internal force
 vector both vanish at equilibrium, and the displacements of the arc-length
-solvers are scaled with the linear solution of `\partial R/\partial
+solvers are scaled with the linear solution of `-\partial \boldsymbol{R}/\partial
 \lambda` at `c = 0, \lambda = 0`, since the reference vector
 ``calc_fext(inc=1.)`` may then be null.
 
@@ -217,7 +218,8 @@ def is_load_factor_dependent(an):
 
 
 def calc_load_vector(an, c, fext, lbd=None):
-    r"""Derivative of the residual with respect to the load factor
+    r"""Load vector, minus the derivative of the residual with respect to the
+    load factor
 
     Returns the load vector ``q`` given by ``an.calc_fext`` for a unit load
     factor at the configuration ``c`` and the load factor ``lbd``, used by
@@ -233,7 +235,7 @@ def calc_load_vector(an, c, fext, lbd=None):
     - ``c=c``, when it declares ``c``;
     - ``lbd=lbd``, when it declares ``lbd`` and ``lbd`` is not ``None``.
 
-    When none of them is passed, `\{q\}` is the constant reference vector,
+    When none of them is passed, `\boldsymbol{q}` is the constant reference vector,
     and ``fext`` is returned without calling ``an.calc_fext``.
 
     Parameters
@@ -250,21 +252,21 @@ def calc_load_vector(an, c, fext, lbd=None):
     Returns
     -------
     q : array-like
-        `\partial R/\partial \lambda`.
+        `-\partial \boldsymbol{R}/\partial \lambda`.
 
     Notes
     -----
-    `\{q\} = \partial R/\partial \lambda` is the external load vector only
+    `\boldsymbol{q} = -\partial \boldsymbol{R}/\partial \lambda` is the external load vector only
     for loads that do not depend on the configuration; with prescribed
-    displacements imposed exactly it also contains `-[T]^T [K_T]
-    \{c_{p1}\}`, see the module docstring.
+    displacements imposed exactly it also contains `-\boldsymbol{Z}^\top \boldsymbol{K}_T
+    \boldsymbol{c}_{p1}`, see the module docstring.
 
-    With prescribed displacements, `\{q\}` is the out-of-balance force
+    With prescribed displacements, `\boldsymbol{q}` is the out-of-balance force
     produced by a unit increment of the load factor at the current
     configuration, with the free degrees of freedom held fixed. The reaction
     is a quantity of the full problem, e.g. the generalized reaction
-    work-conjugate to `\lambda`, `P = \{c_{p1}\}^T (\{F_{int}(c)\} - \lambda
-    \{F_{ext}\})`.
+    work-conjugate to `\lambda`, `P = \boldsymbol{c}_{p1}^\top (\boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda
+    \boldsymbol{F}_{ext})`.
 
     """
 

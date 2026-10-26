@@ -1,8 +1,6 @@
 # Changelog
 
-## 0.9.2 (2026-10-24)
-
-Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
+## 0.9.3 (2026-10-26)
 
 ### Python versions
 
@@ -39,6 +37,36 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   `newton_raphson._weights`, `_norm`, `_log_iteration`; argument `w` of
   `newton_raphson._check_convergence` and `_NR_iterations`. The log of the
   iterations prints `zeta` with `'crisfield'`.
+
+### Round-off floor of the convergence criteria
+
+- With both criteria, an iteration has also converged when the norm of its
+  residual, `||R||_d` with `'crisfield'` and the Euclidean norm with
+  `'relative'`, is not larger than `convergence.ROUNDOFF_FACTOR = 3` times
+  the machine precision times the same norm of `|K_C0| |c|`, the product of
+  the elementwise absolute values of `calc_kC()` and of the solution of the
+  iteration, below which the residual cannot be computed. Like `absTOL`, it
+  is an alternative to `relTOL`; `zeta` is unchanged, and the log of the
+  iterations marks those converged at the round-off floor. With
+  `relTOL = 1e-9`, the arc-length methods stopped on a low sinusoidal arch
+  of Fung and Kaplan (NACA TN 2840, 1952) of 40 BeamC elements of pyfe3d at
+  load factors of 0.026 to 0.032, close to the null load between the limit
+  points, where the residual of the large self-equilibrated axial forces
+  stagnates at 0.29 to 0.47 times `eps ||(|K_C0| |c|)||_d`, and with 160
+  elements before the upper limit point; they now reach the load factor
+  1.0. Over the test suite, the floor changes the verdict of no iteration
+  besides those of the new unit test. With load vectors that depend on the
+  load factor, `|K_C0| |c|` omits the prescribed part of the displacements:
+  the floor is then lower, i.e. conservative.
+- New `convergence.ROUNDOFF_FACTOR` and `convergence.roundoff_floor`; new
+  keyword arguments `Kc_abs` and `full_output` of
+  `convergence.check_convergence` and `newton_raphson._check_convergence`,
+  whose defaults keep the former behaviour, `K0_abs` of `_NR_iterations`
+  and `roundoff` of `_log_iteration`; new `newton_raphson._abs_matrix`.
+  `ROUNDOFF_FACTOR = 0` disables the floor, as in
+  `test_nr_unreachable_tolerance_stops_without_increments` and
+  `test_displacement_control_without_lbd_does_not_converge`, which test the
+  behaviour without it; new test `test_check_convergence_roundoff_floor`.
 
 ### Bug fixes
 
@@ -86,8 +114,8 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   raising a `RuntimeError`.
 - `lb` and the other eigenpairs of `freq` keep the relative residual of
   0.8.0, without any floor of its denominator. The floor of `1e-8` times
-  the matrix-norm scale for every eigenpair, in the development version of
-  0.9.0, loosened the check about 1000 times for models with stiff penalty
+  the matrix-norm scale for every eigenpair, in the development version,
+  loosened the check about 1000 times for models with stiff penalty
   springs, whose `||K||_F` is many orders of magnitude larger than
   `||K u||`: inaccurate eigenpairs of `eigsh` were accepted without
   warning, e.g. lowest load multipliers of blade-stiffened plates of
@@ -95,6 +123,22 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   of the null-space method, which the penalty values approach from below;
   they are now rejected and computed with the dense fallback. New test data
   `tests/data/blade_stiffened_penalty_K.npz` and `_KG.npz`.
+- `freq`: an eigenpair whose relative residual is larger than `check_rtol`
+  passes the verification when its normwise backward error
+  `||K u + lambda2 M u||/((||K||_F + |lambda2| ||M||_F) ||u||)` is not
+  larger than `linear_buckling.BACKWARD_ERROR_RTOL`, the machine precision,
+  i.e. when it is accurate up to the round-off (issue #14). The genuine
+  eigenpairs with an eigenvalue close to zero of a nearly singular `K`,
+  e.g. pre-stressed close to buckling, failed the verification of the
+  sparse solvers and of the dense fallback, raising a `RuntimeError`
+  unless a larger `check_rtol` was given: for a cantilever of `pyfe3d`
+  pre-stressed to 0.9999 of its buckling load, `omega**2 = 0.0895` with
+  relative residuals of 2.5e-6 to 9.1e-6 and backward errors of at most
+  0.05 times the machine precision. The inaccurate eigenpairs of the
+  penalty models above, with backward errors of 14 times the machine
+  precision and more, are still rejected; `lb` keeps the relative residual
+  only. New `linear_buckling._backward_errors` and `freq._failed_residuals`,
+  and test data `tests/data/beam_cantilever_K.npz`, `_KG.npz` and `_M.npz`.
 - `lb`, `freq` and `arpackutils.capped_eigsh`: the calls of ARPACK are
   reproducible with SciPy 1.17 or newer. When the Krylov subspace is
   invariant, e.g. with a nilpotent `K^-1 KG`, ARPACK draws new starting
@@ -149,10 +193,56 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
   criterion: the step through the limit point returned exactly to the
   converged point before the last one. Paths without such a step are
   unchanged.
+- `lb`, `freq` and `arpackutils.capped_eigsh` no longer reset the registry
+  of the warnings already shown: a warning of the caller under the
+  `'default'` action, shown once per location, was shown again after each
+  call, e.g. in a loop calling `lb`. Seven helpers wrapped
+  `scipy.sparse.linalg.splu`, or `spsolve` in `freq`, in
+  `warnings.catch_warnings()`, whose exit resets this registry of every
+  module. `splu` of a CSC matrix issues no warning, and the blocks are
+  removed; the shift of `freq` detects an exactly singular stiffness matrix
+  with the `RuntimeError` of `splu` instead of the `MatrixRankWarning` of
+  `spsolve`. New test `tests/test_warnings_registry.py`.
+
+### Sign convention of the residual
+
+- The residual is `R = Fint - lbd*Fext`, instead of `lbd*Fext - Fint`, in
+  the code and the documentation, such that the tangent stiffness matrix is
+  its Jacobian, `K_T = dR/dc`, the Newton-Raphson corrections solve
+  `K_T dc = -R`, and `dR/dlbd = -Fext`; the load vector that
+  `calc_fext(inc=1., c=c)` or `calc_fext(inc=1., c=c, lbd=lbd)` returns,
+  unchanged, is `-dR/dlbd`. The same convention as `pyfe3d.solver` and
+  `panels`. Each changed operation is the exact negation of the former one:
+  `fint - fext` instead of `fext - fint` in
+  `Analysis._linear_static_follower`, `newton_raphson._NR_iterations`
+  (also in the line search) and `arc_length._solver_arc_length`, and
+  `solve_kT(-R)` or `solve_k0(-R)` instead of `solve_kT(R)` or
+  `solve_k0(R)`. Over the test suite, the load factors and the solution
+  vectors of the 139 calls of `Analysis.static`, 2411 vectors, are bitwise
+  identical before and after, the signs of the zeros included. The test
+  helpers that compute residuals follow the same convention; the method
+  `dR_dlbd` of `tests/test_load_factor_dependent_load.py` is renamed
+  `load_vector`.
+- **Breaking**, in the documentation of an argument only: the argument `R`
+  of `convergence.check_convergence` and `convergence.crisfield_zeta`,
+  as released in 0.9.2, and of `newton_raphson._check_convergence`, is
+  `fint - fext` (`fint - fext_total`) instead of `fext - fint`. These
+  functions use only norms of `R` and `max(abs(R))`, and they return the
+  same values for both signs. No callable of `Analysis` receives or returns
+  a residual, and no attribute stores one.
 
 ### Documentation
 
-- The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation of 0.9.0 was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+- The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.
+- `structsolve.convergence`: the origin of the scaled norm is cited as the sources state it: Crisfield (1981, p. 58) attributes the scaling to Peano and Riccioni and uses it in his arc-length procedure, and Crisfield (1991, Sec. 9.5.4, Eq. 9.48) presents it as an alternative to the Euclidean norm of the residual, not as a recommendation; the dependence of the Euclidean norm on the units is no longer attributed to Crisfield (1991), who says that the scaling matrix could be used to give all parameters the same dimensions.
+- Notation: the basis of the null space of the constraints is `Z`, `c = Z c_r + c_p0 + lbd*c_p1`, instead of `T`, in `structsolve.callbacks`, the pages on boundary conditions and prescribed displacements, the tests and the 0.7.0 entry of this changelog; no name of the API changes, none contained the basis.
+- Notation of the book in the docstrings, the user guide, the tutorial and the math of the tests, without code changes: vectors are bold lower case and matrices bold upper case, without braces or brackets, e.g. `\boldsymbol{c}`, `\Delta \boldsymbol{c}`, `\boldsymbol{K}_T` and `\boldsymbol{Z}` instead of `\{c\}`, `\{\Delta c\}`, `[K_T]` and `[Z]`; the force vectors and the residual keep their upper case, `\boldsymbol{F}_{ext}`, `\boldsymbol{F}_{int}` and `\boldsymbol{R}`, also in the derivatives, e.g. `\partial \boldsymbol{R}/\partial \lambda`, and in the scaled norms of Crisfield's criterion; explicit lists of components keep their braces; the transpose is `^\top` instead of `^T`. Three docstrings that now contain `\boldsymbol` became raw strings.
+- Notation, without code changes: the permutation matrices of the sparse factorizations are `\boldsymbol{\Pi}`, `\boldsymbol{\Pi}_r` and `\boldsymbol{\Pi}_c`, `\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` and `\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c = \boldsymbol{L} \boldsymbol{U}`, instead of `\boldsymbol{P}`, `\boldsymbol{P}_r` and `\boldsymbol{P}_c`, in the docstrings of `_negative_pivots` and `_det_sign` of `structsolve.linear_buckling` (the attributes `perm_r` and `perm_c` of SuperLU are unchanged); the standard problem of the condensed dofs in the docstring of `_eig_condensed` is written with the Schur complement, `(\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}`, as in `_eigh_condensed`, instead of `\boldsymbol{S}^{-1} \boldsymbol{K}_{G_{bb}}`, `\boldsymbol{S}` being the shape functions; the configuration-dependent load of `tests/test_follower_loads.py` and of the page on follower loads is written with the load stiffness matrix of the book, `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda \boldsymbol{K}_{F_{ref}}`, i.e. `\boldsymbol{F}(\boldsymbol{c}, \lambda) = \lambda (\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})`, instead of `\lambda (\boldsymbol{q}_0 + \boldsymbol{Q} \boldsymbol{c})`; the variable `Q` of the tests, `-\boldsymbol{K}_{F_{ref}}`, keeps its name.
+
+### Tests
+
+- The partial derivatives of the Ritz models of the tests are named with an underscore introducing the derivative: `vecfxi`, `vecfxixi` of `tests/ritz.py` become `vecf_xi`, `vecf_xixi`; in `tests/test_linear_buckling.py` and `tests/test_static_deflection.py`, `Swx`, `Swy`, `Swxx`, `Swyy`, `Swxy` become `Sw_x`, `Sw_y`, `Sw_xx`, `Sw_yy`, `Sw_xy`, `Sphixx`, `Sphixy`, `Sphiyx`, `Sphiyy` become `Sphix_x`, `Sphix_y`, `Sphiy_x`, `Sphiy_y`, the functions at `xi` and `eta`, `P_xi` and `P_eta`, become `Pxi` and `Peta`, and their derivatives `Px_xi`, `Pxx_xi`, `Px_eta`, ... become `Pxi_xi`, `Pxi_xixi`, `Peta_eta`, ...; the quadrature weights `wxi` and `weta` keep their names. The same names as in the copies of these models in the tests of pyfe3d.
+- `tests/test_arc_length_fung_kaplan.py`: both arc-length methods, with both convergence criteria, on the modal model of a low sinusoidal arch under a sinusoidal load of Fung and Kaplan (NACA TN 2840, 1952), harmonics 1 and 2: the symmetric path, their Eq. (23), through both limit points, whose loads are those of their Eq. (25) within a tolerance given by the step size, the two null loads and the bifurcation point of their Eq. (31), before the limit point only when `lambda_1**2 > 5.5`, also at the default step sizes and `relTOL = 1e-9`; and the asymmetric path of an imperfect arch, whose extreme loads are those of their Eq. (15). The same arch with 40 BeamC elements is a test of `pyfe3d.solver`, `tests/test_solver_arc_length_fung_kaplan.py` of pyfe3d, whose arc-length methods reach the load factor 1.0 at the default tolerances only with the round-off floor of the convergence criteria, see above.
 
 ## 0.8.0 (2026-10-14)
 
@@ -203,9 +293,9 @@ Versions 0.9.0 and 0.9.1, released the same day, are included in this one.
 ### New: load vectors that depend on the load factor
 
 For prescribed displacements imposed exactly as linear constraints, e.g. by
-the null-space method of `panels`, `c = T c_r + c_p0 + lbd*c_p1`, the
+the null-space method of `panels`, `c = Z c_r + c_p0 + lbd*c_p1`, the
 derivative of the reduced residual with respect to the load factor,
-`dR_r/dlbd = T^T (F_ext - K_T(c) c_p1)`, depends on the configuration and on
+`dR_r/dlbd = Z^T (F_ext - K_T(c) c_p1)`, depends on the configuration and on
 the load factor. All the changes apply only when `calc_fext` declares the
 new keyword argument `lbd` (a `**kwargs` does not count); the callables that
 do not declare it are called exactly as before and give the same results.

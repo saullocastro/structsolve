@@ -110,15 +110,15 @@ def test_boundary_conditions_three_ways():
     np.testing.assert_allclose(u2, u_ref)
     np.testing.assert_allclose(-lambda2_2, w2_ref)
 
-    # 3) null space of the constraint [C]{c} = {0}, {c} = [T]{c_r}
+    # 3) null space of the constraint [C]{c} = {0}, {c} = [Z]{c_r}
     C = np.zeros((1, n))
     C[0, bc] = 1.
-    T = null_space(C)
-    u3 = T @ solve(csr_matrix(T.T @ K @ T), T.T @ f, silent=True)
-    lambda2_3, eigvecs3_r = freq(csr_matrix(T.T @ K @ T),
-                                 csr_matrix(T.T @ M @ T), silent=True,
+    Z = null_space(C)
+    u3 = Z @ solve(csr_matrix(Z.T @ K @ Z), Z.T @ f, silent=True)
+    lambda2_3, eigvecs3_r = freq(csr_matrix(Z.T @ K @ Z),
+                                 csr_matrix(Z.T @ M @ Z), silent=True,
                                  sparse_solver=False, symmetric=True)
-    eigvecs3 = T @ eigvecs3_r
+    eigvecs3 = Z @ eigvecs3_r
     np.testing.assert_allclose(u3[free], u_ref)
     np.testing.assert_allclose(u3[3], 0., atol=1e-12)
     np.testing.assert_allclose(-lambda2_3, w2_ref)

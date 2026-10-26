@@ -8,8 +8,8 @@ upper bar. With the absolute rotations of the bars as degrees of freedom:
 
 .. math::
 
-    [M] = m l^2 \begin{bmatrix} 3 & 1 \\ 1 & 1 \end{bmatrix}, \qquad
-    [K(P)] = \begin{bmatrix} 2k - P l & -k + P l \\ -k & k \end{bmatrix}
+    \boldsymbol{M} = m l^2 \begin{bmatrix} 3 & 1 \\ 1 & 1 \end{bmatrix}, \qquad
+    \boldsymbol{K}(P) = \begin{bmatrix} 2k - P l & -k + P l \\ -k & k \end{bmatrix}
 
 The stiffness matrix is unsymmetric and never singular, ``det K = k**2``, so
 the static (divergence) criterion of :func:`lb` finds no critical load, and

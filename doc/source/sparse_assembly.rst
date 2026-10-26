@@ -26,8 +26,8 @@ Unsymmetric matrices
 --------------------
 
 A matrix with a skew-symmetric part, e.g. a load stiffness matrix, is the
-sum of its symmetric part, `([A] + [A]^T)/2`, and of its skew-symmetric
-part, `([A] - [A]^T)/2`, assembled from their upper triangles with
+sum of its symmetric part, `(\boldsymbol{A} + \boldsymbol{A}^\top)/2`, and of its skew-symmetric
+part, `(\boldsymbol{A} - \boldsymbol{A}^\top)/2`, assembled from their upper triangles with
 :func:`.sparseutils.make_symmetric` and
 :func:`.sparseutils.make_skew_symmetric`. Unsymmetric matrices may also be
 assembled in full. :func:`.linear_buckling.is_symmetric` and

@@ -9,7 +9,7 @@ force vector is small, measured by one of two criteria selected with
   largest scaled norm of the reference force vectors, the external and the
   internal ones and, when they apply, the external force vector of the
   increment of the arc-length solvers and the load factor times
-  `\partial R/\partial \lambda`, over the free degrees-of-freedom only, see
+  `-\partial \boldsymbol{R}/\partial \lambda`, over the free degrees-of-freedom only, see
   :func:`crisfield_zeta`;
 - ``'relative'``: the Euclidean norm of the residual compared with the
   largest Euclidean norm of the force vectors, ``Analysis.relTOL``, or the
@@ -24,12 +24,15 @@ rotations, such that the residual mixes forces and moments, and its
 Euclidean norm `\|R\|` adds the squares of forces and of moments: the
 quantity has no physical meaning and its value depends on the system of
 units, the moments being scaled by a change of the length unit while the
-forces are not [1]_. Each component is therefore scaled with the
-corresponding diagonal entry of a reference stiffness matrix, an idea of
-[2]_ that [3]_ (Eqs. 27 and 28) used in the convergence test of his
-arc-length procedure, with the diagonal of the tangent stiffness matrix at
-the beginning of the increment, and that [1]_ recommends for convergence
-testing:
+forces are not. Each component is therefore scaled with the
+corresponding diagonal entry of a reference stiffness matrix, a scaling
+that [3]_ (p. 58) attributes to [2]_ and that he used (his Eqs. 27 and 28)
+in the convergence test of his arc-length procedure, with the diagonal of
+the tangent stiffness matrix at the beginning of the increment. [1]_ (Sec.
+9.5.4, Eq. 9.48) presents the same scaling as an alternative to the
+Euclidean norm of the residual, with a scaling matrix that could, for
+example, be used to ensure that, for a problem involving rotational
+variables, all parameters have the same dimensions:
 
 .. math::
 
@@ -51,29 +54,29 @@ The iteration `i` has converged when
 
 .. math::
 
-    \zeta_i = \frac{\|R_i\|_{\boldsymbol{d}}}{\max\left(
-    \|\lambda F_{ext}\|_{\boldsymbol{d}}, \|F_{int}(u_i)\|_{\boldsymbol{d}},
-    \|\Delta\lambda F_{ext}\|_{\boldsymbol{d}},
-    \|\lambda \, \partial R/\partial \lambda\|_{\boldsymbol{d}}\right)}
+    \zeta_i = \frac{\|\boldsymbol{R}_i\|_{\boldsymbol{d}}}{\max\left(
+    \|\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}}, \|\boldsymbol{F}_{int}(\boldsymbol{u}_i)\|_{\boldsymbol{d}},
+    \|\Delta\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}},
+    \|\lambda \, \partial \boldsymbol{R}/\partial \lambda\|_{\boldsymbol{d}}\right)}
     \le \epsilon
 
 with `\epsilon` = ``Analysis.relTOL``, `\lambda` the current load factor
-and `\{F_{ext}\}` the reference external force vector. The third reference
+and `\boldsymbol{F}_{ext}` the reference external force vector. The third reference
 only applies to the arc-length solvers, `\Delta\lambda` being the
 increment of the load factor of the current step, and the fourth one only
 to load vectors that depend on the load factor, e.g. prescribed
 displacements imposed exactly, see :mod:`.callbacks`. These are the
 references of the relative criterion, ``convergence='relative'``, measured
 here with the scaled norm. The maximum does not degenerate: under self-equilibrated
-loads `\|\lambda F_{ext}\|_{\boldsymbol{d}}` may be negligible whereas
-`\|F_{int}\|_{\boldsymbol{d}}` reflects the internal force carried by the
+loads `\|\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}}` may be negligible whereas
+`\|\boldsymbol{F}_{int}\|_{\boldsymbol{d}}` reflects the internal force carried by the
 structure; at the beginning of a load-controlled analysis the internal
 forces are small and the external load is the reference; when the
 arc-length solvers pass through a load factor close to zero,
-`\Delta\lambda F_{ext}` is the reference; and under
+`\Delta\lambda \boldsymbol{F}_{ext}` is the reference; and under
 prescribed displacements alone the external and the free part of the
-internal force vectors both vanish at equilibrium, whereas `\lambda \,
-\partial R/\partial \lambda`, the out-of-balance force that the prescribed
+internal force vectors both vanish at equilibrium, whereas `-\lambda \,
+\partial \boldsymbol{R}/\partial \lambda`, the out-of-balance force that the prescribed
 displacements produce with the free degrees-of-freedom held fixed, does
 not. The norms are evaluated over the free degrees-of-freedom only, since the
 components of the residual at the constrained ones are the support
@@ -94,15 +97,68 @@ vector, which is why `\zeta_i` is printed at every iteration.
 
 The criterion applies to the arc-length methods [3]_, which only change
 how the load factor is updated, not the residual, with the additional
-reference `\Delta\lambda F_{ext}`.
+reference `\Delta\lambda \boldsymbol{F}_{ext}`.
 
 .. rubric:: The relative criterion
 
 With ``Analysis.convergence = 'relative'``, the iteration has converged
-when `\|R\| \le` ``relTOL`` `\max(\|F_{ext}\|, \|F_{int}\|, ...)`, with the
+when `\|R\| \le` ``relTOL`` `\max(\|\boldsymbol{F}_{ext}\|, \|\boldsymbol{F}_{int}\|, ...)`, with the
 Euclidean norm over all the degrees-of-freedom of the solver, or when
 `\max|R_j| \le` ``absTOL``, which depends on the units of the model, see
 :func:`check_convergence`.
+
+.. rubric:: The round-off floor
+
+The residual is the difference of force vectors computed in floating-point
+arithmetic. Each component of `\boldsymbol{F}_{int}` sums element contributions of
+the order of `\sum_k |K_{{C0}_{jk}}| |c_k|`, which may be much larger than
+the component itself, e.g. under large self-equilibrated axial forces,
+such that the residual cannot be computed more accurately than about
+`\varepsilon \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}| \|`, with `\varepsilon` the machine
+precision and `|\boldsymbol{K}_{C0}|` and `|\boldsymbol{c}|` the elementwise absolute values of the
+linear stiffness matrix and of the solution. When this level is above
+`\epsilon` times the references of `\zeta_i`, e.g. near a null load, where
+the references, net force vectors, are small and the element contributions
+are not, the iterations stagnate and every step fails. The iteration `i`
+has therefore also converged when
+
+.. math::
+
+    \|\boldsymbol{R}_i\|_{\boldsymbol{d}} \le C \, \varepsilon \,
+    \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}_i| \|_{\boldsymbol{d}}
+
+with `C` = ``ROUNDOFF_FACTOR`` `= 3`, `c_i` the solution of the iteration,
+and the Euclidean norm instead of `\|\cdot\|_{\boldsymbol{d}}` with the
+relative criterion, see :func:`roundoff_floor`. Like ``absTOL``, the floor
+is an alternative to ``relTOL`` with both criteria. `|K_{C0}|` is computed
+once, with `\boldsymbol{d}`, and the floor adds one product by `|c_i|` per
+iteration. It does not change `\zeta_i`, which may then be larger than
+`\epsilon`: the log of the iterations marks the iterations converged at the
+round-off floor. When the load vector depends on the load factor, e.g.
+prescribed displacements imposed exactly, see :mod:`.callbacks`, the
+product `|K_{C0}| \, |c|` omits the contribution of the prescribed part of
+the displacements, which is not in `c`: the floor is then lower, i.e.
+conservative.
+
+Measured on the low sinusoidal arch of Fung and Kaplan [4]_, hinged at both
+ends under a sinusoidal load, `\lambda_1 = 2.2`, modelled with 40 BeamC
+elements of pyfe3d, whose solvers, ``pyfe3d.solver``, implement the same
+criteria, traced with both arc-length methods and both criteria, with
+arc-length increments of 0.05 and `\epsilon = 10^{-9}`, and a reference
+load of 1.25 times the upper limit load, reached at the load factor 0.80:
+without the floor, the four analyses stop at load factors of 0.026 to
+0.032, close to the null load between the limit points; after the last
+converged step, the residuals of the iterations that follow the first
+correction of each attempt remain between 0.29 and 0.47 times
+`\varepsilon \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}| \|`, with `\zeta_i \ge 1.0 \times 10^{-9}`,
+and no residual of the analyses is below 0.21 times this level. With 80
+elements they stop at load factors of 0.20 to 0.21, between the limit
+points, and with 160 elements at 0.67 to 0.71, before the upper limit
+point. With the floor, all of them reach the load factor 1.0, the floor
+accepting 9 to 31 of the about 360 iterations with 40 elements, with
+`\zeta_i` up to `8.8 \times 10^{-9}` and residuals of 0.30 to 2.9 times
+`\varepsilon \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}| \|`, and 83 to 86 iterations with 160
+elements.
 
 References
 ----------
@@ -114,6 +170,10 @@ References
 .. [3] Crisfield, M. A., A fast incremental/iterative solution procedure
    that handles "snap-through", Computers & Structures, 13(1-3), 55-62,
    1981. https://doi.org/10.1016/0045-7949(81)90108-5
+.. [4] Fung, Y. C. and Kaplan, A., Buckling of low arches or curved beams of
+   small curvature, NACA Technical Note 2840, National Advisory Committee
+   for Aeronautics, Washington, 1952.
+   https://ntrs.nasa.gov/citations/19930083579
 
 """
 import numpy as np
@@ -121,6 +181,11 @@ from scipy.sparse import csr_matrix
 
 #: Names of the convergence criteria accepted by ``Analysis.convergence``
 CRITERIA = ('crisfield', 'relative')
+#: An iteration has also converged when the norm of its residual is not
+#: larger than this factor times the machine precision times the norm of
+#: `|K_{C0}| |c|`, the round-off floor of the residual, see
+#: :func:`roundoff_floor` and :func:`check_convergence`
+ROUNDOFF_FACTOR = 3.
 
 
 def crisfield_weights(K0):
@@ -157,7 +222,7 @@ def crisfield_weights(K0):
     -----
     `w_j = 1/|K_{{C0}_{jj}}|` at the free degrees-of-freedom, see the
     module documentation, and `w_j = 0` at the degrees-of-freedom whose row
-    and column of `[K_{C0}]` are both null, i.e. constrained by zeroing
+    and column of `\boldsymbol{K}_{C0}` are both null, i.e. constrained by zeroing
     them.
 
     """
@@ -203,7 +268,7 @@ def crisfield_zeta(R, fext, fint, w, q=None, fext_inc=None):
     Parameters
     ----------
     R : np.ndarray
-        Residual force vector, ``fext - fint``, 1-D array of size ``n``.
+        Residual force vector, ``fint - fext``, 1-D array of size ``n``.
     fext : np.ndarray
         External force vector at the current load factor, 1-D array of size
         ``n``.
@@ -213,27 +278,27 @@ def crisfield_zeta(R, fext, fint, w, q=None, fext_inc=None):
     w : np.ndarray
         Weights of :func:`crisfield_weights`, 1-D array of size ``n``.
     q : np.ndarray or None, optional
-        Additional reference, the load factor times `\partial R/\partial
+        Additional reference, the load factor times `-\partial \boldsymbol{R}/\partial
         \lambda` when the load vector depends on the load factor, see
         :mod:`.callbacks`. Default ``None``.
     fext_inc : np.ndarray or None, optional
         Additional reference, the external force vector of the increment of
-        the arc-length solvers, `\Delta\lambda \{F_{ext}\}`. Default
+        the arc-length solvers, `\Delta\lambda \boldsymbol{F}_{ext}`. Default
         ``None``.
 
     Returns
     -------
     zeta : float
-        `\|R\|_{\boldsymbol{d}}` over the largest scaled norm of the
+        `\|\boldsymbol{R}\|_{\boldsymbol{d}}` over the largest scaled norm of the
         references, dimensionless, ``0.`` when the residual and all the
         references are null.
 
     Notes
     -----
     The criterion is `\zeta \le \epsilon`, see the module documentation:
-    the reference is `\max(\|F_{ext}\|_{\boldsymbol{d}},
-    \|F_{int}\|_{\boldsymbol{d}})`, with also `\|q\|_{\boldsymbol{d}}` and
-    `\|\Delta\lambda F_{ext}\|_{\boldsymbol{d}}` when given. When the
+    the reference is `\max(\|\boldsymbol{F}_{ext}\|_{\boldsymbol{d}},
+    \|\boldsymbol{F}_{int}\|_{\boldsymbol{d}})`, with also `\|\boldsymbol{q}\|_{\boldsymbol{d}}` and
+    `\|\Delta\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}}` when given. When the
     reference is null and the residual is not, `\zeta` is infinite.
 
     """
@@ -248,8 +313,46 @@ def crisfield_zeta(R, fext, fint, w, q=None, fext_inc=None):
     return 0. if Rn == 0 else np.inf
 
 
+def roundoff_floor(Kc_abs, w=None):
+    r"""Round-off floor of the residual norm
+
+    Parameters
+    ----------
+    Kc_abs : np.ndarray
+        `|K_{C0}| |c|`, the product of the elementwise absolute values of
+        the linear stiffness matrix and of the current solution, 1-D array
+        of size ``n``.
+    w : np.ndarray or None, optional
+        Weights of :func:`crisfield_weights`, for the scaled norm of
+        Crisfield's criterion; the Euclidean norm when ``None``. Default
+        ``None``.
+
+    Returns
+    -------
+    floor : float
+        ``ROUNDOFF_FACTOR*eps*norm(Kc_abs)``, with ``eps`` the machine
+        precision of ``float`` and the norm of the criterion.
+
+    See Also
+    --------
+    check_convergence : the criterion that uses it.
+
+    Notes
+    -----
+    `C \varepsilon \| |K_{C0}| |c| \|`, with `C` = ``ROUNDOFF_FACTOR``,
+    see the module documentation.
+
+    """
+    Kc_abs = np.asarray(Kc_abs)
+    if w is None:
+        norm = float(np.linalg.norm(Kc_abs))
+    else:
+        norm = scaled_norm(Kc_abs, w)
+    return ROUNDOFF_FACTOR*np.finfo(float).eps*norm
+
+
 def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
-                      w=None):
+                      w=None, Kc_abs=None, full_output=False):
     r"""Check the convergence of the residual force vector
 
     With ``an.convergence = 'crisfield'`` the convergence is achieved when
@@ -262,7 +365,9 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
     - ``max(abs(R)) <= an.absTOL``, if ``an.absTOL`` is not ``None``.
 
     ``an.absTOL`` is also accepted as an additional criterion with
-    ``'crisfield'``.
+    ``'crisfield'``. With both criteria, when ``Kc_abs`` is given, the
+    convergence is also achieved when the norm of ``R`` of the criterion is
+    not larger than the round-off floor of :func:`roundoff_floor`.
 
     Parameters
     ----------
@@ -270,7 +375,7 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
         Analysis object with the attributes ``convergence``, ``relTOL`` and
         ``absTOL``.
     R : np.ndarray
-        Residual force vector, 1-D array.
+        Residual force vector, ``fint - fext_total``, 1-D array.
     fint : np.ndarray
         Internal force vector of the same evaluation, 1-D array.
     fext_total : np.ndarray
@@ -280,11 +385,18 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
         the current increment of the arc-length solvers. Default ``None``.
     q_ref : np.ndarray or None, optional
         Additional reference of both criteria, the load factor times
-        `\partial R/\partial \lambda` when ``calc_fext`` accepts ``lbd``, see
+        `-\partial \boldsymbol{R}/\partial \lambda` when ``calc_fext`` accepts ``lbd``, see
         :mod:`.callbacks`. Default ``None``.
     w : np.ndarray or None, optional
         Weights of :func:`crisfield_weights`, required with ``'crisfield'``.
         Default ``None``.
+    Kc_abs : np.ndarray or None, optional
+        `|K_{C0}| |c|`, the product of the elementwise absolute values of
+        the linear stiffness matrix ``calc_kC()`` and of the solution of the
+        evaluation of ``R``, 1-D array. ``None`` disables the round-off
+        floor. Default ``None``.
+    full_output : bool, optional
+        Whether to also return ``roundoff``. Default ``False``.
 
     Returns
     -------
@@ -292,11 +404,15 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
         Whether the criterion is satisfied.
     Rnorm : float
         Norm of the residual used by the criterion,
-        `\|R\|_{\boldsymbol{d}}` with ``'crisfield'``, the Euclidean norm
+        `\|\boldsymbol{R}\|_{\boldsymbol{d}}` with ``'crisfield'``, the Euclidean norm
         with ``'relative'``, used by the divergence checks of the solvers.
     zeta : float
         Relative residual, `\zeta` with ``'crisfield'``, ``norm(R)`` over
         the largest Euclidean norm of the references with ``'relative'``.
+    roundoff : bool
+        Only with ``full_output=True``: whether the convergence is achieved
+        by the round-off floor only, i.e. not by ``an.relTOL`` or
+        ``an.absTOL``.
 
     Raises
     ------
@@ -313,6 +429,9 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
     zero, where ``fext_total`` and ``fint`` are small. When all its
     references are null, the relative residual is ``norm(R)`` itself.
 
+    The round-off floor, see the module documentation, does not change
+    ``zeta``: an iteration that it accepts may have `\zeta >` ``an.relTOL``.
+
     """
     if an.convergence not in CRITERIA:
         raise ValueError('%r is an invalid convergence criterion, use one of '
@@ -327,6 +446,7 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
         zeta = crisfield_zeta(R, fext_total, fint, w, q=q_ref,
                               fext_inc=fext_ref)
     else:
+        w = None
         Rnorm = float(np.linalg.norm(R))
         ref = max(np.linalg.norm(fext_total), np.linalg.norm(fint))
         if fext_ref is not None:
@@ -342,4 +462,11 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
             converged = Rnorm <= an.relTOL*ref
     if an.absTOL is not None and np.abs(R).max() <= an.absTOL:
         converged = True
+    roundoff = False
+    if (not converged and Kc_abs is not None
+            and Rnorm <= roundoff_floor(Kc_abs, w=w)):
+        converged = roundoff = True
+    converged = bool(converged)
+    if full_output:
+        return converged, Rnorm, zeta, roundoff
     return converged, Rnorm, zeta

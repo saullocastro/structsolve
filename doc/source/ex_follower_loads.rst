@@ -6,7 +6,7 @@ pressures, are supported through optional keyword arguments of the callables
 of :class:`.Analysis`, see :mod:`.callbacks`: ``calc_fint``, ``calc_kC`` and
 ``calc_kG`` receive the load factor ``inc`` when they declare it, and
 ``calc_fext`` receives the current configuration ``c``, returning the load
-vector `\partial R/\partial \lambda` used by the arc-length methods. Their
+vector `-\partial \boldsymbol{R}/\partial \lambda` used by the arc-length methods. Their
 load stiffness makes the tangent stiffness matrix unsymmetric in general,
 which the solvers support: :func:`.solve` and the non-linear solvers use LU
 factorizations, :func:`.lb` selects the solvers of unsymmetric matrices when
@@ -16,8 +16,9 @@ by default.
 Non-linear analyses
 -------------------
 
-Hardening springs under a load `\lambda(\{q_0\} + [Q]\{c\})` with an
-unsymmetric `[Q]`: the callables receive the load factor and the
+Hardening springs under a load `\lambda(\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})` with an
+unsymmetric load stiffness matrix `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda
+\boldsymbol{K}_{F_{ref}}`: the callables receive the load factor and the
 configuration, and Newton-Raphson and the arc-length methods converge to the
 equilibrium path. The Riks method converges quadratically only with the load
 vector of the current configuration:
@@ -32,7 +33,7 @@ Linear static analysis
 ----------------------
 
 With a configuration-dependent load, ``Analysis.static(NLgeom=False)`` solves
-the geometrically linear problem `[K_{C0}]\{c\} = \{F(c)\}`:
+the geometrically linear problem `\boldsymbol{K}_{C0} \boldsymbol{c} = \boldsymbol{F}(\boldsymbol{c})`:
 
 .. literalinclude:: ../../tests/test_follower_freq_static.py
     :pyobject: test_analysis_linear_static_with_configuration_dependent_load

@@ -4,24 +4,24 @@ Linear buckling with a prestress
 A linear buckling analysis with :func:`.lb` has three steps, of which only
 the last one is done by ``structsolve``:
 
-1. the linear static solution `\{c_0\}` of a reference load
-   `\{F_{ref}\}`, `[K_{C0}]\{c_0\} = \{F_{ref}\}`, e.g. with :func:`.solve`,
+1. the linear static solution `\boldsymbol{c}_0` of a reference load
+   `\boldsymbol{F}_{ref}`, `\boldsymbol{K}_{C0} \boldsymbol{c}_0 = \boldsymbol{F}_{ref}`, e.g. with :func:`.solve`,
    :func:`.static` or ``Analysis.static(NLgeom=False)``;
-2. the geometric stiffness matrix `[K_G(c_0)]` of the prestress of
-   `\{c_0\}`, computed by the model, e.g. from the pre-buckling stress
+2. the geometric stiffness matrix `\boldsymbol{K}_G(\boldsymbol{c}_0)` of the prestress of
+   `\boldsymbol{c}_0`, computed by the model, e.g. from the pre-buckling stress
    resultants at each integration point;
 3. the eigenvalue problem
 
    .. math::
 
-       ([K_{C0}] + \lambda [K_G(c_0)])\{u\} = \{0\}
+       (\boldsymbol{K}_{C0} + \lambda \boldsymbol{K}_G(\boldsymbol{c}_0)) \boldsymbol{u} = \boldsymbol{0}
 
    solved by ``lb(K0, KG)``, which returns the load multipliers `\lambda`
-   and the buckling modes `\{u\}`.
+   and the buckling modes `\boldsymbol{u}`.
 
-Since the static solution is linear, `[K_G]` is proportional to the load,
-`[K_G(\lambda c_0)] = \lambda [K_G(c_0)]`, and the eigenvalue problem gives
-the load levels `\lambda \{F_{ref}\}` at which `[K_{C0}] + \lambda [K_G]` is
+Since the static solution is linear, `\boldsymbol{K}_G` is proportional to the load,
+`\boldsymbol{K}_G(\lambda \boldsymbol{c}_0) = \lambda \boldsymbol{K}_G(\boldsymbol{c}_0)`, and the eigenvalue problem gives
+the load levels `\lambda \boldsymbol{F}_{ref}` at which `\boldsymbol{K}_{C0} + \lambda \boldsymbol{K}_G` is
 singular.
 
 
@@ -29,11 +29,11 @@ Meaning of the load multipliers
 -------------------------------
 
 `\lambda` multiplies the reference load: the critical load is `\lambda_1
-\{F_{ref}\}`, and a reference load `\alpha` times larger gives load
+\boldsymbol{F}_{ref}`, and a reference load `\alpha` times larger gives load
 multipliers `\alpha` times smaller. A load that is kept constant, e.g. a
-preload `\{F_0\}`, is not multiplied by `\lambda`: its geometric stiffness
+preload `\boldsymbol{F}_0`, is not multiplied by `\lambda`: its geometric stiffness
 matrix belongs to the first matrix, ``lb(K0 + KG0, KG)``, and the critical
-load is `\{F_0\} + \lambda_1 \{F_{ref}\}`.
+load is `\boldsymbol{F}_0 + \lambda_1 \boldsymbol{F}_{ref}`.
 
 
 Negative and complex load multipliers

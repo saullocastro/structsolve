@@ -1,17 +1,19 @@
 r"""Configuration-dependent (follower) loads and unsymmetric eigenproblems
 
 The analytic problem has the internal force of hardening springs and a load
-that depends on the configuration through an unsymmetric matrix ``Q``:
+that depends on the configuration, with the unsymmetric load stiffness
+matrix `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda \boldsymbol{K}_{F_{ref}}`:
 
 .. math::
 
-    \{F_{int}(c)\} = [K]\{c\} + \{a c^3\}, \qquad
-    \{F(c, \lambda)\} = \lambda (\{q_0\} + [Q]\{c\})
+    \boldsymbol{F}_{int}(\boldsymbol{c}) = \boldsymbol{K} \boldsymbol{c} + \{a c^3\}, \qquad
+    \boldsymbol{F}(\boldsymbol{c}, \lambda) = \lambda (\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})
 
-passed to :class:`structsolve.Analysis` as described in
-:mod:`structsolve.callbacks`: ``calc_fint(c, inc)`` contains ``-inc Q c``,
-``calc_kC(c, NLgeom, inc)`` contains ``-inc Q``, and ``calc_fext(inc, c)`` is
-the load of the configuration ``c``.
+with `\boldsymbol{K}_{F_{ref}}` given as ``-Q`` in the code, passed to
+:class:`structsolve.Analysis` as described in :mod:`structsolve.callbacks`:
+``calc_fint(c, inc)`` contains `\boldsymbol{K}_F \boldsymbol{c}`, i.e.
+``-inc Q c``, ``calc_kC(c, NLgeom, inc)`` contains `\boldsymbol{K}_F`, i.e.
+``-inc Q``, and ``calc_fext(inc, c)`` is the load of the configuration ``c``.
 """
 import numpy as np
 import pytest
@@ -39,7 +41,7 @@ class FollowerProblem(object):
         return self.K @ c + self.a*c**3
 
     def residual(self, c, lbd):
-        return lbd*(self.q0 + self.Q @ c) - self.fint_el(c)
+        return self.fint_el(c) - lbd*(self.q0 + self.Q @ c)
 
     def calc_fext(self, inc=1., silent=True, c=None):
         if c is None:
@@ -162,7 +164,7 @@ def test_newton_raphson_quadratic_with_follower_load():
 
 def test_riks_quadratic_only_with_configuration_load_vector():
     r"""The bordered system of Riks is the Newton-Raphson method of the
-    augmented system only when dR/dlbd = q0 + Q c, i.e. with ``calc_fext``
+    augmented system only when -dR/dlbd = q0 + Q c, i.e. with ``calc_fext``
     accepting ``c``; with the constant reference vector the corrections
     converge linearly"""
     worst = {}

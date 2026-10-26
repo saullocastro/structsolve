@@ -41,10 +41,10 @@ SHIFT_SEARCH_MIN_EIGVALUES = 6
 SHIFT_SEARCH_MAX_STEPS = 40
 SHIFT_SEARCH_MAX_GROWTH = 1e10
 PARITY_REL_GAP = 1e-4
-#: An eigenvalue `\mu` of `[K_G]\{u\} = \mu [K]\{u\}` with `|\mu|` not
+#: An eigenvalue `\mu` of `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}` with `|\mu|` not
 #: larger than this fraction of the largest `|\mu|` is null, i.e. its load
 #: multiplier is infinite up to the round-off, e.g. at the dofs where
-#: `[K_G]` is null; also the fraction of the scale of the null `\nu` of
+#: `\boldsymbol{K}_G` is null; also the fraction of the scale of the null `\nu` of
 #: :func:`_eigs_shifted`
 NULL_MU_RTOL = 1e-12
 #: An eigenvalue `\mu` of the dense solvers is also null when `|\mu|` is
@@ -53,16 +53,21 @@ NULL_MU_RTOL = 1e-12
 #: :func:`_null_mu_pencil`
 NULL_MU_PERTURBATION_FACTOR = 10.
 #: The load multipliers of each sign are counted with the inertia of
-#: `[K] + s [K_G]` below the modulus `|s|`, this factor divided by the
+#: `\boldsymbol{K} + s \boldsymbol{K}_G` below the modulus `|s|`, this factor divided by the
 #: largest `|\mu|`, i.e. this factor times the lowest modulus that a load
 #: multiplier may have
 INERTIA_COUNT_FACTOR = 1e6
 #: An eigenpair of :func:`.freq` is a rigid-body mode, null up to the
-#: round-off, when `\|[K]\{u\}\| + |\lambda^2| \, \|[M]\{u\}\|` is not larger
-#: than this fraction of the matrix-norm scale `(\|[K]\|_F + |\lambda^2| \,
-#: \|[M]\|_F)\|\{u\}\|`, 100 times the machine precision, see
+#: round-off, when `\|\boldsymbol{K} \boldsymbol{u}\| + |\lambda^2| \, \|\boldsymbol{M} \boldsymbol{u}\|` is not larger
+#: than this fraction of the matrix-norm scale `(\|\boldsymbol{K}\|_F + |\lambda^2| \,
+#: \|\boldsymbol{M}\|_F)\|\boldsymbol{u}\|`, 100 times the machine precision, see
 #: :func:`_relative_residuals`
 RIGID_BODY_RTOL = 100*np.finfo(float).eps
+#: An eigenpair of :func:`.freq` whose relative residual is larger than
+#: ``check_rtol`` passes the residual check when its normwise backward error
+#: is not larger than this value, the machine precision, i.e. when it is
+#: accurate up to the round-off, see :func:`_backward_errors`
+BACKWARD_ERROR_RTOL = np.finfo(float).eps
 
 
 def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
@@ -71,9 +76,7 @@ def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
     singular, not positive definite, or the linear solution is
     inaccurate"""
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K))
+        lu = splu(csc_matrix(K))
         x = np.random.RandomState(42).randn(K.shape[0])
         Kx = K @ x
         mu_max = 0.
@@ -115,7 +118,7 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
     Otherwise the eigenvalues closest to `-\sigma` are returned.
 
     The largest `|\mu|` is estimated with power iterations on
-    `[K]^{-1}[K_G]`, whose norm ratio in the `[K]`-norm increases towards the
+    `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, whose norm ratio in the `\boldsymbol{K}`-norm increases towards the
     largest `|\mu|`, and multiplied by ``safety``. The default shift ``1.`` is
     returned when ``K`` is singular, not positive definite, or the linear
     solution is inaccurate. An estimate of :func:`_estimate_mu_max` may be
@@ -130,11 +133,11 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
 
 
 def _negative_pivots(A):
-    """Number of negative eigenvalues of the symmetric sparse matrix ``A``
+    r"""Number of negative eigenvalues of the symmetric sparse matrix ``A``
 
     ``A`` is factorized with a symmetric permutation and without row
-    interchanges, i.e. `[P][A][P]^T = [L][D][L]^T` with the pivots `[D]` on
-    the diagonal of `[U] = [D][L]^T`. By Sylvester's law of inertia, the
+    interchanges, i.e. `\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with the pivots `\boldsymbol{D}` on
+    the diagonal of `\boldsymbol{U} = \boldsymbol{D} \boldsymbol{L}^\top`. By Sylvester's law of inertia, the
     number of negative pivots is the number of negative eigenvalues of
     ``A``.
 
@@ -146,10 +149,8 @@ def _negative_pivots(A):
 
     """
     try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(A), permc_spec='MMD_AT_PLUS_A',
-                      diag_pivot_thresh=0., options=dict(SymmetricMode=True))
+        lu = splu(csc_matrix(A), permc_spec='MMD_AT_PLUS_A',
+                  diag_pivot_thresh=0., options=dict(SymmetricMode=True))
     except RuntimeError:
         # exactly singular
         return None
@@ -220,32 +221,32 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
     -----
     - No load multiplier is missing below the highest positive `\lambda_n`
       of ``eigvals``: when ``K`` is positive definite, the number of
-      negative pivots of `[K] + s [K_G]` with
+      negative pivots of `\boldsymbol{K} + s \boldsymbol{K}_G` with
       `s = \lambda_n (1 - min\_rel\_gap)`, i.e. the number of load
       multipliers in `(0, s)` by Sylvester's law of inertia, see
       :func:`_negative_pivots`, must be the number of positive ``eigvals``
       lower than `s`. When this count is unknown, the weaker check of the
-      lowest positive `\lambda_1` is done: `[K] + s [K_G]` with
+      lowest positive `\lambda_1` is done: `\boldsymbol{K} + s \boldsymbol{K}_G` with
       `s = \lambda_1 (1 - min\_rel\_gap)` must be positive definite. Only for
       symmetric matrices, ``check_inertia=True``, the complex `\lambda` are
       ignored. Missing negative load multipliers are not detected.
 
-    For symmetric `[K]` and `[K_G]` with a positive definite `[K]`,
-    `[K] + s [K_G]` is congruent to `[I] + s [K]^{-1/2}[K_G][K]^{-1/2}`,
+    For symmetric `\boldsymbol{K}` and `\boldsymbol{K}_G` with a positive definite `\boldsymbol{K}`,
+    `\boldsymbol{K} + s \boldsymbol{K}_G` is congruent to `\boldsymbol{I} + s \boldsymbol{K}^{-1/2} \boldsymbol{K}_G \boldsymbol{K}^{-1/2}`,
     whose eigenvalues are `1 + s \mu_i = 1 - s/\lambda_i`, with `\mu_i =
-    -1/\lambda_i` the eigenvalues of `[K_G]\{u\} = \mu [K]\{u\}`. For
+    -1/\lambda_i` the eigenvalues of `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}`. For
     `s > 0`, `1 - s/\lambda_i < 0` exactly when `0 < \lambda_i < s`, hence
-    the number of negative eigenvalues of `[K] + s [K_G]`, equal to its
+    the number of negative eigenvalues of `\boldsymbol{K} + s \boldsymbol{K}_G`, equal to its
     number of negative pivots by Sylvester's law of inertia, is the number
     of load multipliers in `(0, s)`. This is the Sturm sequence check of
     the eigenvalue solvers of structural analysis ([1]_, Section 10.2.2,
     p. 849, and Section 11.6, p. 954), where the number of negative
-    elements of `[D]` in the factorization `[L][D][L]^T` of `[K] - \mu [M]`
-    is the number of eigenvalues of the pencil `([K], [M])` smaller than
+    elements of `\boldsymbol{D}` in the factorization `\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` of `\boldsymbol{K} - \mu \boldsymbol{M}`
+    is the number of eigenvalues of the pencil `(\boldsymbol{K}, \boldsymbol{M})` smaller than
     `\mu`. When only one
     positive load multiplier was returned, none is expected in `(0, s)` and
     the weaker check is done. The gap ``min_rel_gap`` keeps `s` away from
-    `\lambda_n`, where `[K] + s [K_G]` is singular.
+    `\lambda_n`, where `\boldsymbol{K} + s \boldsymbol{K}_G` is singular.
 
     References
     ----------
@@ -299,8 +300,8 @@ def _frobenius(A):
 
 
 def _relative_residuals(A, B, lam, u, rigid_rtol=None):
-    r"""Relative residuals of the eigenpairs of `([A] + \lambda [B])\{u\}
-    = \{0\}`, used by :func:`_check_eigenpairs` and :func:`.freq`
+    r"""Relative residuals of the eigenpairs of `(\boldsymbol{A} + \lambda \boldsymbol{B}) \boldsymbol{u}
+    = \boldsymbol{0}`, used by :func:`_check_eigenpairs` and :func:`.freq`
 
     Parameters
     ----------
@@ -332,11 +333,11 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
 
     .. math::
 
-        \frac{\|[A]\{u\} + \lambda [B]\{u\}\|}{\|[A]\{u\}\|
-        + |\lambda| \, \|[B]\{u\}\|}
+        \frac{\|\boldsymbol{A} \boldsymbol{u} + \lambda \boldsymbol{B} \boldsymbol{u}\|}{\|\boldsymbol{A} \boldsymbol{u}\|
+        + |\lambda| \, \|\boldsymbol{B} \boldsymbol{u}\|}
 
     compares the residual with the terms of the eigenvalue problem for the
-    eigenvector itself. For an eigenvector in the null space of `[A]` with
+    eigenvector itself. For an eigenvector in the null space of `\boldsymbol{A}` with
     a null eigenvalue, e.g. a rigid-body mode of :func:`.freq`, both the
     residual and the denominator are round-off errors, and their ratio is
     meaningless, of the order of 1. With ``rigid_rtol`` `= \epsilon_r`, an
@@ -344,29 +345,29 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
 
     .. math::
 
-        \|[A]\{u\}\| + |\lambda| \, \|[B]\{u\}\| \le \epsilon_r
-        (\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|
+        \|\boldsymbol{A} \boldsymbol{u}\| + |\lambda| \, \|\boldsymbol{B} \boldsymbol{u}\| \le \epsilon_r
+        (\|\boldsymbol{A}\|_F + |\lambda| \, \|\boldsymbol{B}\|_F) \|\boldsymbol{u}\|
 
     is null up to the round-off: its residual is relative to the
     matrix-norm scale, i.e. it is the normwise backward error
-    `\|r\|/((\|[A]\|_F + |\lambda| \, \|[B]\|_F) \|\{u\}\|)`, with `r` the
+    `\|r\|/((\|\boldsymbol{A}\|_F + |\lambda| \, \|\boldsymbol{B}\|_F) \|\boldsymbol{u}\|)`, with `r` the
     residual vector, not larger than `\epsilon_r`. Every other eigenpair
     keeps the relative residual, such that the check of a genuine eigenpair
     is never loosened.
 
     A backward error at the round-off does not tell that a genuine
-    eigenpair is accurate when `\|[A]\|_F` is set by stiff springs, e.g. the
+    eigenpair is accurate when `\|\boldsymbol{A}\|_F` is set by stiff springs, e.g. the
     penalty connections of multi-domain models: the eigenpairs that satisfy
-    the connections give `\|[A]\{u\}\|` many orders of magnitude smaller
-    than `\|[A]\|_F \|\{u\}\|`. Measured with ``eigsh`` for the lowest load
+    the connections give `\|\boldsymbol{A} \boldsymbol{u}\|` many orders of magnitude smaller
+    than `\|\boldsymbol{A}\|_F \|\boldsymbol{u}\|`. Measured with ``eigsh`` for the lowest load
     multipliers of a blade-stiffened panel with penalty connections,
-    `\|[K]\|_F = 5.1 \cdot 10^{12}` and `5.1 \cdot 10^{13}`, the inaccurate
+    `\|\boldsymbol{K}\|_F = 5.1 \cdot 10^{12}` and `5.1 \cdot 10^{13}`, the inaccurate
     eigenpairs, with relative residuals of 1 to 5 % and eigenvalues up to 1 %
     too low, have backward errors of `3 \cdot 10^{-15}` to `3 \cdot
-    10^{-13}` and `(\|[K]\{u\}\| + |\lambda| \, \|[K_G]\{u\}\|)/((\|[K]\|_F
-    + |\lambda| \, \|[K_G]\|_F)\|\{u\}\|) = 1.6 \cdot 10^{-13}` to `1.6 \cdot
+    10^{-13}` and `(\|\boldsymbol{K} \boldsymbol{u}\| + |\lambda| \, \|\boldsymbol{K}_G \boldsymbol{u}\|)/((\|\boldsymbol{K}\|_F
+    + |\lambda| \, \|\boldsymbol{K}_G\|_F)\|\boldsymbol{u}\|) = 1.6 \cdot 10^{-13}` to `1.6 \cdot
     10^{-11}`, i.e. 720 times the machine precision and more. A floor
-    `\epsilon_f (\|[A]\|_F + |\lambda| \, \|[B]\|_F)\|\{u\}\|` of the
+    `\epsilon_f (\|\boldsymbol{A}\|_F + |\lambda| \, \|\boldsymbol{B}\|_F)\|\boldsymbol{u}\|` of the
     denominator with `\epsilon_f = 10^{-8}` would accept them. The
     rigid-body modes of :func:`.freq`, with the sparse and the dense
     solvers, give at most 19 times the machine precision for the chains of
@@ -374,7 +375,10 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
     connections up to `10^4` times the penalty constants of ``calc_kt_kr``,
     against at least 540 times for the genuine eigenpairs of these plates,
     inaccurate ones included, hence ``RIGID_BODY_RTOL``. :func:`lb` uses the
-    relative residual only: a finite load multiplier is never null.
+    relative residual only: a finite load multiplier is never null. The
+    eigenpairs of :func:`.freq` whose relative residual is larger than
+    ``check_rtol`` are also accepted when their backward error is at the
+    round-off, see :func:`_backward_errors`.
 
     """
     Au = A @ u
@@ -389,6 +393,107 @@ def _relative_residuals(A, B, lam, u, rigid_rtol=None):
     residual = np.full(lam.shape, np.inf)
     np.divide(num, den, out=residual, where=den > 0)
     return residual
+
+
+def _backward_errors(A, B, lam, u):
+    r"""Normwise backward errors of the eigenpairs of `(\boldsymbol{A} + \lambda \boldsymbol{B})
+    \boldsymbol{u} = \boldsymbol{0}`, used by :func:`.freq`
+
+    Parameters
+    ----------
+    A, B : sparse_matrix or ndarray
+        Matrices, shape ``(n, n)``.
+    lam : array_like
+        Finite eigenvalues, real or complex, shape ``(k,)``.
+    u : ndarray
+        Eigenvectors, ``u[:, i]`` that of ``lam[i]``, shape ``(n, k)``.
+
+    Returns
+    -------
+    backward_error : ndarray
+        ``||A u + lam B u|| / ((||A||_F + |lam| ||B||_F) ||u||)``, one per
+        eigenpair, shape ``(k,)``, ``inf`` when the denominator is null.
+
+    Notes
+    -----
+    The normwise backward error of an approximate eigenpair `(\lambda,
+    \boldsymbol{u})`
+
+    .. math::
+
+        \eta = \frac{\|\boldsymbol{A} \boldsymbol{u} + \lambda \boldsymbol{B} \boldsymbol{u}\|}{(\|\boldsymbol{A}\|_F + |\lambda|
+        \, \|\boldsymbol{B}\|_F) \|\boldsymbol{u}\|}
+
+    is the smallest `\epsilon` such that `(\lambda, \boldsymbol{u})` is an exact
+    eigenpair of `(\boldsymbol{A} + \Delta \boldsymbol{A}) + \lambda (\boldsymbol{B} + \Delta \boldsymbol{B})` with
+    `\|\Delta \boldsymbol{A}\| \le \epsilon \|\boldsymbol{A}\|_F` and `\|\Delta \boldsymbol{B}\| \le \epsilon
+    \|\boldsymbol{B}\|_F` ([1]_, Theorem 1, Eq. (2.3), with the tolerances `\|\boldsymbol{A}\|_F`
+    and `\|\boldsymbol{B}\|_F`). The perturbations that attain it are of rank one, so
+    that their Frobenius norm is their 2-norm, and for symmetric matrices and
+    a real `\lambda` the minimum is the same with symmetric perturbations
+    ([1]_, Theorem 2).
+
+    The relative residual of :func:`_relative_residuals` is `\eta` times
+    `(\|\boldsymbol{A}\|_F + |\lambda| \, \|\boldsymbol{B}\|_F)\|\boldsymbol{u}\|/(\|\boldsymbol{A} \boldsymbol{u}\| + |\lambda|
+    \, \|\boldsymbol{B} \boldsymbol{u}\|)`, a ratio that is large for an eigenvalue close to zero
+    of a nearly singular `\boldsymbol{A}`, e.g. a frequency analysis pre-stressed close
+    to buckling, whose eigenvalue is then sensitive to the round-off of the
+    entries of `\boldsymbol{A}`. :func:`.freq` accepts an eigenpair whose relative
+    residual is larger than ``check_rtol`` when `\eta \le`
+    ``BACKWARD_ERROR_RTOL`` `= \epsilon`, the machine precision: the
+    eigenpair is exact for matrices that differ from `\boldsymbol{K}` and `\boldsymbol{M}` by
+    perturbations of the order of the round-off of their entries, and it is
+    as accurate as the matrices allow.
+
+    Measured with SciPy 1.17.1 and Intel MKL 2025.0.0 for the cantilever of
+    49 ``BeamC`` elements of ``pyfe3d`` pre-stressed to 0.9999 of its
+    buckling load, ``tests/data/beam_cantilever_*.npz``, whose two lowest
+    eigenvalues are `\omega_n^2 = 0.0895`: the relative residuals of these
+    eigenpairs are `2.5 \cdot 10^{-6}` to `9.1 \cdot 10^{-6}`, larger than
+    the default ``check_rtol=1e-6``, with ``eigsh``, ``eigs`` and the dense
+    solvers, and `(\|\boldsymbol{K} \boldsymbol{u}\| + |\lambda^2| \, \|\boldsymbol{M} \boldsymbol{u}\|)/((\|\boldsymbol{K}\|_F
+    + |\lambda^2| \, \|\boldsymbol{M}\|_F)\|\boldsymbol{u}\|) = 5.0 \cdot 10^3 \epsilon`, while
+    their backward errors are `0.012 \epsilon` to `0.046 \epsilon`, i.e.
+    ``BACKWARD_ERROR_RTOL`` is 22 times the largest one. The inaccurate
+    eigenpairs of ``eigsh`` for the lowest load multipliers of the
+    blade-stiffened panel with penalty connections of
+    ``tests/data/blade_stiffened_penalty_*.npz``, see
+    :func:`_relative_residuals`, and of six variants with other blade
+    heights, numbers of terms and 1000 times the penalty constants of
+    ``calc_kt_kr``, have relative residuals of `1.6 \cdot 10^{-3}` to
+    `9.7 \cdot 10^{-2}` and backward errors of `14 \epsilon` to `1200
+    \epsilon`: the smallest one is 14 times ``BACKWARD_ERROR_RTOL``, and they
+    are rejected. The backward error of an inaccurate eigenpair is its
+    relative residual times the ratio above, which decreases as the penalty
+    constants increase; the smallest one, `14 \epsilon`, was measured with
+    1000 times the penalty constants of ``calc_kt_kr``.
+
+    :func:`lb` keeps the relative residual only. For the cantilever above,
+    with `\boldsymbol{K} = \boldsymbol{K}_{C0} + f \lambda_{cr} \boldsymbol{K}_G`, the load multipliers
+    `(1 - f) \lambda_{cr}` close to zero of the dense solver have relative
+    residuals from `4.7 \cdot 10^{-7}` for `f = 0.9999` to `5.1 \cdot
+    10^{-4}` for `f = 1 - 10^{-7}`, below its default ``check_rtol=1e-3``.
+    With ``check_rtol=1e-3`` the backward error would only accept eigenpairs
+    whose ratio above is lower than `1000 \epsilon`, the range of the penalty
+    connections with 1000 times the penalty constants, where the inaccurate
+    eigenpairs above lie.
+
+    References
+    ----------
+    .. [1] Tisseur, F., Backward error and condition of polynomial eigenvalue
+       problems, Linear Algebra and its Applications, 309(1-3), 339-361,
+       2000. https://doi.org/10.1016/S0024-3795(99)00063-4
+
+    """
+    Au = A @ u
+    Bu = B @ u
+    lam = np.asarray(lam)
+    num = np.linalg.norm(Au + Bu*lam, axis=0)
+    scale = (_frobenius(A) + np.abs(lam)*_frobenius(B)
+             )*np.linalg.norm(u, axis=0)
+    backward_error = np.full(lam.shape, np.inf)
+    np.divide(num, scale, out=backward_error, where=scale > 0)
+    return backward_error
 
 
 def _null_mu(mu, scale=None):
@@ -430,7 +535,7 @@ def _lb_order(mu, scale=None):
 
 
 def _sort_eigenpairs(mu, eigvecs, scale=None):
-    r"""Sort the eigenpairs of `[K_G]\{u\} = \mu [K]\{u\}` in the order of
+    r"""Sort the eigenpairs of `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}` in the order of
     the load multipliers returned by :func:`lb`, see :func:`_lb_order`"""
     order = _lb_order(mu, scale)
     return mu[order], eigvecs[:, order]
@@ -439,14 +544,14 @@ def _sort_eigenpairs(mu, eigvecs, scale=None):
 def _eigh_condensed(K, KG, k):
     r"""Dense solution after condensing out the dofs where ``KG`` is null
 
-    With the dofs split in `b`, where `[K_G]` has non-null rows, and `a`,
+    With the dofs split in `b`, where `\boldsymbol{K}_G` has non-null rows, and `a`,
     where it does not, the static condensation of the `a` dofs gives:
 
     .. math::
 
-        ([K_{bb}] - [K_{ba}][K_{aa}]^{-1}[K_{ab}]
-         + \lambda [K_{G_{bb}}])\{u_b\} = \{0\}, \qquad
-        \{u_a\} = -[K_{aa}]^{-1}[K_{ab}]\{u_b\}
+        (\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab}
+         + \lambda \boldsymbol{K}_{G_{bb}}) \boldsymbol{u}_b = \boldsymbol{0}, \qquad
+        \boldsymbol{u}_a = -\boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab} \boldsymbol{u}_b
 
     solved with :func:`scipy.linalg.eigh`, which requires a positive
     definite Schur complement. Returns the first ``k`` eigenvalues `\mu` of
@@ -466,9 +571,7 @@ def _eigh_condensed(K, KG, k):
     if a.size:
         Kab = csc_matrix(K[a, :][:, b])
         Kba = K[b, :][:, a]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K[a, :][:, a]))
+        lu = splu(csc_matrix(K[a, :][:, a]))
         # solving blocks of right-hand sides with at most ~1e7 entries
         chunk = max(1, int(1e7) // a.size)
         for j0 in range(0, b.size, chunk):
@@ -578,15 +681,15 @@ def _general_eigenpairs(mu, eigvecs, k=None):
 
 
 def _null_mu_pencil(a, b, mu, vl, vr):
-    r"""Tell which eigenvalues `\mu` of `[a]\{v\} = \mu [b]\{v\}` are null up
+    r"""Tell which eigenvalues `\mu` of `[a]\boldsymbol{v} = \mu [b]\boldsymbol{v}` are null up
     to the round-off of a dense solver
 
     An eigenvalue is null when it is null for :func:`_null_mu`, or when
     `|\mu| \le c\,\epsilon\,\|[a]\|_F\,\kappa`, with `c` =
     :data:`NULL_MU_PERTURBATION_FACTOR`, `\epsilon` the machine precision
-    and `\kappa = \|\{y\}\| \|\{x\}\| / |\{y\}^H [b] \{x\}|` the condition
-    number of `\mu`, with its left and right eigenvectors `\{y\}` and
-    `\{x\}`.
+    and `\kappa = \|\boldsymbol{y}\| \|\boldsymbol{x}\| / |\boldsymbol{y}^H [b] \boldsymbol{x}|` the condition
+    number of `\mu`, with its left and right eigenvectors `\boldsymbol{y}` and
+    `\boldsymbol{x}`.
 
     Parameters
     ----------
@@ -609,13 +712,13 @@ def _null_mu_pencil(a, b, mu, vl, vr):
     returns the exact eigenvalues of `[a] + [\delta a]`, `[b] + [\delta b]`
     with `\|[\delta a]\| \approx \gamma \epsilon \|[a]\|`, `\gamma` of order
     one. Multiplying `([a] + [\delta a] - (\mu + \delta\mu)([b] + [\delta
-    b]))(\{x\} + \{\delta x\}) = 0` by `\{y\}^H`, with `\{y\}^H ([a] - \mu
-    [b]) = 0`, gives to first order `\delta\mu = \{y\}^H ([\delta a] - \mu
-    [\delta b]) \{x\} / (\{y\}^H [b] \{x\})`: a null eigenvalue moves by up
+    b]))(\boldsymbol{x} + \delta \boldsymbol{x}) = 0` by `\boldsymbol{y}^H`, with `\boldsymbol{y}^H ([a] - \mu
+    [b]) = 0`, gives to first order `\delta\mu = \boldsymbol{y}^H ([\delta a] - \mu
+    [\delta b]) \boldsymbol{x} / (\boldsymbol{y}^H [b] \boldsymbol{x})`: a null eigenvalue moves by up
     to `\gamma \epsilon \|[a]\| \kappa`.
 
     A null eigenvalue of a Jordan block of size `m`, e.g. `m = 2` for the
-    nilpotent `[K]^{-1}[K_G]` of Ziegler's double pendulum, is split by a
+    nilpotent `\boldsymbol{K}^{-1} \boldsymbol{K}_G` of Ziegler's double pendulum, is split by a
     perturbation of size `\eta` into `m` eigenvalues with `\mu^m \propto
     \eta`, i.e. `|\mu| \approx (\gamma \epsilon)^{1/m} \|[a]\|`, and
     `d\mu/d\eta = \mu/(m \eta)`: their condition number gives `\epsilon
@@ -632,8 +735,8 @@ def _null_mu_pencil(a, b, mu, vl, vr):
     genuine eigenvalue is null only when `|\mu| \le 2.2 \cdot 10^{-15}
     \|[a]\|`, below the :func:`_null_mu` threshold when `\|[a]\|` is of
     the order of `\max |\mu|`. For symmetric matrices no Jordan block
-    exists, and `\{x\}^T [b] \{x\} = 1` of :func:`scipy.linalg.eigh` gives
-    `\kappa = \|\{x\}\|^2`.
+    exists, and `\boldsymbol{x}^\top [b] \boldsymbol{x} = 1` of :func:`scipy.linalg.eigh` gives
+    `\kappa = \|\boldsymbol{x}\|^2`.
 
     """
     mu = np.asarray(mu)
@@ -652,7 +755,7 @@ def _null_mu_pencil(a, b, mu, vl, vr):
 
 
 def _eig_complex(a, b=None, left=False):
-    r"""All eigenpairs of `[a]\{v\} = w [b]\{v\}` with :func:`scipy.linalg.eig`
+    r"""All eigenpairs of `[a]\boldsymbol{v} = w [b]\boldsymbol{v}` with :func:`scipy.linalg.eig`
 
     The matrices are converted to complex, such that LAPACK ``zgeev`` or
     ``zggev`` is used instead of ``dgeev`` or ``dggev``. With Intel MKL
@@ -682,11 +785,11 @@ def _eig_condensed(K, KG, k):
     condensed out with an LU factorization of ``K``, and the condensed
     problem is solved with :func:`scipy.linalg.eig`, through the complex
     LAPACK driver ``zggev``, see :func:`_eig_complex`. Neither converting to
-    the standard problem `[S]^{-1}[K_{G_{bb}}]` (``dgeev``) nor limiting the
+    the standard problem `(\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}` (``dgeev``) nor limiting the
     threads of BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL
     2025.0.0. The ``k`` returned eigenpairs, see :func:`_general_eigenpairs`,
     are real when they are all real, and complex eigenvectors are
-    back-substituted with the real factorization of `[K_{aa}]`. The null
+    back-substituted with the real factorization of `\boldsymbol{K}_{aa}`. The null
     `\mu` of :func:`_null_mu_pencil`, e.g. the round-off splitting of a
     defective null eigenvalue, are set to 0.
 
@@ -704,9 +807,7 @@ def _eig_condensed(K, KG, k):
     if a.size:
         Kab = csc_matrix(K[a, :][:, b])
         Kba = K[b, :][:, a]
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            lu = splu(csc_matrix(K[a, :][:, a]))
+        lu = splu(csc_matrix(K[a, :][:, a]))
         chunk = max(1, int(1e7) // a.size)
         for j0 in range(0, b.size, chunk):
             j1 = min(j0 + chunk, b.size)
@@ -724,10 +825,18 @@ def _eig_condensed(K, KG, k):
 
 def _splu(A):
     """SuperLU factorization of ``A`` with partial pivoting, raising a
-    ``RuntimeError`` when ``A`` is exactly singular"""
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        return splu(csc_matrix(A))
+    ``RuntimeError`` when ``A`` is exactly singular
+
+    :func:`scipy.sparse.linalg.splu` warns only when it converts its input
+    to the CSC format, :class:`scipy.sparse.SparseEfficiencyWarning`, which
+    the conversion here avoids, as in the other calls of this package. No
+    :func:`warnings.catch_warnings` block is used: its exit resets the
+    registry of the warnings already shown, of every module, and the
+    warnings of the caller shown once per location would be shown again
+    after each call.
+
+    """
+    return splu(csc_matrix(A))
 
 
 def _permutation_parity(p):
@@ -749,33 +858,33 @@ def _permutation_parity(p):
 
 
 def _det_sign(lu):
-    """Sign of the determinant of a real matrix from its SuperLU
-    factorization `[P_r][A][P_c] = [L][U]`, with a unit `[L]`"""
+    r"""Sign of the determinant of a real matrix from its SuperLU
+    factorization `\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c = \boldsymbol{L} \boldsymbol{U}`, with a unit `\boldsymbol{L}`"""
     d = lu.U.diagonal()
     return (int(np.prod(np.sign(d))) * _permutation_parity(lu.perm_r)
             * _permutation_parity(lu.perm_c))
 
 
 def _norm_estimate(lu, KG, v):
-    r"""Estimate from below of `\|[A]^{-1} [K_G]\|_2`, with `[A]` the matrix
+    r"""Estimate from below of `\|\boldsymbol{A}^{-1} \boldsymbol{K}_G\|_2`, with `\boldsymbol{A}` the matrix
     factorized in ``lu``, from the vector ``v``
 
     Returns
     -------
     norm : float
-        `\|[O]^H [O] \{v\}\|/\|[O] \{v\}\|`, with `[O] = [A]^{-1} [K_G]`, or
-        ``0.`` when `[O] \{v\} = 0`.
+        `\|\boldsymbol{O}^H \boldsymbol{O} \boldsymbol{v}\|/\|\boldsymbol{O} \boldsymbol{v}\|`, with `\boldsymbol{O} = \boldsymbol{A}^{-1} \boldsymbol{K}_G`, or
+        ``0.`` when `\boldsymbol{O} \boldsymbol{v} = 0`.
 
     Notes
     -----
-    One step of the power iteration of `[O]^H [O]`, whose largest
-    eigenvalue is `\|[O]\|_2^2`, with two solutions with ``lu``. The
-    estimate is not larger than `\|[O]\|_2` and, by the Cauchy-Schwarz
-    inequality `\|[O]\{v\}\|^2 = \{v\}^H [O]^H [O] \{v\} \le \|\{v\}\|
-    \|[O]^H [O] \{v\}\|`, not smaller than `\|[O]\{v\}\|/\|\{v\}\|`. The
-    vector `[O]\{v\}` is in the range of `[O]`, i.e. of `[A]^{-1} [K_G]`,
+    One step of the power iteration of `\boldsymbol{O}^H \boldsymbol{O}`, whose largest
+    eigenvalue is `\|\boldsymbol{O}\|_2^2`, with two solutions with ``lu``. The
+    estimate is not larger than `\|\boldsymbol{O}\|_2` and, by the Cauchy-Schwarz
+    inequality `\|\boldsymbol{O} \boldsymbol{v}\|^2 = \boldsymbol{v}^H \boldsymbol{O}^H \boldsymbol{O} \boldsymbol{v} \le \|\boldsymbol{v}\|
+    \|\boldsymbol{O}^H \boldsymbol{O} \boldsymbol{v}\|`, not smaller than `\|\boldsymbol{O} \boldsymbol{v}\|/\|\boldsymbol{v}\|`. The
+    vector `\boldsymbol{O} \boldsymbol{v}` is in the range of `\boldsymbol{O}`, i.e. of `\boldsymbol{A}^{-1} \boldsymbol{K}_G`,
     such that the estimate does not decrease with the number of dofs where
-    `[K_G]` is null, as `\|[O]\{v\}\|/\|\{v\}\|` does.
+    `\boldsymbol{K}_G` is null, as `\|\boldsymbol{O} \boldsymbol{v}\|/\|\boldsymbol{v}\|` does.
 
     """
     y = _lu_solve(lu, KG @ v)
@@ -790,17 +899,17 @@ def _eigs_shifted(K, KG, s, k, tol, lu):
     r"""The ``k`` load multipliers nearest the shift ``s``, for real
     unsymmetric matrices
 
-    With `\lambda = s + \delta`, `([K] + s[K_G] + \delta [K_G])\{u\} = 0`
+    With `\lambda = s + \delta`, `(\boldsymbol{K} + s \boldsymbol{K}_G + \delta \boldsymbol{K}_G) \boldsymbol{u} = 0`
     gives the standard problem
-    `([K] + s [K_G])^{-1} [K_G] \{u\} = \nu \{u\}`, `\nu = -1/(\lambda - s)`,
+    `(\boldsymbol{K} + s \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G \boldsymbol{u} = \nu \boldsymbol{u}`, `\nu = -1/(\lambda - s)`,
     whose ``k`` eigenvalues of largest `|\nu|` are found with
     :func:`scipy.sparse.linalg.eigs`, using the SuperLU factorization ``lu``
-    of `[K] + s [K_G]`. The eigenvalues `|\nu| \le \epsilon_0 \max(\max
-    |\nu|, \|[O]\|)`, with `\epsilon_0` = :data:`NULL_MU_RTOL` and
-    `\|[O]\|` the estimate of the norm of the operator `[O] = ([K] + s
-    [K_G])^{-1} [K_G]` of :func:`_norm_estimate` from the starting vector of
+    of `\boldsymbol{K} + s \boldsymbol{K}_G`. The eigenvalues `|\nu| \le \epsilon_0 \max(\max
+    |\nu|, \|\boldsymbol{O}\|)`, with `\epsilon_0` = :data:`NULL_MU_RTOL` and
+    `\|\boldsymbol{O}\|` the estimate of the norm of the operator `\boldsymbol{O} = (\boldsymbol{K} + s
+    \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G` of :func:`_norm_estimate` from the starting vector of
     ARPACK, are taken as null, i.e. infinite load multipliers, e.g. of the
-    null rows of `[K_G]`, and are not returned.
+    null rows of `\boldsymbol{K}_G`, and are not returned.
 
     Returns
     -------
@@ -815,19 +924,19 @@ def _eigs_shifted(K, KG, s, k, tol, lu):
 
     Notes
     -----
-    The null `\nu` are found as round-off: each product with `[O]` is
+    The null `\nu` are found as round-off: each product with `\boldsymbol{O}` is
     computed with an error of the order of the machine precision times
-    `\|[O]\|`, and a null `\nu` comes out with a modulus up to this order,
-    or larger for a defective null eigenvalue. When `[O]` has non-null
+    `\|\boldsymbol{O}\|`, and a null `\nu` comes out with a modulus up to this order,
+    or larger for a defective null eigenvalue. When `\boldsymbol{O}` has non-null
     eigenvalues, `\max |\nu|` is a scale of the round-off; when it has
-    none, e.g. when `[K]^{-1}[K_G]` is nilpotent as with the follower load
+    none, e.g. when `\boldsymbol{K}^{-1} \boldsymbol{K}_G` is nilpotent as with the follower load
     of Ziegler's double pendulum, all the `\nu` are round-off, e.g. about
     `10^{-33}` or `10^{-17}` instead of 0 depending on the restarts of
     ARPACK, and `\max |\nu|` is not a scale: the largest `\nu` would not be
     null and their spurious load multipliers, about `10^{33}` or
-    `10^{17}`, would be returned. The norm `\|[O]\|` is a scale that does
+    `10^{17}`, would be returned. The norm `\|\boldsymbol{O}\|` is a scale that does
     not depend on the eigenvalues. The estimate is not larger than `\max
-    |\nu|` for a normal `[O]`, whose largest `|\nu|` is its norm, and both
+    |\nu|` for a normal `\boldsymbol{O}`, whose largest `|\nu|` is its norm, and both
     scales then give the same null `\nu`.
 
     """
@@ -908,21 +1017,21 @@ def _eigs_shift_search(K, KG, k, tol, check_rtol, silent):
        the union of these intervals starting at 0, i.e. `(0, c)` is covered,
        the next shift is `s_{j+1} = c + r_j`. When the new interval does not
        reach `c`, the next shifts move back towards `c` and fill the gap. The
-       shift is perturbed when `[K] + s [K_G]` is exactly singular.
+       shift is perturbed when `\boldsymbol{K} + s \boldsymbol{K}_G` is exactly singular.
     3. The search stops when the lowest positive real multiplier found,
        `\lambda_{cr}`, is not larger than `c`: no multiplier of `(0,
        \lambda_{cr})` was missed. It fails after
        :data:`SHIFT_SEARCH_MAX_STEPS` steps, or when the shift exceeds
        :data:`SHIFT_SEARCH_MAX_GROWTH` times `r_0`.
-    4. Parity check: `\det([K] + 0.9999 \lambda_{cr} [K_G])` must have the
-       sign of `\det [K]`, i.e. an even number, normally zero, of real
+    4. Parity check: `\det(\boldsymbol{K} + 0.9999 \lambda_{cr} \boldsymbol{K}_G)` must have the
+       sign of `\det \boldsymbol{K}`, i.e. an even number, normally zero, of real
        multipliers in `(0, 0.9999 \lambda_{cr})`. The signs come from the
        SuperLU factorizations, see :func:`_det_sign`. This check cannot
        detect two missing real multipliers, nor a missing complex pair.
 
-    The parity check follows from `\det([K] + s [K_G]) = \det [K]
+    The parity check follows from `\det(\boldsymbol{K} + s \boldsymbol{K}_G) = \det \boldsymbol{K}
     \prod_i (1 + s \mu_i)`, with `\mu_i = -1/\lambda_i` the eigenvalues of
-    `[K]^{-1}[K_G]`: a complex conjugate pair gives the positive factor
+    `\boldsymbol{K}^{-1} \boldsymbol{K}_G`: a complex conjugate pair gives the positive factor
     `|1 + s \mu_i|^2`, a null `\mu_i` the factor 1, and a real `\mu_i` a
     negative factor exactly when `0 < \lambda_i < s`. The sign of the
     determinant therefore changes with the parity of the number of real
@@ -1009,13 +1118,13 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
 
     Notes
     -----
-    :func:`scipy.sparse.linalg.eigsh` solves `[K_G]\{u\} = \mu [K]\{u\}`,
+    :func:`scipy.sparse.linalg.eigsh` solves `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}`,
     with `\mu = -1/\lambda`, which requires symmetric matrices and a
-    positive definite `[K]`. In the Cayley mode, ARPACK computes the
+    positive definite `\boldsymbol{K}`. In the Cayley mode, ARPACK computes the
     eigenvalues `(\mu + \sigma)/(\mu - \sigma)` of the operator
-    `([K_G] - \sigma [K])^{-1}([K_G] + \sigma [K])` ([1]_, Appendix A,
-    Section A.1, "Cayley Transformation Mode", with `[A] = [K_G]` and
-    `[M] = [K]`), and ``which='SM'`` selects those of smallest modulus. When `\sigma` is larger than `|\mu|`
+    `(\boldsymbol{K}_G - \sigma \boldsymbol{K})^{-1}(\boldsymbol{K}_G + \sigma \boldsymbol{K})` ([1]_, Appendix A,
+    Section A.1, "Cayley Transformation Mode", with `\boldsymbol{A} = \boldsymbol{K}_G` and
+    `\boldsymbol{M} = \boldsymbol{K}`), and ``which='SM'`` selects those of smallest modulus. When `\sigma` is larger than `|\mu|`
     of all the eigenvalues, `(\mu + \sigma)/(\mu - \sigma)` increases in
     modulus with `\mu` in `(-\sigma, \sigma)`, such that the most negative
     `\mu`, i.e. the lowest positive load multipliers, are selected, see
@@ -1043,7 +1152,7 @@ def _count_multipliers(K, KG, mu_max, sign, K_positive_definite):
     lower than ``INERTIA_COUNT_FACTOR/mu_max``, or ``None`` when unknown
 
     By Sylvester's law of inertia, for a positive definite ``K``, the number
-    of negative pivots of `[K] + s [K_G]` is the number of load multipliers
+    of negative pivots of `\boldsymbol{K} + s \boldsymbol{K}_G` is the number of load multipliers
     in `(0, s)` for `s > 0`, and in `(s, 0)` for `s < 0`, see
     :func:`_check_eigenpairs` and :func:`_negative_pivots`. ``None`` is
     returned when ``mu_max`` is unknown, ``K`` is not positive definite, or
@@ -1067,15 +1176,15 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
     Notes
     -----
     The Cayley mode with a shift `\sigma` larger than all the `|\mu|`
-    selects the eigenvalues `\mu` of `[K_G]\{u\} = \mu [K]\{u\}` by
+    selects the eigenvalues `\mu` of `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}` by
     increasing `(\mu + \sigma)/(\mu - \sigma)`, i.e. all the negative
     `\mu` before the null and the positive ones, see :func:`_eigsh_cayley`.
     ARPACK may not converge when fewer negative `\mu` exist than the number
     of requested eigenvalues, the remaining ones being then in the cluster
     of the null `\mu`, e.g. for a tensile reference load. The number of
     requested eigenvalues of each sign is therefore limited by the number
-    of load multipliers of that sign, counted with the inertia of `[K] + s
-    [K_G]` below the modulus ``INERTIA_COUNT_FACTOR`` divided by the largest
+    of load multipliers of that sign, counted with the inertia of `\boldsymbol{K} + s
+    \boldsymbol{K}_G` below the modulus ``INERTIA_COUNT_FACTOR`` divided by the largest
     `|\mu|`, see :func:`_count_multipliers`:
 
     1. ``KG`` gives the positive load multipliers `\lambda = -1/\mu`,
@@ -1407,18 +1516,18 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
     .. math::
 
-        ([K] + \lambda [K_G])\{u\} = \{0\}
+        (\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}
 
     where `\lambda` is the load multiplier of the load state that generated
-    `[K_G]`. It is solved as `[K_G]\{u\} = \mu [K]\{u\}`, with `\lambda =
-    -1/\mu`; the null eigenvalues `\mu`, e.g. of the dofs where `[K_G]` is
+    `\boldsymbol{K}_G`. It is solved as `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}`, with `\lambda =
+    -1/\mu`; the null eigenvalues `\mu`, e.g. of the dofs where `\boldsymbol{K}_G` is
     null, give infinite load multipliers.
 
     **Solver policy.** The dense fallback keeps structsolve robust where
     ARPACK is unreliable, normal runs never pay for a dense solution.
 
     **Symmetric matrices.** The shift of the Cayley mode is estimated by
-    power iterations on `[K]^{-1}[K_G]`, see :func:`_estimate_sigma` and
+    power iterations on `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, see :func:`_estimate_sigma` and
     :func:`_eigsh_cayley`. The dense fallback condenses out the dofs where
     ``KG`` has null rows, typically the in-plane dofs, with a sparse
     factorization of ``K``, see :func:`_eigh_condensed`. The eigenpairs are
@@ -1430,25 +1539,25 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
       :func:`_relative_residuals`;
     - when ``K`` is positive definite, no load multiplier below the highest
       positive one returned may be missing: the number of negative pivots of
-      `[K] + s [K_G]`, for `s` slightly below that multiplier, is the number
+      `\boldsymbol{K} + s \boldsymbol{K}_G`, for `s` slightly below that multiplier, is the number
       of load multipliers in `(0, s)` (Sylvester's law of inertia). The
       factorization is done with SuperLU, without row interchanges. When a
-      row interchange was needed and the count is unknown, `[K] + s [K_G]`
+      row interchange was needed and the count is unknown, `\boldsymbol{K} + s \boldsymbol{K}_G`
       must be positive definite for `s` slightly below the lowest positive
       load multiplier. See :func:`_check_eigenpairs`;
-    - the same for the negative load multipliers with `-[K_G]`, i.e. the
+    - the same for the negative load multipliers with `-\boldsymbol{K}_G`, i.e. the
       positive load multipliers of the reversed load, see
       :func:`_check_both_signs`.
 
     The Cayley mode selects all the negative `\mu`, i.e. the positive load
     multipliers, before the null and the positive `\mu`. The load
-    multipliers of each sign are first counted with the inertia of `[K] + s
-    [K_G]`, for `|s|` equal to ``INERTIA_COUNT_FACTOR`` times the lowest
+    multipliers of each sign are first counted with the inertia of `\boldsymbol{K} + s
+    \boldsymbol{K}_G`, for `|s|` equal to ``INERTIA_COUNT_FACTOR`` times the lowest
     modulus that a load multiplier may have, and at most as many are
     requested, since ARPACK may not converge when it must return
     eigenvalues of the cluster of the null `\mu`. When fewer than
     ``num_eigvalues`` positive load multipliers exist, the Cayley mode with
-    `-[K_G]` gives the negative load multipliers closest to zero, see
+    `-\boldsymbol{K}_G` gives the negative load multipliers closest to zero, see
     :func:`_eigsh_both_signs`.
 
     **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a

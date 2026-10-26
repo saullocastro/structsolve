@@ -46,7 +46,7 @@ def solve(a, b, silent=False, **kwargs):
     Notes
     -----
     With `u` the set of the degrees of freedom whose row or column of ``a``
-    is not null, the reduced system `[a_{uu}]\{x_u\} = \{b_u\}` is solved
+    is not null, the reduced system `[a_{uu}]\boldsymbol{x}_u = \boldsymbol{b}_u` is solved
     and `x = 0` at the other degrees of freedom. The terms of ``b`` at the
     removed degrees of freedom are ignored: ``x`` solves the full system
     only when they are null, otherwise the full system has no solution,

@@ -98,8 +98,8 @@ def test_invalid_convergence_parameters():
 
 def test_crisfield_weights_and_zeta():
     r"""`w_j = 1/|K_{jj}|` at the free degrees of freedom, zero at the null
-    rows and columns; `\zeta = \|R\|_{\boldsymbol{d}}/
-    \max(\|F_{ext}\|_{\boldsymbol{d}}, \|F_{int}\|_{\boldsymbol{d}})`"""
+    rows and columns; `\zeta = \|\boldsymbol{R}\|_{\boldsymbol{d}}/
+    \max(\|\boldsymbol{F}_{ext}\|_{\boldsymbol{d}}, \|\boldsymbol{F}_{int}\|_{\boldsymbol{d}})`"""
     from scipy.sparse import csr_matrix
     from structsolve.convergence import crisfield_weights, crisfield_zeta
 
@@ -108,11 +108,11 @@ def test_crisfield_weights_and_zeta():
     np.testing.assert_allclose(w, [0.25, 0.5, 0.])
     fext = np.array([2., 0., 7.])
     fint = np.array([1., 1., 0.])
-    R = fext - fint
+    R = fint - fext
     zeta = crisfield_zeta(R, fext, fint, w)
     ref = max(np.sqrt(4*0.25), np.sqrt(0.25 + 0.5))
     np.testing.assert_allclose(zeta, np.sqrt(0.25 + 0.5)/ref)
-    # an additional reference, e.g. lbd*dR/dlbd
+    # an additional reference, e.g. -lbd*dR/dlbd
     assert crisfield_zeta(R, fext, fint, w, q=np.array([10., 0., 0.])) < zeta
     assert crisfield_zeta(np.zeros(3), np.zeros(3), np.zeros(3), w) == 0.
     assert crisfield_zeta(R, np.zeros(3), np.zeros(3), w) == np.inf
@@ -133,7 +133,7 @@ def test_check_convergence_criteria():
     w = np.array([1., 1.e-6])
     fext = np.array([1., 0.])
     fint = np.array([1., 0.5])
-    R = fext - fint
+    R = fint - fext
     # the second component is a moment of a stiff rotation
     conv, Rnorm, zeta = _check_convergence(an, R, fint, fext, w=w)
     assert conv and zeta < 1.e-3
@@ -145,3 +145,53 @@ def test_check_convergence_criteria():
     an.convergence = 'crisfield'
     with pytest.raises(ValueError, match='weights'):
         _check_convergence(an, R, fint, fext)
+
+
+@pytest.mark.parametrize('convergence', ['crisfield', 'relative'])
+def test_check_convergence_roundoff_floor(convergence, monkeypatch):
+    r"""An iteration has also converged when the norm of the residual of
+    the criterion is not larger than ``ROUNDOFF_FACTOR`` `\varepsilon \|
+    |K_{C0}| |c| \|`, whatever ``relTOL``, and only when ``Kc_abs`` is
+    given; `\zeta` is unchanged"""
+    from structsolve import convergence as cv
+
+    class An(object):
+        relTOL = 1.e-20
+        absTOL = None
+    an = An()
+    an.convergence = convergence
+    eps = np.finfo(float).eps
+    w = np.array([1., 1.e-6]) if convergence == 'crisfield' else None
+    # |K_C0| |c| of a translation and of a stiff rotation
+    Kc_abs = np.array([1.e3, 1.e9])
+    fext = np.array([1., 0.])
+    fint = np.array([1., 0.])
+    if convergence == 'crisfield':
+        norm_Kc = np.sqrt(1.e6 + 1.e-6*1.e18)
+    else:
+        norm_Kc = np.sqrt(1.e6 + 1.e18)
+    floor = cv.ROUNDOFF_FACTOR*eps*norm_Kc
+    assert cv.ROUNDOFF_FACTOR == 3.
+    assert np.isclose(cv.roundoff_floor(Kc_abs, w=w), floor, rtol=1e-14)
+    # residual on the first component only: its norm is |R_0| with both
+    # criteria
+    for factor, expected in ((0.99, True), (1.01, False)):
+        R = np.array([factor*floor, 0.])
+        conv, Rnorm, zeta, roundoff = cv.check_convergence(an, R, fint,
+                fext, w=w, Kc_abs=Kc_abs, full_output=True)
+        assert conv is expected and roundoff is expected
+        assert np.isclose(Rnorm, factor*floor, rtol=1e-14)
+        assert zeta > an.relTOL
+        # without Kc_abs, the criterion of relTOL only
+        assert cv.check_convergence(an, R, fint, fext, w=w) == (False,
+                Rnorm, zeta)
+    R = np.array([0.5*floor, 0.])
+    # an iteration accepted by relTOL is not marked
+    an.relTOL = 1.e-3
+    assert cv.check_convergence(an, R, fint, fext, w=w, Kc_abs=Kc_abs,
+                                full_output=True)[::3] == (True, False)
+    # ROUNDOFF_FACTOR = 0 disables the floor
+    an.relTOL = 1.e-20
+    monkeypatch.setattr(cv, 'ROUNDOFF_FACTOR', 0.)
+    assert not cv.check_convergence(an, R, fint, fext, w=w,
+                                    Kc_abs=Kc_abs)[0]

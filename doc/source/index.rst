@@ -6,13 +6,13 @@ semi-analytical models, such as the Ritz models of plates and shells of
 `panels <https://github.com/saullocastro/panels>`_. With ``structsolve`` you
 can run:
 
-* Linear static analyses, `[K]\{u\} = \{f\}`, with :func:`.static`,
+* Linear static analyses, `\boldsymbol{K} \boldsymbol{u} = \boldsymbol{f}`, with :func:`.static`,
   :func:`.solve` or :class:`.Analysis`
 
-* Linear buckling analyses, `([K] + \lambda [K_G])\{u\} = \{0\}`, with
+* Linear buckling analyses, `(\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}`, with
   :func:`.lb`
 
-* Frequency analyses, `([K] + \lambda^2 [M])\{u\} = \{0\}`, with :func:`.freq`
+* Frequency analyses, `(\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}`, with :func:`.freq`
 
 * Sparse eigenvalue solvers first, with verified results and dense solvers
   only as a last resort, also in the browser (Pyodide) and with the faulty
@@ -130,7 +130,7 @@ License
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.3). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 In BibTeX:
 
@@ -141,7 +141,7 @@ In BibTeX:
       title     = {Structural analysis solvers tailored for semi-analytical
                    models},
       year      = {2026},
-      version   = {0.9.2},
+      version   = {0.9.3},
       publisher = {Zenodo},
       doi       = {10.5281/zenodo.2581212},
       url       = {https://doi.org/10.5281/zenodo.2581212}

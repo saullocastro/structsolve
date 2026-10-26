@@ -6,6 +6,7 @@ and they are shared with the arc-length solvers of
 
 """
 import numpy as np
+from scipy.sparse import csr_matrix
 
 from .logger import msg, warn
 from .static import solve, _factorize
@@ -42,6 +43,13 @@ def _weights(an, kC0):
     return None
 
 
+def _abs_matrix(kC0):
+    r"""Elementwise absolute value `|K_{C0}|` of the linear stiffness matrix
+    ``kC0``, sparse, for the round-off floor of the convergence criteria,
+    see :func:`.convergence.roundoff_floor`"""
+    return abs(csr_matrix(kC0))
+
+
 def _norm(v, w):
     r"""Norm of the convergence criterion: `\|v\|_{\boldsymbol{d}}` with the
     weights ``w`` of Crisfield's criterion, the Euclidean norm when ``w`` is
@@ -51,18 +59,22 @@ def _norm(v, w):
     return scaled_norm(v, w)
 
 
-def _log_iteration(an, iteration, R, zeta, silent, lbd=None):
+def _log_iteration(an, iteration, R, zeta, silent, lbd=None,
+                   roundoff=False):
     r"""Message of one equilibrium iteration, with `\zeta` of Crisfield's
-    criterion or the relative residual of the relative criterion"""
+    criterion or the relative residual of the relative criterion, marked
+    when the iteration converged by the round-off floor only, see
+    :func:`.convergence.check_convergence`"""
     name = 'zeta' if an.convergence == 'crisfield' else 'relative ||R||'
     load = '' if lbd is None else ', lbd %1.5f' % lbd
-    msg('Iteration: %d%s, max(|R|) = %1.3e, %s = %1.3e'
-        % (iteration, load, np.abs(R).max(), name, zeta), level=2,
+    floor = ', converged at the round-off floor' if roundoff else ''
+    msg('Iteration: %d%s, max(|R|) = %1.3e, %s = %1.3e%s'
+        % (iteration, load, np.abs(R).max(), name, zeta, floor), level=2,
         silent=silent)
 
 
 def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
-                       w=None):
+                       w=None, Kc_abs=None, full_output=False):
     r"""Check the convergence of the residual force vector
 
     With ``an.convergence = 'crisfield'``, the default, the convergence is
@@ -77,7 +89,9 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
     - ``max(|R|) <= absTOL``, if ``an.absTOL`` is not ``None``
 
     ``an.absTOL`` is also accepted as an additional criterion with
-    ``'crisfield'``. See :func:`.convergence.check_convergence`.
+    ``'crisfield'``, and, with both criteria, the round-off floor of
+    :func:`.convergence.roundoff_floor` when ``Kc_abs`` is given. See
+    :func:`.convergence.check_convergence`.
 
     Parameters
     ----------
@@ -95,25 +109,33 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
         the current increment of the arc-length solvers.
     q_ref : array-like or None, optional
         Additional reference force vector, the load factor times
-        `\partial R/\partial \lambda` when ``calc_fext`` accepts ``lbd``,
+        `-\partial \boldsymbol{R}/\partial \lambda` when ``calc_fext`` accepts ``lbd``,
         see :mod:`.callbacks`.
     w : array-like or None, optional
         Weights of Crisfield's criterion, see
         :func:`.convergence.crisfield_weights`, required with
         ``an.convergence = 'crisfield'``.
+    Kc_abs : array-like or None, optional
+        `|K_{C0}| |c|` of the round-off floor, see
+        :func:`.convergence.check_convergence`; ``None`` disables it.
+    full_output : bool, optional
+        Whether to also return ``roundoff``.
 
     Returns
     -------
     converged : bool
         Whether the convergence criterion is satisfied.
     Rnorm : float
-        Norm of the residual of the criterion, `\|R\|_{\boldsymbol{d}}` with
+        Norm of the residual of the criterion, `\|\boldsymbol{R}\|_{\boldsymbol{d}}` with
         ``'crisfield'``, the Euclidean norm with ``'relative'``, used by the
         divergence checks and the line search.
     Rrel : float
         Relative residual, Crisfield's `\zeta` with ``'crisfield'``,
         ``||R||/max(||fext_total||, ||fint||, ||fext_ref||, ||q_ref||)``
         with ``'relative'``.
+    roundoff : bool
+        Only with ``full_output=True``: whether the convergence is achieved
+        by the round-off floor only.
 
     Raises
     ------
@@ -135,7 +157,8 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
 
     """
     return check_convergence(an, R, fint, fext_total, fext_ref=fext_ref,
-                             q_ref=q_ref, w=w)
+                             q_ref=q_ref, w=w, Kc_abs=Kc_abs,
+                             full_output=full_output)
 
 
 def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
@@ -210,7 +233,7 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
 
 
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
-                   lbd_dependent=False, q=None, w=None):
+                   lbd_dependent=False, q=None, w=None, K0_abs=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Corrects the predictor ``dc`` at the load factor ``total`` until the
@@ -241,19 +264,23 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         A boolean to tell whether the log messages should be printed.
     lbd_dependent : bool, optional
         Whether ``calc_fext`` accepts ``lbd``, see :mod:`.callbacks`;
-        ``total*q``, with `\{q\} = \partial R/\partial \lambda`, is then an
+        ``total*q``, with `\boldsymbol{q} = -\partial \boldsymbol{R}/\partial \lambda`, is then an
         additional reference of the convergence criterion, see
-        :func:`._check_convergence`. `\{q\}` is evaluated together with the
+        :func:`._check_convergence`. `\boldsymbol{q}` is evaluated together with the
         tangent stiffness matrix, at the same iterate, and the last one
         evaluated is the reference until the next update of the tangent.
     q : array-like or None, optional
-        The last `\{q\}` evaluated before these iterations, the reference
+        The last `\boldsymbol{q}` evaluated before these iterations, the reference
         until the first update of the tangent stiffness matrix, used only
         when ``lbd_dependent=True``.
     w : array-like or None, optional
         Weights of Crisfield's criterion, see
         :func:`.convergence.crisfield_weights`, computed from ``calc_kC()``
         when ``None`` and ``an.convergence = 'crisfield'``.
+    K0_abs : sparse matrix or None, optional
+        `|K_{C0}|` of the round-off floor of the convergence criteria, see
+        :func:`.convergence.check_convergence`, computed from ``calc_kC()``
+        when ``None``.
 
     Returns
     -------
@@ -262,7 +289,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     dc : array-like
         Solution increment, such that ``c + dc`` is the solution.
     q : array-like or None
-        The last `\{q\}` evaluated, ``None`` when ``lbd_dependent=False``.
+        The last `\boldsymbol{q}` evaluated, ``None`` when ``lbd_dependent=False``.
 
     Notes
     -----
@@ -270,15 +297,15 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
 
     .. math::
 
-        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c + \Delta c, \lambda)\},
-        \qquad \{\delta c\} = [K_T]^{-1}\{R\}, \qquad
-        \{\Delta c\} \leftarrow \{\Delta c\} + \eta \{\delta c\}
+        \boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c} + \Delta \boldsymbol{c}, \lambda) - \lambda \boldsymbol{F}_{ext},
+        \qquad \boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}, \qquad
+        \Delta \boldsymbol{c} \leftarrow \Delta \boldsymbol{c} + \eta \delta \boldsymbol{c}
 
-    With full Newton-Raphson, `[K_T]` is computed and factorized at every
+    With full Newton-Raphson, `\boldsymbol{K}_T` is computed and factorized at every
     iteration at `c + \Delta c`, and the convergence is quadratic when it is
-    the exact Jacobian `-\partial R/\partial c` ([1]_, Section 1.2.2,
+    the exact Jacobian `\partial \boldsymbol{R}/\partial \boldsymbol{c}` ([1]_, Section 1.2.2,
     p. 9). With
-    ``an.modified_NR = True``, `[K_T]` is computed at the first iteration,
+    ``an.modified_NR = True``, `\boldsymbol{K}_T` is computed at the first iteration,
     or given as ``kT0``, and then every ``an.compute_every_n`` iterations,
     its LU factorization being reused in the other iterations.
 
@@ -291,7 +318,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         \phi(\eta) \le (1 - 2 \alpha \eta) \phi(0)
 
     with `\alpha` = ``LINE_SEARCH_ALPHA``, which assumes `\phi'(0) =
-    -2\phi(0)`, exact for a Newton direction, i.e. when `[K_T]` is the exact
+    -2\phi(0)`, exact for a Newton direction, i.e. when `\boldsymbol{K}_T` is the exact
     Jacobian at `c + \Delta c`; with ``an.modified_NR = True`` it is an
     approximation. The full step `\eta = 1` is tried first. Otherwise `\eta`
     is replaced by the minimizer `\phi(0)/A` of the quadratic interpolation
@@ -307,9 +334,9 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     pp. 325-327), applied to nonlinear equations with the merit function
     `f = \frac{1}{2}\|D_F F\|^2` ([2]_, Section 6.5, Eq. (6.5.3), p. 147,
     and Algorithm NEFN, p. 303), whose directional derivative along the
-    Newton step is `-F^T F = -2f` (p. 148, with `D_F` the identity). With
-    `F = R` and `\phi = 2f`, `D_F` being the identity with the Euclidean
-    norm or `\mathrm{diag}(\sqrt{w_j})` with Crisfield's criterion, the test
+    Newton step is `-F^\top F = -2f` (p. 148, with `D_F` the identity). With
+    `F = R`, whose Jacobian is `\boldsymbol{K}_T`, and `\phi = 2f`, `D_F` being
+    the identity with the Euclidean norm or `\mathrm{diag}(\sqrt{w_j})` with Crisfield's criterion, the test
     above is their condition (6.3.3) (p. 118) with their `\alpha = 10^{-4}`
     (p. 126), and the first reduction is their quadratic backtrack,
     Eq. (6.3.17) (p. 127). It differs from Algorithm A6.3.1 in that: the
@@ -338,8 +365,12 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     """
 
     modified_NR = an.modified_NR
-    if w is None and an.convergence == 'crisfield':
-        w = _weights(an, an.calc_kC(silent=True))
+    if K0_abs is None or (w is None and an.convergence == 'crisfield'):
+        kC0 = an.calc_kC(silent=True)
+        if w is None:
+            w = _weights(an, kC0)
+        if K0_abs is None:
+            K0_abs = _abs_matrix(kC0)
     fext_total = total*fext
     if not lbd_dependent:
         q = None
@@ -354,13 +385,14 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         iteration += 1
         if fint is None:
             fint = callbacks.calc_fint(an, c + dc, total)
-        R = fext_total - fint
+        R = fint - fext_total
         if q is not None:
             q_ref = total*q
 
-        conv, Rnorm, Rrel = _check_convergence(an, R, fint, fext_total,
-                                               q_ref=q_ref, w=w)
-        _log_iteration(an, iteration, R, Rrel, silent)
+        conv, Rnorm, Rrel, roundoff = _check_convergence(an, R, fint,
+                fext_total, q_ref=q_ref, w=w, Kc_abs=K0_abs @ np.abs(c + dc),
+                full_output=True)
+        _log_iteration(an, iteration, R, Rrel, silent, roundoff=roundoff)
         if conv:
             return True, dc, q
         if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
@@ -378,13 +410,13 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total))
                 iter_kT = 1
                 if lbd_dependent:
-                    # dR/dlbd at the iterate of the tangent stiffness matrix
+                    # -dR/dlbd at the iterate of the tangent stiffness matrix
                     q = callbacks.calc_load_vector(an, c + dc, fext, total)
         except RuntimeError:
             warn('Singular tangent stiffness matrix', level=2, silent=silent)
             return False, dc, q
 
-        varc = solve_kT(R)
+        varc = solve_kT(-R)
 
         eta = 1.
         fint = None
@@ -393,7 +425,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             # phi'(0) = -2*phi(0), exact for a Newton direction
             fint = callbacks.calc_fint(an, c + dc + varc, total)
             phi0 = Rnorm**2
-            phi1 = _norm(fext_total - fint, w)**2
+            phi1 = _norm(fint - fext_total, w)**2
             iter_line_search = 0
             while not phi1 <= (1 - 2*LINE_SEARCH_ALPHA*eta)*phi0:
                 if iter_line_search == an.max_iter_line_search:
@@ -406,7 +438,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 eta_new = phi0/A if (np.isfinite(A) and A > 0) else 0.5*eta
                 eta = min(max(eta_new, 0.1*eta), 0.5*eta)
                 fint = callbacks.calc_fint(an, c + dc + eta*varc, total)
-                phi1 = _norm(fext_total - fint, w)**2
+                phi1 = _norm(fint - fext_total, w)**2
             if eta != 1.:
                 msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
         dc = dc + eta*varc
@@ -460,13 +492,13 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     .. math::
 
-        \{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}
+        \boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}
 
     Each increment starts from a predictor that extrapolates the previous
     converged increment of the solution, scaled by the ratio between the new
     and the previous load increments. The first increment uses the linear
-    solution as predictor: `\Delta\lambda [K_{C0}]^{-1}\{F_{ext}\}`, with
-    `[K_{C0}]` the linear stiffness matrix ``calc_kC()``.
+    solution as predictor: `\Delta\lambda \boldsymbol{K}_{C0}^{-1} \boldsymbol{F}_{ext}`, with
+    `\boldsymbol{K}_{C0}` the linear stiffness matrix ``calc_kC()``.
 
     The callables that accept the keyword argument ``inc`` receive the load
     factor `\lambda` of the step, see :mod:`.callbacks`, which allows
@@ -474,14 +506,14 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     When ``calc_fext`` accepts the keyword argument ``lbd``, e.g. for
     prescribed displacements imposed exactly, see :mod:`.callbacks`, the
-    load vector `\{q\} = \partial R/\partial \lambda` at `c = 0`,
+    load vector `\boldsymbol{q} = -\partial \boldsymbol{R}/\partial \lambda` at `\boldsymbol{c} = \boldsymbol{0}`,
     `\lambda = 0` gives the predictor of the first increment, its linear
-    solution `[K_{C0}]^{-1}\{q\}`, instead of the linear solution of the
+    solution `\boldsymbol{K}_{C0}^{-1} \boldsymbol{q}`, instead of the linear solution of the
     reference vector, which is null under a prescribed displacement alone,
     and `\lambda \|q\|` is an additional reference of the relative
-    convergence criterion. `\{q\}` is evaluated together with the tangent
+    convergence criterion. `\boldsymbol{q}` is evaluated together with the tangent
     stiffness matrix, at the same iterate, i.e. ``calc_fext`` is called once
-    per update of the tangent stiffness matrix, and the last `\{q\}`
+    per update of the tangent stiffness matrix, and the last `\boldsymbol{q}`
     evaluated is the reference of the next convergence checks, also in the
     next step.
 
@@ -493,7 +525,7 @@ def _solver_NR(an, silent=False, initialInc=None):
     iterations, and its LU factorization is reused in the other
     iterations, at the cost of a linear convergence rate; at the first step
     with ``an.kT_initial_state = False``, the linear constitutive stiffness
-    matrix `[K_{C0}]` is used instead of the tangent at the first iteration.
+    matrix `\boldsymbol{K}_{C0}` is used instead of the tangent at the first iteration.
 
     With ``an.line_search = True``, the full Newton step (``eta = 1``) is tried
     first and it is accepted if it satisfies a sufficient-decrease test on the
@@ -528,10 +560,11 @@ def _solver_NR(an, silent=False, initialInc=None):
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
     w = _weights(an, kC0)
+    K0_abs = _abs_matrix(kC0)
     q = None
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
-        # dR/dlbd at c = 0 and lbd = 0
+        # -dR/dlbd at c = 0 and lbd = 0
         q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
     # predictor of the first step: linear solution scaled by the load factor
     dc_last = solve(kC0, fext if q is None else q, silent=True)
@@ -556,11 +589,11 @@ def _solver_NR(an, silent=False, initialInc=None):
             kT0 = kC0
         converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
                 kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
-                w=w)
+                w=w, K0_abs=K0_abs)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)
-            # the dR/dlbd of a step that failed is not kept
+            # the -dR/dlbd of a step that failed is not kept
             q = q_new
             c = c + dc
             total_last = total

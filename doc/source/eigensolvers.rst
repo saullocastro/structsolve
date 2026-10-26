@@ -18,18 +18,25 @@ Solver policy
   verified before it is returned: the relative residual of each eigenpair
   and, for symmetric matrices, the inertia of a shifted matrix, which tells
   whether an eigenvalue was missed (Sylvester's law of inertia). The
-  residual `\|[K]\{u\} + \lambda [B]\{u\}\|` is relative to
-  `\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|`, with `[B] = [K_G]` or `[M]`.
+  residual `\|\boldsymbol{K} \boldsymbol{u} + \lambda \boldsymbol{B} \boldsymbol{u}\|` is relative to
+  `\|\boldsymbol{K} \boldsymbol{u}\| + |\lambda| \, \|\boldsymbol{B} \boldsymbol{u}\|`, with `\boldsymbol{B} = \boldsymbol{K}_G` or `\boldsymbol{M}`.
   Only for a rigid-body mode of :func:`.freq`, whose eigenvalue and
-  `[K]\{u\}` are both null up to the round-off, i.e. `\|[K]\{u\}\| +
-  |\lambda| \, \|[M]\{u\}\|` not larger than ``RIGID_BODY_RTOL`` `= 100
+  `\boldsymbol{K} \boldsymbol{u}` are both null up to the round-off, i.e. `\|\boldsymbol{K} \boldsymbol{u}\| +
+  |\lambda| \, \|\boldsymbol{M} \boldsymbol{u}\|` not larger than ``RIGID_BODY_RTOL`` `= 100
   \epsilon`, `\epsilon` the machine precision, times the matrix-norm scale
-  `(\|[K]\|_F + |\lambda| \, \|[M]\|_F)\|\{u\}\|`, is the residual relative
+  `(\|\boldsymbol{K}\|_F + |\lambda| \, \|\boldsymbol{M}\|_F)\|\boldsymbol{u}\|`, is the residual relative
   to this scale, see
-  :func:`.linear_buckling._relative_residuals`. The check of the other
-  eigenpairs, e.g. of models with stiff penalty springs, whose
-  `\|[K]\|_F` is many orders of magnitude larger than `\|[K]\{u\}\|`, is
-  not loosened.
+  :func:`.linear_buckling._relative_residuals`. An eigenpair of
+  :func:`.freq` whose relative residual is larger than ``check_rtol``
+  passes when its normwise backward error, the residual relative to the
+  matrix-norm scale, is not larger than ``BACKWARD_ERROR_RTOL`` `=
+  \epsilon`, i.e. when it is accurate up to the round-off, e.g. an
+  eigenvalue close to zero of a model pre-stressed close to buckling, see
+  :func:`.linear_buckling._backward_errors`. The check of the other
+  eigenpairs, e.g. the inaccurate ones of models with stiff penalty
+  springs, whose `\|\boldsymbol{K}\|_F` is many orders of magnitude larger than
+  `\|\boldsymbol{K} \boldsymbol{u}\|`, is not loosened, and :func:`.lb` keeps the relative
+  residual only.
 - When all the sparse solvers failed (verification, ARPACK error or no
   convergence, singular factorization, no positive real load multiplier
   for unsymmetric matrices...), a dense solver is used as a last resort, if
@@ -58,11 +65,11 @@ Linear buckling, symmetric matrices
 -----------------------------------
 
 :func:`scipy.sparse.linalg.eigsh` in Cayley mode, with a shift estimated by
-power iterations on `[K]^{-1}[K_G]`, retried with a 10 times larger shift.
+power iterations on `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, retried with a 10 times larger shift.
 It gives the lowest positive load multipliers; when fewer than
-``num_eigvalues`` exist, the same solver with `-[K_G]` gives the negative
+``num_eigvalues`` exist, the same solver with `-\boldsymbol{K}_G` gives the negative
 ones closest to zero, i.e. the critical load multipliers of the reversed
-load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where `[K_G]` has
+load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where `\boldsymbol{K}_G` has
 null rows and solves the condensed problem with :func:`scipy.linalg.eigh`.
 
 
@@ -77,7 +84,7 @@ each shift, :func:`scipy.sparse.linalg.eigs` finds the load multipliers
 nearest `s`, within a disc that contains all of them. The shifts move until
 the lowest positive real multiplier found is inside the union of the discs
 that covers the positive real axis from zero, such that none was missed. A
-parity check of the sign of `\det([K] + s [K_G])` confirms that an even
+parity check of the sign of `\det(\boldsymbol{K} + s \boldsymbol{K}_G)` confirms that an even
 number, normally zero, of real multipliers lies below the critical one. See
 :func:`structsolve.linear_buckling._eigs_shift_search`.
 
@@ -103,7 +110,7 @@ SciPy. :mod:`structsolve.arpackutils` detects such a LAPACK and keeps
 ``ncv <= 32``, computing more than 15 eigenpairs in several passes with
 deflation. The eigenvectors of all the passes are combined with a
 Rayleigh-Ritz projection, solved with the LAPACK driver ``dsyevr``, which
-does not use ``dsteqr``, such that they are `[M]`-orthonormal also across
+does not use ``dsteqr``, such that they are `\boldsymbol{M}`-orthonormal also across
 the passes, where ARPACK alone gives them orthogonal only to its accuracy.
 The detection can be overridden, e.g. to lift the cap with MKL 2025.0.1 or
 newer when its version cannot be read::
