@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling with a prestress &#8212; structsolve 0.9.2 documentation</title>
+    <title>Linear buckling with a prestress &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -563,31 +563,31 @@
 <p>A linear buckling analysis with <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> has three steps, of which only
 the last one is done by <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>:</p>
 <ol class="arabic">
-<li><p>the linear static solution <span class="math notranslate nohighlight">\(\{c_0\}\)</span> of a reference load
-<span class="math notranslate nohighlight">\(\{F_{ref}\}\)</span>, <span class="math notranslate nohighlight">\([K_{C0}]\{c_0\} = \{F_{ref}\}\)</span>, e.g. with <a class="reference internal" href="static.html#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a>,
+<li><p>the linear static solution <span class="math notranslate nohighlight">\(\boldsymbol{c}_0\)</span> of a reference load
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_{ref}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0} \boldsymbol{c}_0 = \boldsymbol{F}_{ref}\)</span>, e.g. with <a class="reference internal" href="static.html#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a>,
 <a class="reference internal" href="static.html#structsolve.static" title="structsolve.static"><code class="xref py py-func docutils literal notranslate"><span class="pre">static()</span></code></a> or <code class="docutils literal notranslate"><span class="pre">Analysis.static(NLgeom=False)</span></code>;</p></li>
-<li><p>the geometric stiffness matrix <span class="math notranslate nohighlight">\([K_G(c_0)]\)</span> of the prestress of
-<span class="math notranslate nohighlight">\(\{c_0\}\)</span>, computed by the model, e.g. from the pre-buckling stress
+<li><p>the geometric stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_G(\boldsymbol{c}_0)\)</span> of the prestress of
+<span class="math notranslate nohighlight">\(\boldsymbol{c}_0\)</span>, computed by the model, e.g. from the pre-buckling stress
 resultants at each integration point;</p></li>
 <li><p>the eigenvalue problem</p>
 <div class="math notranslate nohighlight">
-\[([K_{C0}] + \lambda [K_G(c_0)])\{u\} = \{0\}\]</div>
+\[(\boldsymbol{K}_{C0} + \lambda \boldsymbol{K}_G(\boldsymbol{c}_0)) \boldsymbol{u} = \boldsymbol{0}\]</div>
 <p>solved by <code class="docutils literal notranslate"><span class="pre">lb(K0,</span> <span class="pre">KG)</span></code>, which returns the load multipliers <span class="math notranslate nohighlight">\(\lambda\)</span>
-and the buckling modes <span class="math notranslate nohighlight">\(\{u\}\)</span>.</p>
+and the buckling modes <span class="math notranslate nohighlight">\(\boldsymbol{u}\)</span>.</p>
 </li>
 </ol>
-<p>Since the static solution is linear, <span class="math notranslate nohighlight">\([K_G]\)</span> is proportional to the load,
-<span class="math notranslate nohighlight">\([K_G(\lambda c_0)] = \lambda [K_G(c_0)]\)</span>, and the eigenvalue problem gives
-the load levels <span class="math notranslate nohighlight">\(\lambda \{F_{ref}\}\)</span> at which <span class="math notranslate nohighlight">\([K_{C0}] + \lambda [K_G]\)</span> is
+<p>Since the static solution is linear, <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> is proportional to the load,
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_G(\lambda \boldsymbol{c}_0) = \lambda \boldsymbol{K}_G(\boldsymbol{c}_0)\)</span>, and the eigenvalue problem gives
+the load levels <span class="math notranslate nohighlight">\(\lambda \boldsymbol{F}_{ref}\)</span> at which <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0} + \lambda \boldsymbol{K}_G\)</span> is
 singular.</p>
 <section id="meaning-of-the-load-multipliers">
 <h2>Meaning of the load multipliers<a class="headerlink" href="#meaning-of-the-load-multipliers" title="Link to this heading">#</a></h2>
 <p><span class="math notranslate nohighlight">\(\lambda\)</span> multiplies the reference load: the critical load is <span class="math notranslate nohighlight">\(\lambda_1
-\{F_{ref}\}\)</span>, and a reference load <span class="math notranslate nohighlight">\(\alpha\)</span> times larger gives load
+\boldsymbol{F}_{ref}\)</span>, and a reference load <span class="math notranslate nohighlight">\(\alpha\)</span> times larger gives load
 multipliers <span class="math notranslate nohighlight">\(\alpha\)</span> times smaller. A load that is kept constant, e.g. a
-preload <span class="math notranslate nohighlight">\(\{F_0\}\)</span>, is not multiplied by <span class="math notranslate nohighlight">\(\lambda\)</span>: its geometric stiffness
+preload <span class="math notranslate nohighlight">\(\boldsymbol{F}_0\)</span>, is not multiplied by <span class="math notranslate nohighlight">\(\lambda\)</span>: its geometric stiffness
 matrix belongs to the first matrix, <code class="docutils literal notranslate"><span class="pre">lb(K0</span> <span class="pre">+</span> <span class="pre">KG0,</span> <span class="pre">KG)</span></code>, and the critical
-load is <span class="math notranslate nohighlight">\(\{F_0\} + \lambda_1 \{F_{ref}\}\)</span>.</p>
+load is <span class="math notranslate nohighlight">\(\boldsymbol{F}_0 + \lambda_1 \boldsymbol{F}_{ref}\)</span>.</p>
 </section>
 <section id="negative-and-complex-load-multipliers">
 <h2>Negative and complex load multipliers<a class="headerlink" href="#negative-and-complex-load-multipliers" title="Link to this heading">#</a></h2>

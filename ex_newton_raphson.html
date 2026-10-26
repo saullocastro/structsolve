@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Non-linear static analysis with the Newton-Raphson method &#8212; structsolve 0.9.2 documentation</title>
+    <title>Non-linear static analysis with the Newton-Raphson method &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -563,7 +563,7 @@
 <p>A non-linear static analysis with <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> requires four callables,
 which calculate the external force vector, the internal force vector, the
 constitutive stiffness matrix and the geometric stiffness matrix. The tangent
-stiffness matrix <span class="math notranslate nohighlight">\([K_T] = [K_C] + [K_G]\)</span> should be the exact derivative of the
+stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G\)</span> should be the exact derivative of the
 internal force vector, which gives quadratic convergence to the Newton-Raphson
 method, described in <a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._solver_NR" title="structsolve.newton_raphson._solver_NR"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._solver_NR()</span></code></a>.</p>
 <p>The class below, used in the <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> unit tests, wraps analytic
@@ -613,15 +613,15 @@ problems into these callables:</p>
 <span class="w">        </span><span class="sd">"""Plain dense Newton-Raphson to obtain a reference solution"""</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kC</span><span class="p">,</span> <span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span><span class="p">)</span> <span class="k">if</span> <span class="n">c0</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">c0</span>
         <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
-            <span class="n">R</span> <span class="o">=</span> <span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span>
             <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">R</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">tol</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lbd</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">fext</span><span class="p">):</span>
                 <span class="k">return</span> <span class="n">c</span>
-            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kC</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kG</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="n">R</span><span class="p">)</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kC</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">kG</span><span class="p">(</span><span class="n">c</span><span class="p">),</span> <span class="o">-</span><span class="n">R</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">'reference solution did not converge'</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>One of these problems is a chain of springs with a cubic hardening, where
-<span class="math notranslate nohighlight">\(\{F_{int}\} = [K]\{u\} + a \{u\}^3\)</span>:</p>
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_{int} = \boldsymbol{K} \boldsymbol{u} + a \boldsymbol{u}^3\)</span>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">hardening_springs</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="mf">50.</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Chain of 4 springs with cubic hardening: ``fint = K u + a u**3``"""</span>
     <span class="n">n</span> <span class="o">=</span> <span class="mi">4</span>

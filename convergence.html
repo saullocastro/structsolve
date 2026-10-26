@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Convergence and troubleshooting of non-linear analyses &#8212; structsolve 0.9.2 documentation</title>
+    <title>Convergence and troubleshooting of non-linear analyses &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -561,7 +561,7 @@
   <section id="convergence-and-troubleshooting-of-non-linear-analyses">
 <h1>Convergence and troubleshooting of non-linear analyses<a class="headerlink" href="#convergence-and-troubleshooting-of-non-linear-analyses" title="Link to this heading">#</a></h1>
 <p>The non-linear analyses of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> solve the equilibrium
-<span class="math notranslate nohighlight">\(\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\)</span> in increments of the
+<span class="math notranslate nohighlight">\(\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}\)</span> in increments of the
 load factor (Newton-Raphson) or of the arc length (Riks and Crisfield). The
 attributes of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> listed below control the iterations of each
 increment and the size of the increments.</p>
@@ -577,30 +577,41 @@ diagonal scaling vector <span class="math notranslate nohighlight">\(\boldsymbol
 freedom, i.e. those whose row or column of <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> is not null,</p>
 <div class="math notranslate nohighlight">
 \[\|v\|_{\boldsymbol{d}} = \sqrt{\sum_j v_j^2/|d_j|}, \qquad
-\zeta = \frac{\|R\|_{\boldsymbol{d}}}{\max\left(
-\|\lambda F_{ext}\|_{\boldsymbol{d}}, \|F_{int}\|_{\boldsymbol{d}},
-\|\Delta\lambda F_{ext}\|_{\boldsymbol{d}},
-\|\lambda \, \partial R/\partial \lambda\|_{\boldsymbol{d}}\right)}\]</div>
+\zeta = \frac{\|\boldsymbol{R}\|_{\boldsymbol{d}}}{\max\left(
+\|\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}}, \|\boldsymbol{F}_{int}\|_{\boldsymbol{d}},
+\|\Delta\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}},
+\|\lambda \, \partial \boldsymbol{R}/\partial \lambda\|_{\boldsymbol{d}}\right)}\]</div>
 <p>and the iteration converged when <span class="math notranslate nohighlight">\(\zeta \le\)</span> <code class="docutils literal notranslate"><span class="pre">relTOL</span></code>, default
-<code class="docutils literal notranslate"><span class="pre">1e-9</span></code>. <span class="math notranslate nohighlight">\(\Delta\lambda F_{ext}\)</span> is a reference of the arc-length
-methods only, and <span class="math notranslate nohighlight">\(\lambda \, \partial R/\partial \lambda\)</span> of load
+<code class="docutils literal notranslate"><span class="pre">1e-9</span></code>. <span class="math notranslate nohighlight">\(\Delta\lambda \boldsymbol{F}_{ext}\)</span> is a reference of the arc-length
+methods only, and <span class="math notranslate nohighlight">\(-\lambda \, \partial \boldsymbol{R}/\partial \lambda\)</span> of load
 vectors that depend on the load factor, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The
 criterion does not depend on the units of each degree of freedom, e.g.
 translations and rotations, and the residual at the constrained degrees
 of freedom, e.g. a support reaction, does not enter it.</p>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">'relative'</span></code>: the Euclidean norm of <span class="math notranslate nohighlight">\(\{R\}\)</span> is not larger than
+<li><p><code class="docutils literal notranslate"><span class="pre">'relative'</span></code>: the Euclidean norm of <span class="math notranslate nohighlight">\(\boldsymbol{R}\)</span> is not larger than
 <code class="docutils literal notranslate"><span class="pre">relTOL</span></code> times the largest Euclidean norm of the same references, over
 all the degrees of freedom, the only criterion up to version 0.8.0, with
 the default <code class="docutils literal notranslate"><span class="pre">relTOL=1e-6</span></code> then. It does not depend on the units of the
 model as a whole, but it adds the squares of forces and of moments.</p></li>
 </ul>
 <p>With either criterion, <code class="docutils literal notranslate"><span class="pre">absTOL</span></code>, default <code class="docutils literal notranslate"><span class="pre">None</span></code>, also accepts an
-iteration whose largest absolute value of <span class="math notranslate nohighlight">\(\{R\}\)</span> is not larger than
+iteration whose largest absolute value of <span class="math notranslate nohighlight">\(\boldsymbol{R}\)</span> is not larger than
 <code class="docutils literal notranslate"><span class="pre">absTOL</span></code>, a force in the units of the model. <code class="docutils literal notranslate"><span class="pre">None</span></code> disables a
-tolerance, and at least one must be given. A tolerance below the round-off
-error of <span class="math notranslate nohighlight">\(\{R\}\)</span> cannot be met: every step then fails. The divergence and
-too-slow checks and the line search use the norm of the selected criterion.</p>
+tolerance, and at least one must be given. The divergence and too-slow
+checks and the line search use the norm of the selected criterion.</p>
+<p>A tolerance below the round-off error of <span class="math notranslate nohighlight">\(\boldsymbol{R}\)</span> cannot be met, and every
+step would then fail, e.g. under large self-equilibrated axial forces near
+a null load. With either criterion, an iteration has therefore also
+converged when its residual is at the round-off floor,</p>
+<div class="math notranslate nohighlight">
+\[\|\boldsymbol{R}\|_{\boldsymbol{d}} \le C \varepsilon \, \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}| \|_{\boldsymbol{d}}\]</div>
+<p>with the Euclidean norm with <code class="docutils literal notranslate"><span class="pre">'relative'</span></code>, <span class="math notranslate nohighlight">\(\varepsilon\)</span> the machine
+precision, <span class="math notranslate nohighlight">\(|\boldsymbol{K}_{C0}|\)</span> and <span class="math notranslate nohighlight">\(|\boldsymbol{c}|\)</span> the elementwise absolute values of
+<code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> and of the solution, and <span class="math notranslate nohighlight">\(C\)</span> =
+<code class="docutils literal notranslate"><span class="pre">convergence.ROUNDOFF_FACTOR</span></code> <span class="math notranslate nohighlight">\(= 3\)</span>, see <a class="reference internal" href="convergence_api.html#structsolve.convergence.roundoff_floor" title="structsolve.convergence.roundoff_floor"><code class="xref py py-func docutils literal notranslate"><span class="pre">convergence.roundoff_floor()</span></code></a>;
+<span class="math notranslate nohighlight">\(\zeta\)</span> may then be larger than <code class="docutils literal notranslate"><span class="pre">relTOL</span></code>, and the log messages mark these
+iterations. <code class="docutils literal notranslate"><span class="pre">ROUNDOFF_FACTOR</span> <span class="pre">=</span> <span class="pre">0</span></code> disables the floor.</p>
 </section>
 <section id="increments-and-iterations">
 <h2>Increments and iterations<a class="headerlink" href="#increments-and-iterations" title="Link to this heading">#</a></h2>
@@ -640,7 +651,7 @@ the limit point.</p>
 <section id="checking-the-tangent-stiffness-matrix">
 <h2>Checking the tangent stiffness matrix<a class="headerlink" href="#checking-the-tangent-stiffness-matrix" title="Link to this heading">#</a></h2>
 <p>The tangent stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> must be the derivative
-of <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>, <span class="math notranslate nohighlight">\([K_T] = \partial F_{int}/\partial c\)</span>. An inconsistent
+of <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>, <span class="math notranslate nohighlight">\(\boldsymbol{K}_T = \partial \boldsymbol{F}_{int}/\partial \boldsymbol{c}\)</span>. An inconsistent
 tangent stiffness matrix, e.g. a missing geometric stiffness matrix, does
 not change the converged solution, which is controlled by the residual, but
 the convergence becomes linear and may fail, such that the steps are cut
@@ -712,11 +723,15 @@ stiffness matrix:</p>
     <span class="k">assert</span> <span class="nb">max</span><span class="p">(</span><span class="n">orders</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1.2</span><span class="p">,</span> <span class="n">orders</span>
 </pre></div>
 </div>
-<p>A tolerance that cannot be met, and a run stopped by <code class="docutils literal notranslate"><span class="pre">maxArcLength</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_nr_unreachable_tolerance_stops_without_increments</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">"""A tolerance below the round-off cannot be met: every step is cut</span>
+<p>A tolerance that cannot be met, with the round-off floor disabled, and a
+run stopped by <code class="docutils literal notranslate"><span class="pre">maxArcLength</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_nr_unreachable_tolerance_stops_without_increments</span><span class="p">(</span><span class="n">monkeypatch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A tolerance below the round-off cannot be met without the round-off</span>
+<span class="sd">    floor of the convergence criteria, disabled here: every step is cut</span>
 <span class="sd">    until the increment is smaller than minInc, and no increment is</span>
 <span class="sd">    stored"""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">structsolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">convergence</span>
+    <span class="n">monkeypatch</span><span class="o">.</span><span class="n">setattr</span><span class="p">(</span><span class="n">convergence</span><span class="p">,</span> <span class="s1">'ROUNDOFF_FACTOR'</span><span class="p">,</span> <span class="mf">0.</span><span class="p">)</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">hardening_springs</span><span class="p">()</span>
     <span class="n">p</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">relTOL</span><span class="o">=</span><span class="mf">1e-20</span><span class="p">)</span>
     <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

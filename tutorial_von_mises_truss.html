@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss &#8212; structsolve 0.9.2 documentation</title>
+    <title>Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -53,7 +53,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -564,8 +564,8 @@
 <p>This tutorial runs one of the analytic problems of the unit tests of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>, the function <code class="docutils literal notranslate"><span class="pre">von_mises_truss</span></code> of <code class="docutils literal notranslate"><span class="pre">tests/analytic_problems.py</span></code>, copied below, through the analyses of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>: linear static, linear buckling, frequency, and non-linear static with the Newton-Raphson and the arc-length methods.</p>
 <p>The shallow von Mises truss of height 1 is loaded through a linear spring of stiffness <span class="math notranslate nohighlight">\(k_s\)</span>. The degree of freedom 0 is the apex deflection <span class="math notranslate nohighlight">\(w = c_0\)</span>, the degree of freedom 1 the displacement <span class="math notranslate nohighlight">\(c_1\)</span> of the loaded point, and the internal force vector is</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\{F_{int}\} = \begin{Bmatrix} w^3 - 3 w^2 + 2 w + k_s (c_0 - c_1) \\ k_s (c_1 - c_0) \end{Bmatrix}\end{split}\]</div>
-<p>with the tangent stiffness matrix <span class="math notranslate nohighlight">\([K_C] + [K_G]\)</span>, where <span class="math notranslate nohighlight">\([K_C]\)</span> is the linear stiffness matrix and <span class="math notranslate nohighlight">\([K_G]\)</span> contains the derivative <span class="math notranslate nohighlight">\(3 w^2 - 6 w\)</span> of the non-linear terms. The truss reaches a limit point at <span class="math notranslate nohighlight">\(w = 1 - 1/\sqrt{3}\)</span>, under the limit load <span class="math notranslate nohighlight">\(F_{lim} = 2/(3\sqrt{3})\)</span>. The reference load is <code class="docutils literal notranslate"><span class="pre">frac</span></code> times the limit load.</p>
+\[\begin{split}\boldsymbol{F}_{int} = \begin{Bmatrix} w^3 - 3 w^2 + 2 w + k_s (c_0 - c_1) \\ k_s (c_1 - c_0) \end{Bmatrix}\end{split}\]</div>
+<p>with the tangent stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_C + \boldsymbol{K}_G\)</span>, where <span class="math notranslate nohighlight">\(\boldsymbol{K}_C\)</span> is the linear stiffness matrix and <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> contains the derivative <span class="math notranslate nohighlight">\(3 w^2 - 6 w\)</span> of the non-linear terms. The truss reaches a limit point at <span class="math notranslate nohighlight">\(w = 1 - 1/\sqrt{3}\)</span>, under the limit load <span class="math notranslate nohighlight">\(F_{lim} = 2/(3\sqrt{3})\)</span>. The reference load is <code class="docutils literal notranslate"><span class="pre">frac</span></code> times the limit load.</p>
 <p>The model is given to <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> by the four callables of <code class="docutils literal notranslate"><span class="pre">Analysis</span></code>, which return the external and the internal force vectors and the two parts of the tangent stiffness matrix:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
@@ -626,7 +626,7 @@ reference load: [0.         0.57735027]
 </div>
 <section id="Linear-static-analysis">
 <h2>Linear static analysis<a class="headerlink" href="#Linear-static-analysis" title="Link to this heading">#</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Analysis.static(NLgeom=False)</span></code> solves <span class="math notranslate nohighlight">\([K_{C0}]\{c\} = \{F_{ext}\}\)</span> with the callables <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">Analysis.static(NLgeom=False)</span></code> solves <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0} \boldsymbol{c} = \boldsymbol{F}_{ext}\)</span> with the callables <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code>:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -649,7 +649,7 @@ linear solution: [0.28867513 0.34641016]
 </section>
 <section id="Linear-buckling-analysis">
 <h2>Linear buckling analysis<a class="headerlink" href="#Linear-buckling-analysis" title="Link to this heading">#</a></h2>
-<p>The geometric stiffness matrix of the linear solution gives the eigenvalue problem <span class="math notranslate nohighlight">\(([K_{C0}] + \lambda [K_G(c_{lin})])\{u\} = \{0\}\)</span>. With only two degrees of freedom the dense solver is used explicitly, <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, which returns all the load multipliers:</p>
+<p>The geometric stiffness matrix of the linear solution gives the eigenvalue problem <span class="math notranslate nohighlight">\((\boldsymbol{K}_{C0} + \lambda \boldsymbol{K}_G(\boldsymbol{c}_{lin})) \boldsymbol{u} = \boldsymbol{0}\)</span>. With only two degrees of freedom the dense solver is used explicitly, <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, which returns all the load multipliers:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
@@ -673,7 +673,7 @@ linear buckling estimate of the limit load factor: 1.3494814008979579
 limit load factor: 0.6666666666666666
 </pre></div></div>
 </div>
-<p>The linear buckling analysis assumes a linear pre-buckling path, with <span class="math notranslate nohighlight">\([K_G]\)</span> proportional to the load. The path of the truss is strongly non-linear before its limit point, and the estimate is here about twice the limit load factor. The non-linear analyses below trace the actual path. The row of the loaded point is null in <span class="math notranslate nohighlight">\([K_G]\)</span>, and the second load multiplier, of the order of <span class="math notranslate nohighlight">\(10^{16}\)</span>, is infinite up to the round-off.</p>
+<p>The linear buckling analysis assumes a linear pre-buckling path, with <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> proportional to the load. The path of the truss is strongly non-linear before its limit point, and the estimate is here about twice the limit load factor. The non-linear analyses below trace the actual path. The row of the loaded point is null in <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span>, and the second load multiplier, of the order of <span class="math notranslate nohighlight">\(10^{16}\)</span>, is infinite up to the round-off.</p>
 </section>
 <section id="Non-linear-static-analyses">
 <h2>Non-linear static analyses<a class="headerlink" href="#Non-linear-static-analyses" title="Link to this heading">#</a></h2>
@@ -752,7 +752,8 @@ arc_length_crisfield  largest jump of w: 0.313, final c: [2.21463146 2.27236649]
 </section>
 <section id="Frequency-analysis-along-the-path">
 <h2>Frequency analysis along the path<a class="headerlink" href="#Frequency-analysis-along-the-path" title="Link to this heading">#</a></h2>
-<p>With unit masses at both degrees of freedom, <span class="math notranslate nohighlight">\([M] = [I]\)</span>, the frequency analysis of the tangent stiffness matrix <span class="math notranslate nohighlight">\([K_T(c)] = [K_C] + [K_G(c)]\)</span> at each converged state of the Riks analysis gives <span class="math notranslate nohighlight">\(\omega^2 = -\lambda^2\)</span>. The lowest <span class="math notranslate nohighlight">\(\omega^2\)</span> vanishes where <span class="math notranslate nohighlight">\([K_T]\)</span> is singular, at the limit points <span class="math notranslate nohighlight">\(w = 1 \mp 1/\sqrt{3}\)</span>, and is negative between them, where the equilibrium is unstable:</p>
+<p>With unit masses at both degrees of freedom, <span class="math notranslate nohighlight">\(\boldsymbol{M} = \boldsymbol{I}\)</span>, the frequency analysis of the tangent stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_T(\boldsymbol{c}) = \boldsymbol{K}_C + \boldsymbol{K}_G(\boldsymbol{c})\)</span> at each converged state of the Riks analysis gives <span class="math notranslate nohighlight">\(\omega^2 = -\lambda^2\)</span>. The lowest <span class="math notranslate nohighlight">\(\omega^2\)</span> vanishes where <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is singular, at the limit points <span class="math notranslate nohighlight">\(w = 1 \mp 1/\sqrt{3}\)</span>, and is negative between them, where the equilibrium
+is unstable:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Boundary conditions and vector sizes &#8212; structsolve 0.9.2 documentation</title>
+    <title>Boundary conditions and vector sizes &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -595,22 +595,22 @@ matrices.</p>
 <p>The matrices may also be restricted to the free dofs <span class="math notranslate nohighlight">\(u\)</span> before calling the
 solvers, e.g. <code class="docutils literal notranslate"><span class="pre">K[free,</span> <span class="pre">:][:,</span> <span class="pre">free]</span></code>. The solvers then return vectors of
 the size of the free dofs, expanded by the user with <code class="docutils literal notranslate"><span class="pre">x_full[free]</span> <span class="pre">=</span> <span class="pre">x</span></code>.
-The prestress that generates <span class="math notranslate nohighlight">\([K_G]\)</span>, see <a class="reference internal" href="lb_prestress.html"><span class="doc">Linear buckling with a prestress</span></a>, must be
+The prestress that generates <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span>, see <a class="reference internal" href="lb_prestress.html"><span class="doc">Linear buckling with a prestress</span></a>, must be
 computed from the expanded vector.</p>
 </section>
 <section id="null-space-of-the-constraints-reduce-and-expand">
 <h2>Null space of the constraints, reduce and expand<a class="headerlink" href="#null-space-of-the-constraints-reduce-and-expand" title="Link to this heading">#</a></h2>
-<p>General linear constraints <span class="math notranslate nohighlight">\([C]\{c\} = \{0\}\)</span>, e.g. multi-point constraints
-or the connection of several domains, are imposed with a basis <span class="math notranslate nohighlight">\([T]\)</span> of the
-null space of <span class="math notranslate nohighlight">\([C]\)</span>, <span class="math notranslate nohighlight">\(\{c\} = [T]\{c_r\}\)</span>, which reduces the matrices to</p>
+<p>General linear constraints <span class="math notranslate nohighlight">\(\boldsymbol{C} \boldsymbol{c} = \boldsymbol{0}\)</span>, e.g. multi-point constraints
+or the connection of several domains, are imposed with a basis <span class="math notranslate nohighlight">\(\boldsymbol{Z}\)</span> of the
+null space of <span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r\)</span>, which reduces the matrices to</p>
 <div class="math notranslate nohighlight">
-\[[K_r] = [T]^T[K][T], \qquad [K_{G_r}] = [T]^T[K_G][T], \qquad
-[M_r] = [T]^T[M][T], \qquad \{f_r\} = [T]^T\{f\}\]</div>
-<p>The solvers return the reduced vectors <span class="math notranslate nohighlight">\(\{c_r\}\)</span> and the eigenvectors in the
-reduced coordinates, expanded by the user with <span class="math notranslate nohighlight">\(\{c\} = [T]\{c_r\}\)</span>. The
-partition of the free dofs is the particular case where <span class="math notranslate nohighlight">\([T]\)</span> contains the
+\[\boldsymbol{K}_r = \boldsymbol{Z}^\top \boldsymbol{K} \boldsymbol{Z}, \qquad \boldsymbol{K}_{G_r} = \boldsymbol{Z}^\top \boldsymbol{K}_G \boldsymbol{Z}, \qquad
+\boldsymbol{M}_r = \boldsymbol{Z}^\top \boldsymbol{M} \boldsymbol{Z}, \qquad \boldsymbol{f}_r = \boldsymbol{Z}^\top \boldsymbol{f}\]</div>
+<p>The solvers return the reduced vectors <span class="math notranslate nohighlight">\(\boldsymbol{c}_r\)</span> and the eigenvectors in the
+reduced coordinates, expanded by the user with <span class="math notranslate nohighlight">\(\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r\)</span>. The
+partition of the free dofs is the particular case where <span class="math notranslate nohighlight">\(\boldsymbol{Z}\)</span> contains the
 columns of the identity matrix of the free dofs. Prescribed values different
-from zero add a particular solution, <span class="math notranslate nohighlight">\(\{c\} = [T]\{c_r\} + \{c_p\}\)</span>, see
+from zero add a particular solution, <span class="math notranslate nohighlight">\(\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_p\)</span>, see
 <a class="reference internal" href="ex_prescribed_displacements.html"><span class="doc">Prescribed displacements imposed exactly</span></a>.</p>
 </section>
 <section id="example">
@@ -678,15 +678,15 @@ modes, the first one with the size of the model:</p>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">u2</span><span class="p">,</span> <span class="n">u_ref</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="o">-</span><span class="n">lambda2_2</span><span class="p">,</span> <span class="n">w2_ref</span><span class="p">)</span>
 
-    <span class="c1"># 3) null space of the constraint [C]{c} = {0}, {c} = [T]{c_r}</span>
+    <span class="c1"># 3) null space of the constraint [C]{c} = {0}, {c} = [Z]{c_r}</span>
     <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
     <span class="n">C</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">bc</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.</span>
-    <span class="n">T</span> <span class="o">=</span> <span class="n">null_space</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
-    <span class="n">u3</span> <span class="o">=</span> <span class="n">T</span> <span class="o">@</span> <span class="n">solve</span><span class="p">(</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">K</span> <span class="o">@</span> <span class="n">T</span><span class="p">),</span> <span class="n">T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">f</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">lambda2_3</span><span class="p">,</span> <span class="n">eigvecs3_r</span> <span class="o">=</span> <span class="n">freq</span><span class="p">(</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">K</span> <span class="o">@</span> <span class="n">T</span><span class="p">),</span>
-                                 <span class="n">csr_matrix</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">M</span> <span class="o">@</span> <span class="n">T</span><span class="p">),</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">null_space</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+    <span class="n">u3</span> <span class="o">=</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">solve</span><span class="p">(</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">K</span> <span class="o">@</span> <span class="n">Z</span><span class="p">),</span> <span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">f</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">lambda2_3</span><span class="p">,</span> <span class="n">eigvecs3_r</span> <span class="o">=</span> <span class="n">freq</span><span class="p">(</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">K</span> <span class="o">@</span> <span class="n">Z</span><span class="p">),</span>
+                                 <span class="n">csr_matrix</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">M</span> <span class="o">@</span> <span class="n">Z</span><span class="p">),</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                  <span class="n">sparse_solver</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">symmetric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">eigvecs3</span> <span class="o">=</span> <span class="n">T</span> <span class="o">@</span> <span class="n">eigvecs3_r</span>
+    <span class="n">eigvecs3</span> <span class="o">=</span> <span class="n">Z</span> <span class="o">@</span> <span class="n">eigvecs3_r</span>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">u3</span><span class="p">[</span><span class="n">free</span><span class="p">],</span> <span class="n">u_ref</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">u3</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="o">-</span><span class="n">lambda2_3</span><span class="p">,</span> <span class="n">w2_ref</span><span class="p">)</span>

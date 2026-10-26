@@ -4,27 +4,29 @@ Notation and sign conventions
 Static analyses
 ---------------
 
-`\{c\}` is the vector of the degrees of freedom of the model, the solution
+`\boldsymbol{c}` is the vector of the degrees of freedom of the model, the solution
 vectors of ``an.cs``, and `\lambda` the load factor, the values of
 ``an.increments``. The residual force vector of the non-linear analyses is
 
 .. math::
 
-    \{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c)\}
+    \boldsymbol{R}(\boldsymbol{c}, \lambda) = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext}
 
-with `\{F_{ext}\}` = ``calc_fext(inc=1.)`` and `\{F_{int}\}` =
+with `\boldsymbol{F}_{ext}` = ``calc_fext(inc=1.)`` and `\boldsymbol{F}_{int}` =
 ``calc_fint(c)``, and the tangent stiffness matrix is
 
 .. math::
 
-    [K_T] = [K_C] + [K_G] = \frac{\partial F_{int}}{\partial c}
-          = -\frac{\partial R}{\partial c}
+    \boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G = \frac{\partial \boldsymbol{F}_{int}}{\partial \boldsymbol{c}}
+          = \frac{\partial \boldsymbol{R}}{\partial \boldsymbol{c}}
 
-with `[K_C]` = ``calc_kC(c, NLgeom=True)`` and `[K_G]` = ``calc_kG(c,
-NLgeom=True)``. A configuration-dependent load `\{F(c)\}` has the load
-stiffness matrix `-\partial F/\partial c`, which enters `[K_T]`, see
-:mod:`.callbacks`. The linear static analysis solves `[K_{C0}]\{c\} =
-\{F_{ext}\}`, with `[K_{C0}]` = ``calc_kC()``.
+with `\boldsymbol{K}_C` = ``calc_kC(c, NLgeom=True)`` and `\boldsymbol{K}_G` = ``calc_kG(c,
+NLgeom=True)``, such that the Newton-Raphson corrections solve
+`\boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}`, and `\partial \boldsymbol{R}/\partial
+\lambda = -\boldsymbol{F}_{ext}`. A configuration-dependent load `\boldsymbol{F}(\boldsymbol{c})` has the load
+stiffness matrix `-\partial \boldsymbol{F}/\partial \boldsymbol{c}`, which enters `\boldsymbol{K}_T`, see
+:mod:`.callbacks`. The linear static analysis solves `\boldsymbol{K}_{C0} \boldsymbol{c} =
+\boldsymbol{F}_{ext}`, with `\boldsymbol{K}_{C0}` = ``calc_kC()``.
 
 
 Eigenvalue analyses
@@ -37,14 +39,14 @@ Eigenvalue analyses
       - Eigenvalue problem
       - Returned eigenvalues
     * - :func:`.lb`
-      - `([K] + \lambda [K_G])\{u\} = \{0\}`
+      - `(\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}`
       - load multipliers `\lambda`, the positive ones first, in increasing
         order
     * - :func:`.freq`
-      - `([K] + \lambda^2 [M])\{u\} = \{0\}`
+      - `(\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}`
       - ``lambda2`` `= -\omega_n^2`, negative for a stable structure
 
-For :func:`.lb`, `[K_G]` is the geometric stiffness matrix of the
+For :func:`.lb`, `\boldsymbol{K}_G` is the geometric stiffness matrix of the
 reference load, the critical load being `\lambda_1` times the reference
 load, and a negative load multiplier corresponds to the reversed reference
 load, see :doc:`lb_prestress`. For :func:`.freq`, `\omega_n` is in rad/s, see

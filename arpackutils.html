@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>ARPACK utilities (structsolve.arpackutils) &#8212; structsolve 0.9.2 documentation</title>
+    <title>ARPACK utilities (structsolve.arpackutils) &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -689,7 +689,7 @@ a problem of size <code class="docutils literal notranslate"><span class="pre">n
 <dt class="sig sig-object py" id="structsolve.arpackutils.capped_eigsh">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arpackutils.</span></span><span class="sig-name descname"><span class="pre">capped_eigsh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">M</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">which</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'normal'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arpackutils.capped_eigsh" title="Link to this definition">#</a></dt>
 <dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> with <code class="docutils literal notranslate"><span class="pre">ncv</span></code> from <a class="reference internal" href="#structsolve.arpackutils.arpack_ncv" title="structsolve.arpackutils.arpack_ncv"><code class="xref py py-func docutils literal notranslate"><span class="pre">arpack_ncv()</span></code></a></p>
-<p>Solves <span class="math notranslate nohighlight">\([A]\{x\} = w [M]\{x\}\)</span> with a positive definite <code class="docutils literal notranslate"><span class="pre">M</span></code> about the
+<p>Solves <span class="math notranslate nohighlight">\(\boldsymbol{A} \boldsymbol{x} = w \boldsymbol{M} \boldsymbol{x}\)</span> with a positive definite <code class="docutils literal notranslate"><span class="pre">M</span></code> about the
 shift <code class="docutils literal notranslate"><span class="pre">sigma</span></code>, in the shift-invert (<code class="docutils literal notranslate"><span class="pre">mode='normal'</span></code>) or Cayley
 (<code class="docutils literal notranslate"><span class="pre">mode='cayley'</span></code>) mode, selecting the eigenvalues by increasing <span class="math notranslate nohighlight">\(w\)</span>,
 e.g. the Cayley mode with <code class="docutils literal notranslate"><span class="pre">which='SM'</span></code> and <code class="docutils literal notranslate"><span class="pre">sigma</span></code> larger than all
@@ -732,7 +732,7 @@ precision.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
-<dt><strong>w, x</strong><span class="classifier">ndarray</span></dt><dd><p>The eigenvalues and the <span class="math notranslate nohighlight">\([M]\)</span>-orthonormal eigenvectors, by
+<dt><strong>w, x</strong><span class="classifier">ndarray</span></dt><dd><p>The eigenvalues and the <span class="math notranslate nohighlight">\(\boldsymbol{M}\)</span>-orthonormal eigenvectors, by
 increasing <span class="math notranslate nohighlight">\(w\)</span> when computed in passes. <code class="docutils literal notranslate"><span class="pre">w</span></code> is a 1-D array of size
 <code class="docutils literal notranslate"><span class="pre">k</span></code> and <code class="docutils literal notranslate"><span class="pre">x</span></code> an array of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">k)</span></code>.</p>
 </dd>
@@ -748,26 +748,26 @@ increasing <span class="math notranslate nohighlight">\(w\)</span> when computed
 <p class="rubric">Notes</p>
 <p>In the shift-invert mode ARPACK computes the eigenvalues
 <span class="math notranslate nohighlight">\(\nu = 1/(w - \sigma)\)</span> of largest modulus of the operator
-<span class="math notranslate nohighlight">\(([A] - \sigma [M])^{-1}[M]\)</span>, i.e. the <span class="math notranslate nohighlight">\(w\)</span> nearest <span class="math notranslate nohighlight">\(\sigma\)</span> (<a class="reference internal" href="#rcd70e6da6eee-1" id="id1">[1]</a>,
+<span class="math notranslate nohighlight">\((\boldsymbol{A} - \sigma \boldsymbol{M})^{-1} \boldsymbol{M}\)</span>, i.e. the <span class="math notranslate nohighlight">\(w\)</span> nearest <span class="math notranslate nohighlight">\(\sigma\)</span> (<a class="reference internal" href="#rcd70e6da6eee-1" id="id1">[1]</a>,
 Chapter 3, Section 3.2, Eq. (3.2.2)).
 The passes keep <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&lt;=</span> <span class="pre">(max_ncv</span> <span class="pre">-</span> <span class="pre">1)//2</span></code>, i.e. <code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&gt;=</span> <span class="pre">2</span> <span class="pre">k</span> <span class="pre">+</span> <span class="pre">1</span></code>.
 With <code class="docutils literal notranslate"><span class="pre">k</span></code> close to <code class="docutils literal notranslate"><span class="pre">ncv</span></code> ARPACK converges very slowly, not at all, or
 misses eigenvalues, e.g. <code class="docutils literal notranslate"><span class="pre">k=31</span></code> and <code class="docutils literal notranslate"><span class="pre">ncv=32</span></code>.</p>
 <p>The passes after the first one use the shift-invert mode about
 <span class="math notranslate nohighlight">\(\sigma_d\)</span>, the middle of the largest gap between the last five
-eigenvalues found, with the eigenvectors <span class="math notranslate nohighlight">\([V]\)</span> of the previous passes
+eigenvalues found, with the eigenvectors <span class="math notranslate nohighlight">\(\boldsymbol{V}\)</span> of the previous passes
 deflated from the operator:</p>
 <div class="math notranslate nohighlight">
-\[\{y\} = ([I] - [V][V]^T[M])([A] - \sigma_d [M])^{-1}\{x\}\]</div>
-<p>such that the eigenvalues of <span class="math notranslate nohighlight">\([V]\)</span>, already found, become null and are
+\[\boldsymbol{y} = (\boldsymbol{I} - \boldsymbol{V} \boldsymbol{V}^\top \boldsymbol{M})(\boldsymbol{A} - \sigma_d \boldsymbol{M})^{-1} \boldsymbol{x}\]</div>
+<p>such that the eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{V}\)</span>, already found, become null and are
 not found again. Each pass therefore returns the eigenvalues nearest
 <span class="math notranslate nohighlight">\(\sigma_d\)</span> among those not found yet, i.e. the next ones by increasing
 <span class="math notranslate nohighlight">\(w\)</span>. A shift close to them, instead of <code class="docutils literal notranslate"><span class="pre">sigma</span></code>, separates them better:
 in the study of the panels cylinders it was 30 to 45% faster and gave
 eigenvalues 5 to 10 times more accurate. ARPACK applies the operator
-to <span class="math notranslate nohighlight">\([M]\{x\}\)</span>; for an eigenvector <span class="math notranslate nohighlight">\(\{v_i\}\)</span> of <span class="math notranslate nohighlight">\([V]\)</span>,
-<span class="math notranslate nohighlight">\(([A] - \sigma_d [M])^{-1}[M]\{v_i\} = \{v_i\}/(w_i - \sigma_d)\)</span> and,
-<span class="math notranslate nohighlight">\([V]\)</span> being <span class="math notranslate nohighlight">\([M]\)</span>-orthonormal, <span class="math notranslate nohighlight">\(([I] - [V][V]^T[M])\{v_i\} = \{0\}\)</span>.</p>
+to <span class="math notranslate nohighlight">\(\boldsymbol{M} \boldsymbol{x}\)</span>; for an eigenvector <span class="math notranslate nohighlight">\(\boldsymbol{v}_i\)</span> of <span class="math notranslate nohighlight">\(\boldsymbol{V}\)</span>,
+<span class="math notranslate nohighlight">\((\boldsymbol{A} - \sigma_d \boldsymbol{M})^{-1} \boldsymbol{M} \boldsymbol{v}_i = \boldsymbol{v}_i/(w_i - \sigma_d)\)</span> and,
+<span class="math notranslate nohighlight">\(\boldsymbol{V}\)</span> being <span class="math notranslate nohighlight">\(\boldsymbol{M}\)</span>-orthonormal, <span class="math notranslate nohighlight">\((\boldsymbol{I} - \boldsymbol{V} \boldsymbol{V}^\top \boldsymbol{M}) \boldsymbol{v}_i = \boldsymbol{0}\)</span>.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="rcd70e6da6eee-1" role="doc-biblioentry">

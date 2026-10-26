@@ -2,7 +2,7 @@ Convergence and troubleshooting of non-linear analyses
 ======================================================
 
 The non-linear analyses of :class:`.Analysis` solve the equilibrium
-`\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}` in increments of the
+`\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}` in increments of the
 load factor (Newton-Raphson) or of the arc length (Riks and Crisfield). The
 attributes of :class:`.Analysis` listed below control the iterations of each
 increment and the size of the increments.
@@ -23,30 +23,45 @@ The criterion is selected with ``Analysis.convergence``, see
   .. math::
 
       \|v\|_{\boldsymbol{d}} = \sqrt{\sum_j v_j^2/|d_j|}, \qquad
-      \zeta = \frac{\|R\|_{\boldsymbol{d}}}{\max\left(
-      \|\lambda F_{ext}\|_{\boldsymbol{d}}, \|F_{int}\|_{\boldsymbol{d}},
-      \|\Delta\lambda F_{ext}\|_{\boldsymbol{d}},
-      \|\lambda \, \partial R/\partial \lambda\|_{\boldsymbol{d}}\right)}
+      \zeta = \frac{\|\boldsymbol{R}\|_{\boldsymbol{d}}}{\max\left(
+      \|\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}}, \|\boldsymbol{F}_{int}\|_{\boldsymbol{d}},
+      \|\Delta\lambda \boldsymbol{F}_{ext}\|_{\boldsymbol{d}},
+      \|\lambda \, \partial \boldsymbol{R}/\partial \lambda\|_{\boldsymbol{d}}\right)}
 
   and the iteration converged when `\zeta \le` ``relTOL``, default
-  ``1e-9``. `\Delta\lambda F_{ext}` is a reference of the arc-length
-  methods only, and `\lambda \, \partial R/\partial \lambda` of load
+  ``1e-9``. `\Delta\lambda \boldsymbol{F}_{ext}` is a reference of the arc-length
+  methods only, and `-\lambda \, \partial \boldsymbol{R}/\partial \lambda` of load
   vectors that depend on the load factor, see :mod:`.callbacks`. The
   criterion does not depend on the units of each degree of freedom, e.g.
   translations and rotations, and the residual at the constrained degrees
   of freedom, e.g. a support reaction, does not enter it.
-- ``'relative'``: the Euclidean norm of `\{R\}` is not larger than
+- ``'relative'``: the Euclidean norm of `\boldsymbol{R}` is not larger than
   ``relTOL`` times the largest Euclidean norm of the same references, over
   all the degrees of freedom, the only criterion up to version 0.8.0, with
   the default ``relTOL=1e-6`` then. It does not depend on the units of the
   model as a whole, but it adds the squares of forces and of moments.
 
 With either criterion, ``absTOL``, default ``None``, also accepts an
-iteration whose largest absolute value of `\{R\}` is not larger than
+iteration whose largest absolute value of `\boldsymbol{R}` is not larger than
 ``absTOL``, a force in the units of the model. ``None`` disables a
-tolerance, and at least one must be given. A tolerance below the round-off
-error of `\{R\}` cannot be met: every step then fails. The divergence and
-too-slow checks and the line search use the norm of the selected criterion.
+tolerance, and at least one must be given. The divergence and too-slow
+checks and the line search use the norm of the selected criterion.
+
+A tolerance below the round-off error of `\boldsymbol{R}` cannot be met, and every
+step would then fail, e.g. under large self-equilibrated axial forces near
+a null load. With either criterion, an iteration has therefore also
+converged when its residual is at the round-off floor,
+
+.. math::
+
+    \|\boldsymbol{R}\|_{\boldsymbol{d}} \le C \varepsilon \, \| |\boldsymbol{K}_{C0}| \, |\boldsymbol{c}| \|_{\boldsymbol{d}}
+
+with the Euclidean norm with ``'relative'``, `\varepsilon` the machine
+precision, `|\boldsymbol{K}_{C0}|` and `|\boldsymbol{c}|` the elementwise absolute values of
+``calc_kC()`` and of the solution, and `C` =
+``convergence.ROUNDOFF_FACTOR`` `= 3`, see :func:`.convergence.roundoff_floor`;
+`\zeta` may then be larger than ``relTOL``, and the log messages mark these
+iterations. ``ROUNDOFF_FACTOR = 0`` disables the floor.
 
 
 Increments and iterations
@@ -90,7 +105,7 @@ Checking the tangent stiffness matrix
 -------------------------------------
 
 The tangent stiffness matrix ``calc_kC + calc_kG`` must be the derivative
-of ``calc_fint``, `[K_T] = \partial F_{int}/\partial c`. An inconsistent
+of ``calc_fint``, `\boldsymbol{K}_T = \partial \boldsymbol{F}_{int}/\partial \boldsymbol{c}`. An inconsistent
 tangent stiffness matrix, e.g. a missing geometric stiffness matrix, does
 not change the converged solution, which is controlled by the residual, but
 the convergence becomes linear and may fail, such that the steps are cut
@@ -121,7 +136,8 @@ An inconsistent tangent stiffness matrix:
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_inconsistent_tangent_converges_linearly
 
-A tolerance that cannot be met, and a run stopped by ``maxArcLength``:
+A tolerance that cannot be met, with the round-off floor disabled, and a
+run stopped by ``maxArcLength``:
 
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_nr_unreachable_tolerance_stops_without_increments

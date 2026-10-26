@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Notation and sign conventions &#8212; structsolve 0.9.2 documentation</title>
+    <title>Notation and sign conventions &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -562,21 +562,23 @@
 <h1>Notation and sign conventions<a class="headerlink" href="#notation-and-sign-conventions" title="Link to this heading">#</a></h1>
 <section id="static-analyses">
 <h2>Static analyses<a class="headerlink" href="#static-analyses" title="Link to this heading">#</a></h2>
-<p><span class="math notranslate nohighlight">\(\{c\}\)</span> is the vector of the degrees of freedom of the model, the solution
+<p><span class="math notranslate nohighlight">\(\boldsymbol{c}\)</span> is the vector of the degrees of freedom of the model, the solution
 vectors of <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>, and <span class="math notranslate nohighlight">\(\lambda\)</span> the load factor, the values of
 <code class="docutils literal notranslate"><span class="pre">an.increments</span></code>. The residual force vector of the non-linear analyses is</p>
 <div class="math notranslate nohighlight">
-\[\{R(c, \lambda)\} = \lambda \{F_{ext}\} - \{F_{int}(c)\}\]</div>
-<p>with <span class="math notranslate nohighlight">\(\{F_{ext}\}\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> and <span class="math notranslate nohighlight">\(\{F_{int}\}\)</span> =
+\[\boldsymbol{R}(\boldsymbol{c}, \lambda) = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{F}_{ext}\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> and <span class="math notranslate nohighlight">\(\boldsymbol{F}_{int}\)</span> =
 <code class="docutils literal notranslate"><span class="pre">calc_fint(c)</span></code>, and the tangent stiffness matrix is</p>
 <div class="math notranslate nohighlight">
-\[[K_T] = [K_C] + [K_G] = \frac{\partial F_{int}}{\partial c}
-      = -\frac{\partial R}{\partial c}\]</div>
-<p>with <span class="math notranslate nohighlight">\([K_C]\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kC(c,</span> <span class="pre">NLgeom=True)</span></code> and <span class="math notranslate nohighlight">\([K_G]\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kG(c,</span>
-<span class="pre">NLgeom=True)</span></code>. A configuration-dependent load <span class="math notranslate nohighlight">\(\{F(c)\}\)</span> has the load
-stiffness matrix <span class="math notranslate nohighlight">\(-\partial F/\partial c\)</span>, which enters <span class="math notranslate nohighlight">\([K_T]\)</span>, see
-<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis solves <span class="math notranslate nohighlight">\([K_{C0}]\{c\} =
-\{F_{ext}\}\)</span>, with <span class="math notranslate nohighlight">\([K_{C0}]\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code>.</p>
+\[\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G = \frac{\partial \boldsymbol{F}_{int}}{\partial \boldsymbol{c}}
+      = \frac{\partial \boldsymbol{R}}{\partial \boldsymbol{c}}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{K}_C\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kC(c,</span> <span class="pre">NLgeom=True)</span></code> and <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kG(c,</span>
+<span class="pre">NLgeom=True)</span></code>, such that the Newton-Raphson corrections solve
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}\)</span>, and <span class="math notranslate nohighlight">\(\partial \boldsymbol{R}/\partial
+\lambda = -\boldsymbol{F}_{ext}\)</span>. A configuration-dependent load <span class="math notranslate nohighlight">\(\boldsymbol{F}(\boldsymbol{c})\)</span> has the load
+stiffness matrix <span class="math notranslate nohighlight">\(-\partial \boldsymbol{F}/\partial \boldsymbol{c}\)</span>, which enters <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>, see
+<a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis solves <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0} \boldsymbol{c} =
+\boldsymbol{F}_{ext}\)</span>, with <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0}\)</span> = <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code>.</p>
 </section>
 <section id="eigenvalue-analyses">
 <h2>Eigenvalue analyses<a class="headerlink" href="#eigenvalue-analyses" title="Link to this heading">#</a></h2>
@@ -589,18 +591,18 @@ stiffness matrix <span class="math notranslate nohighlight">\(-\partial F/\parti
 </thead>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a></p></td>
-<td><p><span class="math notranslate nohighlight">\(([K] + \lambda [K_G])\{u\} = \{0\}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\((\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}\)</span></p></td>
 <td><p>load multipliers <span class="math notranslate nohighlight">\(\lambda\)</span>, the positive ones first, in increasing
 order</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a></p></td>
-<td><p><span class="math notranslate nohighlight">\(([K] + \lambda^2 [M])\{u\} = \{0\}\)</span></p></td>
+<td><p><span class="math notranslate nohighlight">\((\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}\)</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">lambda2</span></code> <span class="math notranslate nohighlight">\(= -\omega_n^2\)</span>, negative for a stable structure</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<p>For <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, <span class="math notranslate nohighlight">\([K_G]\)</span> is the geometric stiffness matrix of the
+<p>For <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> is the geometric stiffness matrix of the
 reference load, the critical load being <span class="math notranslate nohighlight">\(\lambda_1\)</span> times the reference
 load, and a negative load multiplier corresponds to the reversed reference
 load, see <a class="reference internal" href="lb_prestress.html"><span class="doc">Linear buckling with a prestress</span></a>. For <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a>, <span class="math notranslate nohighlight">\(\omega_n\)</span> is in rad/s, see

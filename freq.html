@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.9.2 documentation</title>
+    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -591,6 +591,7 @@ sparse solver runs first for every problem size, and its eigenpairs are
 verified:</p>
 <ul class="simple">
 <li><p>the relative residual of each eigenpair must not be larger than
+<code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>, unless its backward error is at the round-off, see
 <code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>;</p></li>
 <li><p>with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, no eigenvalue <code class="docutils literal notranslate"><span class="pre">omega_n**2</span></code> lower than the
 highest one returned may be missing, see <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_freq()</span></code>.</p></li>
@@ -671,7 +672,13 @@ true for both matrices.</p>
 rigid-body mode, whose <span class="math notranslate nohighlight">\(||K u|| + |\lambda^2| ||M u||\)</span> is not larger
 than <code class="docutils literal notranslate"><span class="pre">linear_buckling.RIGID_BODY_RTOL</span></code> times the matrix-norm scale
 <span class="math notranslate nohighlight">\((||K||_F + |\lambda^2| ||M||_F) ||u||\)</span>, the residual is relative to
-this scale, see <code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._relative_residuals()</span></code>. A
+this scale, see <code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._relative_residuals()</span></code>. An
+eigenpair with a larger relative residual is also accepted when its
+normwise backward error <span class="math notranslate nohighlight">\(||K u + \lambda^2 M u||/((||K||_F +
+|\lambda^2| ||M||_F) ||u||)\)</span> is not larger than
+<code class="docutils literal notranslate"><span class="pre">linear_buckling.BACKWARD_ERROR_RTOL</span></code>, the machine precision, e.g.
+an eigenvalue close to zero of a model pre-stressed close to
+buckling, see <code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._backward_errors()</span></code>. Any other
 larger residual of the sparse solver is a failed verification, see
 above. For <code class="docutils literal notranslate"><span class="pre">sparse_solver=False</span></code>, a warning is issued. <code class="docutils literal notranslate"><span class="pre">None</span></code>
 skips the check.</p>
@@ -713,19 +720,19 @@ failures.</p>
 <p class="rubric">Notes</p>
 <p>The free-vibration eigenvalue problem is</p>
 <div class="math notranslate nohighlight">
-\[([K] + \lambda^2 [M])\{u\} = \{0\}\]</div>
+\[(\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span> and <span class="math notranslate nohighlight">\(\omega_n\)</span> is the natural frequency
-in rad/s. The sparse solvers solve <span class="math notranslate nohighlight">\([K]\{u\} = \omega_n^2 [M]\{u\}\)</span>
+in rad/s. The sparse solvers solve <span class="math notranslate nohighlight">\(\boldsymbol{K} \boldsymbol{u} = \omega_n^2 \boldsymbol{M} \boldsymbol{u}\)</span>
 in shift-invert mode, which returns the <span class="math notranslate nohighlight">\(\omega_n^2\)</span> nearest the shift
 <span class="math notranslate nohighlight">\(\sigma\)</span> (<a class="reference internal" href="#r57ae402ba13f-1" id="id1">[1]</a>, Chapter 3, Section 3.2, Eq. (3.2.2)). The negative
-shift is <span class="math notranslate nohighlight">\(\sigma = -|\{y\}^T[K]\{y\} /
-\{y\}^T[M]\{y\}|\)</span>, the Rayleigh quotient of <span class="math notranslate nohighlight">\(\{y\} = [K]^{-1}[M]\{x\}\)</span>
-for a fixed random vector <span class="math notranslate nohighlight">\(\{x\}\)</span>, i.e. one step of inverse iteration
+shift is <span class="math notranslate nohighlight">\(\sigma = -|\boldsymbol{y}^\top \boldsymbol{K} \boldsymbol{y} /
+\boldsymbol{y}^\top \boldsymbol{M} \boldsymbol{y}|\)</span>, the Rayleigh quotient of <span class="math notranslate nohighlight">\(\boldsymbol{y} = \boldsymbol{K}^{-1} \boldsymbol{M} \boldsymbol{x}\)</span>
+for a fixed random vector <span class="math notranslate nohighlight">\(\boldsymbol{x}\)</span>, i.e. one step of inverse iteration
 towards the lowest <span class="math notranslate nohighlight">\(\omega_n^2\)</span>, or <span class="math notranslate nohighlight">\(\sigma = -1\)</span> when <code class="docutils literal notranslate"><span class="pre">K</span></code> is
 singular or the solution is inaccurate. With all <span class="math notranslate nohighlight">\(\omega_n^2 \ge 0\)</span>,
 the eigenvalues nearest a negative shift are the lowest ones.</p>
 <p><strong>Verification.</strong> With <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, the number of negative
-pivots of <span class="math notranslate nohighlight">\([K] - s [M]\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than the highest
+pivots of <span class="math notranslate nohighlight">\(\boldsymbol{K} - s \boldsymbol{M}\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly lower than the highest
 <span class="math notranslate nohighlight">\(\omega_n^2\)</span> returned, is the number of eigenvalues below <span class="math notranslate nohighlight">\(s\)</span>
 (Sylvester’s law of inertia), see <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_freq()</span></code>.</p>
 <p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> uses ARPACK’s symmetric drivers, which

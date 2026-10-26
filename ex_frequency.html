@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequency analysis &#8212; structsolve 0.9.2 documentation</title>
+    <title>Frequency analysis &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -561,7 +561,7 @@
   <section id="frequency-analysis">
 <h1>Frequency analysis<a class="headerlink" href="#frequency-analysis" title="Link to this heading">#</a></h1>
 <p>The function <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a> solves the eigenvalue problem
-<span class="math notranslate nohighlight">\(([K] + \lambda^2 [M])\{u\} = \{0\}\)</span>, where <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span>
+<span class="math notranslate nohighlight">\((\boldsymbol{K} + \lambda^2 \boldsymbol{M}) \boldsymbol{u} = \boldsymbol{0}\)</span>, where <span class="math notranslate nohighlight">\(\lambda^2 = -\omega_n^2\)</span>
 and <span class="math notranslate nohighlight">\(\omega_n\)</span> is the natural frequency in rad/s. The returned <code class="docutils literal notranslate"><span class="pre">lambda2</span></code>
 are therefore negative for a stable structure, and</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">omega</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="o">-</span><span class="n">lambda2</span><span class="p">)</span>   <span class="c1"># rad/s</span>
@@ -601,7 +601,7 @@ for unsymmetric matrices, and returns complex arrays. <code class="docutils lite
 solvers of symmetric matrices, which require a positive definite <code class="docutils literal notranslate"><span class="pre">M</span></code>,
 and returns real arrays; <code class="docutils literal notranslate"><span class="pre">None</span></code> checks the symmetry of the matrices.</p></li>
 <li><p>Normalization: with <code class="docutils literal notranslate"><span class="pre">symmetric=True</span></code>, the eigenvectors are normalized
-with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>, <span class="math notranslate nohighlight">\(\{u_i\}^T[M]\{u_j\} = \delta_{ij}\)</span>. Otherwise
+with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>, <span class="math notranslate nohighlight">\(\boldsymbol{u}_i^\top \boldsymbol{M} \boldsymbol{u}_j = \delta_{ij}\)</span>. Otherwise
 the sparse solver returns eigenvectors normalized with respect to <code class="docutils literal notranslate"><span class="pre">M</span></code>
 and the dense solver eigenvectors with unit Euclidean norm, see
 <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a>; an application that needs a given normalization applies it

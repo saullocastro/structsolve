@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.9.2 documentation</title>
+    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -773,16 +773,17 @@ the current load factor, see <a class="reference internal" href="callbacks.html#
 </dl>
 <p class="rubric">Notes</p>
 <p>For non-linear analyses, the internal force vector
-<span class="math notranslate nohighlight">\(\{F_{int}(c)\}\)</span> must be in equilibrium with the external force
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_{int}(\boldsymbol{c})\)</span> must be in equilibrium with the external force
 vector scaled by the load factor <span class="math notranslate nohighlight">\(\lambda\)</span>:</p>
 <div class="math notranslate nohighlight">
-\[\{R\} = \lambda \{F_{ext}\} - \{F_{int}(c)\} = \{0\}\]</div>
-<p>and the tangent stiffness matrix <span class="math notranslate nohighlight">\([K_T] = [K_C] + [K_G]\)</span>, given by the
+\[\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda \boldsymbol{F}_{ext} = \boldsymbol{0}\]</div>
+<p>and the tangent stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_T = \boldsymbol{K}_C + \boldsymbol{K}_G\)</span>, given by the
 callables <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code>, should be the exact derivative of
-<span class="math notranslate nohighlight">\(\{F_{int}\}\)</span> with respect to <span class="math notranslate nohighlight">\(\{c\}\)</span>, such that the Newton-Raphson
-iterations converge quadratically. The convergence is checked by
-default with Crisfield’s criterion, the residual and the reference
-force vectors scaled with the diagonal of the linear stiffness matrix
+<span class="math notranslate nohighlight">\(\boldsymbol{F}_{int}\)</span> with respect to <span class="math notranslate nohighlight">\(\boldsymbol{c}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{K}_T = \partial
+\boldsymbol{R}/\partial \boldsymbol{c}\)</span>, such that the Newton-Raphson
+iterations, <span class="math notranslate nohighlight">\(\boldsymbol{K}_T \delta \boldsymbol{c} = -\boldsymbol{R}\)</span>, converge
+quadratically. The convergence is checked by default with Crisfield’s
+criterion, the residual and the reference force vectors scaled with the diagonal of the linear stiffness matrix
 <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code> over the free degrees of freedom, such that it does not
 depend on the units of each degree of freedom, e.g. translations and
 rotations, see <a class="reference internal" href="convergence_api.html#module-structsolve.convergence" title="structsolve.convergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">convergence</span></code></a>; <code class="docutils literal notranslate"><span class="pre">convergence</span> <span class="pre">=</span> <span class="pre">'relative'</span></code> keeps
@@ -804,15 +805,15 @@ declare them explicitly, see <a class="reference internal" href="callbacks.html#
 such that <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code> may contain the configuration-dependent part of
 the load, scaled by <code class="docutils literal notranslate"><span class="pre">inc</span></code>, and <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> its derivative.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c)</span></code> must return the load vector of the
-configuration <code class="docutils literal notranslate"><span class="pre">c</span></code> for a unit load factor, the derivative of the
-residual with respect to the load factor, used by the arc-length
-solvers.</p></li>
+configuration <code class="docutils literal notranslate"><span class="pre">c</span></code> for a unit load factor, minus the derivative of
+the residual with respect to the load factor, <span class="math notranslate nohighlight">\(-\partial
+\boldsymbol{R}/\partial \lambda\)</span>, used by the arc-length solvers.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c,</span> <span class="pre">lbd=lbd)</span></code> also receives the current load
 factor when it declares <code class="docutils literal notranslate"><span class="pre">lbd</span></code>, for a derivative <span class="math notranslate nohighlight">\(\partial
-R/\partial \lambda\)</span> that depends on the load factor, e.g. prescribed
+\boldsymbol{R}/\partial \lambda\)</span> that depends on the load factor, e.g. prescribed
 displacements imposed exactly as linear constraints, where the
 reference vector <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.)</span></code> may be null. The solvers then
-use <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> for the displacement scale of the
+use <span class="math notranslate nohighlight">\(-\partial \boldsymbol{R}/\partial \lambda\)</span> for the displacement scale of the
 arc-length methods, for the predictor of the first Newton-Raphson
 increment and as a reference of the convergence criterion, see
 <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>. The linear static analysis never passes
@@ -866,26 +867,26 @@ documentation of each solver.</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>The linear analysis solves <span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}\}\)</span>. When the load
+<p>The linear analysis solves <span class="math notranslate nohighlight">\(\boldsymbol{K}_C \boldsymbol{c} = \boldsymbol{F}_{ext}\)</span>. When the load
 depends on the configuration, the structure is still geometrically
 linear but the load is evaluated in the current configuration,
-<span class="math notranslate nohighlight">\([K_C]\{c\} = \{F_{ext}(c)\}\)</span>, which is solved by the load
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_C \boldsymbol{c} = \boldsymbol{F}_{ext}(\boldsymbol{c})\)</span>, which is solved by the load
 correction iterations</p>
 <div class="math notranslate nohighlight">
-\[\{c_{k+1}\} = \{c_k\} + [K_C]^{-1}(\{F_{ext}(c_k)\}
-              - [K_C]\{c_k\})\]</div>
-<p>starting from <span class="math notranslate nohighlight">\(\{c_0\} = [K_C]^{-1}\{F_{ext}\}\)</span>, the solution of the
-reference load <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code>, with <span class="math notranslate nohighlight">\(\{F_{ext}(c_k)\}\)</span> given by
+\[\boldsymbol{c}_{k+1} = \boldsymbol{c}_k + \boldsymbol{K}_C^{-1}(\boldsymbol{F}_{ext}(\boldsymbol{c}_k)
+              - \boldsymbol{K}_C \boldsymbol{c}_k)\]</div>
+<p>starting from <span class="math notranslate nohighlight">\(\boldsymbol{c}_0 = \boldsymbol{K}_C^{-1} \boldsymbol{F}_{ext}\)</span>, the solution of the
+reference load <code class="docutils literal notranslate"><span class="pre">calc_fext()</span></code>, with <span class="math notranslate nohighlight">\(\boldsymbol{F}_{ext}(\boldsymbol{c}_k)\)</span> given by
 <code class="docutils literal notranslate"><span class="pre">calc_fext(inc=1.,</span> <span class="pre">c=c_k)</span></code>. This is a fixed-point iteration
 without the load stiffness in the iteration matrix. For a follower
-load whose force vector is affine in <span class="math notranslate nohighlight">\(c\)</span>, <span class="math notranslate nohighlight">\(\{F(c)\} = \{F_0\} -
-[K_f]\{c\}\)</span>, this is the solution of <span class="math notranslate nohighlight">\(([K_C] + [K_f])\{c\} =
-\{F_0\}\)</span>, with the convergence rate of the spectral radius of
-<span class="math notranslate nohighlight">\([K_C]^{-1}[K_f]\)</span>, i.e. of the ratio of the load to the lowest
+load whose force vector is affine in <span class="math notranslate nohighlight">\(c\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{F}(\boldsymbol{c}) = \boldsymbol{F}_0 -
+\boldsymbol{K}_f \boldsymbol{c}\)</span>, this is the solution of <span class="math notranslate nohighlight">\((\boldsymbol{K}_C + \boldsymbol{K}_f) \boldsymbol{c} =
+\boldsymbol{F}_0\)</span>, with the convergence rate of the spectral radius of
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_C^{-1} \boldsymbol{K}_f\)</span>, i.e. of the ratio of the load to the lowest
 critical load of the linearized problem; beyond it the iterations
-diverge. The error is multiplied by <span class="math notranslate nohighlight">\(-[K_C]^{-1}[K_f]\)</span> at each
+diverge. The error is multiplied by <span class="math notranslate nohighlight">\(-\boldsymbol{K}_C^{-1} \boldsymbol{K}_f\)</span> at each
 iteration, whose spectral radius is <span class="math notranslate nohighlight">\(1/\min|\lambda|\)</span> over the load
-multipliers <span class="math notranslate nohighlight">\(\lambda\)</span> of <span class="math notranslate nohighlight">\(([K_C] + \lambda [K_f])\{u\} = \{0\}\)</span>,
+multipliers <span class="math notranslate nohighlight">\(\lambda\)</span> of <span class="math notranslate nohighlight">\((\boldsymbol{K}_C + \lambda \boldsymbol{K}_f) \boldsymbol{u} = \boldsymbol{0}\)</span>,
 including the negative and complex ones.</p>
 </dd></dl>
 

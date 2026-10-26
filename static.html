@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.9.2 documentation</title>
+    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -644,7 +644,7 @@ degrees of freedom whose row and column are both null are removed.</p>
 </dl>
 <p class="rubric">Notes</p>
 <p>With <span class="math notranslate nohighlight">\(u\)</span> the set of the degrees of freedom whose row or column of <code class="docutils literal notranslate"><span class="pre">a</span></code>
-is not null, the reduced system <span class="math notranslate nohighlight">\([a_{uu}]\{x_u\} = \{b_u\}\)</span> is solved
+is not null, the reduced system <span class="math notranslate nohighlight">\([a_{uu}]\boldsymbol{x}_u = \boldsymbol{b}_u\)</span> is solved
 and <span class="math notranslate nohighlight">\(x = 0\)</span> at the other degrees of freedom. The terms of <code class="docutils literal notranslate"><span class="pre">b</span></code> at the
 removed degrees of freedom are ignored: <code class="docutils literal notranslate"><span class="pre">x</span></code> solves the full system
 only when they are null, otherwise the full system has no solution,

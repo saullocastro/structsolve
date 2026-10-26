@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.9.2 documentation</title>
+    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -565,7 +565,7 @@ pressures, are supported through optional keyword arguments of the callables
 of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a>, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>: <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>, <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and
 <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code> receive the load factor <code class="docutils literal notranslate"><span class="pre">inc</span></code> when they declare it, and
 <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code> receives the current configuration <code class="docutils literal notranslate"><span class="pre">c</span></code>, returning the load
-vector <span class="math notranslate nohighlight">\(\partial R/\partial \lambda\)</span> used by the arc-length methods. Their
+vector <span class="math notranslate nohighlight">\(-\partial \boldsymbol{R}/\partial \lambda\)</span> used by the arc-length methods. Their
 load stiffness makes the tangent stiffness matrix unsymmetric in general,
 which the solvers support: <a class="reference internal" href="static.html#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a> and the non-linear solvers use LU
 factorizations, <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> selects the solvers of unsymmetric matrices when
@@ -573,8 +573,9 @@ needed, <code class="docutils literal notranslate"><span class="pre">symmetric=N
 by default.</p>
 <section id="non-linear-analyses">
 <h2>Non-linear analyses<a class="headerlink" href="#non-linear-analyses" title="Link to this heading">#</a></h2>
-<p>Hardening springs under a load <span class="math notranslate nohighlight">\(\lambda(\{q_0\} + [Q]\{c\})\)</span> with an
-unsymmetric <span class="math notranslate nohighlight">\([Q]\)</span>: the callables receive the load factor and the
+<p>Hardening springs under a load <span class="math notranslate nohighlight">\(\lambda(\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})\)</span> with an
+unsymmetric load stiffness matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda
+\boldsymbol{K}_{F_{ref}}\)</span>: the callables receive the load factor and the
 configuration, and Newton-Raphson and the arc-length methods converge to the
 equilibrium path. The Riks method converges quadratically only with the load
 vector of the current configuration:</p>
@@ -594,7 +595,7 @@ vector of the current configuration:</p>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">@</span> <span class="n">c</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="o">*</span><span class="n">c</span><span class="o">**</span><span class="mi">3</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">residual</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">lbd</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">lbd</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">@</span> <span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint_el</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fint_el</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="n">lbd</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q0</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">@</span> <span class="n">c</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">calc_fext</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inc</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -630,7 +631,7 @@ vector of the current configuration:</p>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_riks_quadratic_only_with_configuration_load_vector</span><span class="p">():</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">"""The bordered system of Riks is the Newton-Raphson method of the</span>
-<span class="sd">    augmented system only when dR/dlbd = q0 + Q c, i.e. with ``calc_fext``</span>
+<span class="sd">    augmented system only when -dR/dlbd = q0 + Q c, i.e. with ``calc_fext``</span>
 <span class="sd">    accepting ``c``; with the constant reference vector the corrections</span>
 <span class="sd">    converge linearly"""</span>
     <span class="n">worst</span> <span class="o">=</span> <span class="p">{}</span>
@@ -655,7 +656,7 @@ vector of the current configuration:</p>
 <section id="linear-static-analysis">
 <h2>Linear static analysis<a class="headerlink" href="#linear-static-analysis" title="Link to this heading">#</a></h2>
 <p>With a configuration-dependent load, <code class="docutils literal notranslate"><span class="pre">Analysis.static(NLgeom=False)</span></code> solves
-the geometrically linear problem <span class="math notranslate nohighlight">\([K_{C0}]\{c\} = \{F(c)\}\)</span>:</p>
+the geometrically linear problem <span class="math notranslate nohighlight">\(\boldsymbol{K}_{C0} \boldsymbol{c} = \boldsymbol{F}(\boldsymbol{c})\)</span>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_analysis_linear_static_with_configuration_dependent_load</span><span class="p">():</span>
     <span class="n">pb</span> <span class="o">=</span> <span class="n">linear_follower_problem</span><span class="p">()</span>
     <span class="n">an</span> <span class="o">=</span> <span class="n">pb</span><span class="o">.</span><span class="n">analysis</span><span class="p">()</span>

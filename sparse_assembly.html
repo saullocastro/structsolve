@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Assembling matrices with sparseutils &#8212; structsolve 0.9.2 documentation</title>
+    <title>Assembling matrices with sparseutils &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -580,8 +580,8 @@ solvers.</p>
 <section id="unsymmetric-matrices">
 <h2>Unsymmetric matrices<a class="headerlink" href="#unsymmetric-matrices" title="Link to this heading">#</a></h2>
 <p>A matrix with a skew-symmetric part, e.g. a load stiffness matrix, is the
-sum of its symmetric part, <span class="math notranslate nohighlight">\(([A] + [A]^T)/2\)</span>, and of its skew-symmetric
-part, <span class="math notranslate nohighlight">\(([A] - [A]^T)/2\)</span>, assembled from their upper triangles with
+sum of its symmetric part, <span class="math notranslate nohighlight">\((\boldsymbol{A} + \boldsymbol{A}^\top)/2\)</span>, and of its skew-symmetric
+part, <span class="math notranslate nohighlight">\((\boldsymbol{A} - \boldsymbol{A}^\top)/2\)</span>, assembled from their upper triangles with
 <a class="reference internal" href="sparseutils.html#structsolve.sparseutils.make_symmetric" title="structsolve.sparseutils.make_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">sparseutils.make_symmetric()</span></code></a> and
 <a class="reference internal" href="sparseutils.html#structsolve.sparseutils.make_skew_symmetric" title="structsolve.sparseutils.make_skew_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">sparseutils.make_skew_symmetric()</span></code></a>. Unsymmetric matrices may also be
 assembled in full. <a class="reference internal" href="linear_buckling.html#structsolve.linear_buckling.is_symmetric" title="structsolve.linear_buckling.is_symmetric"><code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling.is_symmetric()</span></code></a> and

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Eigenvalue solvers &#8212; structsolve 0.9.2 documentation</title>
+    <title>Eigenvalue solvers &#8212; structsolve 0.9.3 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=aa3b121e"></script>
+    <script src="_static/documentation_options.js?v=0e439607"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.2" />
+  <meta name="docsearch:version" content="0.9.3" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.2 documentation</p>
+    <p class="title logo__title">structsolve 0.9.3 documentation</p>
   
 </a></div>
     
@@ -575,18 +575,25 @@ for every problem size, symmetric or unsymmetric. Every result is
 verified before it is returned: the relative residual of each eigenpair
 and, for symmetric matrices, the inertia of a shifted matrix, which tells
 whether an eigenvalue was missed (Sylvester’s law of inertia). The
-residual <span class="math notranslate nohighlight">\(\|[K]\{u\} + \lambda [B]\{u\}\|\)</span> is relative to
-<span class="math notranslate nohighlight">\(\|[K]\{u\}\| + |\lambda| \, \|[B]\{u\}\|\)</span>, with <span class="math notranslate nohighlight">\([B] = [K_G]\)</span> or <span class="math notranslate nohighlight">\([M]\)</span>.
+residual <span class="math notranslate nohighlight">\(\|\boldsymbol{K} \boldsymbol{u} + \lambda \boldsymbol{B} \boldsymbol{u}\|\)</span> is relative to
+<span class="math notranslate nohighlight">\(\|\boldsymbol{K} \boldsymbol{u}\| + |\lambda| \, \|\boldsymbol{B} \boldsymbol{u}\|\)</span>, with <span class="math notranslate nohighlight">\(\boldsymbol{B} = \boldsymbol{K}_G\)</span> or <span class="math notranslate nohighlight">\(\boldsymbol{M}\)</span>.
 Only for a rigid-body mode of <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a>, whose eigenvalue and
-<span class="math notranslate nohighlight">\([K]\{u\}\)</span> are both null up to the round-off, i.e. <span class="math notranslate nohighlight">\(\|[K]\{u\}\| +
-|\lambda| \, \|[M]\{u\}\|\)</span> not larger than <code class="docutils literal notranslate"><span class="pre">RIGID_BODY_RTOL</span></code> <span class="math notranslate nohighlight">\(= 100
+<span class="math notranslate nohighlight">\(\boldsymbol{K} \boldsymbol{u}\)</span> are both null up to the round-off, i.e. <span class="math notranslate nohighlight">\(\|\boldsymbol{K} \boldsymbol{u}\| +
+|\lambda| \, \|\boldsymbol{M} \boldsymbol{u}\|\)</span> not larger than <code class="docutils literal notranslate"><span class="pre">RIGID_BODY_RTOL</span></code> <span class="math notranslate nohighlight">\(= 100
 \epsilon\)</span>, <span class="math notranslate nohighlight">\(\epsilon\)</span> the machine precision, times the matrix-norm scale
-<span class="math notranslate nohighlight">\((\|[K]\|_F + |\lambda| \, \|[M]\|_F)\|\{u\}\|\)</span>, is the residual relative
+<span class="math notranslate nohighlight">\((\|\boldsymbol{K}\|_F + |\lambda| \, \|\boldsymbol{M}\|_F)\|\boldsymbol{u}\|\)</span>, is the residual relative
 to this scale, see
-<code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._relative_residuals()</span></code>. The check of the other
-eigenpairs, e.g. of models with stiff penalty springs, whose
-<span class="math notranslate nohighlight">\(\|[K]\|_F\)</span> is many orders of magnitude larger than <span class="math notranslate nohighlight">\(\|[K]\{u\}\|\)</span>, is
-not loosened.</p></li>
+<code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._relative_residuals()</span></code>. An eigenpair of
+<a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a> whose relative residual is larger than <code class="docutils literal notranslate"><span class="pre">check_rtol</span></code>
+passes when its normwise backward error, the residual relative to the
+matrix-norm scale, is not larger than <code class="docutils literal notranslate"><span class="pre">BACKWARD_ERROR_RTOL</span></code> <span class="math notranslate nohighlight">\(=
+\epsilon\)</span>, i.e. when it is accurate up to the round-off, e.g. an
+eigenvalue close to zero of a model pre-stressed close to buckling, see
+<code class="xref py py-func docutils literal notranslate"><span class="pre">linear_buckling._backward_errors()</span></code>. The check of the other
+eigenpairs, e.g. the inaccurate ones of models with stiff penalty
+springs, whose <span class="math notranslate nohighlight">\(\|\boldsymbol{K}\|_F\)</span> is many orders of magnitude larger than
+<span class="math notranslate nohighlight">\(\|\boldsymbol{K} \boldsymbol{u}\|\)</span>, is not loosened, and <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> keeps the relative
+residual only.</p></li>
 <li><p>When all the sparse solvers failed (verification, ARPACK error or no
 convergence, singular factorization, no positive real load multiplier
 for unsymmetric matrices…), a dense solver is used as a last resort, if
@@ -614,11 +621,11 @@ solution. To turn the fallback into an error, e.g. in a test suite:</p>
 <section id="linear-buckling-symmetric-matrices">
 <h2>Linear buckling, symmetric matrices<a class="headerlink" href="#linear-buckling-symmetric-matrices" title="Link to this heading">#</a></h2>
 <p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> in Cayley mode, with a shift estimated by
-power iterations on <span class="math notranslate nohighlight">\([K]^{-1}[K_G]\)</span>, retried with a 10 times larger shift.
+power iterations on <span class="math notranslate nohighlight">\(\boldsymbol{K}^{-1} \boldsymbol{K}_G\)</span>, retried with a 10 times larger shift.
 It gives the lowest positive load multipliers; when fewer than
-<code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> exist, the same solver with <span class="math notranslate nohighlight">\(-[K_G]\)</span> gives the negative
+<code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> exist, the same solver with <span class="math notranslate nohighlight">\(-\boldsymbol{K}_G\)</span> gives the negative
 ones closest to zero, i.e. the critical load multipliers of the reversed
-load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where <span class="math notranslate nohighlight">\([K_G]\)</span> has
+load, which are verified in the same way. The dense fallback condenses out the degrees of freedom where <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> has
 null rows and solves the condensed problem with <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eigh()</span></code>.</p>
 </section>
 <section id="linear-buckling-unsymmetric-matrices">
@@ -631,7 +638,7 @@ each shift, <code class="xref py py-func docutils literal notranslate"><span cla
 nearest <span class="math notranslate nohighlight">\(s\)</span>, within a disc that contains all of them. The shifts move until
 the lowest positive real multiplier found is inside the union of the discs
 that covers the positive real axis from zero, such that none was missed. A
-parity check of the sign of <span class="math notranslate nohighlight">\(\det([K] + s [K_G])\)</span> confirms that an even
+parity check of the sign of <span class="math notranslate nohighlight">\(\det(\boldsymbol{K} + s \boldsymbol{K}_G)\)</span> confirms that an even
 number, normally zero, of real multipliers lies below the critical one. See
 <code class="xref py py-func docutils literal notranslate"><span class="pre">structsolve.linear_buckling._eigs_shift_search()</span></code>.</p>
 </section>
@@ -653,7 +660,7 @@ SciPy. <a class="reference internal" href="arpackutils.html#module-structsolve.a
 <code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&lt;=</span> <span class="pre">32</span></code>, computing more than 15 eigenpairs in several passes with
 deflation. The eigenvectors of all the passes are combined with a
 Rayleigh-Ritz projection, solved with the LAPACK driver <code class="docutils literal notranslate"><span class="pre">dsyevr</span></code>, which
-does not use <code class="docutils literal notranslate"><span class="pre">dsteqr</span></code>, such that they are <span class="math notranslate nohighlight">\([M]\)</span>-orthonormal also across
+does not use <code class="docutils literal notranslate"><span class="pre">dsteqr</span></code>, such that they are <span class="math notranslate nohighlight">\(\boldsymbol{M}\)</span>-orthonormal also across
 the passes, where ARPACK alone gives them orthogonal only to its accuracy.
 The detection can be overridden, e.g. to lift the cap with MKL 2025.0.1 or
 newer when its version cannot be read:</p>
