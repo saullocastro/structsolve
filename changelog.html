@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; structsolve 0.9.3 documentation</title>
+    <title>Changelog &#8212; structsolve 0.9.4 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
 
-    <script src="_static/documentation_options.js?v=0e439607"></script>
+    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -49,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.3" />
+  <meta name="docsearch:version" content="0.9.4" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.3 documentation</p>
+    <p class="title logo__title">structsolve 0.9.4 documentation</p>
   
 </a></div>
     
@@ -561,7 +561,7 @@
 <a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
 
-<span class="gu">## 0.9.3 (2026-10-26)</span>
+<span class="gu">## 0.9.4 (2026-10-28)</span>
 
 <span class="gu">### Python versions</span>
 
@@ -796,6 +796,7 @@
 
 <span class="k">-</span><span class="w"> </span>The documentation workflow installs pandoc, which nbsphinx needs to convert the tutorial notebook; the documentation was not published because of it. The documentation is now also built, without being deployed, for every pull request.
 <span class="k">-</span><span class="w"> </span><span class="sb">`structsolve.convergence`</span>: the origin of the scaled norm is cited as the sources state it: Crisfield (1981, p. 58) attributes the scaling to Peano and Riccioni and uses it in his arc-length procedure, and Crisfield (1991, Sec. 9.5.4, Eq. 9.48) presents it as an alternative to the Euclidean norm of the residual, not as a recommendation; the dependence of the Euclidean norm on the units is no longer attributed to Crisfield (1991), who says that the scaling matrix could be used to give all parameters the same dimensions.
+<span class="k">-</span><span class="w"> </span><span class="sb">`structsolve.convergence`</span>: the round-off floor cites Higham (2002), Sec. 3.5, Eqs. (3.12) and (3.13), for the componentwise bound of the rounding error of a matrix-vector product.
 <span class="k">-</span><span class="w"> </span>Notation: the basis of the null space of the constraints is <span class="sb">`Z`</span>, <span class="sb">`c = Z c_r + c_p0 + lbd*c_p1`</span>, instead of <span class="sb">`T`</span>, in <span class="sb">`structsolve.callbacks`</span>, the pages on boundary conditions and prescribed displacements, the tests and the 0.7.0 entry of this changelog; no name of the API changes, none contained the basis.
 <span class="k">-</span><span class="w"> </span>Notation of the book in the docstrings, the user guide, the tutorial and the math of the tests, without code changes: vectors are bold lower case and matrices bold upper case, without braces or brackets, e.g. <span class="sb">`\boldsymbol{c}`</span>, <span class="sb">`\Delta \boldsymbol{c}`</span>, <span class="sb">`\boldsymbol{K}_T`</span> and <span class="sb">`\boldsymbol{Z}`</span> instead of <span class="sb">`\{c\}`</span>, <span class="sb">`\{\Delta c\}`</span>, <span class="sb">`[K_T]`</span> and <span class="sb">`[Z]`</span>; the force vectors and the residual keep their upper case, <span class="sb">`\boldsymbol{F}_{ext}`</span>, <span class="sb">`\boldsymbol{F}_{int}`</span> and <span class="sb">`\boldsymbol{R}`</span>, also in the derivatives, e.g. <span class="sb">`\partial \boldsymbol{R}/\partial \lambda`</span>, and in the scaled norms of Crisfield's criterion; explicit lists of components keep their braces; the transpose is <span class="sb">`^\top`</span> instead of <span class="sb">`^T`</span>. Three docstrings that now contain <span class="sb">`\boldsymbol`</span> became raw strings.
 <span class="k">-</span><span class="w"> </span>Notation, without code changes: the permutation matrices of the sparse factorizations are <span class="sb">`\boldsymbol{\Pi}`</span>, <span class="sb">`\boldsymbol{\Pi}_r`</span> and <span class="sb">`\boldsymbol{\Pi}_c`</span>, <span class="sb">`\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top`</span> and <span class="sb">`\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c = \boldsymbol{L} \boldsymbol{U}`</span>, instead of <span class="sb">`\boldsymbol{P}`</span>, <span class="sb">`\boldsymbol{P}_r`</span> and <span class="sb">`\boldsymbol{P}_c`</span>, in the docstrings of <span class="sb">`_negative_pivots`</span> and <span class="sb">`_det_sign`</span> of <span class="sb">`structsolve.linear_buckling`</span> (the attributes <span class="sb">`perm_r`</span> and <span class="sb">`perm_c`</span> of SuperLU are unchanged); the standard problem of the condensed dofs in the docstring of <span class="sb">`_eig_condensed`</span> is written with the Schur complement, <span class="sb">`(\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}`</span>, as in <span class="sb">`_eigh_condensed`</span>, instead of <span class="sb">`\boldsymbol{S}^{-1} \boldsymbol{K}_{G_{bb}}`</span>, <span class="sb">`\boldsymbol{S}`</span> being the shape functions; the configuration-dependent load of <span class="sb">`tests/test_follower_loads.py`</span> and of the page on follower loads is written with the load stiffness matrix of the book, <span class="sb">`\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda \boldsymbol{K}_{F_{ref}}`</span>, i.e. <span class="sb">`\boldsymbol{F}(\boldsymbol{c}, \lambda) = \lambda (\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})`</span>, instead of <span class="sb">`\lambda (\boldsymbol{q}_0 + \boldsymbol{Q} \boldsymbol{c})`</span>; the variable <span class="sb">`Q`</span> of the tests, <span class="sb">`-\boldsymbol{K}_{F_{ref}}`</span>, keeps its name.
