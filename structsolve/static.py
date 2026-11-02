@@ -32,6 +32,16 @@ PARDISO_GMRES_RTOL = 1.e-11
 #: issued
 PARDISO_WARN_TOL = 1.e-6
 
+# instances of pypardiso.PyPardisoSolver whose memory was freed, reused by
+# the next factorizations, since creating one may take seconds
+_pardiso_pool = []
+
+
+def _pardiso_release(solver):
+    """Free the memory of a PARDISO solver and keep it for reuse"""
+    solver.free_memory(everything=True)
+    _pardiso_pool.append(solver)
+
 
 def solve(a, b, silent=False, **kwargs):
     r"""Solve a linear system of equations removing null rows and columns
@@ -188,7 +198,10 @@ def _factorize(kT, linear_solver='splu'):
     failed beyond the limit point. The symmetric factorization would be
     wrong for an unsymmetric matrix, e.g. with the load stiffness of a
     follower load: ``'splu'`` is then used, with a :class:`RuntimeWarning`.
-    The memory of PARDISO is freed when ``solve_kT`` is deleted.
+    The memory of PARDISO is freed when ``solve_kT`` is deleted, and its
+    solver object is kept for the next factorizations, since creating one
+    took about 6.5 s on Windows with ``pypardiso`` 0.4.7, against
+    milliseconds for the factorization of a small matrix.
 
     """
     if linear_solver not in LINEAR_SOLVERS:
@@ -231,11 +244,14 @@ def _factorize_pardiso(A, used_cols):
     s = 1/np.sqrt(d)
     D = diags(s)
     As_upper = triu(D @ A @ D, format='csr')
-    solver = pypardiso.PyPardisoSolver(mtype=-2)
+    if _pardiso_pool:
+        solver = _pardiso_pool.pop()
+    else:
+        solver = pypardiso.PyPardisoSolver(mtype=-2)
     try:
         solver.factorize(As_upper)
     except Exception as e:
-        solver.free_memory(everything=True)
+        _pardiso_release(solver)
         raise RuntimeError('PARDISO factorization failed: %s' % e)
     iparms = solver.get_iparms()
 
@@ -266,7 +282,7 @@ def _factorize_pardiso(A, used_cols):
     solve_kT.num_negative_eigvals = int(iparms[23])
     solve_kT.num_perturbed_pivots = int(iparms[14])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
-    weakref.finalize(solve_kT, solver.free_memory, everything=True)
+    weakref.finalize(solve_kT, _pardiso_release, solver)
 
     return solve_kT
 

@@ -85,7 +85,9 @@
   1e-9`, improved by GMRES with the factorization as the preconditioner, a
   `RuntimeWarning` being issued above `PARDISO_WARN_TOL = 1e-6`. An
   unsymmetric matrix, e.g. with the load stiffness of a follower load, is
-  factorized by `'splu'` instead, with a `RuntimeWarning`.
+  factorized by `'splu'` instead, with a `RuntimeWarning`. The solver
+  objects of `pypardiso` are kept and reused after their memory is freed,
+  since creating one took about 6.5 s on Windows with `pypardiso` 0.4.7.
 - The callable returned by `static._factorize` has the attributes
   `linear_solver`, `det_sign`, the sign of the determinant, from the
   diagonal of `U` and the permutations of SuperLU, `num_negative_eigvals`,

@@ -6,13 +6,13 @@ matrix along the path
 The tests of ``'pardiso'`` need ``pypardiso``.
 
 """
+import importlib
 import warnings
 
 import numpy as np
 import pytest
 from scipy.sparse import csr_matrix
 
-import structsolve.static as static
 from structsolve.static import _factorize, _permutation_sign
 from analytic_problems import von_mises_truss, linear_problem, Problem
 from test_arc_length import check_equilibrium
@@ -27,6 +27,9 @@ def has_pypardiso():
         return False
     return True
 
+
+#NOTE structsolve.static is the function static(), exported by the package
+static_module = importlib.import_module('structsolve.static')
 
 needs_pardiso = pytest.mark.skipif(not has_pypardiso(),
                                    reason='pypardiso is not installed')
@@ -92,7 +95,7 @@ def test_pardiso_inertia(seed):
 def test_pardiso_gmres_refinement(monkeypatch):
     """With a refinement tolerance below any residual, every solution is
     improved by GMRES, preconditioned by the factorization"""
-    monkeypatch.setattr(static, 'PARDISO_REFINE_TOL', 0.)
+    monkeypatch.setattr(static_module, 'PARDISO_REFINE_TOL', 0.)
     A, _, _ = symmetric_indefinite(60, 0, 1)
     f = _factorize(csr_matrix(A), linear_solver='pardiso')
     b = np.random.default_rng(0).standard_normal(A.shape[0])
