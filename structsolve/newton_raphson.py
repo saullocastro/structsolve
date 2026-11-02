@@ -271,6 +271,59 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False, Rrel=None):
     return False
 
 
+def _converged_state(an, c, lbd, silent=False):
+    r"""Factorization of the tangent stiffness matrix at a converged state,
+    recording its inertia
+
+    Used with ``an.inertia = True``. The tangent stiffness matrix at ``c``
+    and the load factor ``lbd`` is factorized with ``an.linear_solver``, see
+    :func:`.static._factorize`, and the number of its negative eigenvalues,
+    the sign of its determinant and the number of perturbed pivots are
+    appended to ``an.num_negative_eigvals``, ``an.det_signs`` and
+    ``an.num_perturbed_pivots``; for a singular matrix ``None``, ``0`` and
+    ``None``.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    c : array-like
+        Converged solution.
+    lbd : float
+        Converged load factor.
+    silent : bool, optional
+        A boolean to tell whether the log messages should be printed.
+
+    Returns
+    -------
+    solve_kT : callable or None
+        The factorization, see :func:`.static._factorize`, ``None`` when the
+        matrix is singular.
+
+    """
+    try:
+        solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
+                              linear_solver=an.linear_solver)
+    except RuntimeError:
+        warn('Singular tangent stiffness matrix at the converged state',
+             level=2, silent=silent)
+        an.num_negative_eigvals.append(None)
+        an.det_signs.append(0)
+        an.num_perturbed_pivots.append(None)
+        return None
+    nneg = solve_kT.num_negative_eigvals
+    an.num_negative_eigvals.append(nneg)
+    an.det_signs.append(solve_kT.det_sign)
+    an.num_perturbed_pivots.append(solve_kT.num_perturbed_pivots)
+    if nneg is None:
+        msg('Tangent stiffness matrix: sign of the determinant %+d'
+            % solve_kT.det_sign, level=2, silent=silent)
+    else:
+        msg('Tangent stiffness matrix: %d negative eigenvalues, %d perturbed pivots'
+            % (nneg, solve_kT.num_perturbed_pivots), level=2, silent=silent)
+    return solve_kT
+
+
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                    lbd_dependent=False, q=None, w=None, K0_abs=None):
     r"""Newton-Raphson iterations at a fixed load factor
@@ -445,10 +498,11 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             if modified_NR and iteration > 1 and iter_kT < an.compute_every_n:
                 iter_kT += 1
             elif modified_NR and iteration == 1 and kT0 is not None:
-                solve_kT = _factorize(kT0)
+                solve_kT = _factorize(kT0, linear_solver=an.linear_solver)
                 iter_kT = 1
             else:
-                solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total))
+                solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total),
+                                      linear_solver=an.linear_solver)
                 iter_kT = 1
                 if lbd_dependent:
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
@@ -640,6 +694,8 @@ def _solver_NR(an, silent=False, initialInc=None):
             total_last = total
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(total)
+            if an.inertia:
+                _converged_state(an, c, total, silent=silent)
             if total == 1.:
                 break
             dc_last = dc

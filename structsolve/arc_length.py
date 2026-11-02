@@ -15,7 +15,8 @@ from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
-                             _abs_matrix, _norm, INC_CUT_FACTOR)
+                             _abs_matrix, _norm, _converged_state,
+                             INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -299,6 +300,20 @@ def _solver_arc_length(an, method, silent=False):
     as used by Crisfield [2]_ (Eq. 15), makes the number of iterations
     oscillate from step to step.
 
+    The tangent stiffness matrix is factorized with ``an.linear_solver``,
+    see :func:`.static._factorize`. With ``an.inertia = True``, it is
+    factorized at every converged state, the factorization being that of
+    the predictor of the next step, and its number of negative eigenvalues
+    and the sign of its determinant are recorded in
+    ``an.num_negative_eigvals`` and ``an.det_signs``, see
+    :func:`.newton_raphson._converged_state`: on a stable branch without
+    prestress-induced instabilities the count is zero, it increases by one
+    at each limit point of the load beyond which the branch is unstable,
+    and at each bifurcation point crossed without branching. A perturbation
+    whose shape keeps the path on a branch of a given symmetry, e.g.
+    axisymmetric, may thus leave many negative eigenvalues unnoticed
+    without this count.
+
     When the load factor 1.0 is exceeded within a converged step, from
     `\lambda < 1` to `\lambda + \Delta\lambda > 1`, the step is replaced by
     Newton-Raphson iterations at exactly `\lambda = 1`, see
@@ -439,7 +454,7 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 kT = callbacks.calc_kT(an, c, lbd)
             try:
-                solve_kT_conv = _factorize(kT)
+                solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver)
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
@@ -541,7 +556,8 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 try:
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
-                                                            lbd + dlbd))
+                                                            lbd + dlbd),
+                                          linear_solver=an.linear_solver)
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
@@ -629,6 +645,8 @@ def _solver_arc_length(an, method, silent=False):
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())
                 an.increments.append(1.)
+                if an.inertia:
+                    _converged_state(an, c + dc1, 1., silent=silent)
                 finished = True
 
         if finished:
@@ -642,6 +660,13 @@ def _solver_arc_length(an, method, silent=False):
                 level=2, silent=silent)
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(lbd)
+            solve_kT_conv = None
+            if an.inertia:
+                # the factorization at the converged state, reused by the
+                # next step
+                solve_kT_conv = _converged_state(an, c, lbd, silent=silent)
+                if solve_kT_conv is not None:
+                    q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
             if lbd == 1.:
                 break
             if total_arc_length >= an.maxArcLength:
@@ -656,7 +681,6 @@ def _solver_arc_length(an, method, silent=False):
                 factor = min(factor, 1.)
             arc_length = min(factor*arc_length, max_arc_length_inc)
             step_cut = False
-            solve_kT_conv = None
             step_num += 1
 
         else:

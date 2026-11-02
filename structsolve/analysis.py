@@ -107,6 +107,22 @@ class Analysis(object):
                                   when initial imperfections take place.
                                   Otherwise the linear constitutive stiffness
                                   matrix is used. Default is ``True``
+    ``linear_solver``             ``str``, factorization of the tangent
+                                  stiffness matrix of the non-linear solvers,
+                                  ``'splu'`` (default), the sparse LU of
+                                  SuperLU, or ``'pardiso'``, the symmetric
+                                  indefinite factorization of PARDISO, which
+                                  requires ``pypardiso`` and gives the number
+                                  of negative eigenvalues, see
+                                  :func:`.static._factorize`
+    ``inertia``                   ``bool``, the tangent stiffness matrix is
+                                  factorized at every converged increment of
+                                  the non-linear analyses, and its number of
+                                  negative eigenvalues (``'pardiso'``) and the
+                                  sign of its determinant are recorded, such
+                                  that limit points, bifurcations crossed and
+                                  unstable branches are visible. Default is
+                                  ``False``
     ============================  =============================================
 
     ================   =================================================
@@ -205,6 +221,22 @@ class Analysis(object):
     cs : list
         Solution vectors of the converged increments, filled by
         :meth:`.static`.
+    num_negative_eigvals : list
+        With ``inertia=True``, for each converged increment of a non-linear
+        analysis, the number of negative eigenvalues of the tangent
+        stiffness matrix on the degrees of freedom whose row or column is
+        not null, ``None`` with ``linear_solver='splu'``, when PARDISO fell
+        back to SuperLU for an unsymmetric matrix, or for a singular matrix.
+        Empty otherwise.
+    det_signs : list
+        With ``inertia=True``, for each converged increment of a non-linear
+        analysis, the sign of the determinant of the same matrix, ``1`` or
+        ``-1``, ``0`` when it is singular. Empty otherwise.
+    num_perturbed_pivots : list
+        With ``inertia=True`` and ``linear_solver='pardiso'``, the number of
+        pivots perturbed by PARDISO at each converged increment, which makes
+        the count of negative eigenvalues uncertain when not zero; ``None``
+        otherwise.
     last_analysis : str
         Type of the last analysis run, ``'static'`` after :meth:`.static`.
 
@@ -270,7 +302,8 @@ class Analysis(object):
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'arc_length_line_search', 'arc_length_predictor',
             'early_divergence', 'arc_length_weights', 'control_vector',
-            'control_scale',
+            'control_scale', 'linear_solver', 'inertia',
+            'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
@@ -291,6 +324,8 @@ class Analysis(object):
         self.arc_length_weights = None
         self.control_vector = None
         self.control_scale = None
+        self.linear_solver = 'splu'
+        self.inertia = False
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
@@ -315,6 +350,9 @@ class Analysis(object):
         # outputs to be filled
         self.increments = None
         self.cs = None
+        self.num_negative_eigvals = None
+        self.det_signs = None
+        self.num_perturbed_pivots = None
 
         # flag telling the last analysis
         self.last_analysis = ''
@@ -391,6 +429,9 @@ class Analysis(object):
         """
         self.increments = []
         self.cs = []
+        self.num_negative_eigvals = []
+        self.det_signs = []
+        self.num_perturbed_pivots = []
 
         if NLgeom:
             self.maxInc = max(self.initialInc, self.maxInc)

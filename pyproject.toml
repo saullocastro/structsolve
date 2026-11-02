@@ -38,6 +38,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+pardiso = [
+    "pypardiso",
+]
 test = [
     "pytest",
     "pytest-cov",

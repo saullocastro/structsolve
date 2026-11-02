@@ -73,6 +73,40 @@
   the degrees of freedom of null weight (new
   `tests/test_arc_length_weights.py`).
 
+### Stability along the path: inertia of the tangent stiffness matrix
+
+- New `Analysis.linear_solver`, `'splu'` (default) or `'pardiso'`, the
+  factorization of the tangent stiffness matrix of the non-linear solvers,
+  argument `linear_solver` of `static._factorize`. `'pardiso'` needs the
+  package `pypardiso` (new optional dependency `structsolve[pardiso]`): the
+  reduced matrix is scaled to a unit diagonal and its upper triangle
+  factorized as real symmetric indefinite (`mtype=-2`); every solution is
+  checked against its relative residual and, above `PARDISO_REFINE_TOL =
+  1e-9`, improved by GMRES with the factorization as the preconditioner, a
+  `RuntimeWarning` being issued above `PARDISO_WARN_TOL = 1e-6`. An
+  unsymmetric matrix, e.g. with the load stiffness of a follower load, is
+  factorized by `'splu'` instead, with a `RuntimeWarning`.
+- The callable returned by `static._factorize` has the attributes
+  `linear_solver`, `det_sign`, the sign of the determinant, from the
+  diagonal of `U` and the permutations of SuperLU, `num_negative_eigvals`,
+  the number of negative pivots of PARDISO (Sylvester's law of inertia),
+  `None` with SuperLU, and `num_perturbed_pivots`, which make the count
+  uncertain.
+- New `Analysis.inertia`, default `False`: the tangent stiffness matrix is
+  factorized at every converged increment of the Newton-Raphson, arc-length
+  and displacement control solvers, the factorization being reused by the
+  next step of the arc-length solvers, and `Analysis.num_negative_eigvals`,
+  `Analysis.det_signs` and `Analysis.num_perturbed_pivots` record, per
+  increment, its number of negative eigenvalues, the sign of its
+  determinant and the number of perturbed pivots. New
+  `newton_raphson._converged_state`.
+- New `tests/test_inertia.py`: the count and the sign against dense
+  eigenvalues and determinants, with null rows and a diagonal over 6
+  orders of magnitude, and, along the snap-through of the von Mises truss,
+  one negative eigenvalue exactly between the two limit points of the load;
+  the same path with and without `inertia`. The tests of `'pardiso'` are
+  skipped without `pypardiso`.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions
