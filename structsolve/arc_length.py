@@ -14,7 +14,7 @@ from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
-                             _abs_matrix, INC_CUT_FACTOR)
+                             _abs_matrix, _norm, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -27,6 +27,11 @@ MAX_GROWTH_FACTOR = 1.5
 MIN_GROWTH_FACTOR = 0.5
 #: Maximum number of converged steps of an arc-length analysis
 MAX_NUM_STEPS = 1000
+#: Factors tried in turn by the line search of the corrections, with
+#: ``Analysis.arc_length_line_search = True``
+LINE_SEARCH_ETAS = (1., 0.5, 0.25)
+#: Predictors of the arc-length methods, ``Analysis.arc_length_predictor``
+PREDICTORS = ('tangent', 'secant')
 
 
 def _solver_arc_length(an, method, silent=False):
@@ -121,6 +126,20 @@ def _solver_arc_length(an, method, silent=False):
     1), (\delta \boldsymbol{c}_q, 1) \rangle}` at the origin, corresponds to a load factor
     increment of ``an.initialInc`` along the initial tangent.
 
+    With ``an.arc_length_predictor = 'secant'``, the steps after the first
+    one start instead from the increment of the previous converged step
+    scaled to the new arc length, `(\Delta c, \Delta\lambda) = (\Delta
+    s/\Delta s_{prev}) (\Delta c_{prev}, \Delta\lambda_{prev})`, which
+    continues the path in the direction already traced, without the sign
+    rule. Beyond a limit point the tangent predictor `\delta
+    \boldsymbol{c}_q` is dominated by the eigenvectors of `\boldsymbol{K}_T` whose
+    eigenvalues are close to zero, which may turn the path back and forth
+    when there are many of them, e.g. after the bifurcations of a cylinder
+    under axial compression. With full Newton-Raphson the factorization of
+    `\boldsymbol{K}_T` at the last converged state is then not needed and it is
+    skipped, unless ``calc_fext`` accepts ``lbd``, whose `-\partial
+    \boldsymbol{R}/\partial \lambda` is evaluated together with the tangent.
+
     At each iteration, the residual is `\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c} +
     \Delta \boldsymbol{c}) - (\lambda + \Delta\lambda) \boldsymbol{F}_{ext}`, with `\partial
     \boldsymbol{R}/\partial \lambda = -\boldsymbol{F}_{ext}`, and the bordered system
@@ -175,9 +194,29 @@ def _solver_arc_length(an, method, silent=False):
       current one `(\Delta c, \Delta\lambda)` is chosen, i.e. the smallest
       angle, since both have the length `\Delta s`.
 
+    With ``an.arc_length_line_search = True``, the whole correction
+    `(\delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \delta\lambda)`
+    is multiplied by the first factor `\eta` of ``LINE_SEARCH_ETAS``,
+    `1, 1/2, 1/4`, for which the norm of the residual of the convergence
+    criterion, see :func:`.newton_raphson._check_convergence`, decreases,
+    or by the factor of the smallest norm when none decreases it. The
+    internal force vector of the accepted point is reused in the residual
+    of the next iteration, such that the full correction costs no
+    additional evaluation. With `\eta < 1` the iterate leaves the
+    constraint surface, the next correction returning to it; the converged
+    point may thus be closer than `\Delta s` to the last one when the last
+    correction was reduced. Contrary to the line search of
+    :func:`.newton_raphson._NR_iterations`, there is no sufficient-decrease
+    test: the residual of the equilibrium equations alone is not the merit
+    function of the augmented system of the equilibrium equations and the
+    constraint, along whose Newton direction it need not decrease.
+
     The step fails when `\delta\lambda` cannot be computed or is not
-    finite, and when the converged increment points against the tangent
-    predictor `(\Delta c_{pred}, \Delta\lambda_{pred})` of the step,
+    finite, when the iterations are stopped by
+    :func:`.newton_raphson._check_divergence`, earlier with
+    ``an.early_divergence = True``, and when the converged increment points
+    against the predictor `(\Delta c_{pred}, \Delta\lambda_{pred})` of the
+    step,
     `\langle (\Delta c, \Delta\lambda), (\Delta c_{pred},
     \Delta\lambda_{pred}) \rangle \le 0`. The previous converged point is
     also at the distance `\Delta s` from the last one, and with long steps
@@ -258,6 +297,10 @@ def _solver_arc_length(an, method, silent=False):
     """
     if method not in ('riks', 'crisfield'):
         raise ValueError('Invalid arc-length method: %s' % method)
+    if an.arc_length_predictor not in PREDICTORS:
+        raise ValueError('Invalid arc_length_predictor: %s'
+                         % an.arc_length_predictor)
+    secant = an.arc_length_predictor == 'secant'
     modified_NR = an.modified_NR
 
     fext = an.calc_fext(inc=1., silent=True)
@@ -296,8 +339,15 @@ def _solver_arc_length(an, method, silent=False):
                  % (MAX_NUM_STEPS, lbd), level=1, silent=silent)
             break
 
+        # the secant predictor with full Newton-Raphson does not use the
+        # tangent stiffness matrix at the last converged state, whose
+        # factorization is skipped, unless -dR/dlbd depends on the load
+        # factor and must be evaluated together with the tangent
+        use_secant = secant and dc_last is not None
+        need_kT_conv = not use_secant or modified_NR or lbd_dependent
+
         # tangent stiffness matrix at the last converged state
-        if solve_kT_conv is None:
+        if solve_kT_conv is None and need_kT_conv:
             if step_num == 1 and modified_NR and not an.kT_initial_state:
                 kT = kC0
             else:
@@ -314,21 +364,31 @@ def _solver_arc_length(an, method, silent=False):
                 q_conv = q0
             else:
                 q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
-        dc_q_conv = solve_kT_conv(q_conv)
-        norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
+        if solve_kT_conv is not None:
+            dc_q_conv = solve_kT_conv(q_conv)
         if arc_length is None:
+            norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
             arc_length = an.initialInc*norm_q
             max_arc_length_inc = max(an.maxInc, arc_length)
 
-        # tangent predictor
-        sign = 1.
-        if dc_last is not None:
-            sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
-            if sign == 0:
-                sign = 1.
-        dlbd = sign*arc_length/norm_q
-        dc = dlbd*dc_q_conv
-        # tangent predictor, the forward direction of the step
+        if use_secant:
+            # secant predictor: the previous converged increment scaled to
+            # the arc length
+            factor = arc_length/np.sqrt(inner(dc_last, dlbd_last, dc_last,
+                                              dlbd_last))
+            dc = factor*dc_last
+            dlbd = factor*dlbd_last
+        else:
+            # tangent predictor
+            norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
+            sign = 1.
+            if dc_last is not None:
+                sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
+                if sign == 0:
+                    sign = 1.
+            dlbd = sign*arc_length/norm_q
+            dc = dlbd*dc_q_conv
+        # the predictor, the forward direction of the step
         dc_pred = dc
         dlbd_pred = dlbd
 
@@ -338,14 +398,17 @@ def _solver_arc_length(an, method, silent=False):
         converged = False
         Rnorms = []
         solve_kT = solve_kT_conv
-        dc_q = dc_q_conv
-        # the last -dR/dlbd evaluated, with the tangent stiffness matrix
-        q_iter = q_conv
+        if solve_kT_conv is not None:
+            dc_q = dc_q_conv
+            # the last -dR/dlbd evaluated, with the tangent stiffness matrix
+            q_iter = q_conv
         iter_kT = 0
         iteration = 0
+        fint = None
         while True:
             iteration += 1
-            fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
+            if fint is None:
+                fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
             R = fint - fext_total
             q_ref = None
@@ -359,7 +422,8 @@ def _solver_arc_length(an, method, silent=False):
             if conv:
                 converged = True
                 break
-            if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
+            if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent,
+                                 Rrel=Rrel):
                 break
 
             # with modified_NR the tangent of the last converged state is
@@ -409,8 +473,28 @@ def _solver_arc_length(an, method, silent=False):
             if varlbd is None or not np.isfinite(varlbd):
                 warn('Diverged - arc-length constraint cannot be satisfied', level=2, silent=silent)
                 break
-            dc = dc + dc_R + varlbd*dc_q
-            dlbd = dlbd + varlbd
+            dc_corr = dc_R + varlbd*dc_q
+            eta = 1.
+            fint = None
+            if an.arc_length_line_search:
+                # backtracking on the whole correction, the first factor
+                # that decreases the norm of the residual is accepted,
+                # otherwise the one with the smallest norm
+                best = None
+                for eta_try in LINE_SEARCH_ETAS:
+                    lbd_try = lbd + dlbd + eta_try*varlbd
+                    fint_try = callbacks.calc_fint(an, c + dc + eta_try*dc_corr,
+                                                   lbd_try)
+                    Rnorm_try = _norm(fint_try - lbd_try*fext, w)
+                    if best is None or Rnorm_try < best[1]:
+                        best = (eta_try, Rnorm_try, fint_try)
+                    if Rnorm_try < Rnorm:
+                        break
+                eta, _, fint = best
+                if eta != 1.:
+                    msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
+            dc = dc + eta*dc_corr
+            dlbd = dlbd + eta*varlbd
 
         if converged and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0:
             # the increment points backwards, e.g. to the previous converged

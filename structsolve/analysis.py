@@ -38,37 +38,54 @@ class Analysis(object):
     The analysis parameters are attributes of this class, described in the
     following tables together with their default values:
 
-    ========================  ==================================================
-    Non-Linear Algorithm      Description
-    ========================  ==================================================
-    ``NL_method``             ``str``, ``'NR'`` (default) for the
-                              Newton-Raphson method, see
-                              :func:`.newton_raphson._solver_NR`, or
-                              ``'arc_length_riks'`` and
-                              ``'arc_length_crisfield'`` for the arc-length
-                              methods, see
-                              :func:`.arc_length._solver_arc_length`
-    ``line_search``           ``bool``, activates a safeguarding line-search,
-                              for the Newton-Raphson method only, see
-                              :func:`.newton_raphson._NR_iterations`. Default
-                              is ``False``
-    ``max_iter_line_search``  ``int``, maximum number of iterations of the
-                              line-search. Default is ``20``
-    ``modified_NR``           ``bool``, activates the modified Newton-Raphson
-                              method, where the tangent stiffness matrix is
-                              not updated at every iteration. Default is
-                              ``False``, i.e. full Newton-Raphson
-    ``compute_every_n``       ``int``, if ``modified_NR=True``, the tangent
-                              stiffness matrix is updated at every `n`
-                              iterations. Default is ``6``
-    ``kT_initial_state``      ``bool``, if ``modified_NR=True``, tells if the
-                              tangent stiffness matrix should be calculated
-                              already at the first iteration of the analysis,
-                              which is required for example when initial
-                              imperfections take place. Otherwise the linear
-                              constitutive stiffness matrix is used. Default
-                              is ``True``
-    ========================  ==================================================
+    ============================  =============================================
+    Non-Linear Algorithm          Description
+    ============================  =============================================
+    ``NL_method``                 ``str``, ``'NR'`` (default) for the
+                                  Newton-Raphson method, see
+                                  :func:`.newton_raphson._solver_NR`, or
+                                  ``'arc_length_riks'`` and
+                                  ``'arc_length_crisfield'`` for the arc-length
+                                  methods, see
+                                  :func:`.arc_length._solver_arc_length`
+    ``line_search``               ``bool``, activates a safeguarding
+                                  line-search, for the Newton-Raphson method
+                                  only, see
+                                  :func:`.newton_raphson._NR_iterations`.
+                                  Default is ``False``
+    ``max_iter_line_search``      ``int``, maximum number of iterations of the
+                                  line-search. Default is ``20``
+    ``arc_length_line_search``    ``bool``, activates a backtracking line
+                                  search on the corrections of the arc-length
+                                  methods, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``False``
+    ``arc_length_predictor``      ``str``, predictor of the arc-length methods,
+                                  ``'tangent'`` (default) or ``'secant'``, the
+                                  previous converged increment scaled to the
+                                  new arc length, see
+                                  :func:`.arc_length._solver_arc_length`
+    ``early_divergence``          ``bool``, stops a diverging step earlier,
+                                  such that its increment is cut before the
+                                  iterations are spent, see
+                                  :func:`.newton_raphson._check_divergence`.
+                                  Default is ``False``
+    ``modified_NR``               ``bool``, activates the modified
+                                  Newton-Raphson method, where the tangent
+                                  stiffness matrix is not updated at every
+                                  iteration. Default is ``False``, i.e. full
+                                  Newton-Raphson
+    ``compute_every_n``           ``int``, if ``modified_NR=True``, the tangent
+                                  stiffness matrix is updated at every `n`
+                                  iterations. Default is ``6``
+    ``kT_initial_state``          ``bool``, if ``modified_NR=True``, tells if
+                                  the tangent stiffness matrix should be
+                                  calculated already at the first iteration of
+                                  the analysis, which is required for example
+                                  when initial imperfections take place.
+                                  Otherwise the linear constitutive stiffness
+                                  matrix is used. Default is ``True``
+    ============================  =============================================
 
     ================   =================================================
     Incrementation     Description
@@ -229,7 +246,8 @@ class Analysis(object):
 
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
-            'modified_NR', 'compute_every_n',
+            'arc_length_line_search', 'arc_length_predictor',
+            'early_divergence', 'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
             'too_slow_TOL',
@@ -243,6 +261,9 @@ class Analysis(object):
         self.NL_method = 'NR'
         self.line_search = False
         self.max_iter_line_search = 20
+        self.arc_length_line_search = False
+        self.arc_length_predictor = 'tangent'
+        self.early_divergence = False
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True

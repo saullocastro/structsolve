@@ -1,5 +1,40 @@
 # Changelog
 
+## Unreleased
+
+### Robustness of the arc-length corrections
+
+- New `Analysis.arc_length_line_search`, default `False`: the whole
+  correction `(dc, dlbd)` of the arc-length methods is multiplied by the
+  first factor of `arc_length.LINE_SEARCH_ETAS = (1., 0.5, 0.25)` that
+  decreases the norm of the residual of the convergence criterion, or by
+  the factor of the smallest norm when none does; the internal force vector
+  of the accepted point is reused, such that a full correction costs no
+  additional evaluation. `Analysis.line_search` still applies to
+  Newton-Raphson only.
+- New `Analysis.arc_length_predictor`, `'tangent'` (default) or
+  `'secant'`: from the second step on, the secant predictor is the previous
+  converged increment scaled to the new arc length, without the sign rule
+  of the tangent predictor, which beyond a limit point is dominated by the
+  near-singular directions of the tangent stiffness matrix. With full
+  Newton-Raphson, the factorization of the tangent at the converged state is
+  then skipped, unless `calc_fext` accepts `lbd`.
+- New `Analysis.early_divergence`, default `False`, for Newton-Raphson and
+  the arc-length methods: a step is stopped, and its increment cut, as soon
+  as its relative residual exceeds `EARLY_DIVERGENCE_MAX_RREL = 1e3`, or,
+  after `EARLY_DIVERGENCE_NUM_ITER = 3` iterations, its residual norm
+  exceeds `EARLY_DIVERGENCE_FACTOR = 10` times its minimum in the step,
+  instead of waiting for `NUM_ITER_BEFORE_DIVERGENCE_CHECK = 5` iterations
+  and `DIVERGENCE_FACTOR = 1e3` times the first residual. New argument
+  `Rrel` of `newton_raphson._check_divergence`. These are the criteria of
+  the Riks analyses of a tow-steered cylinder for the DCSE website.
+- New `tests/test_arc_length_robustness.py`. On the von Mises truss at 1.5
+  times its limit load with a spring `ks = 1` and `initialInc = 0.6`, the
+  line search avoids the step cut of the Riks method (7 instead of 10
+  steps, 49 instead of 56 evaluations of `calc_fint`); with Crisfield's
+  method it does not reduce the cuts and costs more evaluations on these
+  problems.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

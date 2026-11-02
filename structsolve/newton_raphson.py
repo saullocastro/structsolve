@@ -25,6 +25,17 @@ DIVERGENCE_FACTOR = 1.e3
 #: ``TOO_SLOW_WINDOW`` iterations is not at least ``too_slow_TOL`` (relative)
 #: smaller than the smallest residual norm of the previous iterations
 TOO_SLOW_WINDOW = 5
+#: With ``Analysis.early_divergence = True``: number of iterations of a step
+#: before the early divergence check against the smallest residual norm
+EARLY_DIVERGENCE_NUM_ITER = 3
+#: With ``Analysis.early_divergence = True``: a step diverged when its
+#: residual norm becomes larger than this factor times the smallest residual
+#: norm of its previous iterations
+EARLY_DIVERGENCE_FACTOR = 10.
+#: With ``Analysis.early_divergence = True``: a step diverged when its
+#: relative residual, Crisfield's `\zeta` or the relative residual of
+#: ``convergence='relative'``, becomes larger than this value
+EARLY_DIVERGENCE_MAX_RREL = 1.e3
 #: Constant of the sufficient-decrease (Armijo) test of the line search
 LINE_SEARCH_ALPHA = 1.e-4
 #: Factor used to increase the load increment after a step that converged
@@ -161,14 +172,15 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
                              full_output=full_output)
 
 
-def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
+def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False, Rrel=None):
     r"""Check if the iterations of a step must be stopped without convergence
 
 
     The iterations are stopped when the residual is not finite, when
     ``an.maxNumIter`` corrections were performed, and, after
     ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations, when the residual
-    diverges or when the convergence is too slow.
+    diverges or when the convergence is too slow. With
+    ``an.early_divergence = True`` a diverging step is also stopped earlier.
 
     Parameters
     ----------
@@ -184,6 +196,9 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
         Current iteration, starting at 1.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
+    Rrel : float or None, optional
+        Relative residual of the current iteration, see
+        :func:`._check_convergence`, used by the early divergence check.
 
     Returns
     -------
@@ -211,6 +226,20 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     other, and with the scaled norm of Crisfield's criterion they do not
     depend on the units of the degrees of freedom.
 
+    With ``an.early_divergence = True``, a diverging step is stopped
+    without waiting for ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations,
+    such that its load or arc-length increment is cut before the
+    iterations are spent, when:
+
+    - the relative residual ``Rrel`` is larger than
+      ``EARLY_DIVERGENCE_MAX_RREL``, at any iteration;
+    - `j >` ``EARLY_DIVERGENCE_NUM_ITER`` and `r_j >`
+      ``EARLY_DIVERGENCE_FACTOR`` `\min(r_1, ..., r_{j-1})`.
+
+    These are the criteria with which the Riks analyses of a tow-steered
+    cylinder of the DCSE website (2026) gave up the increments that would
+    not converge beyond the limit point.
+
     """
     if not np.isfinite(Rnorm):
         warn('Diverged - residual is not finite', level=2, silent=silent)
@@ -218,6 +247,16 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     if iteration > an.maxNumIter:
         warn('Maximum number of iterations achieved!', level=2, silent=silent)
         return True
+    if an.early_divergence:
+        if Rrel is not None and Rrel > EARLY_DIVERGENCE_MAX_RREL:
+            warn('Diverged - relative residual larger than %1.0e'
+                 % EARLY_DIVERGENCE_MAX_RREL, level=2, silent=silent)
+            return True
+        if (iteration > EARLY_DIVERGENCE_NUM_ITER and
+                Rnorm > EARLY_DIVERGENCE_FACTOR*min(Rnorms)):
+            warn('Diverged - residual increased %1.0f times its minimum in the step'
+                 % EARLY_DIVERGENCE_FACTOR, level=2, silent=silent)
+            return True
     Rnorms.append(Rnorm)
     if iteration > NUM_ITER_BEFORE_DIVERGENCE_CHECK:
         if Rnorm > DIVERGENCE_FACTOR*Rnorms[0]:
@@ -243,7 +282,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     ``calc_kC + calc_kG`` at the current iterate, see
     :func:`.callbacks.calc_kT`; its updates and the line search are
     controlled by ``an.modified_NR``, ``an.compute_every_n``,
-    ``an.line_search`` and ``an.max_iter_line_search``.
+    ``an.line_search`` and ``an.max_iter_line_search``, the early divergence
+    check by ``an.early_divergence``.
 
     Parameters
     ----------
@@ -395,7 +435,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         _log_iteration(an, iteration, R, Rrel, silent, roundoff=roundoff)
         if conv:
             return True, dc, q
-        if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
+        if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent,
+                             Rrel=Rrel):
             return False, dc, q
 
         # the factorization of the tangent stiffness matrix is reused while
