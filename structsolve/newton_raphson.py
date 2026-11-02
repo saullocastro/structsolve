@@ -393,6 +393,16 @@ def _converged_state(an, c, lbd, silent=False):
     return solve_kT
 
 
+def _stop(an, silent=False):
+    r"""Whether ``an.stop_criterion``, when given, stops the analysis after
+    the last converged increment, see :mod:`.stopping`"""
+    if an.stop_criterion is not None and an.stop_criterion(an):
+        msg('Analysis stopped by the stop criterion at load factor %1.5f'
+            % an.increments[-1], level=1, silent=silent)
+        return True
+    return False
+
+
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                    lbd_dependent=False, q=None, w=None, K0_abs=None,
                    proj=None):
@@ -647,8 +657,10 @@ def _solver_NR(an, silent=False, initialInc=None):
     After a step that converged without being cut, the load increment is
     multiplied by ``INC_GROWTH_FACTOR``, limited by ``an.maxInc``. The last
     step is adjusted such that the analysis finishes at a load factor of
-    exactly ``1.0``. The analysis stops earlier, keeping the converged
-    increments, when the load increment becomes smaller than ``an.minInc``.
+    exactly ``an.final_load_factor``, ``1.0`` by default. The analysis stops
+    earlier, keeping the converged increments, when the load increment
+    becomes smaller than ``an.minInc`` or when ``an.stop_criterion(an)``
+    returns ``True`` after a converged step, see :mod:`.stopping`.
 
     The callables of ``an`` that declare the optional keyword arguments
     ``inc``, ``c`` or ``lbd`` receive the current load factor and
@@ -733,7 +745,11 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     if initialInc is None:
         initialInc = an.initialInc
-    inc = min(initialInc, 1.)
+    target = an.final_load_factor
+    if target is None:
+        raise ValueError("Analysis.final_load_factor = None is not valid "
+                         "with NL_method='NR'")
+    inc = min(initialInc, target)
     min_last_inc = max(an.minInc, 1.e-12)
 
     fext = an.calc_fext(inc=1., silent=True)
@@ -756,9 +772,9 @@ def _solver_NR(an, silent=False, initialInc=None):
     step_num = 1
 
     while True:
-        if total_last + inc >= 1. - min_last_inc:
-            total = 1.
-            inc = 1. - total_last
+        if total_last + inc >= target - min_last_inc:
+            total = target
+            inc = target - total_last
         else:
             total = total_last + inc
         msg('Step %d, attempting load factor %1.5f' % (step_num, total), level=1, silent=silent)
@@ -781,7 +797,9 @@ def _solver_NR(an, silent=False, initialInc=None):
             an.increments.append(total)
             if an.inertia:
                 _converged_state(an, c, total, silent=silent)
-            if total == 1.:
+            if total == target:
+                break
+            if _stop(an, silent):
                 break
             dc_last = dc
             inc_last = inc

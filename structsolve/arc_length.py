@@ -17,7 +17,7 @@ from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
                              _abs_matrix, _norm, _converged_state,
                              _constraint_matrix, _linear_solve,
-                             _residual_projector, INC_CUT_FACTOR)
+                             _residual_projector, _stop, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -60,8 +60,11 @@ def _solver_arc_length(an, method, silent=False):
     fails is repeated with the arc length multiplied by ``INC_CUT_FACTOR``.
     The analysis stops when:
 
-    - the load factor reaches 1.0, the last solution being computed at a load
-      factor of exactly 1.0
+    - the load factor reaches ``an.final_load_factor``, 1.0 by default, the
+      last solution being computed at exactly this load factor; never with
+      ``an.final_load_factor = None``
+    - ``an.stop_criterion(an)`` returns ``True`` after a converged step, see
+      :mod:`.stopping`
     - the cumulative arc length reaches ``an.maxArcLength``
     - the arc length becomes smaller than ``an.minInc``
     - ``MAX_NUM_STEPS`` steps converged
@@ -645,18 +648,22 @@ def _solver_arc_length(an, method, silent=False):
             converged = False
 
         finished = False
-        if converged and lbd + dlbd > 1. and lbd < 1.:
-            msg('Load factor 1.0 exceeded, correcting to load factor 1.0...', level=1, silent=silent)
-            t = (1. - lbd)/dlbd
-            converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
+        target = an.final_load_factor
+        if (converged and target is not None and lbd + dlbd > target
+                and lbd < target):
+            msg('Load factor %1.5f exceeded, correcting to it...' % target,
+                level=1, silent=silent)
+            t = (target - lbd)/dlbd
+            converged, dc1, _ = _NR_iterations(an, c, t*dc, target, fext,
                     kT0=None, silent=silent, lbd_dependent=lbd_dependent,
                     q=q_iter, w=w, K0_abs=K0_abs, proj=proj)
             if converged:
-                msg('Converged at load factor 1.00000', level=2, silent=silent)
+                msg('Converged at load factor %1.5f' % target, level=2,
+                    silent=silent)
                 an.cs.append((c + dc1).copy())
-                an.increments.append(1.)
+                an.increments.append(target)
                 if an.inertia:
-                    _converged_state(an, c + dc1, 1., silent=silent)
+                    _converged_state(an, c + dc1, target, silent=silent)
                 finished = True
 
         if finished:
@@ -677,7 +684,9 @@ def _solver_arc_length(an, method, silent=False):
                 solve_kT_conv = _converged_state(an, c, lbd, silent=silent)
                 if solve_kT_conv is not None:
                     q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
-            if lbd == 1.:
+            if lbd == target:
+                break
+            if _stop(an, silent):
                 break
             if total_arc_length >= an.maxArcLength:
                 msg('Maximum specified arc-length of %1.5f achieved' % an.maxArcLength,

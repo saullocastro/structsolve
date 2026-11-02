@@ -135,6 +135,20 @@ class Analysis(object):
                                   :func:`.static._factorize`, in the linear
                                   and the non-linear analyses. Default is
                                   ``None``
+    ``stop_criterion``            ``callable``, ``stop_criterion(an)`` is
+                                  called after every converged increment of
+                                  the non-linear analyses, which stop when it
+                                  returns ``True``, e.g. a number of
+                                  increments beyond the first limit point or
+                                  a displacement measure, see
+                                  :mod:`.stopping`. Default is ``None``
+    ``final_load_factor``         ``float``, the load factor at which the
+                                  non-linear analyses finish, exactly, or,
+                                  for the arc-length and displacement control
+                                  methods, ``None``: the path is traced
+                                  beyond any load factor until another stop,
+                                  e.g. ``stop_criterion`` or
+                                  ``maxArcLength``. Default is ``1.``
     ============================  =============================================
 
     ================   =================================================
@@ -315,7 +329,7 @@ class Analysis(object):
             'arc_length_line_search', 'arc_length_predictor',
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
-            'constraints',
+            'constraints', 'stop_criterion', 'final_load_factor',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
@@ -340,6 +354,8 @@ class Analysis(object):
         self.linear_solver = 'splu'
         self.inertia = False
         self.constraints = None
+        self.stop_criterion = None
+        self.final_load_factor = 1.
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True

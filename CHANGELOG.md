@@ -135,6 +135,23 @@
   quadratic convergence; the bordered factorization against the projected
   tangent `Z^T K Z`.
 
+### End of the non-linear analyses
+
+- New `Analysis.stop_criterion`, default `None`: a callable
+  `stop_criterion(an)` called after every converged increment of the
+  Newton-Raphson, arc-length and displacement control solvers, with its
+  load factor, solution and inertia already recorded; the analysis stops
+  when it returns `True`. New module `structsolve.stopping` with
+  `beyond_limit_point(num_increments)`, which stops a number of increments
+  beyond the first limit point of the load, and `value_reached(func,
+  value)`, e.g. a displacement measure.
+- New `Analysis.final_load_factor`, default `1.`: the load factor at which
+  the non-linear analyses finish, exactly; with the arc-length and
+  displacement control solvers it may be `None`, the path being then
+  traced beyond any load factor until `stop_criterion`, `maxArcLength`,
+  `MAX_NUM_STEPS` or `minInc` stops it, for post-buckling paths whose load
+  may exceed the reference load. New `tests/test_stopping.py`.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions
