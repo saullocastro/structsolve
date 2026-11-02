@@ -62,6 +62,17 @@
   the Riks method at the same `initialInc = 0.05`); the control of the
   loaded point misses the snap-back.
 
+### Weights of the degrees of freedom in the arc-length norm
+
+- New `Analysis.arc_length_weights`, default `None` (all 1): non-negative
+  weights `w` of the degrees of freedom in the products of displacements
+  of the arc-length constraint, `a^T diag(w) b`, also in the scale
+  `u_ref^T diag(w) u_ref`, e.g. 1 for the translations and 0 for their
+  derivatives or the rotations when the unknowns mix them. With Crisfield's
+  convergence criterion, the analysis is then independent of the units of
+  the degrees of freedom of null weight (new
+  `tests/test_arc_length_weights.py`).
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

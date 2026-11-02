@@ -98,7 +98,20 @@ def _solver_arc_length(an, method, silent=False):
     `\psi^2 \Delta\lambda^2 \boldsymbol{F}_{ext}^\top \boldsymbol{F}_{ext}`. `\psi` is the
     constant ``PSI``,
     and `\boldsymbol{u}_{ref}^\top \boldsymbol{u}_{ref}` is
-    replaced by 1 when it is null. With the inner product
+    replaced by 1 when it is null.
+
+    With ``an.arc_length_weights`` `= \boldsymbol{w}`, the products of
+    displacements in the constraint, and in the inner product below, are
+    weighted, `\boldsymbol{a}^\top \boldsymbol{W} \boldsymbol{b}` with `\boldsymbol{W} =
+    \mathrm{diag}(\boldsymbol{w})`, also in the scale `\boldsymbol{u}_{ref}^\top
+    \boldsymbol{W} \boldsymbol{u}_{ref}`. When the unknowns mix translations with
+    their derivatives or with rotations, of other units and magnitudes, the
+    weights 1 for the translations and 0 for the others measure the arc
+    length on the translations only. The arc length is then independent of
+    the units of the degrees of freedom of null weight, as is Crisfield's
+    convergence criterion, see :mod:`.convergence`.
+
+    With the inner product
 
     .. math::
 
@@ -357,13 +370,22 @@ def _solver_arc_length(an, method, silent=False):
         u_ref = solve(kC0, q0, silent=True)
     else:
         u_ref = solve(kC0, fext, silent=True)
-    scale2 = u_ref.dot(u_ref)
+    if an.arc_length_weights is None:
+        wa = np.ones_like(u_ref)
+    else:
+        wa = np.asarray(an.arc_length_weights, dtype=float)
+        if wa.shape != u_ref.shape:
+            raise ValueError('Analysis.arc_length_weights must have the shape %s'
+                             % (u_ref.shape,))
+        if not np.all(wa >= 0):
+            raise ValueError('Analysis.arc_length_weights must not be negative')
+    scale2 = u_ref.dot(wa*u_ref)
     if not scale2 > 0:
         scale2 = 1.
     psi2 = PSI**2
 
     def inner(dc1, dlbd1, dc2, dlbd2):
-        return dc1.dot(dc2)/scale2 + psi2*dlbd1*dlbd2
+        return dc1.dot(wa*dc2)/scale2 + psi2*dlbd1*dlbd2
 
     if control:
         if an.control_vector is None:

@@ -80,7 +80,14 @@ class Analysis(object):
                                   previous converged increment scaled to the
                                   new arc length, see
                                   :func:`.arc_length._solver_arc_length`
-    ``early_divergence``          ``bool``, stops a diverging step earlier,
+    ``arc_length_weights``        ``array``, non-negative weights of the
+                                  degrees of freedom in the norm of the
+                                  arc-length constraint, e.g. 1 for the
+                                  translations and 0 for their derivatives
+                                  or the rotations, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``None``, all equal to 1
+    ``early_divergence``        ``bool``, stops a diverging step earlier,
                                   such that its increment is cut before the
                                   iterations are spent, see
                                   :func:`.newton_raphson._check_divergence`.
@@ -262,7 +269,8 @@ class Analysis(object):
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'arc_length_line_search', 'arc_length_predictor',
-            'early_divergence', 'control_vector', 'control_scale',
+            'early_divergence', 'arc_length_weights', 'control_vector',
+            'control_scale',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
@@ -280,6 +288,7 @@ class Analysis(object):
         self.arc_length_line_search = False
         self.arc_length_predictor = 'tangent'
         self.early_divergence = False
+        self.arc_length_weights = None
         self.control_vector = None
         self.control_scale = None
         self.modified_NR = False
