@@ -16,7 +16,8 @@ from .static import solve, _factorize, _FactorizationCache
 from .logger import msg, warn
 from . import callbacks
 from .newton_raphson import (_check_convergence, _weights, _abs_matrix,
-                             _constraint_matrix, _residual_projector)
+                             _constraint_matrix, _constraint_values,
+                             _residual_projector)
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -161,6 +162,17 @@ class Analysis(object):
                                   :func:`.static._factorize`, in the linear
                                   and the non-linear analyses. Default is
                                   ``None``
+    ``constraint_values``         ``array`` `\boldsymbol{d}`, of shape
+                                  ``(m,)``, the values of the constraints,
+                                  `\boldsymbol{C}^\top \boldsymbol{c} =
+                                  \lambda \boldsymbol{d}` along the
+                                  non-linear path and `\boldsymbol{C}^\top
+                                  \boldsymbol{c} = \boldsymbol{d}` in the
+                                  linear analysis, e.g. a displacement or a
+                                  rotation prescribed in proportion to the
+                                  load factor, with or without external
+                                  load, which requires ``constraints``.
+                                  Default is ``None``, all null
     ``stop_criterion``            ``callable``, ``stop_criterion(an)`` is
                                   called after every converged increment of
                                   the non-linear analyses, which stop when it
@@ -369,7 +381,8 @@ class Analysis(object):
             'arc_length_line_search', 'arc_length_predictor',
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
-            'constraints', 'stop_criterion', 'final_load_factor',
+            'constraints', 'constraint_values', 'stop_criterion',
+            'final_load_factor',
             'arc_length_sign_rule', 'branch_switching', 'max_inertia_jump',
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
@@ -396,6 +409,7 @@ class Analysis(object):
         self.linear_solver = 'splu'
         self.inertia = False
         self.constraints = None
+        self.constraint_values = None
         self.stop_criterion = None
         self.final_load_factor = 1.
         self.arc_length_sign_rule = 'inner_product'
@@ -542,10 +556,12 @@ class Analysis(object):
             fext = self.calc_fext(silent=silent)
             k0 = self.calc_kC(silent=silent)
 
+            d = _constraint_values(self)
             if self.constraints is None:
                 c = solve(k0, fext, silent=silent)
             else:
-                c = _factorize(k0, constraints=_constraint_matrix(self))(fext)
+                c = _factorize(k0, constraints=_constraint_matrix(self))(fext,
+                                                                         d)
             if callbacks.is_load_configuration_dependent(self):
                 c = self._linear_static_follower(k0, c, silent)
 

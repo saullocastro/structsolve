@@ -20,7 +20,7 @@ from .newton_raphson import (_check_convergence, _check_divergence,
                              _residual_projector, _stop, _factorize_state,
                              _record_inertia, _check_max_inertia_jump,
                              _inertia_jump, _restart_state, _cache,
-                             INC_CUT_FACTOR)
+                             _constraint_values, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -560,6 +560,25 @@ def _solver_arc_length(an, method, silent=False):
     convergence checks. At the converged state it is kept with the tangent
     stiffness matrix when the step is repeated with a shorter arc length.
 
+    With ``an.constraints`` and ``an.constraint_values``, the constraints
+    `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`, e.g. a
+    displacement prescribed in proportion to the load factor, linear in
+    `(\boldsymbol{c}, \lambda)`: the load solutions `\delta
+    \boldsymbol{c}_q` (and `\boldsymbol{u}_{ref}`) are those of the system
+    bordered by `\boldsymbol{d}`, `\boldsymbol{C}^\top \delta
+    \boldsymbol{c}_q = \boldsymbol{d}`, and the residual solutions `\delta
+    \boldsymbol{c}_R` those of the null border, see
+    :func:`.static._factorize`, such that every predictor, tangent, secant,
+    of the displacement controls or the jump to `\lambda = 1`, and every
+    correction `\delta \boldsymbol{c}_R + \delta\lambda \, \delta
+    \boldsymbol{c}_q` satisfies `\boldsymbol{C}^\top \Delta \boldsymbol{c}
+    = \Delta\lambda \boldsymbol{d}`; the eigenvector predictor of the
+    branch switching, at a constant load, has the null border. Under a
+    prescribed displacement alone, `\boldsymbol{F}_{ext} = \boldsymbol{0}`,
+    `\boldsymbol{u}_{ref}` is the displacement of the linear solution, not
+    null, and the reactions of the constraints, in the internal force
+    vector, are the reference of the convergence criterion.
+
     References
     ----------
     .. [1] Riks, E., An incremental approach to the solution of snapping and
@@ -621,12 +640,15 @@ def _solver_arc_length(an, method, silent=False):
     w = _weights(an, kC0)
     K0_abs = _abs_matrix(kC0)
     lbd_dependent = callbacks.is_load_factor_dependent(an)
+    # the values of the constraints C^T c = lbd d, the border of the
+    # solutions of the load vector
+    d = _constraint_values(an)
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q0 = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
-        u_ref = _linear_solve(an, kC0, q0)
+        u_ref = _linear_solve(an, kC0, q0, d)
     else:
-        u_ref = _linear_solve(an, kC0, fext)
+        u_ref = _linear_solve(an, kC0, fext, d)
     C = _constraint_matrix(an)
     proj = _residual_projector(an, w)
 
@@ -771,7 +793,7 @@ def _solver_arc_length(an, method, silent=False):
                 if det_origin is None:
                     det_origin = det_conv
         if solve_kT_conv is not None:
-            dc_q_conv = solve_kT_conv(q_conv)
+            dc_q_conv = solve_kT_conv(q_conv, d)
         if solve_kT_conv is not None and dc_last is not None:
             s_tan = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)) or 1.
         if check_switch:
@@ -921,10 +943,10 @@ def _solver_arc_length(an, method, silent=False):
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
                     q_iter = callbacks.calc_load_vector(an, c + dc, fext,
                                                         lbd + dlbd)
-                    dc_q = solve_kT(q_iter)
+                    dc_q = solve_kT(q_iter, d)
                 else:
                     dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
-                                                               fext))
+                                                               fext), d)
                 iter_kT = 1
             dc_R = solve_kT(-R)
 

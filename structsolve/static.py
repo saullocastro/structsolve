@@ -172,8 +172,9 @@ class _PatternEntry(object):
             # as remove_null_cols
             tags = tags[used_cols, :]
             tags = tags[:, used_cols]
-        Cr, m = _reduced_constraints(C, used_cols)
+        Cr, m, kept = _reduced_constraints(C, used_cols)
         self.m = m
+        self.border_rhs = _Border(0 if C is None else C.shape[1], kept)
         self.border = None
         if m:
             self.border = Cr.data.copy()
@@ -302,13 +303,43 @@ def _positions(tags):
 
 def _reduced_constraints(C, used_cols):
     """The matrix of the constraints on the degrees of freedom
-    ``used_cols``, CSC, without the constraints left without any term, and
-    their number"""
+    ``used_cols``, CSC, without the constraints left without any term,
+    their number and the indices of the constraints kept"""
     if C is None:
-        return None, 0
+        return None, 0, np.zeros(0, dtype=np.intp)
     Cr = csc_matrix(C[used_cols])
-    Cr = Cr[:, np.flatnonzero(np.diff(Cr.indptr))]
-    return Cr, Cr.shape[1]
+    kept = np.flatnonzero(np.diff(Cr.indptr))
+    Cr = Cr[:, kept]
+    return Cr, Cr.shape[1], kept
+
+
+class _Border(object):
+    """The right-hand side of the border of a factorization, see
+    :func:`._factorize`"""
+    def __init__(self, num_constraints, kept):
+        self.num_constraints = num_constraints
+        self.kept = kept
+
+    def __call__(self, d, dtype):
+        """The values ``d`` of the constraints kept, zeros when ``None``"""
+        m = self.kept.shape[0]
+        if d is None:
+            return np.zeros(m, dtype=dtype)
+        if not self.num_constraints:
+            raise ValueError('The values of the constraints require '
+                             'constraints')
+        d = np.asarray(d)
+        if d.shape != (self.num_constraints,):
+            raise ValueError('The values of the constraints must have the '
+                             'shape (%d,)' % self.num_constraints)
+        dropped = np.ones(self.num_constraints, dtype=bool)
+        dropped[self.kept] = False
+        if np.any(d[dropped] != 0):
+            raise ValueError('The constraints %s have no term on the '
+                             'degrees of freedom whose row or column of the '
+                             'matrix is not null, and cannot have a non-zero '
+                             'value' % np.flatnonzero(dropped).tolist())
+        return d[self.kept]
 
 
 def _scaled_upper(A, s):
@@ -424,8 +455,10 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     Returns
     -------
     solve_kT : callable
-        Function that returns the solution ``x`` of ``kT x = b``, or of the
-        system bordered by the constraints, with the attributes:
+        ``solve_kT(b, d=None)`` returns the solution ``x`` of ``kT x = b``,
+        or of the system bordered by the constraints, whose values are
+        ``d``, of shape ``(m,)``, zeros when ``None``, see the Notes; it
+        has the attributes:
 
         - ``linear_solver``: the linear solver used, ``'splu'`` when
           ``'pardiso'`` fell back to it for an unsymmetric matrix;
@@ -497,15 +530,19 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         \begin{bmatrix} \boldsymbol{0} & \boldsymbol{C}^\top \\
         \boldsymbol{C} & \boldsymbol{K}_T \end{bmatrix}
         \begin{Bmatrix} \boldsymbol{\mu} \\ \boldsymbol{x} \end{Bmatrix} =
-        \begin{Bmatrix} \boldsymbol{0} \\ \boldsymbol{b} \end{Bmatrix}
+        \begin{Bmatrix} \boldsymbol{d} \\ \boldsymbol{b} \end{Bmatrix}
 
     is factorized instead, the border first, such that no row of the upper
     triangle factorized by PARDISO is empty, and ``solve_kT`` returns
     `\boldsymbol{x}`, which satisfies `\boldsymbol{C}^\top \boldsymbol{x} =
-    \boldsymbol{0}`, `\boldsymbol{\mu}` being the Lagrange multipliers,
-    the reactions of the constraints. The rows of `\boldsymbol{C}` of the
-    null rows and columns of ``kT`` are removed, and the constraints left
-    without any non-zero term, already satisfied, are dropped. The
+    \boldsymbol{d}`, `\boldsymbol{\mu}` being the Lagrange multipliers,
+    the reactions of the constraints, `\boldsymbol{d} = \boldsymbol{0}`
+    unless ``d`` is given, e.g. a prescribed displacement. The rows of
+    `\boldsymbol{C}` of the null rows and columns of ``kT`` are removed,
+    and the constraints left without any non-zero term, satisfied with
+    `d_j = 0`, are dropped; a non-zero `d_j` of such a constraint raises a
+    :class:`ValueError`, the degrees of freedom of the null rows and
+    columns being zero. The
     bordered matrix is indefinite even when `\boldsymbol{K}_T` is positive
     definite on the space of the constraints: for `\boldsymbol{C}` of full
     rank its inertia is that of `\boldsymbol{Z}^\top \boldsymbol{K}_T
@@ -572,10 +609,11 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     if entry is not None:
         used_cols = entry.used_cols
         m = entry.m
+        border = entry.border_rhs
         if linear_solver == 'pardiso':
             A = entry.reduced_csr(K)
             if entry.is_symmetric(A):
-                return _factorize_pardiso(A, used_cols, m,
+                return _factorize_pardiso(A, used_cols, border,
                                           scaled=entry.scaled_upper(A),
                                           cache=cache)
             warnings.warn("linear_solver='pardiso': the matrix is "
@@ -584,23 +622,24 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         lu = splu(entry.reduced_csc(K))
     else:
         kT_red, used_cols = remove_null_cols(kT, silent=True)
-        Cr, m = _reduced_constraints(C, used_cols)
+        Cr, m, kept = _reduced_constraints(C, used_cols)
+        border = _Border(0 if C is None else C.shape[1], kept)
         if m:
             kT_red = bmat([[None, Cr.T], [Cr, kT_red]], format='csr')
         if linear_solver == 'pardiso':
             A = csr_matrix(kT_red)
             if _is_symmetric(A):
-                return _factorize_pardiso(A, used_cols, m)
+                return _factorize_pardiso(A, used_cols, border)
             warnings.warn("linear_solver='pardiso': the matrix is "
                           "unsymmetric, 'splu' is used instead",
                           RuntimeWarning, stacklevel=3)
         lu = splu(csc_matrix(kT_red))
 
-    def solve_kT(b):
-        x = np.zeros(b.shape[0], dtype=np.result_type(b, lu.U.dtype))
+    def solve_kT(b, d=None):
+        bd = border(d, b.dtype)
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, bd, lu.U.dtype))
         if m:
-            x[used_cols] = lu.solve(np.concatenate((np.zeros(m, dtype=b.dtype),
-                                                    b[used_cols])))[m:]
+            x[used_cols] = lu.solve(np.concatenate((bd, b[used_cols])))[m:]
         else:
             x[used_cols] = lu.solve(b[used_cols])
         return x
@@ -617,11 +656,12 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     return solve_kT
 
 
-def _factorize_pardiso(A, used_cols, m=0, scaled=None, cache=None):
+def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
     """Symmetric indefinite factorization of PARDISO of the reduced matrix
-    ``A``, bordered by ``m`` constraints first, see :func:`._factorize`;
-    ``scaled``, the scaling and the scaled upper triangle of ``A``, is
-    computed when ``None``"""
+    ``A``, bordered first by the constraints of the :class:`_Border`
+    ``border``, see :func:`._factorize`; ``scaled``, the scaling and the
+    scaled upper triangle of ``A``, is computed when ``None``"""
+    m = border.kept.shape[0]
     try:
         import pypardiso
     except ImportError:
@@ -651,9 +691,9 @@ def _factorize_pardiso(A, used_cols, m=0, scaled=None, cache=None):
     def precond(r):
         return s*solver.solve(As_upper, np.ascontiguousarray(s*r))
 
-    def solve_kT(b):
+    def solve_kT(b, d=None):
         x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
-        bu = np.concatenate((np.zeros(m),
+        bu = np.concatenate((border(d, np.float64),
                              np.asarray(b[used_cols], dtype=np.float64)))
         bnorm = np.linalg.norm(bu)
         if bnorm == 0:

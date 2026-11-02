@@ -134,6 +134,38 @@
   load, whose stiffness matrix is singular without the constraint; the
   quadratic convergence; the bordered factorization against the projected
   tangent `Z^T K Z`.
+- New `Analysis.constraint_values`, default `None` (all null): the vector
+  `d` of shape `(m,)` of the non-homogeneous constraints `C^T c = lbd d`
+  along the non-linear path and `C^T c = d` in the linear static analysis,
+  e.g. a displacement or a rotation prescribed in proportion to the load
+  factor, with or without external load. `solve_kT` of `static._factorize`
+  has the new optional argument `d`, the right-hand side of the border,
+  `[[0, C^T], [C, K]] [mu; x] = [d; b]`. Since the constraints are linear
+  in `(c, lbd)`, the solutions of the load vector, `dc_q`, the linear
+  solution `u_ref` of the arc-length scale and the first Newton-Raphson
+  predictor have the border `d`, and those of the residual a null border:
+  every predictor (tangent, secant, displacement control, generalized
+  displacement control, the jump to `final_load_factor`, the restart) and
+  every correction satisfy `C^T Dc = Dlbd d`, while the eigenvector
+  predictor of the branch switching, at constant load, keeps a null
+  border. Under a prescribed displacement alone, `fext = 0`, `u_ref` is not
+  null and the reactions of the constraints, in the internal force vector,
+  are the reference of the convergence criteria, both `'crisfield'` and
+  `'relative'`. A constraint dropped with the null rows and columns must
+  have a null value, otherwise `ValueError`; the values require
+  `constraints`, one finite value per constraint. New
+  `newton_raphson._constraint_values`.
+- New `tests/test_constraint_values.py`: the bordered solutions; the
+  linear chain of 5 springs with a prescribed end displacement, `u_i =
+  delta i/n` and the reaction `k delta/n`, then with a load; the hardening
+  springs driven only by a prescribed end displacement with each solver
+  and both linear solvers, against the dense solution of the free degrees
+  of freedom at every increment, and with a load and a prescribed relative
+  displacement with both convergence criteria; modified Newton-Raphson;
+  the branch switching of a column under a prescribed axial displacement,
+  against its bifurcated branch `v**2 = (EA lbd delta - k)/(EA/2 + beta)`;
+  the restart; null values bitwise the homogeneous constraints; the
+  validation.
 
 ### End of the non-linear analyses
 

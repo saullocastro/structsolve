@@ -80,14 +80,42 @@ def _cache(an):
     return getattr(an, '_factorization_cache', None)
 
 
-def _linear_solve(an, kC0, b):
+def _constraint_values(an):
+    r"""The values `\boldsymbol{d}` of ``an.constraint_values``, of the
+    constraints `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`,
+    validated, ``None`` when not given
+
+    Raises
+    ------
+    ValueError
+        When ``an.constraints`` is ``None``, or when the values are not a
+        finite vector of one value per constraint.
+
+    """
+    if an.constraint_values is None:
+        return None
+    C = _constraint_matrix(an)
+    if C is None:
+        raise ValueError('Analysis.constraint_values requires '
+                         'Analysis.constraints')
+    d = np.atleast_1d(np.asarray(an.constraint_values, dtype=float))
+    if d.shape != (C.shape[1],):
+        raise ValueError('Analysis.constraint_values must have the shape '
+                         '(%d,), one value per constraint' % C.shape[1])
+    if not np.all(np.isfinite(d)):
+        raise ValueError('Analysis.constraint_values must be finite')
+    return d
+
+
+def _linear_solve(an, kC0, b, d=None):
     r"""Linear solution of ``kC0 x = b`` with ``an.linear_solver`` and the
-    constraints of ``an.constraints``, see :func:`.static._factorize`, or
-    with :func:`.static.solve` with ``'splu'`` and without constraints"""
+    constraints of ``an.constraints``, of values ``d``, see
+    :func:`.static._factorize`, or with :func:`.static.solve` with
+    ``'splu'`` and without constraints"""
     if an.constraints is None and an.linear_solver == 'splu':
         return solve(kC0, b, silent=True)
     return _factorize(kC0, linear_solver=an.linear_solver,
-                      constraints=_constraint_matrix(an))(b)
+                      constraints=_constraint_matrix(an))(b, d)
 
 
 def _residual_projector(an, w):
@@ -795,6 +823,17 @@ def _solver_NR(an, silent=False, initialInc=None):
     The step that would end within ``max(an.minInc, 1e-12)`` of the load
     factor 1.0, or beyond it, is replaced by the step to exactly 1.0.
 
+    With ``an.constraint_values``, the values `\boldsymbol{d}` of the
+    constraints `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`
+    of ``an.constraints``, the linear solution of the first predictor is
+    that of the bordered system with the values `\boldsymbol{d}`, see
+    :func:`.static._factorize`, such that `\boldsymbol{C}^\top \Delta
+    \boldsymbol{c} = \Delta\lambda \boldsymbol{d}` for every predictor,
+    scaled from the previous converged increment, and the corrections keep
+    it, their border being null. A prescribed displacement then needs no
+    external load: the reactions of the constraints, part of the internal
+    force vector, are the reference of the convergence criterion.
+
     References
     ----------
     .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
@@ -828,8 +867,10 @@ def _solver_NR(an, silent=False, initialInc=None):
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
-    # predictor of the first step: linear solution scaled by the load factor
-    dc_last = _linear_solve(an, kC0, fext if q is None else q)
+    d = _constraint_values(an)
+    # predictor of the first step: linear solution scaled by the load
+    # factor, C^T dc_last = d
+    dc_last = _linear_solve(an, kC0, fext if q is None else q, d)
     inc_last = 1.
     c = np.zeros_like(dc_last)
     total_last = 0.
