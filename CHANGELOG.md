@@ -109,6 +109,32 @@
   the same path with and without `inertia`. The tests of `'pardiso'` are
   skipped without `pypardiso`.
 
+### Linear constraints of the solution
+
+- New `Analysis.constraints`, default `None`: the matrix `C` of shape
+  `(n, m)`, a 1-D array for one constraint, of the linear constraints
+  `C^T c = 0`, e.g. an inertia relief or multipoint constraints, in the
+  linear static analysis and in the Newton-Raphson, arc-length and
+  displacement control solvers. Every factorization of the stiffness
+  matrices is bordered, `[[0, C^T], [C, K]]`, the border first, new
+  argument `constraints` of `static._factorize`, with both linear solvers,
+  such that every increment satisfies the constraints and Newton-Raphson
+  keeps its quadratic convergence. The rows of the null rows and columns of
+  the stiffness matrix are removed from `C`, and the constraints left
+  without a non-zero term are dropped. The convergence criteria and the
+  line searches measure the residual without the reactions of the
+  constraints, its projection orthogonal to the columns of `C` in the
+  inner product of the criterion, new `newton_raphson._residual_projector`.
+  The inertia, `Analysis.inertia`, is that of the tangent on the space of
+  the constraints: the number of negative pivots of PARDISO minus `m`, and
+  the sign of the determinant times `(-1)**m` (Gould 1985).
+- New `tests/test_constraints.py`: a multipoint constraint against the
+  elimination of the constraint, with its reaction; the inertia relief of a
+  chain of hardening springs without support under a self-equilibrated
+  load, whose stiffness matrix is singular without the constraint; the
+  quadratic convergence; the bordered factorization against the projected
+  tangent `Z^T K Z`.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

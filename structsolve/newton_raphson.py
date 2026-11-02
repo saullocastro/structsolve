@@ -6,7 +6,7 @@ and they are shared with the arc-length solvers of
 
 """
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, csc_matrix
 
 from .logger import msg, warn
 from .static import solve, _factorize
@@ -59,6 +59,74 @@ def _abs_matrix(kC0):
     ``kC0``, sparse, for the round-off floor of the convergence criteria,
     see :func:`.convergence.roundoff_floor`"""
     return abs(csr_matrix(kC0))
+
+
+def _constraint_matrix(an):
+    r"""The matrix `\boldsymbol{C}` of ``an.constraints``, sparse, of shape
+    ``(n, m)``, a 1-D array being one constraint, or ``None``"""
+    if an.constraints is None:
+        return None
+    C = np.asarray(an.constraints) if not hasattr(an.constraints, 'tocsc') \
+        else an.constraints
+    if getattr(C, 'ndim', 2) == 1:
+        C = np.asarray(C)[:, None]
+    return csc_matrix(C)
+
+
+def _linear_solve(an, kC0, b):
+    r"""Linear solution of ``kC0 x = b`` with the constraints of
+    ``an.constraints``, see :func:`.static._factorize`, or with
+    :func:`.static.solve` without constraints"""
+    if an.constraints is None:
+        return solve(kC0, b, silent=True)
+    return _factorize(kC0, constraints=_constraint_matrix(an))(b)
+
+
+def _residual_projector(an, w):
+    r"""Projection of the residual that removes the reactions of the
+    constraints ``an.constraints``, ``None`` without constraints
+
+    With the constraints `\boldsymbol{C}^\top \boldsymbol{c} = \boldsymbol{0}`,
+    the equilibrium is `\boldsymbol{R} + \boldsymbol{C} \boldsymbol{\mu} =
+    \boldsymbol{0}`, `\boldsymbol{\mu}` the reactions of the constraints. The
+    convergence criteria and the line searches measure
+
+    .. math::
+
+        \boldsymbol{R}_p = \boldsymbol{R} - \boldsymbol{C} (\boldsymbol{C}^\top
+        \boldsymbol{W} \boldsymbol{C})^{+} \boldsymbol{C}^\top \boldsymbol{W}
+        \boldsymbol{R}
+
+    the residual minus the reactions that minimize its norm, with the
+    weights `\boldsymbol{W} = \mathrm{diag}(\boldsymbol{w})` of Crisfield's
+    criterion, `\boldsymbol{W} = \boldsymbol{I}` with ``w=None``, i.e. the
+    projection of `\boldsymbol{R}` orthogonal to the columns of
+    `\boldsymbol{C}` in the inner product of the criterion, `^{+}` the
+    pseudo-inverse, for constraints that are not independent.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    w : array-like or None
+        Weights of Crisfield's criterion, see :func:`._weights`.
+
+    Returns
+    -------
+    proj : callable or None
+        ``proj(R)`` returns `\boldsymbol{R}_p`.
+
+    """
+    C = _constraint_matrix(an)
+    if C is None:
+        return None
+    WC = C if w is None else csc_matrix(C.multiply(np.asarray(w)[:, None]))
+    Ginv = np.linalg.pinv((C.T @ WC).toarray())
+
+    def proj(R):
+        return R - C @ (Ginv @ (WC.T @ R))
+
+    return proj
 
 
 def _norm(v, w):
@@ -303,7 +371,8 @@ def _converged_state(an, c, lbd, silent=False):
     """
     try:
         solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
-                              linear_solver=an.linear_solver)
+                              linear_solver=an.linear_solver,
+                              constraints=_constraint_matrix(an))
     except RuntimeError:
         warn('Singular tangent stiffness matrix at the converged state',
              level=2, silent=silent)
@@ -325,7 +394,8 @@ def _converged_state(an, c, lbd, silent=False):
 
 
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
-                   lbd_dependent=False, q=None, w=None, K0_abs=None):
+                   lbd_dependent=False, q=None, w=None, K0_abs=None,
+                   proj=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Corrects the predictor ``dc`` at the load factor ``total`` until the
@@ -374,6 +444,10 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         `|K_{C0}|` of the round-off floor of the convergence criteria, see
         :func:`.convergence.check_convergence`, computed from ``calc_kC()``
         when ``None``.
+    proj : callable or None, optional
+        Projection of the residual that removes the reactions of
+        ``an.constraints``, see :func:`._residual_projector`, computed when
+        ``None`` and ``an.constraints`` is given.
 
     Returns
     -------
@@ -464,6 +538,14 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             w = _weights(an, kC0)
         if K0_abs is None:
             K0_abs = _abs_matrix(kC0)
+    if proj is None:
+        proj = _residual_projector(an, w)
+    C = _constraint_matrix(an)
+
+    def residual(fint):
+        R = fint - fext_total
+        return R if proj is None else proj(R)
+
     fext_total = total*fext
     if not lbd_dependent:
         q = None
@@ -478,7 +560,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         iteration += 1
         if fint is None:
             fint = callbacks.calc_fint(an, c + dc, total)
-        R = fint - fext_total
+        R = residual(fint)
         if q is not None:
             q_ref = total*q
 
@@ -498,11 +580,13 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             if modified_NR and iteration > 1 and iter_kT < an.compute_every_n:
                 iter_kT += 1
             elif modified_NR and iteration == 1 and kT0 is not None:
-                solve_kT = _factorize(kT0, linear_solver=an.linear_solver)
+                solve_kT = _factorize(kT0, linear_solver=an.linear_solver,
+                                      constraints=C)
                 iter_kT = 1
             else:
                 solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total),
-                                      linear_solver=an.linear_solver)
+                                      linear_solver=an.linear_solver,
+                                      constraints=C)
                 iter_kT = 1
                 if lbd_dependent:
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
@@ -520,7 +604,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             # phi'(0) = -2*phi(0), exact for a Newton direction
             fint = callbacks.calc_fint(an, c + dc + varc, total)
             phi0 = Rnorm**2
-            phi1 = _norm(fint - fext_total, w)**2
+            phi1 = _norm(residual(fint), w)**2
             iter_line_search = 0
             while not phi1 <= (1 - 2*LINE_SEARCH_ALPHA*eta)*phi0:
                 if iter_line_search == an.max_iter_line_search:
@@ -533,7 +617,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 eta_new = phi0/A if (np.isfinite(A) and A > 0) else 0.5*eta
                 eta = min(max(eta_new, 0.1*eta), 0.5*eta)
                 fint = callbacks.calc_fint(an, c + dc + eta*varc, total)
-                phi1 = _norm(fint - fext_total, w)**2
+                phi1 = _norm(residual(fint), w)**2
             if eta != 1.:
                 msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
         dc = dc + eta*varc
@@ -656,13 +740,14 @@ def _solver_NR(an, silent=False, initialInc=None):
     kC0 = an.calc_kC(silent=silent)
     w = _weights(an, kC0)
     K0_abs = _abs_matrix(kC0)
+    proj = _residual_projector(an, w)
     q = None
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
     # predictor of the first step: linear solution scaled by the load factor
-    dc_last = solve(kC0, fext if q is None else q, silent=True)
+    dc_last = _linear_solve(an, kC0, fext if q is None else q)
     inc_last = 1.
     c = np.zeros_like(dc_last)
     total_last = 0.
@@ -684,7 +769,7 @@ def _solver_NR(an, silent=False, initialInc=None):
             kT0 = kC0
         converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
                 kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
-                w=w, K0_abs=K0_abs)
+                w=w, K0_abs=K0_abs, proj=proj)
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)

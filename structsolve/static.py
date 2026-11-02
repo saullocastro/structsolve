@@ -9,7 +9,7 @@ import warnings
 import weakref
 
 import numpy as np
-from scipy.sparse import csc_matrix, csr_matrix, diags, triu
+from scipy.sparse import bmat, csc_matrix, csr_matrix, diags, triu
 from scipy.sparse.linalg import spsolve, splu, gmres, LinearOperator
 
 from .logger import msg
@@ -115,7 +115,7 @@ def _is_symmetric(a):
     return d.max() <= SYMMETRY_RTOL*abs(a).max()
 
 
-def _factorize(kT, linear_solver='splu'):
+def _factorize(kT, linear_solver='splu', constraints=None):
     r"""Factorization of the tangent stiffness matrix
 
     Null rows and columns are removed, the corresponding values of the
@@ -131,19 +131,26 @@ def _factorize(kT, linear_solver='splu'):
         ``'splu'`` (default) for the sparse LU factorization of SuperLU, or
         ``'pardiso'`` for the symmetric indefinite factorization of PARDISO,
         which requires the package ``pypardiso``, see ``LINEAR_SOLVERS``.
+    constraints : array-like, sparse matrix or None, optional
+        The matrix `\boldsymbol{C}` of the linear constraints
+        `\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}`, of shape ``(n, m)``
+        for ``m`` constraints, see the Notes. ``None`` (default) for none.
 
     Returns
     -------
     solve_kT : callable
-        Function that returns the solution ``x`` of ``kT x = b``, with the
-        attributes:
+        Function that returns the solution ``x`` of ``kT x = b``, or of the
+        system bordered by the constraints, with the attributes:
 
         - ``linear_solver``: the linear solver used, ``'splu'`` when
           ``'pardiso'`` fell back to it for an unsymmetric matrix;
         - ``det_sign``: the sign of the determinant of the reduced matrix,
-          ``1`` or ``-1``;
+          ``1`` or ``-1``, on the space of the constraints when given;
         - ``num_negative_eigvals``: the number of negative eigenvalues of the
-          reduced matrix with ``'pardiso'``, ``None`` with ``'splu'``;
+          reduced matrix with ``'pardiso'``, on the space of the
+          constraints when given, ``None`` with ``'splu'``;
+        - ``num_constraints``: the number ``m`` of constraints of the
+          border;
         - ``num_perturbed_pivots``: the number of pivots perturbed by
           PARDISO, ``None`` with ``'splu'``.
 
@@ -198,6 +205,35 @@ def _factorize(kT, linear_solver='splu'):
     failed beyond the limit point. The symmetric factorization would be
     wrong for an unsymmetric matrix, e.g. with the load stiffness of a
     follower load: ``'splu'`` is then used, with a :class:`RuntimeWarning`.
+    With ``constraints``, the bordered system
+
+    .. math::
+
+        \begin{bmatrix} \boldsymbol{0} & \boldsymbol{C}^\top \\
+        \boldsymbol{C} & \boldsymbol{K}_T \end{bmatrix}
+        \begin{Bmatrix} \boldsymbol{\mu} \\ \boldsymbol{x} \end{Bmatrix} =
+        \begin{Bmatrix} \boldsymbol{0} \\ \boldsymbol{b} \end{Bmatrix}
+
+    is factorized instead, the border first, such that no row of the upper
+    triangle factorized by PARDISO is empty, and ``solve_kT`` returns
+    `\boldsymbol{x}`, which satisfies `\boldsymbol{C}^\top \boldsymbol{x} =
+    \boldsymbol{0}`, `\boldsymbol{\mu}` being the Lagrange multipliers,
+    the reactions of the constraints. The rows of `\boldsymbol{C}` of the
+    null rows and columns of ``kT`` are removed, and the constraints left
+    without any non-zero term, already satisfied, are dropped. The
+    bordered matrix is indefinite even when `\boldsymbol{K}_T` is positive
+    definite on the space of the constraints: for `\boldsymbol{C}` of full
+    rank its inertia is that of `\boldsymbol{Z}^\top \boldsymbol{K}_T
+    \boldsymbol{Z}` plus `m` positive and `m` negative eigenvalues,
+    `\boldsymbol{Z}` a basis of the null space of `\boldsymbol{C}^\top`
+    (Gould, N.I.M., On practical conditions for the existence and
+    uniqueness of solutions to the general equality quadratic programming
+    problem, Mathematical Programming, 32, 90-99, 1985), hence
+    ``num_negative_eigvals`` is the number of negative pivots minus `m`,
+    and ``det_sign`` is multiplied by `(-1)^m`. This is the border of the
+    inertia relief of the Riks analyses of a tow-steered cylinder for the
+    DCSE website (2026), with a single constraint.
+
     The memory of PARDISO is freed when ``solve_kT`` is deleted, and its
     solver object is kept for the next factorizations, since creating one
     took about 6.5 s on Windows with ``pypardiso`` 0.4.7, against
@@ -207,33 +243,48 @@ def _factorize(kT, linear_solver='splu'):
     if linear_solver not in LINEAR_SOLVERS:
         raise ValueError('Invalid linear_solver: %s' % linear_solver)
     kT_red, used_cols = remove_null_cols(kT, silent=True)
+    m = 0
+    if constraints is not None:
+        C = csr_matrix(constraints)
+        if C.shape[0] == 1 and kT.shape[0] != 1:
+            C = C.T.tocsr()
+        Cr = csc_matrix(C[used_cols])
+        Cr = Cr[:, np.flatnonzero(np.diff(Cr.indptr))]
+        m = Cr.shape[1]
+        if m:
+            kT_red = bmat([[None, Cr.T], [Cr, kT_red]], format='csr')
     if linear_solver == 'pardiso':
         A = csr_matrix(kT_red)
         if _is_symmetric(A):
-            return _factorize_pardiso(A, used_cols)
+            return _factorize_pardiso(A, used_cols, m)
         warnings.warn("linear_solver='pardiso': the matrix is unsymmetric, "
                       "'splu' is used instead", RuntimeWarning, stacklevel=3)
     lu = splu(csc_matrix(kT_red))
 
     def solve_kT(b):
         x = np.zeros(b.shape[0], dtype=np.result_type(b, lu.U.dtype))
-        x[used_cols] = lu.solve(b[used_cols])
+        if m:
+            x[used_cols] = lu.solve(np.concatenate((np.zeros(m, dtype=b.dtype),
+                                                    b[used_cols])))[m:]
+        else:
+            x[used_cols] = lu.solve(b[used_cols])
         return x
 
     diagU = lu.U.diagonal()
     solve_kT.linear_solver = 'splu'
     solve_kT.det_sign = int(np.prod(np.sign(diagU))
                             *_permutation_sign(lu.perm_r)
-                            *_permutation_sign(lu.perm_c))
+                            *_permutation_sign(lu.perm_c)*(-1)**m)
     solve_kT.num_negative_eigvals = None
     solve_kT.num_perturbed_pivots = None
+    solve_kT.num_constraints = m
 
     return solve_kT
 
 
-def _factorize_pardiso(A, used_cols):
+def _factorize_pardiso(A, used_cols, m=0):
     """Symmetric indefinite factorization of PARDISO of the reduced matrix
-    ``A``, see :func:`._factorize`"""
+    ``A``, bordered by ``m`` constraints first, see :func:`._factorize`"""
     try:
         import pypardiso
     except ImportError:
@@ -243,7 +294,12 @@ def _factorize_pardiso(A, used_cols):
     d[d == 0] = 1.
     s = 1/np.sqrt(d)
     D = diags(s)
-    As_upper = triu(D @ A @ D, format='csr')
+    # the diagonal stored explicitly, also its zeros, of the border
+    As_upper = triu(D @ A @ D, format='coo')
+    n = A.shape[0]
+    As_upper = csr_matrix((np.r_[As_upper.data, np.zeros(n)],
+                           (np.r_[As_upper.row, np.arange(n)],
+                            np.r_[As_upper.col, np.arange(n)])), shape=A.shape)
     if _pardiso_pool:
         solver = _pardiso_pool.pop()
     else:
@@ -260,7 +316,8 @@ def _factorize_pardiso(A, used_cols):
 
     def solve_kT(b):
         x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
-        bu = np.asarray(b[used_cols], dtype=np.float64)
+        bu = np.concatenate((np.zeros(m),
+                             np.asarray(b[used_cols], dtype=np.float64)))
         bnorm = np.linalg.norm(bu)
         if bnorm == 0:
             return x
@@ -275,11 +332,12 @@ def _factorize_pardiso(A, used_cols):
                 warnings.warn("linear_solver='pardiso': relative residual "
                               "%1.1e of a solution after GMRES" % res,
                               RuntimeWarning, stacklevel=2)
-        x[used_cols] = xu
+        x[used_cols] = xu[m:]
         return x
 
     solve_kT.linear_solver = 'pardiso'
-    solve_kT.num_negative_eigvals = int(iparms[23])
+    solve_kT.num_constraints = m
+    solve_kT.num_negative_eigvals = int(iparms[23]) - m
     solve_kT.num_perturbed_pivots = int(iparms[14])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
     weakref.finalize(solve_kT, _pardiso_release, solver)

@@ -16,7 +16,8 @@ from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
                              _abs_matrix, _norm, _converged_state,
-                             INC_CUT_FACTOR)
+                             _constraint_matrix, _linear_solve,
+                             _residual_projector, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -382,9 +383,16 @@ def _solver_arc_length(an, method, silent=False):
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q0 = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
-        u_ref = solve(kC0, q0, silent=True)
+        u_ref = _linear_solve(an, kC0, q0)
     else:
-        u_ref = solve(kC0, fext, silent=True)
+        u_ref = _linear_solve(an, kC0, fext)
+    C = _constraint_matrix(an)
+    proj = _residual_projector(an, w)
+
+    def residual(fint, lbd_total):
+        R = fint - lbd_total*fext
+        return R if proj is None else proj(R)
+
     if an.arc_length_weights is None:
         wa = np.ones_like(u_ref)
     else:
@@ -454,7 +462,8 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 kT = callbacks.calc_kT(an, c, lbd)
             try:
-                solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver)
+                solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver,
+                                           constraints=C)
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
@@ -533,7 +542,7 @@ def _solver_arc_length(an, method, silent=False):
             if fint is None:
                 fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
-            R = fint - fext_total
+            R = residual(fint, lbd + dlbd)
             q_ref = None
             if lbd_dependent:
                 q_ref = (lbd + dlbd)*q_iter
@@ -557,7 +566,8 @@ def _solver_arc_length(an, method, silent=False):
                 try:
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
                                                             lbd + dlbd),
-                                          linear_solver=an.linear_solver)
+                                          linear_solver=an.linear_solver,
+                                          constraints=C)
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
@@ -615,7 +625,7 @@ def _solver_arc_length(an, method, silent=False):
                     lbd_try = lbd + dlbd + eta_try*varlbd
                     fint_try = callbacks.calc_fint(an, c + dc + eta_try*dc_corr,
                                                    lbd_try)
-                    Rnorm_try = _norm(fint_try - lbd_try*fext, w)
+                    Rnorm_try = _norm(residual(fint_try, lbd_try), w)
                     if best is None or Rnorm_try < best[1]:
                         best = (eta_try, Rnorm_try, fint_try)
                     if Rnorm_try < Rnorm:
@@ -640,7 +650,7 @@ def _solver_arc_length(an, method, silent=False):
             t = (1. - lbd)/dlbd
             converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
                     kT0=None, silent=silent, lbd_dependent=lbd_dependent,
-                    q=q_iter, w=w, K0_abs=K0_abs)
+                    q=q_iter, w=w, K0_abs=K0_abs, proj=proj)
             if converged:
                 msg('Converged at load factor 1.00000', level=2, silent=silent)
                 an.cs.append((c + dc1).copy())

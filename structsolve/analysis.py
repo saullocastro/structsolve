@@ -15,7 +15,8 @@ import numpy as np
 from .static import solve, _factorize
 from .logger import msg, warn
 from . import callbacks
-from .newton_raphson import _check_convergence, _weights, _abs_matrix
+from .newton_raphson import (_check_convergence, _weights, _abs_matrix,
+                             _constraint_matrix, _residual_projector)
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
@@ -123,6 +124,17 @@ class Analysis(object):
                                   that limit points, bifurcations crossed and
                                   unstable branches are visible. Default is
                                   ``False``
+    ``constraints``               ``array`` or sparse matrix `\boldsymbol{C}`,
+                                  of shape ``(n, m)``, a 1-D array for one
+                                  constraint: the linear constraints
+                                  `\boldsymbol{C}^\top \boldsymbol{c} =
+                                  \boldsymbol{0}` of the solution, e.g. an
+                                  inertia relief or multipoint constraints,
+                                  imposed by bordering every factorization
+                                  of the stiffness matrices, see
+                                  :func:`.static._factorize`, in the linear
+                                  and the non-linear analyses. Default is
+                                  ``None``
     ============================  =============================================
 
     ================   =================================================
@@ -303,6 +315,7 @@ class Analysis(object):
             'arc_length_line_search', 'arc_length_predictor',
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
+            'constraints',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
@@ -326,6 +339,7 @@ class Analysis(object):
         self.control_scale = None
         self.linear_solver = 'splu'
         self.inertia = False
+        self.constraints = None
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
@@ -452,7 +466,10 @@ class Analysis(object):
             fext = self.calc_fext(silent=silent)
             k0 = self.calc_kC(silent=silent)
 
-            c = solve(k0, fext, silent=silent)
+            if self.constraints is None:
+                c = solve(k0, fext, silent=silent)
+            else:
+                c = _factorize(k0, constraints=_constraint_matrix(self))(fext)
             if callbacks.is_load_configuration_dependent(self):
                 c = self._linear_static_follower(k0, c, silent)
 
@@ -472,12 +489,15 @@ class Analysis(object):
             level=2, silent=silent)
         w = _weights(self, k0)
         k0_abs = _abs_matrix(k0)
+        proj = _residual_projector(self, w)
         # k0 is factorized once for all the corrections
         solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
             R = fint - fext
+            if proj is not None:
+                R = proj(R)
             conv, Rnorm, Rrel, roundoff = _check_convergence(self, R, fint,
                     fext, w=w, Kc_abs=k0_abs @ np.abs(c), full_output=True)
             msg('Iteration: %d, %s = %1.3e%s' % (iteration, 'zeta' if
@@ -490,7 +510,8 @@ class Analysis(object):
                 break
             if solve_k0 is None:
                 try:
-                    solve_k0 = _factorize(k0)
+                    solve_k0 = _factorize(k0,
+                            constraints=_constraint_matrix(self))
                 except RuntimeError:
                     break
             c = c + solve_k0(-R)
