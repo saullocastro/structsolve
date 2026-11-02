@@ -73,6 +73,13 @@ def _constraint_matrix(an):
     return csc_matrix(C)
 
 
+def _cache(an):
+    r"""The cache of the factorizations of the tangent stiffness matrix of
+    the running analysis, see :func:`.static._factorize`, ``None`` outside
+    :meth:`.Analysis.static`"""
+    return getattr(an, '_factorization_cache', None)
+
+
 def _linear_solve(an, kC0, b):
     r"""Linear solution of ``kC0 x = b`` with ``an.linear_solver`` and the
     constraints of ``an.constraints``, see :func:`.static._factorize`, or
@@ -382,7 +389,8 @@ def _factorize_state(an, c, lbd, silent=False):
     try:
         return _factorize(callbacks.calc_kT(an, c, lbd),
                           linear_solver=an.linear_solver,
-                          constraints=_constraint_matrix(an))
+                          constraints=_constraint_matrix(an),
+                          cache=_cache(an))
     except RuntimeError:
         warn('Singular tangent stiffness matrix at the converged state',
              level=2, silent=silent)
@@ -648,12 +656,12 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 iter_kT += 1
             elif modified_NR and iteration == 1 and kT0 is not None:
                 solve_kT = _factorize(kT0, linear_solver=an.linear_solver,
-                                      constraints=C)
+                                      constraints=C, cache=_cache(an))
                 iter_kT = 1
             else:
                 solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total),
                                       linear_solver=an.linear_solver,
-                                      constraints=C)
+                                      constraints=C, cache=_cache(an))
                 iter_kT = 1
                 if lbd_dependent:
                     # -dR/dlbd at the iterate of the tangent stiffness matrix

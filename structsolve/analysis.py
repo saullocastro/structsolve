@@ -12,7 +12,7 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .static import solve, _factorize
+from .static import solve, _factorize, _FactorizationCache
 from .logger import msg, warn
 from . import callbacks
 from .newton_raphson import (_check_convergence, _weights, _abs_matrix,
@@ -378,7 +378,7 @@ class Analysis(object):
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
             'too_slow_TOL',
             'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
-            'calc_fint', 'calc_kG']
+            'calc_fint', 'calc_kG', '_factorization_cache']
 
 
     def __init__(self, calc_fext=None, calc_fint=None, calc_kC=None,
@@ -434,6 +434,8 @@ class Analysis(object):
 
         # flag telling the last analysis
         self.last_analysis = ''
+        # pattern-dependent work of the factorizations of a running analysis
+        self._factorization_cache = None
 
 
     def static(self, NLgeom=False, silent=False):
@@ -517,18 +519,23 @@ class Analysis(object):
         if NLgeom:
             self.maxInc = max(self.initialInc, self.maxInc)
             msg('Started Non-Linear Static Analysis', silent=silent)
-            if self.NL_method == 'NR':
-                _solver_NR(self, silent=silent)
-            elif self.NL_method == 'arc_length_riks':
-                _solver_arc_length_riks(self, silent=silent)
-            elif self.NL_method == 'arc_length_crisfield':
-                _solver_arc_length_crisfield(self, silent=silent)
-            elif self.NL_method == 'displacement_control':
-                _solver_displacement_control(self, silent=silent)
-            elif self.NL_method == 'generalized_displacement_control':
-                _solver_generalized_displacement_control(self, silent=silent)
-            else:
+            solvers = {
+                'NR': _solver_NR,
+                'arc_length_riks': _solver_arc_length_riks,
+                'arc_length_crisfield': _solver_arc_length_crisfield,
+                'displacement_control': _solver_displacement_control,
+                'generalized_displacement_control':
+                    _solver_generalized_displacement_control}
+            if self.NL_method not in solvers:
                 raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
+            # the work of the factorizations that depends only on the
+            # pattern of the tangent stiffness matrix is reused
+            self._factorization_cache = _FactorizationCache()
+            try:
+                solvers[self.NL_method](self, silent=silent)
+            finally:
+                self._factorization_cache.close()
+                self._factorization_cache = None
 
         else:
             msg('Started Linear Static Analysis', silent=silent)

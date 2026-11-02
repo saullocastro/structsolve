@@ -240,6 +240,40 @@
   the preprocessing of `_factorize` and 19 % in the conversions to sparse
   formats of the calling script. The element loop accounted for less than
   1 %.
+- New `static._FactorizationCache`, created by `Analysis.static` for each
+  non-linear analysis and passed to `static._factorize` as the new argument
+  `cache` by every factorization of the tangent stiffness matrix: the work
+  that depends only on the sparsity pattern is done once per pattern. The
+  reduced and bordered matrix, its CSC form, the transposed terms of the
+  symmetry check, the diagonal of the scaling and the scaled upper
+  triangle of PARDISO are built from index arrays that gather the values
+  of `kT`, and the analysis of PARDISO (reordering and symbolic
+  factorization, phase 11) is reused: the next factorizations use its
+  phase 22 instead of 12, with up to `static.CACHE_MAX_PARDISO_SOLVERS = 4`
+  solvers that keep the analysis, since the factorizations of the
+  converged state and of the iteration coexist. The pattern (shape,
+  `indptr`, `indices`), the null rows and columns, found from the values at
+  every call since explicit zeros do not count, and the constraints are
+  checked at every call, and any change rebuilds the cache; the symmetry
+  and the scaling are still computed from the values. The factorizations,
+  solutions, inertia and perturbed pivots are bitwise those without the
+  cache (tested with `MKL_NUM_THREADS=1`). `_factorize` without `cache`
+  is unchanged; a matrix that is not `float64` or not in canonical CSR form
+  is not cached. On a symmetric 57000-DOF matrix with 4.5 million terms,
+  one PARDISO factorization took 0.40-0.44 s instead of 1.65-1.78 s, with
+  or without one constraint (the phase 22 alone 0.20 s instead of 1.0 s for
+  the phase 12), and the preprocessing of SuperLU 0.05 s instead of
+  0.11 s, of about 1.1 s per factorization. A Newton-Raphson analysis of a
+  grid of 40000 hardening springs took 2.8 s instead of 4.8 s with
+  `'pardiso'`, its Riks analysis 3.7 s instead of 7.1 s, with SuperLU
+  within 3 %. New `sparseutils._used_cols`.
+- New `tests/test_factorization_cache.py`: bitwise the factorization
+  without the cache, with null rows, explicit zeros, a border and
+  unsymmetric matrices; the phases of PARDISO and the rebuilds when the
+  pattern, the null rows or the constraints change; the Newton-Raphson,
+  Riks, Crisfield and generalized displacement control analyses with
+  constraints and `inertia`, and the Riks analysis beyond the limit point
+  of the von Mises truss, bitwise those without the cache.
 
 ## 0.9.4 (2026-10-28)
 

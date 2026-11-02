@@ -53,14 +53,7 @@ def remove_null_cols(*args, **kwargs):
         m = args[0]
     else:
         m = csr_matrix(args[0])
-    # the stored non-zero terms, explicit zeros excluded as by nonzero()
-    nz = m.data != 0
-    used = np.zeros(num_cols, dtype=bool)
-    used[m.indices[nz]] = True
-    if m.shape[0] == m.shape[1]:
-        rows = np.repeat(np.arange(m.shape[0]), np.diff(m.indptr))
-        used[rows[nz]] = True
-    used_cols = np.flatnonzero(used)
+    used_cols = _used_cols(m)
     nothing_removed = used_cols.shape[0] == num_cols
 
     for i, arg in enumerate(args):
@@ -80,6 +73,24 @@ def remove_null_cols(*args, **kwargs):
     msg('finished!', level=3, silent=silent)
 
     return args
+
+
+def _used_cols(m, rows=None):
+    """Indices of the degrees of freedom kept by :func:`remove_null_cols`
+
+    ``m`` is a :class:`csr_matrix`; ``rows``, the row index of each stored
+    term, is computed when ``None``. The stored terms that are explicit
+    zeros do not count, as with ``nonzero()``.
+
+    """
+    nz = m.data != 0
+    used = np.zeros(m.shape[1], dtype=bool)
+    used[m.indices[nz]] = True
+    if m.shape[0] == m.shape[1]:
+        if rows is None:
+            rows = np.repeat(np.arange(m.shape[0]), np.diff(m.indptr))
+        used[rows[nz]] = True
+    return np.flatnonzero(used)
 
 
 def make_symmetric(m):

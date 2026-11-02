@@ -19,7 +19,8 @@ from .newton_raphson import (_check_convergence, _check_divergence,
                              _constraint_matrix, _linear_solve,
                              _residual_projector, _stop, _factorize_state,
                              _record_inertia, _check_max_inertia_jump,
-                             _inertia_jump, _restart_state, INC_CUT_FACTOR)
+                             _inertia_jump, _restart_state, _cache,
+                             INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -753,7 +754,7 @@ def _solver_arc_length(an, method, silent=False):
                 kT = callbacks.calc_kT(an, c, lbd)
             try:
                 solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver,
-                                           constraints=C)
+                                           constraints=C, cache=_cache(an))
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
@@ -912,7 +913,7 @@ def _solver_arc_length(an, method, silent=False):
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
                                                             lbd + dlbd),
                                           linear_solver=an.linear_solver,
-                                          constraints=C)
+                                          constraints=C, cache=_cache(an))
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break

@@ -13,7 +13,7 @@ from scipy.sparse import bmat, csc_matrix, csr_matrix
 from scipy.sparse.linalg import spsolve, splu, gmres, LinearOperator
 
 from .logger import msg
-from .sparseutils import remove_null_cols
+from .sparseutils import remove_null_cols, _used_cols
 
 
 #: Linear solvers of the factorizations of the tangent stiffness matrix,
@@ -35,12 +35,293 @@ PARDISO_WARN_TOL = 1.e-6
 # instances of pypardiso.PyPardisoSolver whose memory was freed, reused by
 # the next factorizations, since creating one may take seconds
 _pardiso_pool = []
+#: Maximum number of PARDISO solvers that a cache of the factorizations
+#: keeps with the analysis of its pattern, for the phase 22, see
+#: :func:`._factorize`
+CACHE_MAX_PARDISO_SOLVERS = 4
 
 
 def _pardiso_release(solver):
     """Free the memory of a PARDISO solver and keep it for reuse"""
     solver.free_memory(everything=True)
     _pardiso_pool.append(solver)
+
+
+def _pardiso_factorize(solver, A, phase):
+    """Numerical factorization of ``A`` by the ``pypardiso.PyPardisoSolver``
+    ``solver``, with the phase 12 of PARDISO (analysis and factorization), or
+    22 (factorization only), which reuses the analysis of the last phase 12
+    of ``solver``, valid for a matrix of the same pattern"""
+    if phase == 12:
+        solver.factorize(A)
+        return
+    # as pypardiso.PyPardisoSolver.factorize, with the phase 22 instead of 12
+    solver._check_A(A)
+    if A.nnz > solver.size_limit_storage:
+        solver.factorized_A = solver._hash_csr_matrix(A)
+    else:
+        solver.factorized_A = A.copy()
+    solver.set_phase(22)
+    solver._call_pardiso(A, np.zeros((A.shape[0], 1)))
+
+
+def _release_solvers(solvers):
+    """Free the memory of the PARDISO ``solvers`` and empty the list"""
+    while solvers:
+        _pardiso_release(solvers.pop())
+
+
+class _FactorizationCache(object):
+    r"""Work of :func:`._factorize` that depends only on the sparsity pattern
+    of the matrix, reused while the pattern does not change
+
+    Created by :meth:`.Analysis.static` for the factorizations of the
+    tangent stiffness matrix along a non-linear analysis, whose pattern is
+    usually the same at every iteration, and passed to :func:`._factorize`
+    as ``cache``. It keeps the last pattern only; see :func:`._factorize`
+    for what is reused and for the checks that keep it valid. :meth:`close`
+    frees the memory of its PARDISO solvers.
+
+    """
+    def __init__(self):
+        self.entry = None
+        # generation of the pattern of entry, of the analyses of PARDISO
+        self.gen = 0
+        # PARDISO solvers with the analysis of the pattern of generation gen,
+        # whose factorization is not used by any solve_kT
+        self.free_solvers = []
+        self.closed = False
+        weakref.finalize(self, _release_solvers, self.free_solvers)
+
+    def get(self, K, C):
+        r"""The :class:`_PatternEntry` of the CSR matrix ``K``, canonical and
+        ``float64``, with the constraints ``C``, CSR or ``None``, built anew
+        when the pattern of ``K``, its degrees of freedom whose row or
+        column is not null, or ``C`` changed"""
+        e = self.entry
+        rows = None
+        if (e is not None and e.shape == K.shape
+                and np.array_equal(e.indptr, K.indptr)
+                and np.array_equal(e.indices, K.indices)):
+            rows = e.rows
+        used_cols = _used_cols(K, rows)
+        if (rows is not None and np.array_equal(e.used_cols, used_cols)
+                and e.same_constraints(C)):
+            return e
+        _release_solvers(self.free_solvers)
+        self.gen += 1
+        self.entry = None
+        try:
+            self.entry = _PatternEntry(K, used_cols, C)
+        except ValueError:
+            # duplicated terms summed: not cached
+            pass
+        return self.entry
+
+    def pardiso_solver(self):
+        """A PARDISO solver and the phase of its factorization: 22 for a
+        solver that keeps the analysis of the current pattern, 12 otherwise"""
+        if self.free_solvers:
+            return self.free_solvers.pop(), 22
+        if _pardiso_pool:
+            return _pardiso_pool.pop(), 12
+        import pypardiso
+        return pypardiso.PyPardisoSolver(mtype=-2), 12
+
+    def release(self, solver, gen):
+        """Free the factorization of ``solver`` and keep its analysis when it
+        is of the current pattern, otherwise free all its memory"""
+        if (not self.closed and gen == self.gen
+                and len(self.free_solvers) < CACHE_MAX_PARDISO_SOLVERS):
+            solver.free_memory(everything=False)
+            self.free_solvers.append(solver)
+        else:
+            _pardiso_release(solver)
+
+    def close(self):
+        """Free the memory of the PARDISO solvers and forget the pattern"""
+        self.closed = True
+        self.entry = None
+        _release_solvers(self.free_solvers)
+
+
+class _PatternEntry(object):
+    r"""Pattern-dependent data of :func:`._factorize` for one pattern, see
+    :class:`_FactorizationCache`
+
+    The reduced and bordered matrix, its CSC form for SuperLU and the scaled
+    upper triangle for PARDISO are built once, by the operations of
+    :func:`._factorize` applied to a matrix whose stored terms are their own
+    positions, 1-based, which gives the position in ``K.data``, or in the
+    data of the border, of each of their terms; a factorization then only
+    gathers ``K.data``.
+
+    """
+    def __init__(self, K, used_cols, C):
+        self.shape = K.shape
+        self.indptr = K.indptr.copy()
+        self.indices = K.indices.copy()
+        self.rows = np.repeat(np.arange(K.shape[0]), np.diff(K.indptr))
+        self.used_cols = used_cols
+        self.C = None if C is None else (C.shape, C.indptr.copy(),
+                                         C.indices.copy(), C.data.copy())
+        nnz = K.nnz
+        tags = csr_matrix((np.arange(1, nnz + 1, dtype=np.float64),
+                           K.indices, K.indptr), shape=K.shape)
+        if used_cols.shape[0] != K.shape[1]:
+            # as remove_null_cols
+            tags = tags[used_cols, :]
+            tags = tags[:, used_cols]
+        Cr, m = _reduced_constraints(C, used_cols)
+        self.m = m
+        self.border = None
+        if m:
+            self.border = Cr.data.copy()
+            Ct = csc_matrix((np.arange(nnz + 1, nnz + 1 + Cr.nnz,
+                                       dtype=np.float64),
+                             Cr.indices, Cr.indptr), shape=Cr.shape)
+            tags = bmat([[None, Ct.T], [Ct, tags]], format='csr')
+        A = csr_matrix(tags)
+        self.A_tags = A
+        self.A_gather = _positions(A.data)
+        self.A_sorted = bool(A.has_sorted_indices)
+        self.csc = None
+        self.pardiso = None
+
+    def same_constraints(self, C):
+        """Whether ``C`` is the matrix of the constraints of the entry"""
+        if C is None or self.C is None:
+            return C is None and self.C is None
+        shape, indptr, indices, data = self.C
+        return (shape == C.shape and np.array_equal(indptr, C.indptr)
+                and np.array_equal(indices, C.indices)
+                and np.array_equal(data, C.data))
+
+    def _ext(self, K):
+        """The data of ``K`` followed by the data of the border"""
+        if self.m:
+            return np.concatenate((K.data, self.border))
+        return K.data
+
+    def reduced_csr(self, K):
+        """The reduced and bordered matrix of ``K``, CSR"""
+        A = csr_matrix((self._ext(K)[self.A_gather], self.A_tags.indices,
+                        self.A_tags.indptr), shape=self.A_tags.shape)
+        if self.A_sorted:
+            A.has_sorted_indices = True
+        return A
+
+    def reduced_csc(self, K):
+        """The reduced and bordered matrix of ``K``, CSC"""
+        if self.csc is None:
+            At = csc_matrix(self.A_tags)
+            self.csc = (_positions(At.data), At.indices, At.indptr,
+                        bool(At.has_sorted_indices))
+        gather, indices, indptr, srt = self.csc
+        A = csc_matrix((self._ext(K)[gather], indices, indptr),
+                       shape=self.A_tags.shape)
+        if srt:
+            A.has_sorted_indices = True
+        return A
+
+    def pardiso_data(self):
+        """Pattern data of the symmetry check and of the scaled upper
+        triangle of :func:`._factorize_pardiso`"""
+        if self.pardiso is None:
+            A = self.A_tags
+            N = A.shape[0]
+            nnzA = A.nnz
+            Ad = csr_matrix((np.arange(1, nnzA + 1, dtype=np.float64),
+                             A.indices, A.indptr), shape=A.shape)
+            # position of the transposed term of each term, nnzA when absent
+            At = Ad.T.tocsr()
+            if (np.array_equal(At.indptr, A.indptr)
+                    and np.array_equal(At.indices, A.indices)):
+                tpos = _positions(At.data)
+            else:
+                rows = np.repeat(np.arange(N, dtype=np.int64),
+                                 np.diff(A.indptr))
+                cols = A.indices.astype(np.int64)
+                keys = rows*N + cols
+                tpos = None
+                if nnzA and np.all(np.diff(keys) > 0):
+                    tkeys = cols*N + rows
+                    pos = np.minimum(np.searchsorted(keys, tkeys), nnzA - 1)
+                    tpos = np.where(keys[pos] == tkeys, pos, nnzA)
+            # positions of the diagonal, nnzA when absent
+            dpos = _positions(Ad.diagonal())
+            dpos[dpos < 0] = nnzA
+            U = _scaled_upper(Ad, np.ones(N))
+            upos = _positions(U.data)
+            urows = np.repeat(np.arange(N), np.diff(U.indptr))
+            # the diagonal terms of A, to which an explicit zero is added
+            dup = np.flatnonzero((urows == U.indices) & (upos >= 0))
+            upos[upos < 0] = nnzA
+            self.pardiso = dict(tpos=tpos, dpos=dpos, upos=upos, urows=urows,
+                                ucols=U.indices, dup=dup, U=U,
+                                U_sorted=bool(U.has_sorted_indices))
+        return self.pardiso
+
+    def is_symmetric(self, A):
+        """:func:`_is_symmetric` of the reduced matrix ``A`` of this entry"""
+        p = self.pardiso_data()
+        if p['tpos'] is None:
+            return _is_symmetric(A)
+        a = A.data
+        if a.size == 0:
+            return True
+        ae = np.append(a, 0.)
+        return np.abs(a - ae[p['tpos']]).max() <= \
+            SYMMETRY_RTOL*np.abs(a).max()
+
+    def scaled_upper(self, A):
+        """The scaling and the scaled upper triangle of
+        :func:`._scaled_upper` of the reduced matrix ``A`` of this entry"""
+        p = self.pardiso_data()
+        ae = np.append(A.data, 0.)
+        d = np.abs(ae[p['dpos']])
+        d[d == 0] = 1.
+        s = 1/np.sqrt(d)
+        data = ae[p['upos']]*s[p['urows']]*s[p['ucols']]
+        data[p['dup']] += 0.
+        U = csr_matrix((data, p['U'].indices, p['U'].indptr), shape=A.shape)
+        if p['U_sorted']:
+            U.has_sorted_indices = True
+        return s, U
+
+
+def _positions(tags):
+    """Positions, 0-based, given by the ``float`` ``tags``, 1-based, of the
+    terms built by :class:`_PatternEntry`, ``-1`` for the tag 0 of a term
+    that is not in the original matrix"""
+    pos = tags.astype(np.int64)
+    if not np.array_equal(pos, tags):
+        raise ValueError('_FactorizationCache: terms were summed')
+    return pos - 1
+
+
+def _reduced_constraints(C, used_cols):
+    """The matrix of the constraints on the degrees of freedom
+    ``used_cols``, CSC, without the constraints left without any term, and
+    their number"""
+    if C is None:
+        return None, 0
+    Cr = csc_matrix(C[used_cols])
+    Cr = Cr[:, np.flatnonzero(np.diff(Cr.indptr))]
+    return Cr, Cr.shape[1]
+
+
+def _scaled_upper(A, s):
+    """Upper triangle of ``D A D``, ``D = diag(s)``, CSR, the diagonal
+    stored explicitly, also its zeros, of the border"""
+    Acoo = A.tocoo()
+    upper = Acoo.row <= Acoo.col
+    row = Acoo.row[upper]
+    col = Acoo.col[upper]
+    n = A.shape[0]
+    return csr_matrix((np.r_[Acoo.data[upper]*s[row]*s[col], np.zeros(n)],
+                       (np.r_[row, np.arange(n)],
+                        np.r_[col, np.arange(n)])), shape=A.shape)
 
 
 def solve(a, b, silent=False, **kwargs):
@@ -115,7 +396,7 @@ def _is_symmetric(a):
     return np.abs(d).max() <= SYMMETRY_RTOL*np.abs(a.data).max()
 
 
-def _factorize(kT, linear_solver='splu', constraints=None):
+def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     r"""Factorization of the tangent stiffness matrix
 
     Null rows and columns are removed, the corresponding values of the
@@ -135,6 +416,10 @@ def _factorize(kT, linear_solver='splu', constraints=None):
         The matrix `\boldsymbol{C}` of the linear constraints
         `\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}`, of shape ``(n, m)``
         for ``m`` constraints, see the Notes. ``None`` (default) for none.
+    cache : :class:`_FactorizationCache` or None, optional
+        Cache of the work that depends only on the sparsity pattern of
+        ``kT``, reused by the next factorizations of a matrix of the same
+        pattern, see the Notes. ``None`` (default) for none.
 
     Returns
     -------
@@ -239,27 +524,77 @@ def _factorize(kT, linear_solver='splu', constraints=None):
     took about 6.5 s on Windows with ``pypardiso`` 0.4.7, against
     milliseconds for the factorization of a small matrix.
 
+    With ``cache``, created by :meth:`.Analysis.static` for each non-linear
+    analysis, along which the pattern of the tangent stiffness matrix
+    usually does not change, the work that depends only on the pattern is
+    done once per pattern: the indices of the reduced and bordered matrix,
+    of its CSC form, of the transposed terms of the symmetry check, of its
+    diagonal and of the scaled upper triangle, from which each
+    factorization only gathers the values of ``kT``; and the analysis
+    (reordering and symbolic factorization) of PARDISO, its phase 11, the
+    next factorizations being its phase 22 instead of 12 with a solver
+    that keeps the analysis of the pattern; up to
+    ``CACHE_MAX_PARDISO_SOLVERS`` such solvers are kept, since the
+    factorizations of the last converged state and of the current
+    iteration coexist. The pattern is the shape, ``indptr`` and
+    ``indices`` of ``kT`` in CSR form, compared at every call, the
+    degrees of freedom whose row or column is not null, which depend on
+    the values, since explicit zeros do not count, computed at every call,
+    and ``constraints``, compared with its values; any change rebuilds the
+    cache. The values enter only through the gathered terms, and the
+    symmetry check, the scaling and the null rows and columns are evaluated
+    at every call, such that the factorization is bitwise the one without
+    the cache, verified by the tests, also the inertia and the perturbed
+    pivots of PARDISO (with ``MKL_NUM_THREADS=1``; the analysis of PARDISO
+    depends only on the pattern, with its default ``iparm(11) = iparm(13)
+    = 0`` for symmetric indefinite matrices). A matrix that is not
+    ``float64`` or whose CSR form has duplicated or unsorted terms is
+    factorized without the cache. On a symmetric matrix of 57000 degrees
+    of freedom with 4.5 million terms, the factorization took 1.65 s
+    without and 0.40 s with the cache with ``'pardiso'``, with or without
+    one constraint, and 1.1 s with ``'splu'``, whose preprocessing went
+    from 0.11 s to 0.05 s, SuperLU computing its ordering at every
+    factorization.
+
     """
     if linear_solver not in LINEAR_SOLVERS:
         raise ValueError('Invalid linear_solver: %s' % linear_solver)
-    kT_red, used_cols = remove_null_cols(kT, silent=True)
-    m = 0
+    C = None
     if constraints is not None:
         C = csr_matrix(constraints)
         if C.shape[0] == 1 and kT.shape[0] != 1:
             C = C.T.tocsr()
-        Cr = csc_matrix(C[used_cols])
-        Cr = Cr[:, np.flatnonzero(np.diff(Cr.indptr))]
-        m = Cr.shape[1]
+    entry = None
+    if cache is not None:
+        K = kT if isinstance(kT, csr_matrix) else csr_matrix(kT)
+        if K.dtype == np.float64 and K.has_canonical_format:
+            entry = cache.get(K, C)
+    if entry is not None:
+        used_cols = entry.used_cols
+        m = entry.m
+        if linear_solver == 'pardiso':
+            A = entry.reduced_csr(K)
+            if entry.is_symmetric(A):
+                return _factorize_pardiso(A, used_cols, m,
+                                          scaled=entry.scaled_upper(A),
+                                          cache=cache)
+            warnings.warn("linear_solver='pardiso': the matrix is "
+                          "unsymmetric, 'splu' is used instead",
+                          RuntimeWarning, stacklevel=3)
+        lu = splu(entry.reduced_csc(K))
+    else:
+        kT_red, used_cols = remove_null_cols(kT, silent=True)
+        Cr, m = _reduced_constraints(C, used_cols)
         if m:
             kT_red = bmat([[None, Cr.T], [Cr, kT_red]], format='csr')
-    if linear_solver == 'pardiso':
-        A = csr_matrix(kT_red)
-        if _is_symmetric(A):
-            return _factorize_pardiso(A, used_cols, m)
-        warnings.warn("linear_solver='pardiso': the matrix is unsymmetric, "
-                      "'splu' is used instead", RuntimeWarning, stacklevel=3)
-    lu = splu(csc_matrix(kT_red))
+        if linear_solver == 'pardiso':
+            A = csr_matrix(kT_red)
+            if _is_symmetric(A):
+                return _factorize_pardiso(A, used_cols, m)
+            warnings.warn("linear_solver='pardiso': the matrix is "
+                          "unsymmetric, 'splu' is used instead",
+                          RuntimeWarning, stacklevel=3)
+        lu = splu(csc_matrix(kT_red))
 
     def solve_kT(b):
         x = np.zeros(b.shape[0], dtype=np.result_type(b, lu.U.dtype))
@@ -282,33 +617,32 @@ def _factorize(kT, linear_solver='splu', constraints=None):
     return solve_kT
 
 
-def _factorize_pardiso(A, used_cols, m=0):
+def _factorize_pardiso(A, used_cols, m=0, scaled=None, cache=None):
     """Symmetric indefinite factorization of PARDISO of the reduced matrix
-    ``A``, bordered by ``m`` constraints first, see :func:`._factorize`"""
+    ``A``, bordered by ``m`` constraints first, see :func:`._factorize`;
+    ``scaled``, the scaling and the scaled upper triangle of ``A``, is
+    computed when ``None``"""
     try:
         import pypardiso
     except ImportError:
         raise ImportError("linear_solver='pardiso' requires the package "
                           "pypardiso")
-    d = np.abs(A.diagonal())
-    d[d == 0] = 1.
-    s = 1/np.sqrt(d)
-    # upper triangle of D A D, the diagonal stored explicitly, also its
-    # zeros, of the border
-    Acoo = A.tocoo()
-    upper = Acoo.row <= Acoo.col
-    row = Acoo.row[upper]
-    col = Acoo.col[upper]
-    n = A.shape[0]
-    As_upper = csr_matrix((np.r_[Acoo.data[upper]*s[row]*s[col], np.zeros(n)],
-                           (np.r_[row, np.arange(n)],
-                            np.r_[col, np.arange(n)])), shape=A.shape)
-    if _pardiso_pool:
-        solver = _pardiso_pool.pop()
+    if scaled is None:
+        d = np.abs(A.diagonal())
+        d[d == 0] = 1.
+        s = 1/np.sqrt(d)
+        As_upper = _scaled_upper(A, s)
     else:
-        solver = pypardiso.PyPardisoSolver(mtype=-2)
+        s, As_upper = scaled
+    if cache is not None:
+        solver, phase = cache.pardiso_solver()
+        gen = cache.gen
+    else:
+        solver = (_pardiso_pool.pop() if _pardiso_pool
+                  else pypardiso.PyPardisoSolver(mtype=-2))
+        phase = 12
     try:
-        solver.factorize(As_upper)
+        _pardiso_factorize(solver, As_upper, phase)
     except Exception as e:
         _pardiso_release(solver)
         raise RuntimeError('PARDISO factorization failed: %s' % e)
@@ -343,7 +677,10 @@ def _factorize_pardiso(A, used_cols, m=0):
     solve_kT.num_negative_eigvals = int(iparms[23]) - m
     solve_kT.num_perturbed_pivots = int(iparms[14])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
-    weakref.finalize(solve_kT, _pardiso_release, solver)
+    if cache is not None:
+        weakref.finalize(solve_kT, cache.release, solver, gen)
+    else:
+        weakref.finalize(solve_kT, _pardiso_release, solver)
 
     return solve_kT
 
