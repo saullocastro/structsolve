@@ -9,7 +9,7 @@ import warnings
 import weakref
 
 import numpy as np
-from scipy.sparse import bmat, csc_matrix, csr_matrix, diags, triu
+from scipy.sparse import bmat, csc_matrix, csr_matrix
 from scipy.sparse.linalg import spsolve, splu, gmres, LinearOperator
 
 from .logger import msg
@@ -109,10 +109,10 @@ def _permutation_sign(perm):
 
 def _is_symmetric(a):
     """Whether the sparse matrix ``a`` is symmetric to ``SYMMETRY_RTOL``"""
-    d = abs(a - a.T)
-    if d.nnz == 0:
+    d = (a - a.T).data
+    if d.size == 0:
         return True
-    return d.max() <= SYMMETRY_RTOL*abs(a).max()
+    return np.abs(d).max() <= SYMMETRY_RTOL*np.abs(a.data).max()
 
 
 def _factorize(kT, linear_solver='splu', constraints=None):
@@ -293,13 +293,16 @@ def _factorize_pardiso(A, used_cols, m=0):
     d = np.abs(A.diagonal())
     d[d == 0] = 1.
     s = 1/np.sqrt(d)
-    D = diags(s)
-    # the diagonal stored explicitly, also its zeros, of the border
-    As_upper = triu(D @ A @ D, format='coo')
+    # upper triangle of D A D, the diagonal stored explicitly, also its
+    # zeros, of the border
+    Acoo = A.tocoo()
+    upper = Acoo.row <= Acoo.col
+    row = Acoo.row[upper]
+    col = Acoo.col[upper]
     n = A.shape[0]
-    As_upper = csr_matrix((np.r_[As_upper.data, np.zeros(n)],
-                           (np.r_[As_upper.row, np.arange(n)],
-                            np.r_[As_upper.col, np.arange(n)])), shape=A.shape)
+    As_upper = csr_matrix((np.r_[Acoo.data[upper]*s[row]*s[col], np.zeros(n)],
+                           (np.r_[row, np.arange(n)],
+                            np.r_[col, np.arange(n)])), shape=A.shape)
     if _pardiso_pool:
         solver = _pardiso_pool.pop()
     else:

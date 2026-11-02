@@ -53,21 +53,26 @@ def remove_null_cols(*args, **kwargs):
         m = args[0]
     else:
         m = csr_matrix(args[0])
-    rows, cols = m.nonzero()
+    # the stored non-zero terms, explicit zeros excluded as by nonzero()
+    nz = m.data != 0
+    used = np.zeros(num_cols, dtype=bool)
+    used[m.indices[nz]] = True
     if m.shape[0] == m.shape[1]:
-        used_cols = np.unique(np.concatenate((rows, cols)))
-    else:
-        used_cols = np.unique(cols)
+        rows = np.repeat(np.arange(m.shape[0]), np.diff(m.indptr))
+        used[rows[nz]] = True
+    used_cols = np.flatnonzero(used)
+    nothing_removed = used_cols.shape[0] == num_cols
 
     for i, arg in enumerate(args):
         if isinstance(arg, csr_matrix):
             m = arg
         else:
             m = csr_matrix(arg)
-        m = m[used_cols, :]
-        #NOTE below, converting to csc_matrix seems to require more time than
-        #     the "slow" column slicing for csr_matrix
-        m = m[:, used_cols]
+        if not nothing_removed:
+            m = m[used_cols, :]
+            #NOTE below, converting to csc_matrix seems to require more time
+            #     than the "slow" column slicing for csr_matrix
+            m = m[:, used_cols]
         args[i] = m
     args.append(used_cols)
     msg('{} columns removed'.format(num_cols - used_cols.shape[0]),
