@@ -3,7 +3,8 @@
 The Riks and Crisfield methods share the implementation of
 :func:`._solver_arc_length`, and are selected with
 ``Analysis.NL_method = 'arc_length_riks'`` or
-``Analysis.NL_method = 'arc_length_crisfield'``. The module-level constants
+``Analysis.NL_method = 'arc_length_crisfield'``, as does the indirect
+displacement control, ``Analysis.NL_method = 'displacement_control'``. The module-level constants
 control the arc-length scaling and adaptation.
 
 """
@@ -74,7 +75,7 @@ def _solver_arc_length(an, method, silent=False):
         Analysis object, the converged load factors and solutions are appended
         to ``an.increments`` and ``an.cs``.
     method : str
-        ``'riks'`` or ``'crisfield'``.
+        ``'riks'``, ``'crisfield'`` or ``'displacement_control'``.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
 
@@ -194,6 +195,44 @@ def _solver_arc_length(an, method, silent=False):
       current one `(\Delta c, \Delta\lambda)` is chosen, i.e. the smallest
       angle, since both have the length `\Delta s`.
 
+    - ``method='displacement_control'``: indirect displacement control, the
+      arc-length constraint being replaced by the linear constraint
+
+      .. math::
+
+          \frac{\boldsymbol{\psi}^\top \Delta \boldsymbol{c}}{s_{ref}} = \Delta s
+
+      with `\boldsymbol{\psi}` = ``an.control_vector`` and `s_{ref}` =
+      ``an.control_scale``, by default `|\boldsymbol{\psi}^\top
+      \boldsymbol{u}_{ref}|`, such that in the linear regime `\Delta s =
+      \Delta\lambda`; a unit vector `\boldsymbol{\psi}` controls the
+      displacement of one degree of freedom, e.g. the end shortening, and a
+      buckling mode controls its amplitude. The correction of the load
+      factor satisfies the constraint exactly:
+
+      .. math::
+
+          \delta\lambda = \frac{s_{ref} \Delta s - \boldsymbol{\psi}^\top
+          (\Delta \boldsymbol{c} + \delta \boldsymbol{c}_R)}{\boldsymbol{\psi}^\top
+          \delta \boldsymbol{c}_q}
+
+      and the predictors are scaled to satisfy it, the tangent predictor
+      `\Delta\lambda = s_{ref} \Delta s/(\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q)`, without the sign rule, the sign of the load factor
+      increment following from the one of `\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q`. The step length `\Delta s` plays the role of the arc
+      length, with ``an.initialInc`` the first one, `\Delta s` keeping the
+      sign for which the controlled quantity increases with the load factor
+      at the origin. The path can be traced through the limit points of the
+      load and of the other degrees of freedom, e.g. snap-backs, as long as
+      the controlled quantity increases monotonically along it; at a limit
+      point of the controlled quantity `\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q` vanishes and the iterations fail or converge to
+      another part of the path. For the indirect displacement control, see
+      de Borst [5]_. The check against the doubling back below does not
+      apply, since the previous converged point does not satisfy the
+      constraint.
+
     With ``an.arc_length_line_search = True``, the whole correction
     `(\delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \delta\lambda)`
     is multiplied by the first factor `\eta` of ``LINE_SEARCH_ETAS``,
@@ -293,10 +332,14 @@ def _solver_arc_length(an, method, silent=False):
     .. [4] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
        Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
        1991.
+    .. [5] de Borst, R., Computation of post-bifurcation and post-failure
+       behavior of strain-softening solids, Computers & Structures, 25(2),
+       211-224, 1987. https://doi.org/10.1016/0045-7949(87)90144-1
 
     """
-    if method not in ('riks', 'crisfield'):
+    if method not in ('riks', 'crisfield', 'displacement_control'):
         raise ValueError('Invalid arc-length method: %s' % method)
+    control = method == 'displacement_control'
     if an.arc_length_predictor not in PREDICTORS:
         raise ValueError('Invalid arc_length_predictor: %s'
                          % an.arc_length_predictor)
@@ -321,6 +364,27 @@ def _solver_arc_length(an, method, silent=False):
 
     def inner(dc1, dlbd1, dc2, dlbd2):
         return dc1.dot(dc2)/scale2 + psi2*dlbd1*dlbd2
+
+    if control:
+        if an.control_vector is None:
+            raise ValueError("NL_method='displacement_control' requires "
+                             "Analysis.control_vector")
+        psi_c = np.asarray(an.control_vector, dtype=float)
+        if psi_c.shape != u_ref.shape:
+            raise ValueError('Analysis.control_vector must have the shape %s'
+                             % (u_ref.shape,))
+        if an.control_scale is None:
+            s_ref = abs(psi_c.dot(u_ref))
+            if not s_ref > 0:
+                raise ValueError('The controlled quantity is null in the '
+                                 'linear solution, Analysis.control_scale '
+                                 'must be given')
+        else:
+            s_ref = float(an.control_scale)
+
+        def ctrl(dc):
+            # the controlled quantity, dimensionless
+            return psi_c.dot(dc)/s_ref
 
     c = np.zeros_like(u_ref)
     lbd = 0.
@@ -367,11 +431,33 @@ def _solver_arc_length(an, method, silent=False):
         if solve_kT_conv is not None:
             dc_q_conv = solve_kT_conv(q_conv)
         if arc_length is None:
-            norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
+            if control:
+                # the first step is initialInc in units of the scale, the
+                # controlled quantity increasing with the load factor along
+                # the initial tangent
+                norm_q = 1.
+                ctrl_sign = np.sign(ctrl(dc_q_conv)) or 1.
+            else:
+                norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
             arc_length = an.initialInc*norm_q
             max_arc_length_inc = max(an.maxInc, arc_length)
 
-        if use_secant:
+        if control:
+            # psi^T dc = ds
+            ds = ctrl_sign*arc_length
+            if use_secant:
+                den = ctrl(dc_last)
+                dc_dir, dlbd_dir = dc_last, dlbd_last
+            else:
+                den = ctrl(dc_q_conv)
+                dc_dir, dlbd_dir = dc_q_conv, 1.
+            if den == 0:
+                warn('The controlled quantity does not change along the predictor! Analysis stopped',
+                     level=1, silent=silent)
+                break
+            dlbd = dlbd_dir*ds/den
+            dc = (ds/den)*dc_dir
+        elif use_secant:
             # secant predictor: the previous converged increment scaled to
             # the arc length
             factor = arc_length/np.sqrt(inner(dc_last, dlbd_last, dc_last,
@@ -448,12 +534,18 @@ def _solver_arc_length(an, method, silent=False):
                 iter_kT = 1
             dc_R = solve_kT(-R)
 
-            # linearized constraint
-            den = inner(dc, dlbd, dc_q, 1.)
-            g = 0.5*(inner(dc, dlbd, dc, dlbd) - arc_length**2)
             varlbd = None
-            if den != 0:
-                varlbd = -(g + inner(dc, dlbd, dc_R, 0.))/den
+            if control:
+                # psi^T (dc + dc_R + varlbd dc_q) = ds
+                den = ctrl(dc_q)
+                if den != 0:
+                    varlbd = (ds - ctrl(dc + dc_R))/den
+            else:
+                # linearized constraint
+                den = inner(dc, dlbd, dc_q, 1.)
+                g = 0.5*(inner(dc, dlbd, dc, dlbd) - arc_length**2)
+                if den != 0:
+                    varlbd = -(g + inner(dc, dlbd, dc_R, 0.))/den
             if method == 'crisfield':
                 u = dc + dc_R
                 a = inner(dc_q, 1., dc_q, 1.)
@@ -496,7 +588,8 @@ def _solver_arc_length(an, method, silent=False):
             dc = dc + eta*dc_corr
             dlbd = dlbd + eta*varlbd
 
-        if converged and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0:
+        if (converged and not control
+                and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0):
             # the increment points backwards, e.g. to the previous converged
             # point, which is also at the distance arc_length
             warn('Diverged - the step returned along the path already traced',

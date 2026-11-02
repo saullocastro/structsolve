@@ -35,6 +35,33 @@
   method it does not reduce the cuts and costs more evaluations on these
   problems.
 
+### Indirect displacement control
+
+- New `Analysis.NL_method = 'displacement_control'`, with the new
+  attributes `Analysis.control_vector`, the vector `psi`, and
+  `Analysis.control_scale`: the arc-length constraint is replaced by the
+  linear constraint `psi^T Dc/s_ref = Ds`, with `s_ref = control_scale`,
+  by default `|psi^T u_ref|`, the controlled quantity in the linear
+  solution for a load factor of 1, such that `Ds = Dlbd` in the linear
+  regime. The correction of the load factor is `dlbd = (s_ref Ds - psi^T
+  (Dc + dc_R))/(psi^T dc_q)`. `psi` a unit vector controls one degree of
+  freedom, e.g. the end shortening; a buckling mode controls its amplitude,
+  with `control_scale` when its linear response is null. It shares the
+  implementation of the arc-length methods, `arc_length._solver_arc_length`
+  with `method='displacement_control'`, new module
+  `structsolve.displacement_control`; `initialInc`, `minInc`, `maxInc` and
+  `maxArcLength` are in units of `s_ref`, the first step being
+  `initialInc`, and the line search, the secant predictor and the early
+  divergence check apply. The path is traced as long as the controlled
+  quantity increases along it.
+- New `tests/test_displacement_control.py`: on the von Mises truss loaded
+  through a soft spring at 1.5 times its limit load, with a snap-through in
+  the load and a snap-back in the displacement of the loaded point, the
+  control of the apex deflection traces the path of the Riks method to the
+  load factor 1 (14 steps, 32 evaluations of `calc_fint`, against 103 with
+  the Riks method at the same `initialInc = 0.05`); the control of the
+  loaded point misses the snap-back.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

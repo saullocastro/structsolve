@@ -19,6 +19,7 @@ from .newton_raphson import _check_convergence, _weights, _abs_matrix
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
+from .displacement_control import _solver_displacement_control
 
 
 class Analysis(object):
@@ -46,9 +47,23 @@ class Analysis(object):
                                   :func:`.newton_raphson._solver_NR`, or
                                   ``'arc_length_riks'`` and
                                   ``'arc_length_crisfield'`` for the arc-length
-                                  methods, see
+                                  methods, or ``'displacement_control'`` for
+                                  the indirect displacement control, see
                                   :func:`.arc_length._solver_arc_length`
-    ``line_search``               ``bool``, activates a safeguarding
+    ``control_vector``            ``array``, the vector `\boldsymbol{\psi}` of the
+                                  controlled quantity `\boldsymbol{\psi}^\top
+                                  \boldsymbol{c}` of
+                                  ``NL_method='displacement_control'``, e.g.
+                                  a unit vector that picks one degree of
+                                  freedom, or a buckling mode. Default is
+                                  ``None``
+    ``control_scale``             ``float``, the reference value of the
+                                  controlled quantity, which makes the step
+                                  dimensionless. Default is ``None``, i.e.
+                                  `|\boldsymbol{\psi}^\top \boldsymbol{u}_{ref}|`,
+                                  its value in the linear solution for a
+                                  load factor of 1
+    ``line_search``             ``bool``, activates a safeguarding
                                   line-search, for the Newton-Raphson method
                                   only, see
                                   :func:`.newton_raphson._NR_iterations`.
@@ -247,7 +262,8 @@ class Analysis(object):
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
             'arc_length_line_search', 'arc_length_predictor',
-            'early_divergence', 'modified_NR', 'compute_every_n',
+            'early_divergence', 'control_vector', 'control_scale',
+            'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
             'too_slow_TOL',
@@ -264,6 +280,8 @@ class Analysis(object):
         self.arc_length_line_search = False
         self.arc_length_predictor = 'tangent'
         self.early_divergence = False
+        self.control_vector = None
+        self.control_scale = None
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
@@ -331,7 +349,8 @@ class Analysis(object):
         ------
         ValueError
             When ``NLgeom=True`` and the ``NL_method`` attribute is not
-            ``'NR'``, ``'arc_length_riks'`` or ``'arc_length_crisfield'``.
+            ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'`` or
+            ``'displacement_control'``.
 
         Notes
         -----
@@ -373,6 +392,8 @@ class Analysis(object):
                 _solver_arc_length_riks(self, silent=silent)
             elif self.NL_method == 'arc_length_crisfield':
                 _solver_arc_length_crisfield(self, silent=silent)
+            elif self.NL_method == 'displacement_control':
+                _solver_displacement_control(self, silent=silent)
             else:
                 raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
 
