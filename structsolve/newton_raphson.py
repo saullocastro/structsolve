@@ -74,12 +74,13 @@ def _constraint_matrix(an):
 
 
 def _linear_solve(an, kC0, b):
-    r"""Linear solution of ``kC0 x = b`` with the constraints of
-    ``an.constraints``, see :func:`.static._factorize`, or with
-    :func:`.static.solve` without constraints"""
-    if an.constraints is None:
+    r"""Linear solution of ``kC0 x = b`` with ``an.linear_solver`` and the
+    constraints of ``an.constraints``, see :func:`.static._factorize`, or
+    with :func:`.static.solve` with ``'splu'`` and without constraints"""
+    if an.constraints is None and an.linear_solver == 'splu':
         return solve(kC0, b, silent=True)
-    return _factorize(kC0, constraints=_constraint_matrix(an))(b)
+    return _factorize(kC0, linear_solver=an.linear_solver,
+                      constraints=_constraint_matrix(an))(b)
 
 
 def _residual_projector(an, w):
@@ -369,17 +370,34 @@ def _converged_state(an, c, lbd, silent=False):
         matrix is singular.
 
     """
+    solve_kT = _factorize_state(an, c, lbd, silent=silent)
+    _record_inertia(an, solve_kT, silent=silent)
+    return solve_kT
+
+
+def _factorize_state(an, c, lbd, silent=False):
+    r"""Factorization of the tangent stiffness matrix at ``c`` and ``lbd``
+    with ``an.linear_solver`` and ``an.constraints``, see
+    :func:`.static._factorize`, ``None`` when it is singular"""
     try:
-        solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
-                              linear_solver=an.linear_solver,
-                              constraints=_constraint_matrix(an))
+        return _factorize(callbacks.calc_kT(an, c, lbd),
+                          linear_solver=an.linear_solver,
+                          constraints=_constraint_matrix(an))
     except RuntimeError:
         warn('Singular tangent stiffness matrix at the converged state',
              level=2, silent=silent)
+        return None
+
+
+def _record_inertia(an, solve_kT, silent=False):
+    r"""Append the inertia of the factorization ``solve_kT`` of a converged
+    state to ``an.num_negative_eigvals``, ``an.det_signs`` and
+    ``an.num_perturbed_pivots``, see :func:`._converged_state`"""
+    if solve_kT is None:
         an.num_negative_eigvals.append(None)
         an.det_signs.append(0)
         an.num_perturbed_pivots.append(None)
-        return None
+        return
     nneg = solve_kT.num_negative_eigvals
     an.num_negative_eigvals.append(nneg)
     an.det_signs.append(solve_kT.det_sign)
@@ -390,7 +408,46 @@ def _converged_state(an, c, lbd, silent=False):
     else:
         msg('Tangent stiffness matrix: %d negative eigenvalues, %d perturbed pivots'
             % (nneg, solve_kT.num_perturbed_pivots), level=2, silent=silent)
-    return solve_kT
+
+
+def _check_max_inertia_jump(an):
+    r"""Validate ``an.max_inertia_jump``, which requires ``an.inertia`` and
+    the counts of negative eigenvalues of ``an.linear_solver='pardiso'``"""
+    max_jump = an.max_inertia_jump
+    if max_jump is None:
+        return None
+    if not an.inertia or an.linear_solver != 'pardiso':
+        raise ValueError("Analysis.max_inertia_jump requires Analysis.inertia "
+                         "= True and Analysis.linear_solver = 'pardiso'")
+    if int(max_jump) != max_jump or max_jump < 1:
+        raise ValueError('Analysis.max_inertia_jump must be a positive '
+                         'integer')
+    return int(max_jump)
+
+
+def _inertia_jump(solve_last, solve_new, max_jump):
+    r"""Whether the number of negative eigenvalues changed by more than
+    ``max_jump`` between the factorizations ``solve_last`` and ``solve_new``
+    of two converged states, ``False`` when a count is not known"""
+    if max_jump is None or solve_last is None or solve_new is None:
+        return False
+    n0 = solve_last.num_negative_eigvals
+    n1 = solve_new.num_negative_eigvals
+    if n0 is None or n1 is None:
+        return False
+    return abs(n1 - n0) > max_jump
+
+
+def _restart_state(an, method):
+    r"""``an.restart_state`` validated for the solver ``method``, ``None``
+    when not given"""
+    state = an.restart_state
+    if state is None:
+        return None
+    if state.get('method') != method:
+        raise ValueError('Analysis.restart_state was saved by the method %r, '
+                         'not %r' % (state.get('method'), method))
+    return state
 
 
 def _stop(an, silent=False):
@@ -751,6 +808,7 @@ def _solver_NR(an, silent=False, initialInc=None):
                          "with NL_method='NR'")
     inc = min(initialInc, target)
     min_last_inc = max(an.minInc, 1.e-12)
+    max_jump = _check_max_inertia_jump(an)
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
@@ -768,8 +826,23 @@ def _solver_NR(an, silent=False, initialInc=None):
     c = np.zeros_like(dc_last)
     total_last = 0.
     step_cut = False
-
     step_num = 1
+
+    state = _restart_state(an, 'NR')
+    if state is not None:
+        c = np.array(state['c'], dtype=float)
+        total_last = state['lbd']
+        inc = min(state['inc'], target - total_last)
+        dc_last = np.array(state['dc_last'], dtype=float)
+        inc_last = state['inc_last']
+        q = state['q']
+        step_num = state['step_num']
+        msg('Restarting at load factor %1.5f' % total_last, level=1,
+            silent=silent)
+    # factorization of the last converged state, with max_inertia_jump
+    solve_last = None
+    if max_jump is not None:
+        solve_last = _factorize_state(an, c, total_last, silent=silent)
 
     while True:
         if total_last + inc >= target - min_last_inc:
@@ -787,6 +860,18 @@ def _solver_NR(an, silent=False, initialInc=None):
                 kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
                 w=w, K0_abs=K0_abs, proj=proj)
 
+        solve_new = None
+        if converged and an.inertia:
+            solve_new = _factorize_state(an, c + dc, total, silent=silent)
+            if (_inertia_jump(solve_last, solve_new, max_jump)
+                    and inc*INC_CUT_FACTOR >= an.minInc):
+                warn('The number of negative eigenvalues changed from %d to '
+                     '%d, by more than max_inertia_jump'
+                     % (solve_last.num_negative_eigvals,
+                        solve_new.num_negative_eigvals), level=2,
+                     silent=silent)
+                converged = False
+
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)
             # the -dR/dlbd of a step that failed is not kept
@@ -796,17 +881,21 @@ def _solver_NR(an, silent=False, initialInc=None):
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(total)
             if an.inertia:
-                _converged_state(an, c, total, silent=silent)
-            if total == target:
-                break
-            if _stop(an, silent):
-                break
+                _record_inertia(an, solve_new, silent=silent)
+                solve_last = solve_new
             dc_last = dc
             inc_last = inc
             if not step_cut:
                 inc = min(INC_GROWTH_FACTOR*inc, an.maxInc)
             step_cut = False
             step_num += 1
+            an.path_state = dict(method='NR', c=c.copy(), lbd=total_last,
+                                 inc=inc, dc_last=dc_last.copy(),
+                                 inc_last=inc_last, q=q, step_num=step_num)
+            if total == target:
+                break
+            if _stop(an, silent):
+                break
 
         else:
             inc *= INC_CUT_FACTOR

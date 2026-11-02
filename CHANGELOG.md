@@ -152,6 +152,90 @@
   `MAX_NUM_STEPS` or `minInc` stops it, for post-buckling paths whose load
   may exceed the reference load. New `tests/test_stopping.py`.
 
+### Critical points along the path
+
+- New `Analysis.max_inertia_jump`, default `None`: with `inertia=True` and
+  `linear_solver='pardiso'`, a converged increment whose number of negative
+  eigenvalues changed by more than this value is repeated with a smaller
+  increment, as a failed one, in all the non-linear solvers. With `1` the
+  eigenvalues cross zero one at a time. On the DOE09 cylinder (case 510)
+  the tangent predictor jumped from 0 to 4 negative eigenvalues in one
+  step at 4615 N, and the secant predictor reached 31-34 of them.
+- New `Analysis.branch_switching`, default `0`: with `inertia=True`, the
+  arc-length methods switch to the bifurcated branch at the first
+  `branch_switching` bifurcation points crossed. A crossing is detected by
+  the count of negative eigenvalues, or by the sign of the determinant with
+  `'splu'`. It is classified as a bifurcation when the load varies in the
+  same direction along the tangents before and after it. The next step
+  starts along the critical eigenvector, computed by a subspace iteration
+  with the factorization already available (`_critical_eigenvector`,
+  restricted to `Analysis.constraints`), and is corrected with the
+  spherical constraint. For the perturbation along the critical
+  eigenvector, see Wagner and Wriggers (1988). The new attribute
+  `Analysis.branch_points` records the indices of the switched states.
+  Tested on supercritical and subcritical symmetric bifurcations, whose
+  branches `lambda P0 = k + beta v^2` are traced to 1e-6, and on the von
+  Mises truss, whose limit points are not switched.
+- New `Analysis.arc_length_sign_rule`, default `'inner_product'` (the rule
+  of the previous versions), or `'determinant'`: with `inertia=True`, the
+  load factor increases while the determinant of the tangent stiffness
+  matrix has the sign of the one at the origin, and decreases otherwise.
+  The path then cannot turn back along a branch without crossing a
+  critical point. On the DOE09 cylinder the Crisfield run did exactly that
+  with the inner-product rule: it went round a loop of unstable branches
+  at about 4600 N and then went back along the fundamental path through
+  the origin into tension, all with an even number of negative
+  eigenvalues.
+- New tests in `tests/test_branch_switching.py`.
+
+### Generalized displacement control
+
+- New `NL_method='generalized_displacement_control'`, the method of Yang
+  and Shieh (AIAA Journal 28(12), 2110-2116, 1990), implemented in the
+  arc-length solver:
+  - the load increment is scaled by the square root of the generalized
+    stiffness parameter, whose sign reverses the load at the limit points;
+  - the corrections are orthogonal to the tangent of the previous step,
+    in the norm of `arc_length_weights`.
+- The step is a load factor and is never increased beyond `initialInc`.
+  Growing it as the arc length is grown made the von Mises truss jump
+  across its limit point, from a load factor of 0.63 to -0.62.
+- The equations were written from the description of the method, not
+  checked against the paper.
+- New module `structsolve.generalized_displacement_control` and new
+  `tests/test_generalized_displacement_control.py`.
+
+### Restart
+
+- After every converged increment, the new `Analysis.path_state` holds the
+  state from which the analysis can continue: the solution, the load
+  factor, the next increment and the directions of the predictors, as
+  arrays and numbers that can be pickled. Set `Analysis.restart_state` to
+  it to continue from that increment, e.g. with other options or in
+  another job. This works for the Newton-Raphson, arc-length and
+  displacement-control solvers.
+- The restarted path equals the uninterrupted one to round-off. New
+  `tests/test_restart.py`.
+
+### Cost of the factorizations
+
+- `newton_raphson._linear_solve`, used for the linear solution of the
+  arc-length scale and of the first predictors, now uses
+  `Analysis.linear_solver`. It always used SuperLU before: with
+  `'pardiso'` on the DOE09 cylinder (57000 DOF), that one-off SuperLU
+  factorization took 14.4 s.
+- `sparseutils.remove_null_cols` finds the null rows and columns from the
+  stored terms directly and skips the slicing when there are none. Its
+  time halved on a 57000-DOF matrix, from 0.14 to 0.07 s.
+- `static._is_symmetric` and the scaling of the matrix factorized by
+  PARDISO avoid intermediate sparse products. The overhead of `_factorize`
+  around the PARDISO factorization dropped from about 0.2 s to 0.15 s on
+  the same matrix. The solutions are unchanged to 4e-17.
+- On the cylinder, a profile on hpc12 put about 26 % of each tangent in
+  the preprocessing of `_factorize` and 19 % in the conversions to sparse
+  formats of the calling script. The element loop accounted for less than
+  1 %.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

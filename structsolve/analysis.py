@@ -21,6 +21,8 @@ from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
 from .displacement_control import _solver_displacement_control
+from .generalized_displacement_control import (
+    _solver_generalized_displacement_control)
 
 
 class Analysis(object):
@@ -49,7 +51,9 @@ class Analysis(object):
                                   ``'arc_length_riks'`` and
                                   ``'arc_length_crisfield'`` for the arc-length
                                   methods, or ``'displacement_control'`` for
-                                  the indirect displacement control, see
+                                  the indirect displacement control, or
+                                  ``'generalized_displacement_control'``,
+                                  see
                                   :func:`.arc_length._solver_arc_length`
     ``control_vector``            ``array``, the vector `\boldsymbol{\psi}` of the
                                   controlled quantity `\boldsymbol{\psi}^\top
@@ -81,6 +85,21 @@ class Analysis(object):
                                   previous converged increment scaled to the
                                   new arc length, see
                                   :func:`.arc_length._solver_arc_length`
+    ``arc_length_sign_rule``      ``str``, rule of the sign of the tangent
+                                  predictor of the arc-length methods,
+                                  ``'inner_product'`` (default), with the
+                                  previous increment, or ``'determinant'``,
+                                  the load reversed when the sign of the
+                                  determinant of the tangent stiffness matrix
+                                  changes, which requires ``inertia``, see
+                                  :func:`.arc_length._solver_arc_length`
+    ``branch_switching``          ``int``, number of bifurcation points at
+                                  which the arc-length methods switch to the
+                                  bifurcated branch, along the critical
+                                  eigenvector, which requires ``inertia``,
+                                  see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``0``
     ``arc_length_weights``        ``array``, non-negative weights of the
                                   degrees of freedom in the norm of the
                                   arc-length constraint, e.g. 1 for the
@@ -124,6 +143,12 @@ class Analysis(object):
                                   that limit points, bifurcations crossed and
                                   unstable branches are visible. Default is
                                   ``False``
+    ``max_inertia_jump``          ``int``, a converged increment whose number
+                                  of negative eigenvalues changed by more
+                                  than this value is repeated with a smaller
+                                  increment, which requires ``inertia`` and
+                                  ``linear_solver='pardiso'``. Default is
+                                  ``None``
     ``constraints``               ``array`` or sparse matrix `\boldsymbol{C}`,
                                   of shape ``(n, m)``, a 1-D array for one
                                   constraint: the linear constraints
@@ -149,6 +174,11 @@ class Analysis(object):
                                   beyond any load factor until another stop,
                                   e.g. ``stop_criterion`` or
                                   ``maxArcLength``. Default is ``1.``
+    ``restart_state``             ``dict``, the ``path_state`` of a previous
+                                  analysis with the same ``NL_method``, from
+                                  whose last converged increment the
+                                  non-linear analysis continues. Default is
+                                  ``None``
     ============================  =============================================
 
     ================   =================================================
@@ -263,6 +293,15 @@ class Analysis(object):
         pivots perturbed by PARDISO at each converged increment, which makes
         the count of negative eigenvalues uncertain when not zero; ``None``
         otherwise.
+    branch_points : list
+        With ``branch_switching``, the indices in ``increments`` of the
+        converged increments from which the path was switched to a
+        bifurcated branch.
+    path_state : dict or None
+        After each converged increment of a non-linear analysis, the state
+        from which it can be continued, see ``restart_state``: the solution,
+        the load factor, the next increment and the directions of the
+        predictors.
     last_analysis : str
         Type of the last analysis run, ``'static'`` after :meth:`.static`.
 
@@ -330,6 +369,8 @@ class Analysis(object):
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
             'constraints', 'stop_criterion', 'final_load_factor',
+            'arc_length_sign_rule', 'branch_switching', 'max_inertia_jump',
+            'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
@@ -356,6 +397,10 @@ class Analysis(object):
         self.constraints = None
         self.stop_criterion = None
         self.final_load_factor = 1.
+        self.arc_length_sign_rule = 'inner_product'
+        self.branch_switching = 0
+        self.max_inertia_jump = None
+        self.restart_state = None
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
@@ -383,6 +428,8 @@ class Analysis(object):
         self.num_negative_eigvals = None
         self.det_signs = None
         self.num_perturbed_pivots = None
+        self.branch_points = None
+        self.path_state = None
 
         # flag telling the last analysis
         self.last_analysis = ''
@@ -426,8 +473,9 @@ class Analysis(object):
         ------
         ValueError
             When ``NLgeom=True`` and the ``NL_method`` attribute is not
-            ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'`` or
-            ``'displacement_control'``.
+            ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'``,
+            ``'displacement_control'`` or
+            ``'generalized_displacement_control'``.
 
         Notes
         -----
@@ -462,6 +510,8 @@ class Analysis(object):
         self.num_negative_eigvals = []
         self.det_signs = []
         self.num_perturbed_pivots = []
+        self.branch_points = []
+        self.path_state = None
 
         if NLgeom:
             self.maxInc = max(self.initialInc, self.maxInc)
@@ -474,6 +524,8 @@ class Analysis(object):
                 _solver_arc_length_crisfield(self, silent=silent)
             elif self.NL_method == 'displacement_control':
                 _solver_displacement_control(self, silent=silent)
+            elif self.NL_method == 'generalized_displacement_control':
+                _solver_generalized_displacement_control(self, silent=silent)
             else:
                 raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
 
