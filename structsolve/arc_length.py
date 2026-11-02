@@ -369,9 +369,17 @@ def _solver_arc_length(an, method, silent=False):
       would defeat the scaling by `GSP_k`, which shortens the steps where
       the structure softens: with longer steps the iterations may converge
       beyond a limit point on another part of the path. ``an.maxArcLength``
-      bounds the sum of the `\Delta s`. The equations above are those implemented here,
-      they were not checked against [6]_. The check against the doubling
-      back below does not apply.
+      bounds the sum of the `\Delta s`. With ``an.arc_length_weights =
+      None``, `GSP_k`, the predictor and `\delta\lambda` are Eqs. (33),
+      (34) and (30) of [6]_, with `\delta c_q^{(0)} = \delta c_q^{(1)}` as
+      there. [6]_ multiplies the load increment by `-1` when `GSP_k < 0`,
+      its step 2d, which keeps the displacements going forward only if the
+      reversal is relative to the previous step, `s_k = s_{k-1} \,
+      \mathrm{sign}(GSP_k)` as here, since `GSP_k` is negative only at
+      the step after each limit point. The weights and the adaptation of
+      `\Delta s` are additions of this implementation: in [6]_ `\Delta s`
+      is the first load increment throughout. The check against the
+      doubling back below does not apply.
 
     With ``an.arc_length_line_search = True``, the whole correction
     `(\delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \delta\lambda)`
@@ -494,9 +502,22 @@ def _solver_arc_length(an, method, silent=False):
     times, after which the switch is abandoned and the path continues on
     the branch already traced. The index in ``an.increments`` of the state
     from which the path was switched is appended to ``an.branch_points``.
-    For the perturbation of the state along the critical eigenvector, see
-    Wagner and Wriggers [7]_; here it is the predictor of an arc-length
-    step from the first state beyond the critical point.
+    The detection by the count of negative pivots and the switch along the
+    critical eigenvector follow Wagner and Wriggers [7]_, whose
+    classification by the current stiffness parameter, zero at the limit
+    points and not at the bifurcations, their Eq. (22), is replaced here by
+    the direction of the load along the tangents. In [7]_ the critical
+    point is first located by bisection, the eigenvector is added to the
+    displacements of the last converged state, `\bar{\boldsymbol{v}} +
+    \xi \boldsymbol{\phi}/\|\boldsymbol{\phi}\|` with `|\xi| =
+    \|\bar{\boldsymbol{v}}\|/\tau` and `\tau` of the order of 100, Eqs.
+    (24) and (25), and an equilibrium state is then found by the arc-length
+    method, repeated with another `\tau`, up to about three times, when it
+    falls back on the primary branch. Here the critical point is not
+    located, the perturbation is the predictor of an arc-length step from
+    the first state beyond the critical point, with the length of the
+    arc-length steps instead of `|\xi|`, and the shorter steps of the
+    repeated attempts play the role of the other values of `\tau`.
 
     With ``an.restart_state``, the dictionary ``an.path_state`` saved after
     a converged step of an analysis with the same method, the analysis

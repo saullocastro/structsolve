@@ -170,8 +170,10 @@
   starts along the critical eigenvector, computed by a subspace iteration
   with the factorization already available (`_critical_eigenvector`,
   restricted to `Analysis.constraints`), and is corrected with the
-  spherical constraint. For the perturbation along the critical
-  eigenvector, see Wagner and Wriggers (1988). The new attribute
+  spherical constraint. The detection and the switch along the critical
+  eigenvector follow Wagner and Wriggers (Engineering Computations 5(2),
+  103-109, 1988), without their location of the critical point by
+  bisection. The new attribute
   `Analysis.branch_points` records the indices of the switched states.
   Tested on supercritical and subcritical symmetric bifurcations, whose
   branches `lambda P0 = k + beta v^2` are traced to 1e-6, and on the von
@@ -197,6 +199,9 @@
     stiffness parameter, whose sign reverses the load at the limit points;
   - the corrections are orthogonal to the tangent of the previous step,
     in the norm of `arc_length_weights`.
+  - With the default weights, these are Eqs. (30), (33) and (34) of the
+    paper. The load reverses relative to the previous step when the
+    parameter is negative (the paper's step 2d).
 - The step is a load factor and is never increased beyond `initialInc`.
   Growing it as the arc length is grown made the von Mises truss jump
   across its limit point, from a load factor of 0.63 to -0.62.

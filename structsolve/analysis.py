@@ -55,8 +55,9 @@ class Analysis(object):
                                   ``'generalized_displacement_control'``,
                                   see
                                   :func:`.arc_length._solver_arc_length`
-    ``control_vector``            ``array``, the vector `\boldsymbol{\psi}` of the
-                                  controlled quantity `\boldsymbol{\psi}^\top
+    ``control_vector``            ``array``, the vector
+                                  `\boldsymbol{\psi}` of the controlled
+                                  quantity `\boldsymbol{\psi}^\top
                                   \boldsymbol{c}` of
                                   ``NL_method='displacement_control'``, e.g.
                                   a unit vector that picks one degree of
@@ -65,10 +66,10 @@ class Analysis(object):
     ``control_scale``             ``float``, the reference value of the
                                   controlled quantity, which makes the step
                                   dimensionless. Default is ``None``, i.e.
-                                  `|\boldsymbol{\psi}^\top \boldsymbol{u}_{ref}|`,
-                                  its value in the linear solution for a
+                                  `|\boldsymbol{\psi}^\top
+                                  \boldsymbol{u}_{ref}|`, its value in the linear solution for a
                                   load factor of 1
-    ``line_search``             ``bool``, activates a safeguarding
+    ``line_search``               ``bool``, activates a safeguarding
                                   line-search, for the Newton-Raphson method
                                   only, see
                                   :func:`.newton_raphson._NR_iterations`.
@@ -107,7 +108,7 @@ class Analysis(object):
                                   or the rotations, see
                                   :func:`.arc_length._solver_arc_length`.
                                   Default is ``None``, all equal to 1
-    ``early_divergence``        ``bool``, stops a diverging step earlier,
+    ``early_divergence``          ``bool``, stops a diverging step earlier,
                                   such that its increment is cut before the
                                   iterations are spent, see
                                   :func:`.newton_raphson._check_divergence`.
