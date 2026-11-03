@@ -9,9 +9,9 @@ from structsolve import freq
 def test_freq_simple():
     """Test frequency analysis with known natural frequencies
 
-    For a diagonal system: [K]{u} + omega^2 [M]{u} = 0
-    K = diag(k1, k2, ...), M = diag(m1, m2, ...)
-    omega_i = sqrt(ki/mi)
+    The sparse solver of :func:`freq` on the diagonal ``K = diag(k1, k2,
+    ...)`` and ``M = I``, whose natural frequencies are ``omega_i =
+    sqrt(k_i/m_i)``, returns eigenvectors of the size of the model.
     """
     n = 10
     k_vals = np.arange(1, n + 1, dtype=float) * 100

@@ -13,9 +13,10 @@ from ritz import isotropic_plate, vecf, vecf_xi
 def test_lb_simple_eigenvalue():
     """Test linear buckling with a well-conditioned system
 
-    lb solves: [K] + lambda[KG] = 0
-    For K = diag(2,4,6,...) and KG = I, lambda_i = -K_ii
-    lb returns -1/eigvals from eigsh(A=KG, M=K), giving positive load factors.
+    The sparse solver of :func:`lb` returns at least the 5 load multipliers
+    requested and eigenvectors of the size of the model, for ``K =
+    diag(2, 4, 6, ...)`` and ``KG = I``, whose load multipliers of ``(K +
+    lambda KG) u = 0`` are ``lambda_i = -K_ii``.
     """
     n = 10
     k_diag = np.arange(2, 2 * n + 2, 2, dtype=float)
@@ -32,9 +33,8 @@ def test_lb_simple_eigenvalue():
 def test_lb_dense_solver():
     """Test lb with sparse_solver=False
 
-    lb solves [K] + lambda[KG] = 0, returning -1/eigvals.
-    For K=2I, KG=I: eigsh gives eigval=0.5, so lb returns -1/0.5 = -2.
-    The dense solver (eigh) with b=K gives eigvals with the same sign convention.
+    For ``K = 2 I`` and ``KG = I`` the load multipliers of ``(K + lambda KG)
+    u = 0`` are all -2, returned by the dense solver as by the sparse one.
     """
     n = 10
     K = csc_matrix(np.eye(n) * 2.0)
@@ -334,11 +334,21 @@ def test_lb_sparse_singular_K():
 
 
 def test_lb_plate_buckling_fsdt():
-    """Test plate buckling (FSDT) based on semi-analytical Ritz method.
+    r"""Test plate buckling (FSDT) based on semi-analytical Ritz method.
 
     Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.
     Compares the critical load with the classical solution ``4*pi**2*D/b**2``,
     with a relative tolerance of 2 %.
+
+    Notes
+    -----
+    The plate, `a = 0.3`, `b = 0.1` and `h = 0.003` m, of steel, `E = 200`
+    GPa and `\nu = 0.3`, has the deflection `w` null and the rotations free
+    at the four edges, simply supported, under the uniform compression
+    `N_{xx}`. The first-order shear deformation theory (FSDT) of the model
+    gives a slightly lower critical load than the classical plate theory of
+    the reference value, `N_{cr} = 4 \pi^2 D/b^2`, `D = E h^3/(12 (1 -
+    \nu^2))`, because of the transverse shear deformation.
     """
     from scipy.special import roots_legendre
 
@@ -442,7 +452,6 @@ def test_lb_plate_buckling_fsdt():
     Ncr_analytical = 4 * np.pi**2 * D / b**2
     Ncr_computed = eigvals[0] * abs(Nxxhat)
 
-    # FSDT gives slightly lower Ncr than CLPT due to shear deformation
     np.testing.assert_allclose(Ncr_computed, Ncr_analytical, rtol=0.02)
 
 
@@ -542,7 +551,7 @@ def test_lb_penalty_connections():
     residuals of 1 to 2 % and a lowest load multiplier 0.08 % too low,
     which a floor of the denominator of the relative residual, 1e-8 times
     the matrix-norm scale ``(||K||_F + |lambda| ||KG||_F) ||u||``, accepted;
-    they fail the verification, and the dense fallback is used
+    they fail the verification, and the dense fallback is used.
 
     The model of panels for Figure 7 (Section 3.2.2) of Stamatelos and
     Labeas (2023): a square plate, ``a = b = 0.5`` m, of 11 ``[0_3/90_3]s``
@@ -551,10 +560,12 @@ def test_lb_penalty_connections():
     and 12 x 4 (blades) terms, connected by penalty springs 100 times those
     of ``calc_kt_kr``, under a uniform compression of 1 N/m.
 
-    Reference: Stamatelos, D.G. and Labeas, G.N., Buckling analysis of
-    laminated stiffened plates with material anisotropy using the
-    Rayleigh-Ritz approach, Computation, 11(6), 110, 2023,
-    doi:10.3390/computation11060110.
+    References
+    ----------
+    .. [1] Stamatelos, D.G. and Labeas, G.N., Buckling analysis of laminated
+       stiffened plates with material anisotropy using the Rayleigh-Ritz
+       approach, Computation, 11(6), 110, 2023.
+       https://doi.org/10.3390/computation11060110
 
     """
     import warnings
