@@ -980,6 +980,17 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         x[used_cols] = xu[m:]
         return x
 
+    def unrefined(b):
+        # the solution of the factorization, without the check of its
+        # residual and GMRES, for the subspace iterations of the
+        # eigenvectors, which tolerate it
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
+        bu = np.concatenate((border(None, np.float64),
+                             np.asarray(b[used_cols], dtype=np.float64)))
+        x[used_cols] = precond(bu)[m:]
+        return x
+
+    solve_kT.unrefined = unrefined
     solve_kT.linear_solver = 'pardiso'
     solve_kT.num_constraints = m
     solve_kT.num_negative_eigvals = int(iparms[23]) - m

@@ -68,10 +68,18 @@ PIN_MAX_ITER = 20
 EIGVEC_MAX_SIZE = 64
 
 
-def _eigs_near_zero(solve_kT, size, p, max_iter=None):
+def _eigs_near_zero(solve_kT, size, p, max_iter=None, start=None):
     r"""The ``p`` eigenvalues of `\boldsymbol{K}_T` closest to zero and their
     eigenvectors, by the subspace iteration of :func:`._critical_eigenvector`,
-    with at most ``max_iter`` iterations, ``EIGVEC_MAX_ITER`` by default
+    with at most ``max_iter`` iterations, ``EIGVEC_MAX_ITER`` by default,
+    from the vectors ``start``, columns, completed by random vectors. With
+    ``'pardiso'`` the solutions of the factorization are used without the
+    check of their residual and GMRES, see :func:`.static._factorize`: the
+    tangent stiffness matrix near a critical point is almost singular, the
+    GMRES of its solutions took about one second each for the DOE09
+    cylinder (57000 degrees of freedom), against 0.03 s for those of the
+    factorization alone, and the subspace iteration converges to the
+    eigenvectors closest to zero without them.
 
     Returns
     -------
@@ -81,12 +89,17 @@ def _eigs_near_zero(solve_kT, size, p, max_iter=None):
         The eigenvectors, the columns, orthonormal.
 
     """
+    solve = getattr(solve_kT, 'unrefined', solve_kT)
     rng = np.random.default_rng(1)
-    Y = np.column_stack([solve_kT(x) for x in rng.standard_normal((p, size))])
+    X = rng.standard_normal((p, size))
+    if start is not None:
+        k = min(start.shape[1], p)
+        X[:k] = start[:, :k].T
+    Y = np.column_stack([solve(x) for x in X])
     theta_old = None
     for _ in range(EIGVEC_MAX_ITER if max_iter is None else max_iter):
         Q, _ = np.linalg.qr(Y)
-        Y = np.column_stack([solve_kT(q) for q in Q.T])
+        Y = np.column_stack([solve(q) for q in Q.T])
         H = Q.T @ Y
         theta, V = np.linalg.eigh(0.5*(H + H.T))
         if (theta_old is not None
@@ -136,8 +149,9 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
 
     """
     p = min(max(num_neg, 1) + max(-num_new, 0) + EIGVEC_NUM_GUARD, size)
+    vecs = None
     while True:
-        mus, vecs = _eigs_near_zero(solve_kT, size, p)
+        mus, vecs = _eigs_near_zero(solve_kT, size, p, start=vecs)
         p_max = min(max(EIGVEC_MAX_SIZE, p), size)
         if (mus < 0).sum() >= num_neg or p >= p_max:
             break
