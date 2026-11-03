@@ -351,8 +351,6 @@
 - The step is a load factor and is never increased beyond `initialInc`.
   Growing it as the arc length is grown made the von Mises truss jump
   across its limit point, from a load factor of 0.63 to -0.62.
-- The equations were written from the description of the method, not
-  checked against the paper.
 - New module `structsolve.generalized_displacement_control` and new
   `tests/test_generalized_displacement_control.py`.
 

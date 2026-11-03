@@ -126,7 +126,7 @@ class _FactorizationCache(object):
         try:
             self.entry = _PatternEntry(K, used_cols, C)
         except ValueError:
-            # duplicated terms summed: not cached
+            # duplicated terms of the constraints: not cached
             pass
         return self.entry
 
@@ -200,9 +200,10 @@ class _PatternEntry(object):
                              Cr.indices, Cr.indptr), shape=Cr.shape)
             tags = bmat([[None, Ct.T], [Ct, tags]], format='csr')
         A = csr_matrix(tags)
+        # sorted, for the transposed terms of the symmetry check
+        A.sort_indices()
         self.A_tags = A
         self.A_gather = _positions(A.data)
-        self.A_sorted = bool(A.has_sorted_indices)
         self.csc = None
         self.pardiso = None
 
@@ -225,8 +226,7 @@ class _PatternEntry(object):
         """The reduced and bordered matrix of ``K``, CSR"""
         A = csr_matrix((self._ext(K)[self.A_gather], self.A_tags.indices,
                         self.A_tags.indptr), shape=self.A_tags.shape)
-        if self.A_sorted:
-            A.has_sorted_indices = True
+        A.has_sorted_indices = True
         return A
 
     def reduced_csc(self, K):
@@ -257,15 +257,15 @@ class _PatternEntry(object):
                     and np.array_equal(At.indices, A.indices)):
                 tpos = _positions(At.data)
             else:
+                # the keys of the sorted terms increase
                 rows = np.repeat(np.arange(N, dtype=np.int64),
                                  np.diff(A.indptr))
                 cols = A.indices.astype(np.int64)
                 keys = rows*N + cols
-                tpos = None
-                if nnzA and np.all(np.diff(keys) > 0):
-                    tkeys = cols*N + rows
-                    pos = np.minimum(np.searchsorted(keys, tkeys), nnzA - 1)
-                    tpos = np.where(keys[pos] == tkeys, pos, nnzA)
+                tkeys = cols*N + rows
+                pos = np.minimum(np.searchsorted(keys, tkeys),
+                                 max(nnzA - 1, 0))
+                tpos = np.where(keys[pos] == tkeys, pos, nnzA)
             # positions of the diagonal, nnzA when absent
             dpos = _positions(Ad.diagonal())
             dpos[dpos < 0] = nnzA
@@ -283,8 +283,6 @@ class _PatternEntry(object):
     def is_symmetric(self, A):
         """:func:`_is_symmetric` of the reduced matrix ``A`` of this entry"""
         p = self.pardiso_data()
-        if p['tpos'] is None:
-            return _is_symmetric(A)
         a = A.data
         if a.size == 0:
             return True
@@ -312,10 +310,7 @@ def _positions(tags):
     """Positions, 0-based, given by the ``float`` ``tags``, 1-based, of the
     terms built by :class:`_PatternEntry`, ``-1`` for the tag 0 of a term
     that is not in the original matrix"""
-    pos = tags.astype(np.int64)
-    if not np.array_equal(pos, tags):
-        raise ValueError('_FactorizationCache: terms were summed')
-    return pos - 1
+    return tags.astype(np.int64) - 1
 
 
 def _reduced_constraints(C, used_cols):
