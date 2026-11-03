@@ -23,7 +23,8 @@ pypardiso importable, e.g. from the root of the repository::
     PYTHONPATH=... python benchmarks/simo1990_cylinder.py lb 12 12
     PYTHONPATH=... python benchmarks/simo1990_cylinder.py riks 0.1 12 12
     PYTHONPATH=... python benchmarks/simo1990_cylinder.py riks 0.5 12 12
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py perfect 12 12
+    PYTHONPATH=... python benchmarks/simo1990_cylinder.py perfect 8 8
+    PYTHONPATH=... python benchmarks/simo1990_cylinder.py perfect 12 12 10 pardiso
     PYTHONPATH=... python benchmarks/simo1990_cylinder.py plot
 
 The commands ``riks`` and ``perfect`` save ``simo1990_<case>_m<m>n<n>.npz``
@@ -539,7 +540,8 @@ def main(argv):
     elif cmd == 'perfect':
         m, n = int(argv[2]), int(argv[3])
         nbs = int(argv[4]) if len(argv) > 4 else 3
-        run_riks(0., m, n, branch_switching=nbs, silent=True)
+        kwargs = {'linear_solver': argv[5]} if len(argv) > 5 else {}
+        run_riks(0., m, n, branch_switching=nbs, silent=True, **kwargs)
     elif cmd == 'summary':
         summary()
     elif cmd == 'plot':

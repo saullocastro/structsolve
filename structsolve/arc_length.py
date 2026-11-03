@@ -127,7 +127,9 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
     values are negative, i.e. positive eigenvalues are closer to zero than
     some negative ones, e.g. of weakly stiff terms of a Ritz model, the
     size of the subspace is doubled and the iteration repeated, up to
-    ``EIGVEC_MAX_SIZE`` vectors. With ``an.constraints`` the factorization
+    ``EIGVEC_MAX_SIZE`` vectors. Without a count of negative eigenvalues
+    (``'splu'``), ``num_neg`` is 1 when the determinant is negative and 0
+    otherwise. With ``an.constraints`` the factorization
     is the bordered one, whose solutions satisfy the constraints, and the
     eigenpairs are those of `\boldsymbol{K}_T` restricted to them.
 
@@ -980,8 +982,12 @@ def _solver_arc_length(an, method, silent=False):
             # along the tangents before and after it, a limit point otherwise
             if s_tan == s_tan_prev:
                 nneg = solve_kT_conv.num_negative_eigvals
+                if nneg is None:
+                    # SuperLU: a negative determinant has at least one
+                    # negative eigenvalue
+                    nneg = 1 if solve_kT_conv.det_sign < 0 else 0
                 phi, mu = _critical_eigenvector(solve_kT_conv, c.shape[0],
-                                                nneg or 0, num_new)
+                                                nneg, num_new)
                 if phi.dot(c) < 0:
                     phi = -phi
                 msg('Bifurcation point crossed, critical eigenvalue %1.5e, '

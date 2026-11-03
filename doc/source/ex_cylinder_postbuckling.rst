@@ -149,19 +149,24 @@ is below `10^{-9}` of the reference load. The maximum and the average axial
 deflections are those of `u(0, y)` over 61 points along the loaded edge.
 
 The perfect cylinder runs with ``inertia = True`` and ``branch_switching =
-10``, ``initialInc = maxInc = 0.03``, ``linear_solver = 'splu'`` and the
-unknowns scaled to a unit diagonal of the linear stiffness matrix (the class
-``ScaledModel`` of the script, which changes only the coordinates of the
-Ritz vector). Without the scaling the critical eigenvector of
-:func:`.arc_length._critical_eigenvector` is not that of the bifurcation:
-its subspace of ``num_neg + 2`` vectors has the eigenvalues closest to zero
-in the Euclidean norm, those of weakly stiff in-plane Ritz terms, constant
-along the path (`1.5 \times 10^{-4}` and `1.8 \times 10^{-4}` with the
-scaling), and the switch converges back on the fundamental path. With
-``linear_solver = 'pardiso'`` the count of negative eigenvalues, with 18 to
-20 perturbed pivots, is late: the tangent stiffness matrix has a negative
-eigenvalue from the load factor 0.83 on (dense eigenvalues), PARDISO counts
-it from 0.90 on, where the eigenvalue is no longer close to zero.
+10``, ``initialInc = maxInc = 0.03`` and the unknowns scaled to a unit
+diagonal of the linear stiffness matrix (the class ``ScaledModel`` of the
+script, which changes only the coordinates of the Ritz vector), with
+``linear_solver = 'splu'`` (the sign of the determinant, ``perfect 8 8``)
+or ``'pardiso'`` (the number of negative eigenvalues, ``perfect 12 12 10
+pardiso``). This benchmark found two weaknesses of structsolve, fixed in
+0.10.0: the subspace of :func:`.arc_length._critical_eigenvector`, of
+``num_neg + 2`` vectors, held the eigenvalues closest to zero, those of
+weakly stiff in-plane Ritz terms, constant along the path (`1.5 \times
+10^{-4}` in the scaled unknowns), such that the eigenvector returned was not
+the critical one and the switch converged back on the fundamental path; it
+now grows until it holds the negative eigenvalues counted by the
+factorization (48 vectors with `m = n = 12`). And the count of negative
+eigenvalues of PARDISO, with 18 to 20 perturbed pivots of these dense
+tangent stiffness matrices, was late, from the load factor 0.90 on, where a
+dense eigenvalue analysis has the first negative eigenvalue from 0.83 on;
+a factorization with perturbed pivots is now repeated with ``iparm(24) =
+1``, without perturbed pivots, see :func:`.static._factorize`.
 
 Results
 -------
@@ -214,10 +219,13 @@ Case     m = n  Buckling load / `N_{cl}`  First limit load     `u_{max}`, `u_{av
 50 %     12     1.00415                   0.3902               0.01069, 0.00900            0.3234, 0.0177                 0.4546     91, 255
 50 %     14     1.00415                   0.3902               0.01069, 0.00900            0.3234, 0.0177                 0.4545     91, 568
 perfect  8      1.00472                   0.8273               0.01821, 0.01821            0.3273, 0.0208                 0.4383     174, 51
-perfect  12     1.00415                   none, 0.980 at 0.04  -                           -                              -          79, 223
+perfect  8 P    1.00472                   0.8273               0.01821, 0.01821            0.3273, 0.0208                 0.438      174, 56
+perfect  10 P   1.00416                   0.8270               0.01821, 0.01821            0.326, 0.0209                  0.438      181, 189
+perfect  12 P   1.00415                   0.8267               0.01821, 0.01821            0.326, 0.0209                  0.437      182, 429
 =======  =====  ========================  ===================  ==========================  =============================  =========  ====================
 
-The times are those of one process (``MKL_NUM_THREADS=1``) on a laptop
+``P``: ``linear_solver = 'pardiso'``, otherwise ``'splu'``, which gives the
+same perfect paths with `m = n = 10` and `12` (199 s and 553 s). The times are those of one process (``MKL_NUM_THREADS=1``) on a laptop
 shared with other jobs, mostly spent in the internal forces and tangent
 stiffness matrices of panels.
 
@@ -255,17 +263,19 @@ fundamental path has its first negative eigenvalue between the load
 factors 0.817 and 0.834 (dense eigenvalues, `m = n = 8`; the same for
 `m = n = 12`).
 
-With `m = n = 10` and `12` the switch fails: the weakly stiff in-plane Ritz
-terms mentioned above have scaled eigenvalues of `1.8 \times 10^{-5}` and
-`3.3 \times 10^{-6}`, closer to zero than the negative eigenvalue of the
-first step beyond the bifurcation, such that the critical eigenvector is
-again one of them; with `m = n = 10` the switch is abandoned, with `m = n =
-12` the sign of the determinant of SuperLU does not even change, and the
-path stays on the fundamental branch up to the load 0.980 at `u_{max} =
-0.04` with one negative eigenvalue. Tracing the perfect cylinder with
-`m = n \ge 10` would need a critical eigenvector that looks for the
-negative eigenvalues rather than for the eigenvalues closest to zero, or a
-correct count of PARDISO.
+With ``linear_solver = 'pardiso'`` the switch happens at the first
+negative eigenvalue for `m = n = 8, 10, 12`, at 0.8273, 0.8270 and 0.8267,
+and the bifurcated branch is traced down to the plateau, 0.327, 0.326 and
+0.326, and to `u_{max} = 0.04` (0.438, 0.438, 0.437), in 174 to 182
+increments: the perfect cylinder is converged in the Ritz terms as well.
+With ``'splu'`` the paths are the same, to the digits of the table, with
+`m = n = 10` and `12` as well (181 and 182 increments): the sign of the
+determinant changes at the load 0.827, and since 0.10.0 the eigenvector
+search, without a count of negative eigenvalues, looks for at least one
+negative eigenvalue when the determinant is negative, past the weakly stiff
+in-plane Ritz terms (scaled eigenvalues of `1.8 \times 10^{-5}` and `3.3
+\times 10^{-6}`); before, the switch failed with these terms and the path
+stayed on the fundamental branch up to the load 0.980 at `u_{max} = 0.04`.
 
 References
 ----------

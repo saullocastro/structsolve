@@ -334,7 +334,12 @@
   the factorization: positive eigenvalues closer to zero, e.g. of weakly
   stiff in-plane terms of a Ritz model (about 1.5e-4 along the whole path
   of the benchmark below, in the scaled unknowns), filled the `num_neg + 2`
-  vectors, and the eigenvector returned was not the critical one.
+  vectors, and the eigenvector returned was not the critical one. With
+  `'splu'`, without a count, at least one negative eigenvalue is looked
+  for when the determinant is negative: the perfect cylinder of the
+  benchmark below then switches with 10 x 10 and 12 x 12 terms as with
+  `'pardiso'` (0.8270 and 0.8267), where before the path stayed on the
+  fundamental branch.
 - New tests in `tests/test_branch_switching.py`.
 
 ### Generalized displacement control
@@ -464,11 +469,10 @@
   `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
   eigenvalues closest to zero, returned an eigenvector of weakly stiff
   in-plane Ritz terms instead of the negative eigenvalue, such that the
-  switch converged back on the fundamental path. The benchmark uses SuperLU
-  and unknowns scaled to a unit diagonal; with 10 x 10 terms or more the
-  switch still fails with SuperLU. Both fixed, see "Critical points along
-  the path" and "PARDISO with perturbed pivots": with
-  `linear_solver='pardiso'` the perfect cylinder now switches at the first
+  switch converged back on the fundamental path. Both fixed, see "Critical
+  points along the path" and "PARDISO with perturbed pivots": with
+  `linear_solver='pardiso'`, and with `'splu'` and the same paths, the
+  perfect cylinder (unknowns scaled to a unit diagonal) now switches at the first
   critical point, 0.8273, 0.8270 and 0.8267 with 8 x 8, 10 x 10 and 12 x 12
   terms, where a dense eigenvalue analysis of the tangent has its first
   negative eigenvalue, and follows the bifurcated branch down to the
