@@ -307,6 +307,32 @@
   constraints and `inertia`, and the Riks analysis beyond the limit point
   of the von Mises truss, bitwise those without the cache.
 
+### Benchmark: post-buckling of an axially compressed cylinder
+
+- New `benchmarks/simo1990_cylinder.py`, not run by pytest, and
+  documentation page `ex_cylinder_postbuckling`: the cylinder of Simo, Fox
+  and Rifai (1990), Section 6.3.4, Fig. 6.3.4, an `L/10 x 15 deg` section
+  of `panels` 0.15.0 (`cylshell_clpt_donnell`), traced with the Riks method
+  to twice the shortening of the linear buckling load. The imperfection is
+  added exactly for the Donnell kinematics, `fint(c + c0) - fint(c0) -
+  kG(N0) c`, checked against the gradient of the strain energy to 1.7e-10.
+  With 12 x 12 terms the limit loads are 0.727 (10 % imperfection) and
+  0.390 (50 %), against 0.715 and 0.411 read from the figure and 0.717 and
+  0.402 for Stanley's points, unchanged in the third digit from 10 x 10 to
+  14 x 14 terms; the snap-back, the plateau at 0.32 to 0.33 and the loads
+  up to the shortening 0.04 agree within 0.02. The perfect cylinder with
+  `branch_switching`, 8 x 8 terms, bifurcates at 0.827 (0.833 read) and
+  follows Fig. 6.3.4 (d) to the plateau.
+- Found with it, not changed: the count of negative eigenvalues of PARDISO
+  (`linear_solver='pardiso'`, about 20 perturbed pivots) found the first
+  critical point at the load 0.90 instead of 0.83, and
+  `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
+  eigenvalues closest to zero, returned an eigenvector of weakly stiff
+  in-plane Ritz terms instead of the negative eigenvalue, such that the
+  switch converged back on the fundamental path. The benchmark uses SuperLU
+  and unknowns scaled to a unit diagonal; with 10 x 10 terms or more the
+  switch still fails.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions
