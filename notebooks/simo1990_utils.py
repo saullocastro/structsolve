@@ -1,5 +1,10 @@
 r"""Post-buckling of an axially compressed cylinder, Simo, Fox and Rifai (1990)
 
+Utilities of the notebook ``simo1990_cylinder_postbuckling.ipynb`` and of
+the test ``tests/test_simo1990_cylinder.py``, and the command line used for
+the long convergence runs of the documentation page
+``doc/source/ex_cylinder_postbuckling.rst``.
+
 Benchmark of the Riks method of structsolve deep into the post-buckled
 regime: Section 6.3.4 of Simo, Fox and Rifai (1990), "Post-buckling analysis
 of a simply-supported cylinder; effect of initial imperfections", pp. 54-57,
@@ -13,23 +18,25 @@ model ``'cylshell_clpt_donnell'`` (panels 0.15.0) with Bardell's functions.
 
 Neither panels nor structsolve takes a geometric imperfection, which is
 added here exactly for the Donnell kinematics with the Ritz vector ``c0`` of
-the imperfection, see :class:`ImperfectShell` and the documentation page
-``doc/source/ex_cylinder_postbuckling.rst``.
+the imperfection, see :class:`ImperfectShell` and the documentation page.
 
-This script is not run by pytest. Run it with structsolve, panels 0.15.0 and
-pypardiso importable, e.g. from the root of the repository::
+panels (which requires structsolve>=0.10.0) is not a dependency of
+structsolve. Run the command line with structsolve, panels 0.15.0 and
+pypardiso importable, from the root of the repository::
 
-    PYTHONPATH=".;<panels>;<pypardiso>" python benchmarks/simo1990_cylinder.py verify
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py lb 12 12
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py riks 0.1 12 12
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py riks 0.5 12 12
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py perfect 8 8
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py perfect 12 12 10 pardiso
-    PYTHONPATH=... python benchmarks/simo1990_cylinder.py plot
+    PYTHONPATH=".;<panels>;<pypardiso>" python notebooks/simo1990_utils.py verify
+    PYTHONPATH=... python notebooks/simo1990_utils.py lb 12 12
+    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
+    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.5 12 12
+    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 8 8
+    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 12 12 10 pardiso
+    PYTHONPATH=... python notebooks/simo1990_utils.py summary
+    PYTHONPATH=... python notebooks/simo1990_utils.py plot
 
-The commands ``riks`` and ``perfect`` save ``simo1990_<case>_m<m>n<n>.npz``
-in the directory given by the environment variable ``SIMO1990_OUT``
-(default: the current directory), read by ``plot``, which writes
+(``;`` separates the paths on Windows, ``:`` elsewhere.) The commands
+``riks`` and ``perfect`` save ``simo1990_<case>_m<m>n<n>.npz`` in the
+directory given by the environment variable ``SIMO1990_OUT`` (default: the
+current directory), read by ``summary`` and ``plot``, which writes
 ``ex_cylinder_postbuckling.png``.
 
 """
@@ -297,7 +304,7 @@ def normalized_shell(m, n, nxy=None):
 
 
 def run_riks(xi=0.1, m=12, n=12, umax=0.04, branch_switching=0, silent=False,
-             scaled=None, **kwargs):
+             scaled=None, save=True, verbose=True, **kwargs):
     """Riks analysis until the maximum shortening ``umax``
 
     ``xi > 0``: imperfection of amplitude ``xi*t`` in the shape of the
@@ -305,11 +312,20 @@ def run_riks(xi=0.1, m=12, n=12, umax=0.04, branch_switching=0, silent=False,
     the perfect shell, with ``inertia`` (PARDISO) and ``branch_switching``.
     ``scaled`` (default: ``True`` for the perfect shell) solves in the
     scaled unknowns of :class:`ScaledModel`. ``kwargs`` are attributes of
-    the :class:`structsolve.Analysis`.
+    the :class:`structsolve.Analysis`. ``save`` writes the ``.npz`` file
+    read by :func:`summary` and :func:`plot`.
+
+    Returns a dictionary: the analysis ``an``, the shell ``s``, the linear
+    buckling load ``lbd_cr`` (``/N_CL``), the load factors ``lbds``, the
+    average and maximum axial deflections ``u`` (one row per increment), the
+    maximum deflections ``wmax``, the Ritz vectors ``cs`` (unscaled), the
+    indices ``branch_points`` of the switched states, the run time
+    ``elapsed`` and the maximum relative residual ``max_residual``.
 
     """
+    log = print if verbose else (lambda *args: None)
     s, lbd_cr, mode = normalized_shell(m, n)
-    print('m=%d n=%d linear buckling N/N_CL = %.5f' % (m, n, lbd_cr))
+    log('m=%d n=%d linear buckling N/N_CL = %.5f' % (m, n, lbd_cr))
     if xi > 0:
         c0 = imperfection(s, mode, xi)
         model = ImperfectShell(s, c0)
@@ -359,21 +375,49 @@ def run_riks(xi=0.1, m=12, n=12, umax=0.04, branch_switching=0, silent=False,
     u = np.array([edge_shortening(s, c) for c in cs])
     wmax = np.array([np.abs(s.uvw(c, gridx=21, gridy=21)[1]['w']).max()
                      for c in cs])
-    print('increments %d, time %.1f s, max relative residual %.1e'
-          % (len(lbds), elapsed, res))
+    log('increments %d, time %.1f s, max relative residual %.1e'
+        % (len(lbds), elapsed, res))
     ilim = np.argmax(np.diff(lbds) < 0) if np.any(np.diff(lbds) < 0) else -1
     if ilim >= 0:
-        print('first limit load %.4f at u_avg %.5f u_max %.5f'
-              % (lbds[ilim], u[ilim, 0], u[ilim, 1]))
-    case = 'xi%g' % xi if xi > 0 else 'perfect'
-    fname = os.path.join(OUT, 'simo1990_%s_m%dn%d.npz' % (case, m, n))
-    np.savez(fname, lbds=lbds, u=u, wmax=wmax, lbd_cr=lbd_cr, elapsed=elapsed,
-             cs=np.asarray(cs), c0=c0,
-             branch_points=np.asarray(an.branch_points, dtype=int),
-             num_negative_eigvals=np.asarray(
-                 [-1 if v is None else v for v in an.num_negative_eigvals]))
-    print('saved', fname)
-    return an, s, lbds, u
+        log('first limit load %.4f at u_avg %.5f u_max %.5f'
+            % (lbds[ilim], u[ilim, 0], u[ilim, 1]))
+    if save:
+        case = 'xi%g' % xi if xi > 0 else 'perfect'
+        fname = os.path.join(OUT, 'simo1990_%s_m%dn%d.npz' % (case, m, n))
+        np.savez(fname, lbds=lbds, u=u, wmax=wmax, lbd_cr=lbd_cr,
+                 elapsed=elapsed, cs=np.asarray(cs), c0=c0,
+                 branch_points=np.asarray(an.branch_points, dtype=int),
+                 num_negative_eigvals=np.asarray(
+                     [-1 if v is None else v for v in an.num_negative_eigvals]))
+        log('saved', fname)
+    return dict(an=an, s=s, lbd_cr=lbd_cr, lbds=lbds, u=u, wmax=wmax, cs=cs,
+                branch_points=np.asarray(an.branch_points, dtype=int),
+                elapsed=elapsed, max_residual=res)
+
+
+def path_values(lbds, u_max):
+    """Characteristic values of a computed path
+
+    ``lbds`` and ``u_max`` of the converged increments. Returns a dictionary
+    with the first limit (or bifurcation) load ``P_lim`` and ``u_lim`` at
+    it, the smallest deflection after it ``u_back`` at the load ``P_back``
+    (the snap-back), the minimum load after it ``P_min`` at ``u_min``, and
+    the loads ``P(0.02)``, ``P(0.025)``, ``P(0.03)``, ``P(0.035)`` and
+    ``P(0.04)`` at these maximum deflections on the post-buckled branch,
+    after the snap-back (``nan`` beyond the end of the path).
+
+    """
+    lbds = np.asarray(lbds)
+    u_max = np.asarray(u_max)
+    ilim = np.flatnonzero(np.diff(lbds) < 0)[0]
+    imin = ilim + np.argmin(lbds[ilim:])
+    iback = ilim + np.argmin(u_max[ilim:imin + 1])
+    out = dict(P_lim=lbds[ilim], u_lim=u_max[ilim], P_min=lbds[imin],
+               u_min=u_max[imin], u_back=u_max[iback], P_back=lbds[iback])
+    for ui in (0.02, 0.025, 0.03, 0.035, 0.04):
+        out['P(%g)' % ui] = (np.interp(ui, u_max[iback:], lbds[iback:])
+                             if u_max[-1] >= ui else np.nan)
+    return out
 
 
 def verify(m=8, n=8, xi=0.5, seed=1):

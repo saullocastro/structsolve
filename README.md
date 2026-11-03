@@ -24,6 +24,9 @@ Structural analysis solvers tailored for semi-analytical models
 Currently these solvers are pretty much compatible with my other repository
 [panels](https://github.com/saullocastro/panels).
 
+The folder `notebooks/` holds validation notebooks against results of the
+literature, run with models of `panels`, see `notebooks/README.md`.
+
 
 Citing this library
 ===================
