@@ -1,9 +1,7 @@
 r"""Post-buckling of an axially compressed cylinder, Simo, Fox and Rifai (1990)
 
-Utilities of the notebook ``simo1990_cylinder_postbuckling.ipynb`` and of
-the test ``tests/test_simo1990_cylinder.py``, and the command line used for
-the long convergence runs of the documentation page
-``doc/source/ex_cylinder_postbuckling.rst``.
+Model and analyses of the test ``tests/test_simo1990_cylinder.py``, and the
+command line used for the long convergence runs of this benchmark.
 
 Benchmark of the Riks method of structsolve deep into the post-buckled
 regime: Section 6.3.4 of Simo, Fox and Rifai (1990), "Post-buckling analysis
@@ -18,20 +16,20 @@ model ``'cylshell_clpt_donnell'`` (panels 0.15.0) with Bardell's functions.
 
 Neither panels nor structsolve takes a geometric imperfection, which is
 added here exactly for the Donnell kinematics with the Ritz vector ``c0`` of
-the imperfection, see :class:`ImperfectShell` and the documentation page.
+the imperfection, see :class:`ImperfectShell`.
 
 panels (which requires structsolve>=0.10.0) is not a dependency of
 structsolve. Run the command line with structsolve and panels 0.15.0
 importable, and oneMKL for 'pardiso', from the root of the repository::
 
-    PYTHONPATH=".;<panels>" python notebooks/simo1990_utils.py verify
-    PYTHONPATH=... python notebooks/simo1990_utils.py lb 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.5 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 8 8
-    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 12 12 10 pardiso
-    PYTHONPATH=... python notebooks/simo1990_utils.py summary
-    PYTHONPATH=... python notebooks/simo1990_utils.py plot
+    PYTHONPATH=".;<panels>" python tests/simo1990_utils.py verify
+    PYTHONPATH=... python tests/simo1990_utils.py lb 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py riks 0.1 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py riks 0.5 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py perfect 8 8
+    PYTHONPATH=... python tests/simo1990_utils.py perfect 12 12 10 pardiso
+    PYTHONPATH=... python tests/simo1990_utils.py summary
+    PYTHONPATH=... python tests/simo1990_utils.py plot
 
 (``;`` separates the paths on Windows, ``:`` elsewhere.) The commands
 ``riks`` and ``perfect`` save ``simo1990_<case>_m<m>n<n>.npz`` in the
@@ -194,7 +192,7 @@ class ImperfectShell(object):
     ``kT_imp(c) = kT(c + c0) - kG(N0)``
 
     with ``N0`` the membrane resultants, linear and non-linear parts, of the
-    state ``c0``, see the documentation page.
+    state ``c0``.
 
     """
     def __init__(self, s, c0):
