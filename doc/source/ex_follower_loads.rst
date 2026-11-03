@@ -29,6 +29,41 @@ vector of the current configuration:
 .. literalinclude:: ../../tests/test_follower_loads.py
     :pyobject: test_riks_quadratic_only_with_configuration_load_vector
 
+Inertia of unsymmetric tangent stiffness matrices
+-------------------------------------------------
+
+The symmetric indefinite factorization of PARDISO counts the negative
+eigenvalues of a symmetric tangent stiffness matrix (``Analysis.inertia``
+with ``linear_solver='pardiso'``); an unsymmetric one is factorized by
+SuperLU, whose LU factorization gives only the sign of the determinant,
+the parity of the number of negative real eigenvalues. With
+``Analysis.inertia_num_eigvals = k``, the number of negative real
+eigenvalues among the `k` of smallest magnitude is computed at every
+converged increment by shift-invert at `\sigma = 0` with ARPACK, with the
+LU factorization of the converged state, and recorded in
+``Analysis.num_negative_eigvals``, such that ``max_inertia_jump`` applies,
+see :func:`.newton_raphson._eigvals_inertia`.
+
+It detects the divergence points, where a real eigenvalue crosses zero,
+the static critical points of the path: limit points and bifurcations. It
+does not detect flutter: a complex pair `a \pm i b` whose real part
+becomes negative is not a static critical point, the tangent staying
+regular, and it is not counted (the number of such pairs among the `k` is
+logged), the kinetic criterion of :func:`.freq` being needed, see below.
+Negative real eigenvalues beyond the `k` of smallest magnitude are missed;
+an odd number of them is reported, since the parity of the count then
+differs from the sign of the determinant.
+
+A problem whose tangent is `\mathrm{diag}(k_0, \boldsymbol{S}
+(\boldsymbol{D}_0 + \lambda \boldsymbol{D}_1) \boldsymbol{S}^{-1})`, with
+two real eigenvalues crossing zero at `\lambda = 0.27` and `0.63` and a
+complex pair at `0.47`: the count goes 0, 1, 2, the sign of the
+determinant +1, -1, +1, and the count agrees with
+:func:`numpy.linalg.eigvals` at every increment:
+
+.. literalinclude:: ../../tests/test_inertia_unsymmetric.py
+    :pyobject: test_count_along_path
+
 Linear static analysis
 ----------------------
 

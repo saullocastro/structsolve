@@ -44,3 +44,23 @@ load:
 
 .. literalinclude:: ../../tests/test_load_factor_dependent_load.py
     :pyobject: test_constant_and_incremented_prescriptions
+
+Both together: the null-space method and ``constraint_values``
+--------------------------------------------------------------
+
+A displacement prescribed by the null-space method, through ``calc_fext``
+with ``c`` and ``lbd``, combines with the non-homogeneous constraints
+`\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}` of
+``Analysis.constraints`` and ``Analysis.constraint_values`` on the reduced
+problem: the solutions of `-\partial \boldsymbol{R}/\partial \lambda` have
+the border `\boldsymbol{d}`, those of the residual a null border. The
+springs above, with a load on the node 2 and either the node 1 or the
+relative displacement of the nodes 1 and 2 prescribed as well, against
+the problem with both prescriptions eliminated by hand, a single unknown
+found by :func:`scipy.optimize.brentq`, for all the non-linear solvers:
+
+.. literalinclude:: ../../tests/test_constraint_values_load_factor.py
+    :pyobject: reference
+
+.. literalinclude:: ../../tests/test_constraint_values_load_factor.py
+    :pyobject: test_path

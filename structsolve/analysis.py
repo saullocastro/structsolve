@@ -145,11 +145,22 @@ class Analysis(object):
                                   that limit points, bifurcations crossed and
                                   unstable branches are visible. Default is
                                   ``False``
+    ``inertia_num_eigvals``       ``int`` `k`, with ``inertia``: when the
+                                  count of PARDISO is not available, e.g.
+                                  for an unsymmetric tangent stiffness
+                                  matrix, the number of its negative real
+                                  eigenvalues among the `k` of smallest
+                                  magnitude, by shift-invert with ARPACK and
+                                  the LU factorization of the converged
+                                  state, see
+                                  :func:`.newton_raphson._eigvals_inertia`.
+                                  Default is ``None``, not computed
     ``max_inertia_jump``          ``int``, a converged increment whose number
                                   of negative eigenvalues changed by more
                                   than this value is repeated with a smaller
                                   increment, which requires ``inertia`` and
-                                  ``linear_solver='pardiso'``. Default is
+                                  ``linear_solver='pardiso'`` or
+                                  ``inertia_num_eigvals``. Default is
                                   ``None``
     ``constraints``               ``array`` or sparse matrix `\boldsymbol{C}`,
                                   of shape ``(n, m)``, a 1-D array for one
@@ -295,8 +306,10 @@ class Analysis(object):
         analysis, the number of negative eigenvalues of the tangent
         stiffness matrix on the degrees of freedom whose row or column is
         not null, ``None`` with ``linear_solver='splu'``, when PARDISO fell
-        back to SuperLU for an unsymmetric matrix, or for a singular matrix.
-        Empty otherwise.
+        back to SuperLU for an unsymmetric matrix, or for a singular matrix,
+        unless ``inertia_num_eigvals`` is given: the number of negative real
+        eigenvalues among the ``inertia_num_eigvals`` of smallest magnitude
+        is then recorded for the SuperLU factorizations. Empty otherwise.
     det_signs : list
         With ``inertia=True``, for each converged increment of a non-linear
         analysis, the sign of the determinant of the same matrix, ``1`` or
@@ -384,6 +397,7 @@ class Analysis(object):
             'constraints', 'constraint_values', 'stop_criterion',
             'final_load_factor',
             'arc_length_sign_rule', 'branch_switching', 'max_inertia_jump',
+            'inertia_num_eigvals',
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
@@ -415,6 +429,7 @@ class Analysis(object):
         self.arc_length_sign_rule = 'inner_product'
         self.branch_switching = 0
         self.max_inertia_jump = None
+        self.inertia_num_eigvals = None
         self.restart_state = None
         self.modified_NR = False
         self.compute_every_n = 6
