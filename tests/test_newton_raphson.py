@@ -63,6 +63,30 @@ def test_nr_line_search_does_not_spoil_quadratic_convergence():
     assert len(p.fint_calls) == len(p0.fint_calls)
 
 
+
+def test_nr_line_search_backtracks(capsys):
+    r"""Spring of force `c - c^2 + c^3/3`, whose stiffness `(1 - c)^2`
+    vanishes at `c = 1`, loaded slightly beyond the force there: the Newton
+    steps that overshoot past the inflection are shortened by the line
+    search, which reaches the load in one increment, whereas without it
+    the increment is cut"""
+    def spring(P):
+        return Problem(np.array([P]), lambda c: c - c**2 + c**3/3, np.eye(1),
+                       lambda c: np.diag((1 - c)**2 - 1))
+    p0 = spring(0.34)
+    p0.analysis(initialInc=1.)
+    p0.an.static(NLgeom=True, silent=True)
+    check_increments_and_equilibrium(p0)
+    assert len(p0.an.increments) > 1
+    p = spring(0.34)
+    p.analysis(initialInc=1., line_search=True)
+    p.an.static(NLgeom=True, silent=False)
+    assert 'Line-search: eta' in capsys.readouterr().out
+    check_increments_and_equilibrium(p)
+    assert p.an.increments == [1.]
+    assert len(p.fint_calls) < len(p0.fint_calls)
+
+
 def test_nr_incremental_hardening():
     p = hardening_springs()
     p.analysis(initialInc=0.1)

@@ -17,6 +17,8 @@ directly from the ``structsolve`` namespace:
 - :class:`.DenseFallbackWarning`: warning of :func:`.lb` and :func:`.freq`
   when a dense solver was used as a last resort
 
+and the criteria to stop a non-linear analysis in :mod:`structsolve.stopping`.
+
 """
 from __future__ import absolute_import
 

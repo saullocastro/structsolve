@@ -1,5 +1,525 @@
 # Changelog
 
+## 0.10.0 (2026-11-03)
+
+### Robustness of the arc-length corrections
+
+- New `Analysis.arc_length_line_search`, default `False`: the whole
+  correction `(dc, dlbd)` of the arc-length methods is multiplied by the
+  first factor of `arc_length.LINE_SEARCH_ETAS = (1., 0.5, 0.25)` that
+  decreases the norm of the residual of the convergence criterion, or by
+  the factor of the smallest norm when none does; the internal force vector
+  of the accepted point is reused, such that a full correction costs no
+  additional evaluation. `Analysis.line_search` still applies to
+  Newton-Raphson only.
+- New `Analysis.early_divergence`, default `False`, for Newton-Raphson and
+  the arc-length methods: a step is stopped, and its increment cut, as soon
+  as its relative residual exceeds `EARLY_DIVERGENCE_MAX_RREL = 1e3`, or,
+  after `EARLY_DIVERGENCE_NUM_ITER = 3` iterations, its residual norm
+  exceeds `EARLY_DIVERGENCE_FACTOR = 10` times its minimum in the step,
+  instead of waiting for `NUM_ITER_BEFORE_DIVERGENCE_CHECK = 5` iterations
+  and `DIVERGENCE_FACTOR = 1e3` times the first residual. New argument
+  `Rrel` of `newton_raphson._check_divergence`. These are the criteria of
+  the Riks analyses of a tow-steered cylinder for the DCSE website.
+- New `tests/test_arc_length_robustness.py`. On the von Mises truss at 1.5
+  times its limit load with a spring `ks = 1` and `initialInc = 0.6`, the
+  line search avoids the step cut of the Riks method (7 instead of 10
+  steps, 49 instead of 56 evaluations of `calc_fint`); with Crisfield's
+  method it does not reduce the cuts and costs more evaluations on these
+  problems.
+
+### Indirect displacement control
+
+- New `Analysis.NL_method = 'displacement_control'`, with the new
+  attributes `Analysis.control_vector`, the vector `psi`, and
+  `Analysis.control_scale`: the arc-length constraint is replaced by the
+  linear constraint `psi^T Dc/s_ref = Ds`, with `s_ref = control_scale`,
+  by default `|psi^T u_ref|`, the controlled quantity in the linear
+  solution for a load factor of 1, such that `Ds = Dlbd` in the linear
+  regime. The correction of the load factor is `dlbd = (s_ref Ds - psi^T
+  (Dc + dc_R))/(psi^T dc_q)`. `psi` a unit vector controls one degree of
+  freedom, e.g. the end shortening; a buckling mode controls its amplitude,
+  with `control_scale` when its linear response is null. It shares the
+  implementation of the arc-length methods, `arc_length._solver_arc_length`
+  with `method='displacement_control'`, new module
+  `structsolve.displacement_control`; `initialInc`, `minInc`, `maxInc` and
+  `maxArcLength` are in units of `s_ref`, the first step being
+  `initialInc`, and the line search and the early divergence check
+  apply. The path is traced as long as the controlled
+  quantity increases along it.
+- New `tests/test_displacement_control.py`: on the von Mises truss loaded
+  through a soft spring at 1.5 times its limit load, with a snap-through in
+  the load and a snap-back in the displacement of the loaded point, the
+  control of the apex deflection traces the path of the Riks method to the
+  load factor 1 (14 steps, 32 evaluations of `calc_fint`, against 103 with
+  the Riks method at the same `initialInc = 0.05`); the control of the
+  loaded point misses the snap-back.
+
+### Weights of the degrees of freedom in the arc-length norm
+
+- New `Analysis.arc_length_weights`, default `None` (all 1): non-negative
+  weights `w` of the degrees of freedom in the products of displacements
+  of the arc-length constraint, `a^T diag(w) b`, also in the scale
+  `u_ref^T diag(w) u_ref`, e.g. 1 for the translations and 0 for their
+  derivatives or the rotations when the unknowns mix them. With Crisfield's
+  convergence criterion, the analysis is then independent of the units of
+  the degrees of freedom of null weight (new
+  `tests/test_arc_length_weights.py`).
+
+### Stability along the path: inertia of the tangent stiffness matrix
+
+- New `Analysis.linear_solver`, `'splu'` (default) or `'pardiso'`, the
+  factorization of the tangent stiffness matrix of the non-linear solvers,
+  argument `linear_solver` of `static._factorize`. `'pardiso'` needs the
+  shared library `mkl_rt` of Intel oneMKL (new optional dependency
+  `structsolve[pardiso]`, the package `mkl`), called through the new
+  module `structsolve.pardiso`, see below: the
+  reduced matrix is scaled to a unit diagonal and its upper triangle
+  factorized as real symmetric indefinite (`mtype=-2`); every solution is
+  checked against its relative residual and, above `PARDISO_REFINE_TOL =
+  1e-9`, improved by GMRES with the factorization as the preconditioner, a
+  `RuntimeWarning` being issued above `PARDISO_WARN_TOL = 1e-6`. An
+  unsymmetric matrix, e.g. with the load stiffness of a follower load, is
+  factorized by `'splu'` instead, with a `RuntimeWarning`.
+- The callable returned by `static._factorize` has the attributes
+  `linear_solver`, `det_sign`, the sign of the determinant, from the
+  diagonal of `U` and the permutations of SuperLU, `num_negative_eigvals`,
+  the number of negative pivots of PARDISO (Sylvester's law of inertia),
+  `None` with SuperLU, and `num_perturbed_pivots`, which make the count
+  uncertain.
+- New `Analysis.inertia`, default `False`: the tangent stiffness matrix is
+  factorized at every converged increment of the Newton-Raphson, arc-length
+  and displacement control solvers, the factorization being reused by the
+  next step of the arc-length solvers, and `Analysis.num_negative_eigvals`,
+  `Analysis.det_signs` and `Analysis.num_perturbed_pivots` record, per
+  increment, its number of negative eigenvalues, the sign of its
+  determinant and the number of perturbed pivots. New
+  `newton_raphson._converged_state`.
+- New `tests/test_inertia.py`: the count and the sign against dense
+  eigenvalues and determinants, with null rows and a diagonal over 6
+  orders of magnitude, and, along the snap-through of the von Mises truss,
+  one negative eigenvalue exactly between the two limit points of the load;
+  the same path with and without `inertia`. The tests of `'pardiso'` are
+  skipped without oneMKL.
+- New `Analysis.inertia_num_eigvals`, default `None`: with `inertia=True`,
+  the number of negative real eigenvalues of a tangent stiffness matrix
+  factorized by SuperLU, e.g. unsymmetric under a follower load, where the
+  LU gives only the sign of the determinant, i.e. the parity of that
+  number. The `k = inertia_num_eigvals` eigenvalues of smallest magnitude
+  of the reduced tangent scaled by `S = |diag(K0)|^(-1/2)`, `K0` the linear
+  stiffness matrix, fixed along the path (`K_T v = mu S^-2 v`, a kinetic
+  criterion with a lumped stiffness-proportional mass, independent of the
+  units of the unknowns; new `newton_raphson._inertia_scaling`), on the
+  space of the constraints, are computed at
+  every converged increment by shift-invert at `sigma = 0` with ARPACK
+  (`scipy.sparse.linalg.eigs` on the operator of the forward and backward
+  substitutions of the LU of the converged state, no new factorization),
+  new `static._smallest_eigvals` and `solve_kT.smallest_eigvals(k, s)` of the
+  SuperLU factorizations, and those that are real (`|Im| <=
+  INERTIA_REAL_RTOL = 1e-8` times the modulus) and negative are recorded in
+  `Analysis.num_negative_eigvals`, so that `max_inertia_jump` and the
+  detection of the crossings of `branch_switching` use them; the exact
+  count of PARDISO is kept for symmetric matrices. It detects the
+  divergence points, a real eigenvalue crossing zero; it does not detect
+  flutter, a complex pair crossing the imaginary axis being no static
+  critical point (their number among the `k` is logged). Negative real
+  eigenvalues beyond the `k` are missed, and an odd number of them is
+  reported, since the parity then differs from the sign of the
+  determinant. New `newton_raphson._eigvals_inertia`; `max_inertia_jump`
+  now requires `linear_solver='pardiso'` or `inertia_num_eigvals`.
+  Without the scaling, in the unknowns of a Ritz model, the eigenvalues
+  of smallest magnitude are those of its high-order terms: on the
+  cantilever cylinder of Schweizerhof and Ramm (1984) under follower
+  pressure in panels (Sanders, 14 x 8 terms, 260 unknowns), the negative
+  eigenvalue past the bifurcation was the 130th by magnitude and the count
+  of 20 missed it; with the scaling it is found with `k = 20`, at the
+  increment where the determinant changes sign. With the finite elements of
+  bfsccylinder the count goes from 0 to 1 at the limit point of that shell.
+- New `tests/test_inertia_unsymmetric.py`: the eigenvalues of ARPACK
+  against `numpy.linalg.eigvals`, with null rows and with constraints
+  (`Z^T K Z`), also scaled (`S K S`); the counts of the same problem with
+  its unknowns scaled from 1e-3 to 1, as a Ritz model, unchanged; along
+  the path of a non-normal unsymmetric tangent, with a positive diagonal,
+  whose
+  two real eigenvalues cross zero at `lbd = 0.27` and `0.63` and a complex
+  pair at `0.47`, the count goes 0, 1, 2 with Newton-Raphson, Riks and
+  Crisfield, as the dense eigenvalues, while the sign of the determinant
+  returns to +1; `max_inertia_jump = 1` separates two crossings at `0.25`
+  and `0.27`; the parity warning; on the symmetric von Mises truss the
+  count of SuperLU equals the inertia. Cost on hpc12 (8 threads), a grid
+  of 40000 hardening springs under a follower load with an unsymmetric
+  load stiffness: the ARPACK count took 1.1 s with `k = 6` and 2.8 s with
+  `k = 20` per converged increment, against 0.23 s for the SuperLU
+  factorization, its 20 smallest eigenvalues being clustered in [10.04,
+  12.39]; the Newton-Raphson analysis took 2.2 and 2.8 s per increment instead of
+  1.1 s, the Riks analysis 2.2 and 2.9 s instead of 1.1 s.
+
+### Linear constraints of the solution
+
+- New `Analysis.constraints`, default `None`: the matrix `C` of shape
+  `(n, m)`, a 1-D array for one constraint, of the linear constraints
+  `C^T c = 0`, e.g. an inertia relief or multipoint constraints, in the
+  linear static analysis and in the Newton-Raphson, arc-length and
+  displacement control solvers. Every factorization of the stiffness
+  matrices is bordered, `[[0, C^T], [C, K]]`, the border first, new
+  argument `constraints` of `static._factorize`, with both linear solvers,
+  such that every increment satisfies the constraints and Newton-Raphson
+  keeps its quadratic convergence. The rows of the null rows and columns of
+  the stiffness matrix are removed from `C`, and the constraints left
+  without a non-zero term are dropped. The convergence criteria and the
+  line searches measure the residual without the reactions of the
+  constraints, its projection orthogonal to the columns of `C` in the
+  inner product of the criterion, new `newton_raphson._residual_projector`.
+  The inertia, `Analysis.inertia`, is that of the tangent on the space of
+  the constraints: the number of negative pivots of PARDISO minus `m`, and
+  the sign of the determinant times `(-1)**m` (Gould 1985).
+- New `tests/test_constraints.py`: a multipoint constraint against the
+  elimination of the constraint, with its reaction; the inertia relief of a
+  chain of hardening springs without support under a self-equilibrated
+  load, whose stiffness matrix is singular without the constraint; the
+  quadratic convergence; the bordered factorization against the projected
+  tangent `Z^T K Z`.
+- New `Analysis.constraint_values`, default `None` (all null): the vector
+  `d` of shape `(m,)` of the non-homogeneous constraints `C^T c = lbd d`
+  along the non-linear path and `C^T c = d` in the linear static analysis,
+  e.g. a displacement or a rotation prescribed in proportion to the load
+  factor, with or without external load. `solve_kT` of `static._factorize`
+  has the new optional argument `d`, the right-hand side of the border,
+  `[[0, C^T], [C, K]] [mu; x] = [d; b]`. Since the constraints are linear
+  in `(c, lbd)`, the solutions of the load vector, `dc_q`, the linear
+  solution `u_ref` of the arc-length scale and the first Newton-Raphson
+  predictor have the border `d`, and those of the residual a null border:
+  every predictor (tangent, displacement control, generalized
+  displacement control, the jump to `final_load_factor`, the restart) and
+  every correction satisfy `C^T Dc = Dlbd d`, while the eigenvector
+  predictor of the branch switching, at constant load, keeps a null
+  border. Under a prescribed displacement alone, `fext = 0`, `u_ref` is not
+  null and the reactions of the constraints, in the internal force vector,
+  are the reference of the convergence criteria, both `'crisfield'` and
+  `'relative'`. A constraint dropped with the null rows and columns must
+  have a null value, otherwise `ValueError`; the values require
+  `constraints`, one finite value per constraint. New
+  `newton_raphson._constraint_values`.
+- New `tests/test_constraint_values.py`: the bordered solutions; the
+  linear chain of 5 springs with a prescribed end displacement, `u_i =
+  delta i/n` and the reaction `k delta/n`, then with a load; the hardening
+  springs driven only by a prescribed end displacement with each solver
+  and both linear solvers, against the dense solution of the free degrees
+  of freedom at every increment, and with a load and a prescribed relative
+  displacement with both convergence criteria; modified Newton-Raphson;
+  the branch switching of a column under a prescribed axial displacement,
+  against its bifurcated branch `v**2 = (EA lbd delta - k)/(EA/2 + beta)`;
+  the restart; null values bitwise the homogeneous constraints; the
+  validation.
+- New `tests/test_constraint_values_load_factor.py`: `constraint_values`
+  together with a `calc_fext` that depends on the load factor, the
+  springs of `tests/test_load_factor_dependent_load.py` whose node 3 is
+  prescribed by the null-space method, `x3 = 1.5 lbd`, under a load `80
+  lbd` on the node 2, with the node 1, `x1 = -0.5 lbd`, or the relative
+  displacement `x2 - x1 = -0.5 lbd` prescribed by the constraint: every
+  increment of Newton-Raphson, Riks, Crisfield, displacement control and
+  generalized displacement control against the problem with both
+  prescriptions eliminated by hand (one unknown, `brentq`) to `1e-8`, with
+  `'pardiso'` and modified Newton-Raphson; no change of the solvers was
+  needed.
+
+### End of the non-linear analyses
+
+- New `Analysis.stop_criterion`, default `None`: a callable
+  `stop_criterion(an)` called after every converged increment of the
+  Newton-Raphson, arc-length and displacement control solvers, with its
+  load factor, solution and inertia already recorded; the analysis stops
+  when it returns `True`. New module `structsolve.stopping` with
+  `value_reached(func, value)`, e.g. a displacement measure.
+- New `Analysis.final_load_factor`, default `1.`: the load factor at which
+  the non-linear analyses finish, exactly; with the arc-length and
+  displacement control solvers it may be `None`, the path being then
+  traced beyond any load factor until `stop_criterion`, `maxArcLength`,
+  `MAX_NUM_STEPS` or `minInc` stops it, for post-buckling paths whose load
+  may exceed the reference load. New `tests/test_stopping.py`.
+
+### Critical points along the path
+
+- New `Analysis.max_inertia_jump`, default `None`: with `inertia=True` and
+  `linear_solver='pardiso'`, a converged increment whose number of negative
+  eigenvalues changed by more than this value is repeated with a smaller
+  increment, as a failed one, in all the non-linear solvers. With `1` the
+  eigenvalues cross zero one at a time. On the DOE09 cylinder (case 510)
+  the tangent predictor jumped from 0 to 4 negative eigenvalues in one
+  step at 4615 N, and a secant predictor (the previous increment scaled
+  to the arc length), tried and not kept, reached 31-34 of them.
+- New `Analysis.branch_switching`, default `0`: with `inertia=True`, the
+  arc-length methods switch to the bifurcated branch at the first
+  `branch_switching` bifurcation points crossed. A crossing is detected by
+  the count of negative eigenvalues, or by the sign of the determinant with
+  `'splu'`. It is classified as a bifurcation when the load varies in the
+  same direction along the tangents before and after it. The next step
+  starts along the critical eigenvector, computed by a subspace iteration
+  with the factorization already available (`_critical_eigenvector`,
+  restricted to `Analysis.constraints`), and is corrected with the
+  spherical constraint. The detection and the switch along the critical
+  eigenvector follow Wagner and Wriggers (Engineering Computations 5(2),
+  103-109, 1988), without their location of the critical point by
+  bisection. The new attribute
+  `Analysis.branch_points` records the indices of the switched states.
+  Tested on supercritical and subcritical symmetric bifurcations, whose
+  branches `lambda P0 = k + beta v^2` are traced to 1e-6, and on the von
+  Mises truss, whose limit points are not switched.
+- `Analysis.branch_switching` also with
+  `NL_method='displacement_control'` and
+  `'generalized_displacement_control'`: the switching step is the one of
+  the arc-length methods, along the critical eigenvector, corrected with
+  the spherical constraint, whose radius is the length of the last
+  increment in the arc-length norm times the growth of the step length
+  since then (the arc length of the Riks and Crisfield methods). The next
+  step starts along the tangent in the direction of the switching
+  increment: the displacement control chooses the sign of its step
+  accordingly, the generalized displacement control restarts its stiffness
+  parameter from the current tangent, `GSP = <dq1, dq1>/<dq, dq>`, with the
+  corrections orthogonal to it, as at its first step. The symmetric
+  bifurcations of the tests are switched and their branches traced to
+  1e-6 with both methods, for the steps 0.07, 0.13 and 0.17 and the rising
+  and falling branches. On the DOE09 cylinder (80 increments) the
+  generalized displacement control with `branch_switching=1` switched at
+  4533.3 N, where the count fell from 4 to 2, and unloaded on the
+  bifurcated branch to 4432.5 N with 1 negative eigenvalue (456 s), where
+  without switching it rose again to 4504.2 N with 4.
+- `Analysis.branch_switching` also where the number of negative eigenvalues
+  decreases, e.g. a column unstable at the origin that the axial tension
+  stabilizes, as in the algorithm of Wagner and Wriggers (p. 106, step
+  (c): the number of negative diagonal elements changes); the eigenvector
+  is then that of the smallest positive eigenvalues, the first that became
+  positive. With `'splu'` the change of the sign of the determinant was
+  already detected in both directions, with `'pardiso'` only the
+  increases were.
+- Tried on the DOE09 cylinder and not kept: a sign rule of the tangent
+  predictor by the determinant of the tangent stiffness matrix, and the
+  pinning of the amplitude of the critical eigenvector at a bifurcation
+  point orthogonal to the load, where the run with `max_inertia_jump=1`
+  stalls at 4526.7 N.
+- `_critical_eigenvector` doubles its subspace, up to `EIGVEC_MAX_SIZE =
+  64` vectors, until it holds the `num_neg` negative eigenvalues counted by
+  the factorization: positive eigenvalues closer to zero, e.g. of weakly
+  stiff in-plane terms of a Ritz model (about 1.5e-4 along the whole path
+  of the benchmark below, in the scaled unknowns), filled the `num_neg + 2`
+  vectors, and the eigenvector returned was not the critical one. With
+  `'splu'`, without a count, at least one negative eigenvalue is looked
+  for when the determinant is negative: the perfect cylinder of the
+  benchmark below then switches with 10 x 10 and 12 x 12 terms as with
+  `'pardiso'` (0.8270 and 0.8267), where before the path stayed on the
+  fundamental branch.
+- New tests in `tests/test_branch_switching.py`.
+
+### Generalized displacement control
+
+- New `NL_method='generalized_displacement_control'`, the method of Yang
+  and Shieh (AIAA Journal 28(12), 2110-2116, 1990), implemented in the
+  arc-length solver:
+  - the load increment is scaled by the square root of the generalized
+    stiffness parameter, whose sign reverses the load at the limit points;
+  - the corrections are orthogonal to the tangent of the previous step,
+    in the norm of `arc_length_weights`.
+  - With the default weights, these are Eqs. (30), (33) and (34) of the
+    paper. The load reverses relative to the previous step when the
+    parameter is negative (the paper's step 2d).
+- The step is a load factor and is never increased beyond `initialInc`.
+  Growing it as the arc length is grown made the von Mises truss jump
+  across its limit point, from a load factor of 0.63 to -0.62.
+- New module `structsolve.generalized_displacement_control` and new
+  `tests/test_generalized_displacement_control.py`.
+
+### Restart
+
+- After every converged increment, the new `Analysis.path_state` holds the
+  state from which the analysis can continue: the solution, the load
+  factor, the next increment and the directions of the predictors, as
+  arrays and numbers that can be pickled. Set `Analysis.restart_state` to
+  it to continue from that increment, e.g. with other options or in
+  another job. This works for the Newton-Raphson, arc-length and
+  displacement-control solvers.
+- The restarted path equals the uninterrupted one to round-off. New
+  `tests/test_restart.py`.
+
+### Cost of the factorizations
+
+- `newton_raphson._linear_solve`, used for the linear solution of the
+  arc-length scale and of the first predictors, now uses
+  `Analysis.linear_solver`. It always used SuperLU before: with
+  `'pardiso'` on the DOE09 cylinder (57000 DOF), that one-off SuperLU
+  factorization took 14.4 s.
+- `sparseutils.remove_null_cols` finds the null rows and columns from the
+  stored terms directly and skips the slicing when there are none. Its
+  time halved on a 57000-DOF matrix, from 0.14 to 0.07 s.
+- `static._is_symmetric` and the scaling of the matrix factorized by
+  PARDISO avoid intermediate sparse products. The overhead of `_factorize`
+  around the PARDISO factorization dropped from about 0.2 s to 0.15 s on
+  the same matrix. The solutions are unchanged to 4e-17.
+- On the cylinder, a profile on hpc12 put about 26 % of each tangent in
+  the preprocessing of `_factorize` and 19 % in the conversions to sparse
+  formats of the calling script. The element loop accounted for less than
+  1 %.
+- New `static._FactorizationCache`, created by `Analysis.static` for each
+  non-linear analysis and passed to `static._factorize` as the new argument
+  `cache` by every factorization of the tangent stiffness matrix: the work
+  that depends only on the sparsity pattern is done once per pattern. The
+  reduced and bordered matrix, its CSC form, the transposed terms of the
+  symmetry check, the diagonal of the scaling and the scaled upper
+  triangle of PARDISO are built from index arrays that gather the values
+  of `kT`, and the analysis of PARDISO (reordering and symbolic
+  factorization, phase 11) is reused: the next factorizations use its
+  phase 22 instead of 12, with up to `static.CACHE_MAX_PARDISO_SOLVERS = 4`
+  solvers that keep the analysis, since the factorizations of the
+  converged state and of the iteration coexist. The pattern (shape,
+  `indptr`, `indices`), the null rows and columns, found from the values at
+  every call since explicit zeros do not count, and the constraints are
+  checked at every call, and any change rebuilds the cache; the symmetry
+  and the scaling are still computed from the values. The factorizations,
+  solutions, inertia and perturbed pivots are bitwise those without the
+  cache (tested with `MKL_NUM_THREADS=1`). `_factorize` without `cache`
+  is unchanged; a matrix that is not `float64` or not in canonical CSR form
+  is not cached. On a symmetric 57000-DOF matrix with 4.5 million terms,
+  one PARDISO factorization took 0.40-0.44 s instead of 1.65-1.78 s, with
+  or without one constraint (the phase 22 alone 0.20 s instead of 1.0 s for
+  the phase 12), and the preprocessing of SuperLU 0.05 s instead of
+  0.11 s, of about 1.1 s per factorization. A Newton-Raphson analysis of a
+  grid of 40000 hardening springs took 2.8 s instead of 4.8 s with
+  `'pardiso'`, its Riks analysis 3.7 s instead of 7.1 s, with SuperLU
+  within 3 %. New `sparseutils._used_cols`.
+- New `tests/test_factorization_cache.py`: bitwise the factorization
+  without the cache, with null rows, explicit zeros, a border and
+  unsymmetric matrices; the phases of PARDISO and the rebuilds when the
+  pattern, the null rows or the constraints change; the Newton-Raphson,
+  Riks, Crisfield and generalized displacement control analyses with
+  constraints and `inertia`, and the Riks analysis beyond the limit point
+  of the von Mises truss, bitwise those without the cache. Constraints
+  given with duplicated terms are not cached.
+- New module `structsolve.pardiso`: `PardisoSolver`, the interface to
+  PARDISO of Intel oneMKL through `ctypes`, which calls the phases 12, 22
+  (the numerical factorization with the analysis of the last phase 12),
+  33, 0 and -1 directly and keeps a reference to the values of the
+  factorized matrix only, for the iterative refinement of PARDISO.
+  `mkl_rt` is given by the environment variable `STRUCTSOLVE_MKL_RT`,
+  otherwise found by `ctypes.util.find_library`, in `lib` or
+  `Library/bin` of the environment, or under it or the user site, and
+  loaded once per process. New `tests/test_pardiso.py`.
+
+### Benchmark: post-buckling of an axially compressed cylinder
+
+- New folder `notebooks/`, as in `panels`: the notebook
+  `notebooks/simo1990_cylinder_postbuckling.ipynb`, stored with its
+  outputs, with the utilities and the command line of the convergence runs
+  in `notebooks/simo1990_utils.py`, the test
+  `tests/test_simo1990_cylinder.py` (skipped where `panels`, which is not a
+  dependency of structsolve, is not installed; about 1.5 min) and the
+  documentation page `ex_cylinder_postbuckling`: the cylinder of Simo, Fox
+  and Rifai (1990), Section 6.3.4, Fig. 6.3.4, an `L/10 x 15 deg` section
+  of `panels` 0.15.0 (`cylshell_clpt_donnell`), traced with the Riks method
+  to twice the shortening of the linear buckling load. The imperfection is
+  added exactly for the Donnell kinematics, `fint(c + c0) - fint(c0) -
+  kG(N0) c`, checked against the gradient of the strain energy to 1.7e-10.
+  With 12 x 12 terms the limit loads are 0.727 (10 % imperfection) and
+  0.390 (50 %), against 0.715 and 0.411 read from the figure and 0.717 and
+  0.402 for Stanley's points, unchanged in the third digit from 10 x 10 to
+  14 x 14 terms; the snap-back, the plateau at 0.32 to 0.33 and the loads
+  up to the shortening 0.04 agree within 0.02. The perfect cylinder with
+  `branch_switching`, 8 x 8 terms, bifurcates at 0.827 (0.833 read) and
+  follows Fig. 6.3.4 (d) to the plateau.
+- Found with it: the count of negative eigenvalues of PARDISO
+  (`linear_solver='pardiso'`, about 20 perturbed pivots) found the first
+  critical point at the load 0.90 instead of 0.83, and
+  `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
+  eigenvalues closest to zero, returned an eigenvector of weakly stiff
+  in-plane Ritz terms instead of the negative eigenvalue, such that the
+  switch converged back on the fundamental path. Both fixed, see "Critical
+  points along the path" and "PARDISO with perturbed pivots": with
+  `linear_solver='pardiso'`, and with `'splu'` and the same paths, the
+  perfect cylinder (unknowns scaled to a unit diagonal) now switches at the first
+  critical point, 0.8273, 0.8270 and 0.8267 with 8 x 8, 10 x 10 and 12 x 12
+  terms, where a dense eigenvalue analysis of the tangent has its first
+  negative eigenvalue, and follows the bifurcated branch down to the
+  plateau, 0.327, 0.326 and 0.326 (174 to 182 increments, 57 s, 189 s and
+  428 s on one thread).
+
+### PARDISO with perturbed pivots
+
+- `static._factorize` with `'pardiso'`: when the factorization with the
+  default parameters of PARDISO perturbs pivots, the matrix is factorized
+  again with `PARDISO_FALLBACK_IPARM = {24: 1}`, the two-level
+  factorization algorithm, kept (`solve_kT.pardiso_fallback`) only without
+  perturbed pivots and with a relative residual, without refinement, not
+  larger than `PARDISO_ACCURACY_RTOL = 1e-6`; otherwise SuperLU factorizes
+  the matrix, with a `RuntimeWarning`, and the count of negative
+  eigenvalues is unknown (`None`) instead of possibly wrong: with MKL
+  2025.0, the stiffness matrices of three Ritz models of `tests/data` had
+  fallbacks without perturbed pivots but residuals of 26 to 1.3e3, and
+  that of a plate a wrong count. With the cache of a non-linear analysis
+  the next factorizations of the pattern use the fallback, with the same
+  check, or SuperLU directly. The dense tangent of the benchmark below (8 x 8
+  terms, 114 degrees of freedom) had 18 to 20 perturbed pivots along the
+  path, solutions of relative residual 0.4 to 1 (before GMRES) and one
+  negative eigenvalue less than the dense eigenvalue analysis from the load
+  0.827 to 0.893; with `iparm(24) = 1` no pivot is perturbed, the
+  residuals are 1e-13 and the counts are those of the dense analysis at
+  every increment, with 8 x 8 and 12 x 12 terms. Neither the perturbation
+  `iparm(10)` (8, 13, 20), the scaling and weighted matching `iparm(11) =
+  iparm(13) = 1`, nor `iparm(21) = 3` changed the perturbed pivots; the
+  minimum degree ordering `iparm(2) = 0` fixed the benchmark but not a
+  dense random indefinite matrix of the same size, which `iparm(24) = 1`
+  fixed. The factorizations without perturbed pivots, e.g. all those of
+  the DOE09 cylinder, are unchanged. New tests in `tests/test_inertia.py`,
+  one with a dense matrix (34 perturbed pivots with MKL 2026.1, none with
+  2026.2) and others that fake the perturbed pivots or the residual, for
+  every MKL.
+- `solve_kT.pardiso_fallback` is set by `_factorize` instead of being read
+  from `iparm(1) = 1`, which MKL 2026.2 also sets with its default
+  parameters: the fallback was reported for every factorization.
+
+### PARDISO in the symmetric eigenvalue analyses
+
+- New argument `linear_solver` of `lb()` and `freq()`, `'splu'` (default,
+  results bitwise unchanged) or `'pardiso'`: the factorizations of the
+  sparse solvers of symmetric matrices are done by PARDISO through
+  `static._factorize` (unit diagonal scaling, symmetric indefinite
+  factorization, fallback on perturbed pivots): the shifted matrix of the
+  Cayley or shift-invert mode, passed to `eigsh` as `OPinv`, also in the
+  passes of `arpackutils.capped_eigsh` (new argument `linear_solver`), the
+  stiffness matrix of the estimates of the shifts, and the matrices of the
+  inertia counts of `linear_buckling._negative_pivots`, whose count is then
+  the number of negative eigenvalues of PARDISO, known also where SuperLU
+  needs a row interchange. ARPACK remains the eigenvalue solver; the
+  solvers of unsymmetric matrices and the dense fallbacks are unchanged.
+  `ValueError` for another value, `ImportError` without oneMKL.
+- New `arpackutils.pardiso_factorization` and `arpackutils.pardiso_solve`:
+  a factorization of PARDISO is used only when the relative residual of
+  its solution for a random right-hand side is not larger than
+  `arpackutils.PARDISO_ACCURACY_RTOL = 1e-6` and, for the counts, no pivot
+  remains perturbed; SuperLU factorizes that matrix otherwise, with a
+  `RuntimeWarning` for the operator of ARPACK. The Ritz models of the tests
+  (`plate_ssss_Nxx`, 300 DOF, `cylinder_5panels`, 1140 DOF,
+  `blade_stiffened_penalty`, 3200 DOF) had 5 to 80 perturbed pivots with
+  the default parameters (MKL 2025.0, Windows) and residuals of 0.2 to
+  50, also for a positive definite `K`; the fallback `iparm(24) = 1` reported no
+  perturbed pivot for the plate and the cylinder but had residuals of 1 to
+  2e7 and wrong inertia, e.g. 10 negative eigenvalues instead of 9 for the
+  plate close to its 10th load multiplier. Neither `iparm(11) = iparm(13)
+  = 1` nor the minimum degree ordering `iparm(2) = 0` gave accurate
+  factorizations of all of them. These models therefore use SuperLU.
+- DOE09 cylinder (case 510, `ny = 60`, `KC0` and `KG` of the linear
+  buckling, 56519 DOF, 5.0 million terms, one DOF of the inertia relief
+  fixed), 20 eigenvalues, `freq` with `M = I`, hpc12 (AMD EPYC 9354P, MKL
+  2023.1), wall time of the call (of its factorizations): `lb` 289 s
+  (35 s, 5 factorizations) with `'splu'` and 140 s (7.4 s) with
+  `'pardiso'` on 1 thread, 297 s (38 s) and 87 s (4.1 s) on 8 threads;
+  `freq` 124 s (29 s, 3) and 55 s (4.5 s) on 1 thread, 125 s (30 s) and
+  23 s (2.6 s) on 8 threads. No factorization fell back to SuperLU, and the
+  eigenvalues agree to 2e-10 (`lb`) and 1.1e-9 (`freq`). Most of the time
+  is in the solutions of the ARPACK iterations.
+- New `tests/test_eigen_pardiso.py`, skipped without oneMKL except the
+  errors: `lb` and `freq` as with `'splu'`, the passes of `capped_eigsh`
+  with the cap of `ncv`, the counts where SuperLU needs a row interchange,
+  with perturbed pivots or an inaccurate factorization, complex right-hand
+  sides.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions

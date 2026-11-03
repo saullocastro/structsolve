@@ -6,10 +6,10 @@ and they are shared with the arc-length solvers of
 
 """
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, csc_matrix
 
 from .logger import msg, warn
-from .static import solve, _factorize
+from .static import solve, _factorize, _count_negative_real
 from . import callbacks
 from .convergence import check_convergence, crisfield_weights, scaled_norm
 
@@ -25,6 +25,17 @@ DIVERGENCE_FACTOR = 1.e3
 #: ``TOO_SLOW_WINDOW`` iterations is not at least ``too_slow_TOL`` (relative)
 #: smaller than the smallest residual norm of the previous iterations
 TOO_SLOW_WINDOW = 5
+#: With ``Analysis.early_divergence = True``: number of iterations of a step
+#: before the early divergence check against the smallest residual norm
+EARLY_DIVERGENCE_NUM_ITER = 3
+#: With ``Analysis.early_divergence = True``: a step diverged when its
+#: residual norm becomes larger than this factor times the smallest residual
+#: norm of its previous iterations
+EARLY_DIVERGENCE_FACTOR = 10.
+#: With ``Analysis.early_divergence = True``: a step diverged when its
+#: relative residual, Crisfield's `\zeta` or the relative residual of
+#: ``convergence='relative'``, becomes larger than this value
+EARLY_DIVERGENCE_MAX_RREL = 1.e3
 #: Constant of the sufficient-decrease (Armijo) test of the line search
 LINE_SEARCH_ALPHA = 1.e-4
 #: Factor used to increase the load increment after a step that converged
@@ -48,6 +59,110 @@ def _abs_matrix(kC0):
     ``kC0``, sparse, for the round-off floor of the convergence criteria,
     see :func:`.convergence.roundoff_floor`"""
     return abs(csr_matrix(kC0))
+
+
+def _constraint_matrix(an):
+    r"""The matrix `\boldsymbol{C}` of ``an.constraints``, sparse, of shape
+    ``(n, m)``, a 1-D array being one constraint, or ``None``"""
+    if an.constraints is None:
+        return None
+    C = np.asarray(an.constraints) if not hasattr(an.constraints, 'tocsc') \
+        else an.constraints
+    if getattr(C, 'ndim', 2) == 1:
+        C = np.asarray(C)[:, None]
+    return csc_matrix(C)
+
+
+def _cache(an):
+    r"""The cache of the factorizations of the tangent stiffness matrix of
+    the running analysis, see :func:`.static._factorize`, ``None`` outside
+    :meth:`.Analysis.static`"""
+    return getattr(an, '_factorization_cache', None)
+
+
+def _constraint_values(an):
+    r"""The values `\boldsymbol{d}` of ``an.constraint_values``, of the
+    constraints `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`,
+    validated, ``None`` when not given
+
+    Raises
+    ------
+    ValueError
+        When ``an.constraints`` is ``None``, or when the values are not a
+        finite vector of one value per constraint.
+
+    """
+    if an.constraint_values is None:
+        return None
+    C = _constraint_matrix(an)
+    if C is None:
+        raise ValueError('Analysis.constraint_values requires '
+                         'Analysis.constraints')
+    d = np.atleast_1d(np.asarray(an.constraint_values, dtype=float))
+    if d.shape != (C.shape[1],):
+        raise ValueError('Analysis.constraint_values must have the shape '
+                         '(%d,), one value per constraint' % C.shape[1])
+    if not np.all(np.isfinite(d)):
+        raise ValueError('Analysis.constraint_values must be finite')
+    return d
+
+
+def _linear_solve(an, kC0, b, d=None):
+    r"""Linear solution of ``kC0 x = b`` with ``an.linear_solver`` and the
+    constraints of ``an.constraints``, of values ``d``, see
+    :func:`.static._factorize`, or with :func:`.static.solve` with
+    ``'splu'`` and without constraints"""
+    if an.constraints is None and an.linear_solver == 'splu':
+        return solve(kC0, b, silent=True)
+    return _factorize(kC0, linear_solver=an.linear_solver,
+                      constraints=_constraint_matrix(an))(b, d)
+
+
+def _residual_projector(an, w):
+    r"""Projection of the residual that removes the reactions of the
+    constraints ``an.constraints``, ``None`` without constraints
+
+    With the constraints `\boldsymbol{C}^\top \boldsymbol{c} = \boldsymbol{0}`,
+    the equilibrium is `\boldsymbol{R} + \boldsymbol{C} \boldsymbol{\mu} =
+    \boldsymbol{0}`, `\boldsymbol{\mu}` the reactions of the constraints. The
+    convergence criteria and the line searches measure
+
+    .. math::
+
+        \boldsymbol{R}_p = \boldsymbol{R} - \boldsymbol{C} (\boldsymbol{C}^\top
+        \boldsymbol{W} \boldsymbol{C})^{+} \boldsymbol{C}^\top \boldsymbol{W}
+        \boldsymbol{R}
+
+    the residual minus the reactions that minimize its norm, with the
+    weights `\boldsymbol{W} = \mathrm{diag}(\boldsymbol{w})` of Crisfield's
+    criterion, `\boldsymbol{W} = \boldsymbol{I}` with ``w=None``, i.e. the
+    projection of `\boldsymbol{R}` orthogonal to the columns of
+    `\boldsymbol{C}` in the inner product of the criterion, `^{+}` the
+    pseudo-inverse, for constraints that are not independent.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    w : array-like or None
+        Weights of Crisfield's criterion, see :func:`._weights`.
+
+    Returns
+    -------
+    proj : callable or None
+        ``proj(R)`` returns `\boldsymbol{R}_p`.
+
+    """
+    C = _constraint_matrix(an)
+    if C is None:
+        return None
+    WC = C if w is None else csc_matrix(C.multiply(np.asarray(w)[:, None]))
+    Ginv = np.linalg.pinv((C.T @ WC).toarray())
+
+    def proj(R):
+        return R - C @ (Ginv @ (WC.T @ R))
+
+    return proj
 
 
 def _norm(v, w):
@@ -161,14 +276,15 @@ def _check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
                              full_output=full_output)
 
 
-def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
+def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False, Rrel=None):
     r"""Check if the iterations of a step must be stopped without convergence
 
 
     The iterations are stopped when the residual is not finite, when
     ``an.maxNumIter`` corrections were performed, and, after
     ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations, when the residual
-    diverges or when the convergence is too slow.
+    diverges or when the convergence is too slow. With
+    ``an.early_divergence = True`` a diverging step is also stopped earlier.
 
     Parameters
     ----------
@@ -184,6 +300,9 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
         Current iteration, starting at 1.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
+    Rrel : float or None, optional
+        Relative residual of the current iteration, see
+        :func:`._check_convergence`, used by the early divergence check.
 
     Returns
     -------
@@ -211,6 +330,20 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     other, and with the scaled norm of Crisfield's criterion they do not
     depend on the units of the degrees of freedom.
 
+    With ``an.early_divergence = True``, a diverging step is stopped
+    without waiting for ``NUM_ITER_BEFORE_DIVERGENCE_CHECK`` iterations,
+    such that its load or arc-length increment is cut before the
+    iterations are spent, when:
+
+    - the relative residual ``Rrel`` is larger than
+      ``EARLY_DIVERGENCE_MAX_RREL``, at any iteration;
+    - `j >` ``EARLY_DIVERGENCE_NUM_ITER`` and `r_j >`
+      ``EARLY_DIVERGENCE_FACTOR`` `\min(r_1, ..., r_{j-1})`.
+
+    These are the criteria with which the Riks analyses of a tow-steered
+    cylinder of the DCSE website (2026) gave up the increments that would
+    not converge beyond the limit point.
+
     """
     if not np.isfinite(Rnorm):
         warn('Diverged - residual is not finite', level=2, silent=silent)
@@ -218,6 +351,16 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     if iteration > an.maxNumIter:
         warn('Maximum number of iterations achieved!', level=2, silent=silent)
         return True
+    if an.early_divergence:
+        if Rrel is not None and Rrel > EARLY_DIVERGENCE_MAX_RREL:
+            warn('Diverged - relative residual larger than %1.0e'
+                 % EARLY_DIVERGENCE_MAX_RREL, level=2, silent=silent)
+            return True
+        if (iteration > EARLY_DIVERGENCE_NUM_ITER and
+                Rnorm > EARLY_DIVERGENCE_FACTOR*min(Rnorms)):
+            warn('Diverged - residual increased %1.0f times its minimum in the step'
+                 % EARLY_DIVERGENCE_FACTOR, level=2, silent=silent)
+            return True
     Rnorms.append(Rnorm)
     if iteration > NUM_ITER_BEFORE_DIVERGENCE_CHECK:
         if Rnorm > DIVERGENCE_FACTOR*Rnorms[0]:
@@ -232,8 +375,246 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False):
     return False
 
 
+def _converged_state(an, c, lbd, silent=False):
+    r"""Factorization of the tangent stiffness matrix at a converged state,
+    recording its inertia
+
+    Used with ``an.inertia = True``. The tangent stiffness matrix at ``c``
+    and the load factor ``lbd`` is factorized with ``an.linear_solver``, see
+    :func:`.static._factorize`, and the number of its negative eigenvalues,
+    the sign of its determinant and the number of perturbed pivots are
+    appended to ``an.num_negative_eigvals``, ``an.det_signs`` and
+    ``an.num_perturbed_pivots``; for a singular matrix ``None``, ``0`` and
+    ``None``.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    c : array-like
+        Converged solution.
+    lbd : float
+        Converged load factor.
+    silent : bool, optional
+        A boolean to tell whether the log messages should be printed.
+
+    Returns
+    -------
+    solve_kT : callable or None
+        The factorization, see :func:`.static._factorize`, ``None`` when the
+        matrix is singular.
+
+    """
+    solve_kT = _factorize_state(an, c, lbd, silent=silent)
+    _record_inertia(an, solve_kT, silent=silent)
+    return solve_kT
+
+
+def _factorize_state(an, c, lbd, silent=False):
+    r"""Factorization of the tangent stiffness matrix at ``c`` and ``lbd``
+    with ``an.linear_solver`` and ``an.constraints``, see
+    :func:`.static._factorize`, ``None`` when it is singular; with
+    ``an.inertia_num_eigvals``, the count of the negative real eigenvalues
+    of a SuperLU factorization, see :func:`._eigvals_inertia`"""
+    try:
+        solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
+                              linear_solver=an.linear_solver,
+                              constraints=_constraint_matrix(an),
+                              cache=_cache(an))
+    except RuntimeError:
+        warn('Singular tangent stiffness matrix at the converged state',
+             level=2, silent=silent)
+        return None
+    if an.inertia_num_eigvals is not None:
+        _eigvals_inertia(solve_kT, an.inertia_num_eigvals, silent=silent,
+                         s=_inertia_scaling(an))
+    return solve_kT
+
+
+def _inertia_scaling(an):
+    r"""The scaling `s_i = |K_{0,ii}|^{-1/2}` of the counts of
+    ``an.inertia_num_eigvals``, from the diagonal of the linear stiffness
+    matrix ``an.calc_kC()``, 1 for a null term, computed once per analysis,
+    see :func:`._eigvals_inertia`"""
+    s = getattr(an, '_inertia_scaling', None)
+    if s is None:
+        d = np.abs(np.asarray(an.calc_kC(silent=True).diagonal(),
+                              dtype=np.float64))
+        d[d == 0] = 1.
+        s = 1/np.sqrt(d)
+        an._inertia_scaling = s
+    return s
+
+
+def _eigvals_inertia(solve_kT, k, silent=False, s=None):
+    r"""The number of negative real eigenvalues among the ``k`` of smallest
+    magnitude of the SuperLU factorization ``solve_kT``, set as its
+    ``num_negative_eigvals``, see ``Analysis.inertia_num_eigvals``
+
+    Nothing is done when ``solve_kT`` already has a count, the exact one of
+    PARDISO. The eigenvalues are computed by
+    :func:`.static._smallest_eigvals` with the LU factorization of
+    ``solve_kT``, on the degrees of freedom whose row or column is not
+    null and on the space of the constraints, scaled by ``s``, of all the
+    degrees of freedom, when given: those of `\boldsymbol{K}_T
+    \boldsymbol{v} = \mu \boldsymbol{S}^{-2} \boldsymbol{v}`,
+    `\boldsymbol{S} = \mathrm{diag}(s)`. The analyses pass the scaling of
+    :func:`._inertia_scaling`, `\boldsymbol{S}^{-2} =
+    |\mathrm{diag}(\boldsymbol{K}_0)|`, the diagonal of the linear stiffness
+    matrix, fixed along the path: a kinetic criterion with a lumped
+    stiffness-proportional mass, whose eigenvalues vary continuously along
+    the path and cross zero where `\boldsymbol{K}_T` is singular, whatever
+    the units of the unknowns. In the unknowns themselves, the eigenvalues
+    of smallest magnitude are those of the unknowns of smallest stiffness,
+    e.g. the high-order terms of a Ritz model, not those that cross zero:
+    the cantilever cylinder of Schweizerhof and Ramm (1984) in panels
+    (Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
+    follower pressure, had its negative eigenvalue 130th by magnitude
+    without the scaling. The attributes set on ``solve_kT`` are:
+
+    - ``num_negative_eigvals``: the number of real eigenvalues that are
+      negative, ``None`` when ARPACK did not converge;
+    - ``num_complex_negative``: the number of complex eigenvalues with a
+      negative real part, among the ``k``;
+    - ``inertia_num_eigvals``: ``k``;
+    - ``inertia_complete``: ``False`` when the parity of the count differs
+      from the sign of the determinant, i.e. an odd number of negative real
+      eigenvalues lies beyond the ``k`` of smallest magnitude, with a
+      warning.
+
+    Returns
+    -------
+    nneg : int or None
+        ``solve_kT.num_negative_eigvals``.
+
+    """
+    if solve_kT.num_negative_eigvals is not None:
+        return solve_kT.num_negative_eigvals
+    if not hasattr(solve_kT, 'smallest_eigvals'):
+        return None
+    solve_kT.inertia_num_eigvals = k
+    solve_kT.inertia_scaling = s
+    solve_kT.num_complex_negative = None
+    solve_kT.inertia_complete = None
+    lam = solve_kT.smallest_eigvals(k, s)
+    if lam is None:
+        warn('ARPACK did not converge, the number of negative eigenvalues '
+             'is not known', level=2, silent=silent)
+        return None
+    nneg, ncomplex = _count_negative_real(lam)
+    solve_kT.num_negative_eigvals = nneg
+    solve_kT.num_complex_negative = ncomplex
+    # complex pairs have a positive product: the sign of the determinant is
+    # (-1)**(number of negative real eigenvalues)
+    solve_kT.inertia_complete = (-1)**nneg == solve_kT.det_sign
+    if not solve_kT.inertia_complete:
+        warn('An odd number of negative real eigenvalues lies beyond the '
+             '%d of smallest magnitude: increase Analysis.inertia_num_eigvals'
+             % k, level=2, silent=silent)
+    return nneg
+
+
+def _record_inertia(an, solve_kT, silent=False):
+    r"""Append the inertia of the factorization ``solve_kT`` of a converged
+    state to ``an.num_negative_eigvals``, ``an.det_signs`` and
+    ``an.num_perturbed_pivots``, see :func:`._converged_state`"""
+    if solve_kT is None:
+        an.num_negative_eigvals.append(None)
+        an.det_signs.append(0)
+        an.num_perturbed_pivots.append(None)
+        return
+    nneg = solve_kT.num_negative_eigvals
+    an.num_negative_eigvals.append(nneg)
+    an.det_signs.append(solve_kT.det_sign)
+    an.num_perturbed_pivots.append(solve_kT.num_perturbed_pivots)
+    if nneg is None:
+        msg('Tangent stiffness matrix: sign of the determinant %+d'
+            % solve_kT.det_sign, level=2, silent=silent)
+    elif solve_kT.num_perturbed_pivots is None:
+        msg('Tangent stiffness matrix: %d negative real eigenvalues and %d '
+            'complex with a negative real part among the %d of smallest '
+            'magnitude, sign of the determinant %+d'
+            % (nneg, solve_kT.num_complex_negative,
+               solve_kT.inertia_num_eigvals, solve_kT.det_sign), level=2,
+            silent=silent)
+    else:
+        msg('Tangent stiffness matrix: %d negative eigenvalues, %d perturbed pivots'
+            % (nneg, solve_kT.num_perturbed_pivots), level=2, silent=silent)
+
+
+def _check_max_inertia_jump(an):
+    r"""Validate ``an.inertia_num_eigvals``, which requires ``an.inertia``,
+    and ``an.max_inertia_jump``, which requires ``an.inertia`` and the
+    counts of negative eigenvalues of ``an.linear_solver='pardiso'`` or of
+    ``an.inertia_num_eigvals``"""
+    k = an.inertia_num_eigvals
+    if k is not None:
+        if not an.inertia:
+            raise ValueError('Analysis.inertia_num_eigvals requires '
+                             'Analysis.inertia = True')
+        if isinstance(k, bool) or int(k) != k or k < 1:
+            raise ValueError('Analysis.inertia_num_eigvals must be a '
+                             'positive integer')
+    max_jump = an.max_inertia_jump
+    if max_jump is None:
+        return None
+    if not an.inertia or (an.linear_solver != 'pardiso' and k is None):
+        raise ValueError("Analysis.max_inertia_jump requires Analysis.inertia "
+                         "= True and Analysis.linear_solver = 'pardiso' or "
+                         "Analysis.inertia_num_eigvals")
+    if int(max_jump) != max_jump or max_jump < 1:
+        raise ValueError('Analysis.max_inertia_jump must be a positive '
+                         'integer')
+    return int(max_jump)
+
+
+def _inertia_jump(solve_last, solve_new, max_jump):
+    r"""Whether the number of negative eigenvalues changed by more than
+    ``max_jump`` between the factorizations ``solve_last`` and ``solve_new``
+    of two converged states, ``False`` when a count is not known
+
+    The count of ``solve_last`` is computed when it has none but
+    ``solve_new`` has one of ``an.inertia_num_eigvals``, e.g. for the
+    factorization at the origin of the arc-length solvers, made before
+    the count was asked for, see :func:`._eigvals_inertia`."""
+    if max_jump is None or solve_last is None or solve_new is None:
+        return False
+    n1 = solve_new.num_negative_eigvals
+    n0 = solve_last.num_negative_eigvals
+    k = getattr(solve_new, 'inertia_num_eigvals', None)
+    if n0 is None and n1 is not None and k is not None:
+        n0 = _eigvals_inertia(solve_last, k, silent=True,
+                              s=getattr(solve_new, 'inertia_scaling', None))
+    if n0 is None or n1 is None:
+        return False
+    return abs(n1 - n0) > max_jump
+
+
+def _restart_state(an, method):
+    r"""``an.restart_state`` validated for the solver ``method``, ``None``
+    when not given"""
+    state = an.restart_state
+    if state is None:
+        return None
+    if state.get('method') != method:
+        raise ValueError('Analysis.restart_state was saved by the method %r, '
+                         'not %r' % (state.get('method'), method))
+    return state
+
+
+def _stop(an, silent=False):
+    r"""Whether ``an.stop_criterion``, when given, stops the analysis after
+    the last converged increment, see :mod:`.stopping`"""
+    if an.stop_criterion is not None and an.stop_criterion(an):
+        msg('Analysis stopped by the stop criterion at load factor %1.5f'
+            % an.increments[-1], level=1, silent=silent)
+        return True
+    return False
+
+
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
-                   lbd_dependent=False, q=None, w=None, K0_abs=None):
+                   lbd_dependent=False, q=None, w=None, K0_abs=None,
+                   proj=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Corrects the predictor ``dc`` at the load factor ``total`` until the
@@ -243,7 +624,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
     ``calc_kC + calc_kG`` at the current iterate, see
     :func:`.callbacks.calc_kT`; its updates and the line search are
     controlled by ``an.modified_NR``, ``an.compute_every_n``,
-    ``an.line_search`` and ``an.max_iter_line_search``.
+    ``an.line_search`` and ``an.max_iter_line_search``, the early divergence
+    check by ``an.early_divergence``.
 
     Parameters
     ----------
@@ -281,6 +663,10 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         `|K_{C0}|` of the round-off floor of the convergence criteria, see
         :func:`.convergence.check_convergence`, computed from ``calc_kC()``
         when ``None``.
+    proj : callable or None, optional
+        Projection of the residual that removes the reactions of
+        ``an.constraints``, see :func:`._residual_projector`, computed when
+        ``None`` and ``an.constraints`` is given.
 
     Returns
     -------
@@ -371,6 +757,14 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             w = _weights(an, kC0)
         if K0_abs is None:
             K0_abs = _abs_matrix(kC0)
+    if proj is None:
+        proj = _residual_projector(an, w)
+    C = _constraint_matrix(an)
+
+    def residual(fint):
+        R = fint - fext_total
+        return R if proj is None else proj(R)
+
     fext_total = total*fext
     if not lbd_dependent:
         q = None
@@ -385,7 +779,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         iteration += 1
         if fint is None:
             fint = callbacks.calc_fint(an, c + dc, total)
-        R = fint - fext_total
+        R = residual(fint)
         if q is not None:
             q_ref = total*q
 
@@ -395,7 +789,8 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         _log_iteration(an, iteration, R, Rrel, silent, roundoff=roundoff)
         if conv:
             return True, dc, q
-        if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
+        if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent,
+                             Rrel=Rrel):
             return False, dc, q
 
         # the factorization of the tangent stiffness matrix is reused while
@@ -404,10 +799,13 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             if modified_NR and iteration > 1 and iter_kT < an.compute_every_n:
                 iter_kT += 1
             elif modified_NR and iteration == 1 and kT0 is not None:
-                solve_kT = _factorize(kT0)
+                solve_kT = _factorize(kT0, linear_solver=an.linear_solver,
+                                      constraints=C, cache=_cache(an))
                 iter_kT = 1
             else:
-                solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total))
+                solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total),
+                                      linear_solver=an.linear_solver,
+                                      constraints=C, cache=_cache(an))
                 iter_kT = 1
                 if lbd_dependent:
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
@@ -425,7 +823,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
             # phi'(0) = -2*phi(0), exact for a Newton direction
             fint = callbacks.calc_fint(an, c + dc + varc, total)
             phi0 = Rnorm**2
-            phi1 = _norm(fint - fext_total, w)**2
+            phi1 = _norm(residual(fint), w)**2
             iter_line_search = 0
             while not phi1 <= (1 - 2*LINE_SEARCH_ALPHA*eta)*phi0:
                 if iter_line_search == an.max_iter_line_search:
@@ -438,7 +836,7 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 eta_new = phi0/A if (np.isfinite(A) and A > 0) else 0.5*eta
                 eta = min(max(eta_new, 0.1*eta), 0.5*eta)
                 fint = callbacks.calc_fint(an, c + dc + eta*varc, total)
-                phi1 = _norm(fint - fext_total, w)**2
+                phi1 = _norm(residual(fint), w)**2
             if eta != 1.:
                 msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
         dc = dc + eta*varc
@@ -468,8 +866,10 @@ def _solver_NR(an, silent=False, initialInc=None):
     After a step that converged without being cut, the load increment is
     multiplied by ``INC_GROWTH_FACTOR``, limited by ``an.maxInc``. The last
     step is adjusted such that the analysis finishes at a load factor of
-    exactly ``1.0``. The analysis stops earlier, keeping the converged
-    increments, when the load increment becomes smaller than ``an.minInc``.
+    exactly ``an.final_load_factor``, ``1.0`` by default. The analysis stops
+    earlier, keeping the converged increments, when the load increment
+    becomes smaller than ``an.minInc`` or when ``an.stop_criterion(an)``
+    returns ``True`` after a converged step, see :mod:`.stopping`.
 
     The callables of ``an`` that declare the optional keyword arguments
     ``inc``, ``c`` or ``lbd`` receive the current load factor and
@@ -539,6 +939,17 @@ def _solver_NR(an, silent=False, initialInc=None):
     The step that would end within ``max(an.minInc, 1e-12)`` of the load
     factor 1.0, or beyond it, is replaced by the step to exactly 1.0.
 
+    With ``an.constraint_values``, the values `\boldsymbol{d}` of the
+    constraints `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`
+    of ``an.constraints``, the linear solution of the first predictor is
+    that of the bordered system with the values `\boldsymbol{d}`, see
+    :func:`.static._factorize`, such that `\boldsymbol{C}^\top \Delta
+    \boldsymbol{c} = \Delta\lambda \boldsymbol{d}` for every predictor,
+    scaled from the previous converged increment, and the corrections keep
+    it, their border being null. A prescribed displacement then needs no
+    external load: the reactions of the constraints, part of the internal
+    force vector, are the reference of the convergence criterion.
+
     References
     ----------
     .. [1] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
@@ -554,31 +965,54 @@ def _solver_NR(an, silent=False, initialInc=None):
 
     if initialInc is None:
         initialInc = an.initialInc
-    inc = min(initialInc, 1.)
+    target = an.final_load_factor
+    if target is None:
+        raise ValueError("Analysis.final_load_factor = None is not valid "
+                         "with NL_method='NR'")
+    inc = min(initialInc, target)
     min_last_inc = max(an.minInc, 1.e-12)
+    max_jump = _check_max_inertia_jump(an)
 
     fext = an.calc_fext(inc=1., silent=True)
     kC0 = an.calc_kC(silent=silent)
     w = _weights(an, kC0)
     K0_abs = _abs_matrix(kC0)
+    proj = _residual_projector(an, w)
     q = None
     lbd_dependent = callbacks.is_load_factor_dependent(an)
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
-    # predictor of the first step: linear solution scaled by the load factor
-    dc_last = solve(kC0, fext if q is None else q, silent=True)
+    d = _constraint_values(an)
+    # predictor of the first step: linear solution scaled by the load
+    # factor, C^T dc_last = d
+    dc_last = _linear_solve(an, kC0, fext if q is None else q, d)
     inc_last = 1.
     c = np.zeros_like(dc_last)
     total_last = 0.
     step_cut = False
-
     step_num = 1
 
+    state = _restart_state(an, 'NR')
+    if state is not None:
+        c = np.array(state['c'], dtype=float)
+        total_last = state['lbd']
+        inc = min(state['inc'], target - total_last)
+        dc_last = np.array(state['dc_last'], dtype=float)
+        inc_last = state['inc_last']
+        q = state['q']
+        step_num = state['step_num']
+        msg('Restarting at load factor %1.5f' % total_last, level=1,
+            silent=silent)
+    # factorization of the last converged state, with max_inertia_jump
+    solve_last = None
+    if max_jump is not None:
+        solve_last = _factorize_state(an, c, total_last, silent=silent)
+
     while True:
-        if total_last + inc >= 1. - min_last_inc:
-            total = 1.
-            inc = 1. - total_last
+        if total_last + inc >= target - min_last_inc:
+            total = target
+            inc = target - total_last
         else:
             total = total_last + inc
         msg('Step %d, attempting load factor %1.5f' % (step_num, total), level=1, silent=silent)
@@ -589,7 +1023,19 @@ def _solver_NR(an, silent=False, initialInc=None):
             kT0 = kC0
         converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
                 kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
-                w=w, K0_abs=K0_abs)
+                w=w, K0_abs=K0_abs, proj=proj)
+
+        solve_new = None
+        if converged and an.inertia:
+            solve_new = _factorize_state(an, c + dc, total, silent=silent)
+            if (_inertia_jump(solve_last, solve_new, max_jump)
+                    and inc*INC_CUT_FACTOR >= an.minInc):
+                warn('The number of negative eigenvalues changed from %d to '
+                     '%d, by more than max_inertia_jump'
+                     % (solve_last.num_negative_eigvals,
+                        solve_new.num_negative_eigvals), level=2,
+                     silent=silent)
+                converged = False
 
         if converged:
             msg('Converged at load factor %1.5f' % total, level=2, silent=silent)
@@ -599,14 +1045,22 @@ def _solver_NR(an, silent=False, initialInc=None):
             total_last = total
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(total)
-            if total == 1.:
-                break
+            if an.inertia:
+                _record_inertia(an, solve_new, silent=silent)
+                solve_last = solve_new
             dc_last = dc
             inc_last = inc
             if not step_cut:
                 inc = min(INC_GROWTH_FACTOR*inc, an.maxInc)
             step_cut = False
             step_num += 1
+            an.path_state = dict(method='NR', c=c.copy(), lbd=total_last,
+                                 inc=inc, dc_last=dc_last.copy(),
+                                 inc_last=inc_last, q=q, step_num=step_num)
+            if total == target:
+                break
+            if _stop(an, silent):
+                break
 
         else:
             inc *= INC_CUT_FACTOR

@@ -24,11 +24,14 @@ Structural analysis solvers tailored for semi-analytical models
 Currently these solvers are pretty much compatible with my other repository
 [panels](https://github.com/saullocastro/panels).
 
+The folder `notebooks/` holds validation notebooks against results of the
+literature, run with models of `panels`, see `notebooks/README.md`.
+
 
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.9.4). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.10.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -42,6 +45,12 @@ History
 =======
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
+
+* version 0.10.0 (2026-11-03)
+    - Arc-length corrections: line search and early divergence check; indirect displacement control and generalized displacement control; weights of the degrees of freedom in the arc-length norm
+    - Stability along the path: the number of negative eigenvalues of the tangent with PARDISO (`linear_solver='pardiso'`, `inertia=True`), increments cut when it jumps (`max_inertia_jump`) and switching to the bifurcated branch along the critical eigenvector (`branch_switching`)
+    - Linear constraints of the solution, `C^T c = 0`, by a border of the factorizations; stop criteria and `final_load_factor`; restart of the non-linear analyses from `path_state`
+    - Cheaper factorizations: the linear solutions use `linear_solver`, and the null rows and columns, the symmetry check and the scaling of PARDISO cost less
 
 * version 0.9.4 (2026-10-28)
     - Crisfield's convergence criterion is the default of the non-linear analyses, `Analysis.convergence = 'crisfield'`, with `relTOL = 1e-9`: the residual and the reference forces are measured with the norm scaled by the diagonal of `calc_kC()` over the free degrees of freedom; the former check is kept with `convergence = 'relative'`

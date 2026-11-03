@@ -12,13 +12,18 @@ from __future__ import absolute_import
 
 import numpy as np
 
-from .static import solve, _factorize
+from .static import solve, _factorize, _FactorizationCache
 from .logger import msg, warn
 from . import callbacks
-from .newton_raphson import _check_convergence, _weights, _abs_matrix
+from .newton_raphson import (_check_convergence, _weights, _abs_matrix,
+                             _constraint_matrix, _constraint_values,
+                             _residual_projector)
 from .newton_raphson import _solver_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
+from .displacement_control import _solver_displacement_control
+from .generalized_displacement_control import (
+    _solver_generalized_displacement_control)
 
 
 class Analysis(object):
@@ -38,37 +43,158 @@ class Analysis(object):
     The analysis parameters are attributes of this class, described in the
     following tables together with their default values:
 
-    ========================  ==================================================
-    Non-Linear Algorithm      Description
-    ========================  ==================================================
-    ``NL_method``             ``str``, ``'NR'`` (default) for the
-                              Newton-Raphson method, see
-                              :func:`.newton_raphson._solver_NR`, or
-                              ``'arc_length_riks'`` and
-                              ``'arc_length_crisfield'`` for the arc-length
-                              methods, see
-                              :func:`.arc_length._solver_arc_length`
-    ``line_search``           ``bool``, activates a safeguarding line-search,
-                              for the Newton-Raphson method only, see
-                              :func:`.newton_raphson._NR_iterations`. Default
-                              is ``False``
-    ``max_iter_line_search``  ``int``, maximum number of iterations of the
-                              line-search. Default is ``20``
-    ``modified_NR``           ``bool``, activates the modified Newton-Raphson
-                              method, where the tangent stiffness matrix is
-                              not updated at every iteration. Default is
-                              ``False``, i.e. full Newton-Raphson
-    ``compute_every_n``       ``int``, if ``modified_NR=True``, the tangent
-                              stiffness matrix is updated at every `n`
-                              iterations. Default is ``6``
-    ``kT_initial_state``      ``bool``, if ``modified_NR=True``, tells if the
-                              tangent stiffness matrix should be calculated
-                              already at the first iteration of the analysis,
-                              which is required for example when initial
-                              imperfections take place. Otherwise the linear
-                              constitutive stiffness matrix is used. Default
-                              is ``True``
-    ========================  ==================================================
+    ============================  =============================================
+    Non-Linear Algorithm          Description
+    ============================  =============================================
+    ``NL_method``                 ``str``, ``'NR'`` (default) for the
+                                  Newton-Raphson method, see
+                                  :func:`.newton_raphson._solver_NR`, or
+                                  ``'arc_length_riks'`` and
+                                  ``'arc_length_crisfield'`` for the arc-length
+                                  methods, or ``'displacement_control'`` for
+                                  the indirect displacement control, or
+                                  ``'generalized_displacement_control'``,
+                                  see
+                                  :func:`.arc_length._solver_arc_length`
+    ``control_vector``            ``array``, the vector
+                                  `\boldsymbol{\psi}` of the controlled
+                                  quantity `\boldsymbol{\psi}^\top
+                                  \boldsymbol{c}` of
+                                  ``NL_method='displacement_control'``, e.g.
+                                  a unit vector that picks one degree of
+                                  freedom, or a buckling mode. Default is
+                                  ``None``
+    ``control_scale``             ``float``, the reference value of the
+                                  controlled quantity, which makes the step
+                                  dimensionless. Default is ``None``, i.e.
+                                  `|\boldsymbol{\psi}^\top
+                                  \boldsymbol{u}_{ref}|`, its value in the linear solution for a
+                                  load factor of 1
+    ``line_search``               ``bool``, activates a safeguarding
+                                  line-search, for the Newton-Raphson method
+                                  only, see
+                                  :func:`.newton_raphson._NR_iterations`.
+                                  Default is ``False``
+    ``max_iter_line_search``      ``int``, maximum number of iterations of the
+                                  line-search. Default is ``20``
+    ``arc_length_line_search``    ``bool``, activates a backtracking line
+                                  search on the corrections of the arc-length
+                                  methods, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``False``
+    ``branch_switching``          ``int``, number of bifurcation points at
+                                  which the arc-length and the displacement
+                                  control methods switch to the bifurcated
+                                  branch, along the critical eigenvector,
+                                  where the number of negative eigenvalues
+                                  increases or decreases, which requires
+                                  ``inertia``, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``0``
+    ``arc_length_weights``        ``array``, non-negative weights of the
+                                  degrees of freedom in the norm of the
+                                  arc-length constraint, e.g. 1 for the
+                                  translations and 0 for their derivatives
+                                  or the rotations, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``None``, all equal to 1
+    ``early_divergence``          ``bool``, stops a diverging step earlier,
+                                  such that its increment is cut before the
+                                  iterations are spent, see
+                                  :func:`.newton_raphson._check_divergence`.
+                                  Default is ``False``
+    ``modified_NR``               ``bool``, activates the modified
+                                  Newton-Raphson method, where the tangent
+                                  stiffness matrix is not updated at every
+                                  iteration. Default is ``False``, i.e. full
+                                  Newton-Raphson
+    ``compute_every_n``           ``int``, if ``modified_NR=True``, the tangent
+                                  stiffness matrix is updated at every `n`
+                                  iterations. Default is ``6``
+    ``kT_initial_state``          ``bool``, if ``modified_NR=True``, tells if
+                                  the tangent stiffness matrix should be
+                                  calculated already at the first iteration of
+                                  the analysis, which is required for example
+                                  when initial imperfections take place.
+                                  Otherwise the linear constitutive stiffness
+                                  matrix is used. Default is ``True``
+    ``linear_solver``             ``str``, factorization of the tangent
+                                  stiffness matrix of the non-linear solvers,
+                                  ``'splu'`` (default), the sparse LU of
+                                  SuperLU, or ``'pardiso'``, the symmetric
+                                  indefinite factorization of PARDISO, which
+                                  requires oneMKL, see :mod:`.pardiso`, and
+                                  gives the number
+                                  of negative eigenvalues, see
+                                  :func:`.static._factorize`
+    ``inertia``                   ``bool``, the tangent stiffness matrix is
+                                  factorized at every converged increment of
+                                  the non-linear analyses, and its number of
+                                  negative eigenvalues (``'pardiso'``) and the
+                                  sign of its determinant are recorded, such
+                                  that limit points, bifurcations crossed and
+                                  unstable branches are visible. Default is
+                                  ``False``
+    ``inertia_num_eigvals``       ``int`` `k`, with ``inertia``: when the
+                                  count of PARDISO is not available, e.g.
+                                  for an unsymmetric tangent stiffness
+                                  matrix, the number of its negative real
+                                  eigenvalues among the `k` of smallest
+                                  magnitude, scaled by the diagonal of the
+                                  linear stiffness matrix, by shift-invert
+                                  with ARPACK and the LU factorization of
+                                  the converged state, see
+                                  :func:`.newton_raphson._eigvals_inertia`.
+                                  Default is ``None``, not computed
+    ``max_inertia_jump``          ``int``, a converged increment whose number
+                                  of negative eigenvalues changed by more
+                                  than this value is repeated with a smaller
+                                  increment, which requires ``inertia`` and
+                                  ``linear_solver='pardiso'`` or
+                                  ``inertia_num_eigvals``. Default is
+                                  ``None``
+    ``constraints``               ``array`` or sparse matrix `\boldsymbol{C}`,
+                                  of shape ``(n, m)``, a 1-D array for one
+                                  constraint: the linear constraints
+                                  `\boldsymbol{C}^\top \boldsymbol{c} =
+                                  \boldsymbol{0}` of the solution, e.g. an
+                                  inertia relief or multipoint constraints,
+                                  imposed by bordering every factorization
+                                  of the stiffness matrices, see
+                                  :func:`.static._factorize`, in the linear
+                                  and the non-linear analyses. Default is
+                                  ``None``
+    ``constraint_values``         ``array`` `\boldsymbol{d}`, of shape
+                                  ``(m,)``, the values of the constraints,
+                                  `\boldsymbol{C}^\top \boldsymbol{c} =
+                                  \lambda \boldsymbol{d}` along the
+                                  non-linear path and `\boldsymbol{C}^\top
+                                  \boldsymbol{c} = \boldsymbol{d}` in the
+                                  linear analysis, e.g. a displacement or a
+                                  rotation prescribed in proportion to the
+                                  load factor, with or without external
+                                  load, which requires ``constraints``.
+                                  Default is ``None``, all null
+    ``stop_criterion``            ``callable``, ``stop_criterion(an)`` is
+                                  called after every converged increment of
+                                  the non-linear analyses, which stop when it
+                                  returns ``True``, e.g. a number of
+                                  increments beyond the first limit point or
+                                  a displacement measure, see
+                                  :mod:`.stopping`. Default is ``None``
+    ``final_load_factor``         ``float``, the load factor at which the
+                                  non-linear analyses finish, exactly, or,
+                                  for the arc-length and displacement control
+                                  methods, ``None``: the path is traced
+                                  beyond any load factor until another stop,
+                                  e.g. ``stop_criterion`` or
+                                  ``maxArcLength``. Default is ``1.``
+    ``restart_state``             ``dict``, the ``path_state`` of a previous
+                                  analysis with the same ``NL_method``, from
+                                  whose last converged increment the
+                                  non-linear analysis continues. Default is
+                                  ``None``
+    ============================  =============================================
 
     ================   =================================================
     Incrementation     Description
@@ -166,6 +292,33 @@ class Analysis(object):
     cs : list
         Solution vectors of the converged increments, filled by
         :meth:`.static`.
+    num_negative_eigvals : list
+        With ``inertia=True``, for each converged increment of a non-linear
+        analysis, the number of negative eigenvalues of the tangent
+        stiffness matrix on the degrees of freedom whose row or column is
+        not null, ``None`` with ``linear_solver='splu'``, when PARDISO fell
+        back to SuperLU for an unsymmetric matrix, or for a singular matrix,
+        unless ``inertia_num_eigvals`` is given: the number of negative real
+        eigenvalues among the ``inertia_num_eigvals`` of smallest magnitude
+        is then recorded for the SuperLU factorizations. Empty otherwise.
+    det_signs : list
+        With ``inertia=True``, for each converged increment of a non-linear
+        analysis, the sign of the determinant of the same matrix, ``1`` or
+        ``-1``, ``0`` when it is singular. Empty otherwise.
+    num_perturbed_pivots : list
+        With ``inertia=True`` and ``linear_solver='pardiso'``, the number of
+        pivots perturbed by PARDISO at each converged increment, which makes
+        the count of negative eigenvalues uncertain when not zero; ``None``
+        otherwise.
+    branch_points : list
+        With ``branch_switching``, the indices in ``increments`` of the
+        converged increments from which the path was switched to a
+        bifurcated branch.
+    path_state : dict or None
+        After each converged increment of a non-linear analysis, the state
+        from which it can be continued, see ``restart_state``: the solution,
+        the load factor, the next increment and the directions of the
+        predictors.
     last_analysis : str
         Type of the last analysis run, ``'static'`` after :meth:`.static`.
 
@@ -229,12 +382,21 @@ class Analysis(object):
 
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
+            'arc_length_line_search',
+            'early_divergence', 'arc_length_weights', 'control_vector',
+            'control_scale', 'linear_solver', 'inertia',
+            'constraints', 'constraint_values', 'stop_criterion',
+            'final_load_factor',
+            'branch_switching', 'max_inertia_jump', 'inertia_num_eigvals',
+            'restart_state', 'path_state', 'branch_points',
+            'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
             'too_slow_TOL',
             'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
-            'calc_fint', 'calc_kG']
+            'calc_fint', 'calc_kG', '_factorization_cache',
+            '_inertia_scaling']
 
 
     def __init__(self, calc_fext=None, calc_fint=None, calc_kC=None,
@@ -243,6 +405,21 @@ class Analysis(object):
         self.NL_method = 'NR'
         self.line_search = False
         self.max_iter_line_search = 20
+        self.arc_length_line_search = False
+        self.early_divergence = False
+        self.arc_length_weights = None
+        self.control_vector = None
+        self.control_scale = None
+        self.linear_solver = 'splu'
+        self.inertia = False
+        self.constraints = None
+        self.constraint_values = None
+        self.stop_criterion = None
+        self.final_load_factor = 1.
+        self.branch_switching = 0
+        self.max_inertia_jump = None
+        self.inertia_num_eigvals = None
+        self.restart_state = None
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
@@ -267,9 +444,18 @@ class Analysis(object):
         # outputs to be filled
         self.increments = None
         self.cs = None
+        self.num_negative_eigvals = None
+        self.det_signs = None
+        self.num_perturbed_pivots = None
+        self.branch_points = None
+        self.path_state = None
 
         # flag telling the last analysis
         self.last_analysis = ''
+        # pattern-dependent work of the factorizations of a running analysis
+        self._factorization_cache = None
+        # scaling of the counts of inertia_num_eigvals of a running analysis
+        self._inertia_scaling = None
 
 
     def static(self, NLgeom=False, silent=False):
@@ -310,7 +496,9 @@ class Analysis(object):
         ------
         ValueError
             When ``NLgeom=True`` and the ``NL_method`` attribute is not
-            ``'NR'``, ``'arc_length_riks'`` or ``'arc_length_crisfield'``.
+            ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'``,
+            ``'displacement_control'`` or
+            ``'generalized_displacement_control'``.
 
         Notes
         -----
@@ -342,25 +530,46 @@ class Analysis(object):
         """
         self.increments = []
         self.cs = []
+        self.num_negative_eigvals = []
+        self.det_signs = []
+        self.num_perturbed_pivots = []
+        self.branch_points = []
+        self.path_state = None
 
         if NLgeom:
             self.maxInc = max(self.initialInc, self.maxInc)
             msg('Started Non-Linear Static Analysis', silent=silent)
-            if self.NL_method == 'NR':
-                _solver_NR(self, silent=silent)
-            elif self.NL_method == 'arc_length_riks':
-                _solver_arc_length_riks(self, silent=silent)
-            elif self.NL_method == 'arc_length_crisfield':
-                _solver_arc_length_crisfield(self, silent=silent)
-            else:
+            solvers = {
+                'NR': _solver_NR,
+                'arc_length_riks': _solver_arc_length_riks,
+                'arc_length_crisfield': _solver_arc_length_crisfield,
+                'displacement_control': _solver_displacement_control,
+                'generalized_displacement_control':
+                    _solver_generalized_displacement_control}
+            if self.NL_method not in solvers:
                 raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
+            # the work of the factorizations that depends only on the
+            # pattern of the tangent stiffness matrix is reused
+            self._factorization_cache = _FactorizationCache()
+            self._inertia_scaling = None
+            try:
+                solvers[self.NL_method](self, silent=silent)
+            finally:
+                self._factorization_cache.close()
+                self._factorization_cache = None
+                self._inertia_scaling = None
 
         else:
             msg('Started Linear Static Analysis', silent=silent)
             fext = self.calc_fext(silent=silent)
             k0 = self.calc_kC(silent=silent)
 
-            c = solve(k0, fext, silent=silent)
+            d = _constraint_values(self)
+            if self.constraints is None:
+                c = solve(k0, fext, silent=silent)
+            else:
+                c = _factorize(k0, constraints=_constraint_matrix(self))(fext,
+                                                                         d)
             if callbacks.is_load_configuration_dependent(self):
                 c = self._linear_static_follower(k0, c, silent)
 
@@ -380,12 +589,15 @@ class Analysis(object):
             level=2, silent=silent)
         w = _weights(self, k0)
         k0_abs = _abs_matrix(k0)
+        proj = _residual_projector(self, w)
         # k0 is factorized once for all the corrections
         solve_k0 = None
         for iteration in range(1, self.maxNumIter + 1):
             fext = self.calc_fext(inc=1., c=c, silent=True)
             fint = k0 @ c
             R = fint - fext
+            if proj is not None:
+                R = proj(R)
             conv, Rnorm, Rrel, roundoff = _check_convergence(self, R, fint,
                     fext, w=w, Kc_abs=k0_abs @ np.abs(c), full_output=True)
             msg('Iteration: %d, %s = %1.3e%s' % (iteration, 'zeta' if
@@ -398,7 +610,8 @@ class Analysis(object):
                 break
             if solve_k0 is None:
                 try:
-                    solve_k0 = _factorize(k0)
+                    solve_k0 = _factorize(k0,
+                            constraints=_constraint_matrix(self))
                 except RuntimeError:
                     break
             c = c + solve_k0(-R)

@@ -228,3 +228,21 @@ def test_analysis_linear_static_beyond_the_critical_load():
     increments, cs = an.static(NLgeom=False, silent=True)
     ref = np.linalg.solve(pb.K0 - pb.Q, pb.F0)
     assert not np.allclose(cs[0], ref, rtol=1e-6)
+
+
+def test_analysis_linear_static_follower_with_constraints():
+    """The load correction iterations with constraints: the reactions of
+    the constraints are removed from the residual, and the solution is
+    that of the bordered system with the load stiffness"""
+    pb = linear_follower_problem()
+    an = pb.analysis()
+    an.relTOL = 1e-12
+    C = np.zeros((6, 2))
+    C[0, 0] = 1.
+    C[2, 1] = C[3, 1] = 1.
+    an.constraints = C
+    increments, cs = an.static(NLgeom=False, silent=True)
+    A = np.block([[pb.K0 - pb.Q, C], [C.T, np.zeros((2, 2))]])
+    ref = np.linalg.solve(A, np.r_[pb.F0, 0., 0.])[:6]
+    assert np.allclose(cs[0], ref, rtol=1e-9)
+    np.testing.assert_allclose(C.T @ cs[0], 0., atol=1e-14)

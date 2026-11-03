@@ -3,7 +3,8 @@
 The Riks and Crisfield methods share the implementation of
 :func:`._solver_arc_length`, and are selected with
 ``Analysis.NL_method = 'arc_length_riks'`` or
-``Analysis.NL_method = 'arc_length_crisfield'``. The module-level constants
+``Analysis.NL_method = 'arc_length_crisfield'``, as does the indirect
+displacement control, ``Analysis.NL_method = 'displacement_control'``. The module-level constants
 control the arc-length scaling and adaptation.
 
 """
@@ -14,7 +15,12 @@ from .static import solve, _factorize
 from . import callbacks
 from .newton_raphson import (_check_convergence, _check_divergence,
                              _NR_iterations, _log_iteration, _weights,
-                             _abs_matrix, INC_CUT_FACTOR)
+                             _abs_matrix, _norm, _converged_state,
+                             _constraint_matrix, _linear_solve,
+                             _residual_projector, _stop, _factorize_state,
+                             _record_inertia, _check_max_inertia_jump,
+                             _inertia_jump, _restart_state, _cache,
+                             _constraint_values, INC_CUT_FACTOR)
 
 
 #: Scaling factor of the load-factor term in the arc-length constraint
@@ -27,6 +33,138 @@ MAX_GROWTH_FACTOR = 1.5
 MIN_GROWTH_FACTOR = 0.5
 #: Maximum number of converged steps of an arc-length analysis
 MAX_NUM_STEPS = 1000
+#: Factors tried in turn by the line search of the corrections, with
+#: ``Analysis.arc_length_line_search = True``
+LINE_SEARCH_ETAS = (1., 0.5, 0.25)
+#: Methods of :func:`._solver_arc_length`
+METHODS = ('riks', 'crisfield', 'displacement_control',
+           'generalized_displacement_control')
+#: Minimum cosine between ``an.control_vector`` and the linear solution for
+#: the default ``an.control_scale``; below it they are orthogonal
+CONTROL_MIN_COS = 1e-10
+#: Minimum cosine between the converged increment of a branch-switching
+#: step and its predictor, the critical eigenvector
+BRANCH_SWITCH_MIN_COS = 0.5
+#: Number of attempts of a branch-switching step, each with the arc length
+#: multiplied by ``INC_CUT_FACTOR``, before the switch is abandoned
+BRANCH_SWITCH_MAX_TRIES = 3
+#: Number of eigenpairs computed besides the negative eigenvalues by the
+#: subspace iteration of the critical eigenvector
+EIGVEC_NUM_GUARD = 2
+#: Maximum number of iterations of the subspace iteration
+EIGVEC_MAX_ITER = 100
+#: Relative tolerance of the eigenvalues of the subspace iteration
+EIGVEC_TOL = 1.e-10
+#: Largest subspace of :func:`._critical_eigenvector`, whose size is
+#: doubled until it holds the negative eigenvalues
+EIGVEC_MAX_SIZE = 64
+
+
+def _eigs_near_zero(solve_kT, size, p, start=None):
+    r"""The ``p`` eigenvalues of `\boldsymbol{K}_T` closest to zero and their
+    eigenvectors, by the subspace iteration of :func:`._critical_eigenvector`,
+    with at most ``EIGVEC_MAX_ITER`` iterations, from the vectors ``start``,
+    columns, completed by random vectors. With
+    ``'pardiso'`` the solutions of the factorization are used without the
+    check of their residual and GMRES, see :func:`.static._factorize`: the
+    tangent stiffness matrix near a critical point is almost singular, the
+    GMRES of its solutions took about one second each for the DOE09
+    cylinder (57000 degrees of freedom), against 0.03 s for those of the
+    factorization alone, and the subspace iteration converges to the
+    eigenvectors closest to zero without them.
+
+    Returns
+    -------
+    mus : array-like
+        The eigenvalues, not sorted.
+    vecs : array-like
+        The eigenvectors, the columns, orthonormal.
+
+    """
+    solve = getattr(solve_kT, 'unrefined', solve_kT)
+    rng = np.random.default_rng(1)
+    X = rng.standard_normal((p, size))
+    if start is not None:
+        k = min(start.shape[1], p)
+        X[:k] = start[:, :k].T
+    Y = np.column_stack([solve(x) for x in X])
+    theta_old = None
+    for _ in range(EIGVEC_MAX_ITER):
+        Q, _ = np.linalg.qr(Y)
+        Y = np.column_stack([solve(q) for q in Q.T])
+        H = Q.T @ Y
+        theta, V = np.linalg.eigh(0.5*(H + H.T))
+        if (theta_old is not None
+                and np.all(np.abs(theta - theta_old)
+                           <= EIGVEC_TOL*np.abs(theta).max())):
+            break
+        theta_old = theta
+    keep = theta != 0
+    return 1./theta[keep], (Q @ V)[:, keep]
+
+
+def _critical_eigenvector(solve_kT, size, num_neg, num_new):
+    r"""Eigenvector of the tangent stiffness matrix whose eigenvalue just
+    became negative
+
+    Subspace iteration with the inverse of the factorization ``solve_kT``,
+    see :func:`.static._factorize`, and the Rayleigh-Ritz projection of the
+    inverse on the orthonormalized subspace, which gives the eigenvalues of
+    `\boldsymbol{K}_T` closest to zero and their eigenvectors in the
+    Euclidean inner product, see :func:`._eigs_near_zero`. The subspace has
+    ``num_neg + EIGVEC_NUM_GUARD`` vectors, ``num_neg`` being the number of
+    negative eigenvalues of `\boldsymbol{K}_T`, and is iterated until the
+    Ritz values change by less than ``EIGVEC_TOL``, at most
+    ``EIGVEC_MAX_ITER`` times. When fewer than ``num_neg`` of the Ritz
+    values are negative, i.e. positive eigenvalues are closer to zero than
+    some negative ones, e.g. of weakly stiff terms of a Ritz model, the
+    size of the subspace is doubled and the iteration repeated, up to
+    ``EIGVEC_MAX_SIZE`` vectors. Without a count of negative eigenvalues
+    (``'splu'``), ``num_neg`` is 1 when the determinant is negative and 0
+    otherwise. With ``an.constraints`` the factorization
+    is the bordered one, whose solutions satisfy the constraints, and the
+    eigenpairs are those of `\boldsymbol{K}_T` restricted to them.
+
+    Of the negative eigenvalues found, the ``num_new`` closest to zero are
+    taken as those that became negative in the last step, and the most
+    negative of them is the critical one, the first that became negative.
+    Without negative eigenvalue, the one closest to zero is taken. With
+    ``num_new < 0``, ``-num_new`` eigenvalues became positive in the last
+    step, the subspace has ``-num_new`` more vectors, and the critical one
+    is the largest of the ``-num_new`` smallest positive eigenvalues, the
+    first that became positive.
+
+    Returns
+    -------
+    phi : array-like
+        The eigenvector, of unit Euclidean norm.
+    mu : float
+        Its eigenvalue.
+
+    """
+    p = min(max(num_neg, 1) + max(-num_new, 0) + EIGVEC_NUM_GUARD, size)
+    vecs = None
+    while True:
+        mus, vecs = _eigs_near_zero(solve_kT, size, p, start=vecs)
+        p_max = min(max(EIGVEC_MAX_SIZE, p), size)
+        if (mus < 0).sum() >= num_neg or p >= p_max:
+            break
+        p = min(2*p, p_max)
+    neg = np.flatnonzero(mus < 0)
+    pos = np.flatnonzero(mus > 0)
+    if num_new < 0 and pos.size > 0:
+        # the positive eigenvalues sorted from the closest to zero
+        new = pos[np.argsort(mus[pos])][:-num_new]
+        i = int(new[np.argmax(mus[new])])
+    elif neg.size == 0:
+        i = int(np.argmin(np.abs(mus)))
+    else:
+        # the negative eigenvalues sorted from the closest to zero
+        neg = neg[np.argsort(-mus[neg])]
+        new = neg[:max(num_new, 1)]
+        i = int(new[np.argmin(mus[new])])
+    phi = vecs[:, i]
+    return phi/np.linalg.norm(phi), float(mus[i])
 
 
 def _solver_arc_length(an, method, silent=False):
@@ -52,8 +190,11 @@ def _solver_arc_length(an, method, silent=False):
     fails is repeated with the arc length multiplied by ``INC_CUT_FACTOR``.
     The analysis stops when:
 
-    - the load factor reaches 1.0, the last solution being computed at a load
-      factor of exactly 1.0
+    - the load factor reaches ``an.final_load_factor``, 1.0 by default, the
+      last solution being computed at exactly this load factor; never with
+      ``an.final_load_factor = None``
+    - ``an.stop_criterion(an)`` returns ``True`` after a converged step, see
+      :mod:`.stopping`
     - the cumulative arc length reaches ``an.maxArcLength``
     - the arc length becomes smaller than ``an.minInc``
     - ``MAX_NUM_STEPS`` steps converged
@@ -69,7 +210,8 @@ def _solver_arc_length(an, method, silent=False):
         Analysis object, the converged load factors and solutions are appended
         to ``an.increments`` and ``an.cs``.
     method : str
-        ``'riks'`` or ``'crisfield'``.
+        ``'riks'``, ``'crisfield'``, ``'displacement_control'`` or
+        ``'generalized_displacement_control'``.
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
 
@@ -92,7 +234,20 @@ def _solver_arc_length(an, method, silent=False):
     `\psi^2 \Delta\lambda^2 \boldsymbol{F}_{ext}^\top \boldsymbol{F}_{ext}`. `\psi` is the
     constant ``PSI``,
     and `\boldsymbol{u}_{ref}^\top \boldsymbol{u}_{ref}` is
-    replaced by 1 when it is null. With the inner product
+    replaced by 1 when it is null.
+
+    With ``an.arc_length_weights`` `= \boldsymbol{w}`, the products of
+    displacements in the constraint, and in the inner product below, are
+    weighted, `\boldsymbol{a}^\top \boldsymbol{W} \boldsymbol{b}` with `\boldsymbol{W} =
+    \mathrm{diag}(\boldsymbol{w})`, also in the scale `\boldsymbol{u}_{ref}^\top
+    \boldsymbol{W} \boldsymbol{u}_{ref}`. When the unknowns mix translations with
+    their derivatives or with rotations, of other units and magnitudes, the
+    weights 1 for the translations and 0 for the others measure the arc
+    length on the translations only. The arc length is then independent of
+    the units of the degrees of freedom of null weight, as is Crisfield's
+    convergence criterion, see :mod:`.convergence`.
+
+    With the inner product
 
     .. math::
 
@@ -175,9 +330,119 @@ def _solver_arc_length(an, method, silent=False):
       current one `(\Delta c, \Delta\lambda)` is chosen, i.e. the smallest
       angle, since both have the length `\Delta s`.
 
+    - ``method='displacement_control'``: indirect displacement control, the
+      arc-length constraint being replaced by the linear constraint
+
+      .. math::
+
+          \frac{\boldsymbol{\psi}^\top \Delta \boldsymbol{c}}{s_{ref}} = \Delta s
+
+      with `\boldsymbol{\psi}` = ``an.control_vector`` and `s_{ref}` =
+      ``an.control_scale``, by default `|\boldsymbol{\psi}^\top
+      \boldsymbol{u}_{ref}|`, such that in the linear regime `\Delta s =
+      \Delta\lambda`, which must then not be orthogonal to
+      `\boldsymbol{u}_{ref}` (cosine above ``CONTROL_MIN_COS``); a unit
+      vector `\boldsymbol{\psi}` controls the
+      displacement of one degree of freedom, e.g. the end shortening, and a
+      buckling mode controls its amplitude. The correction of the load
+      factor satisfies the constraint exactly:
+
+      .. math::
+
+          \delta\lambda = \frac{s_{ref} \Delta s - \boldsymbol{\psi}^\top
+          (\Delta \boldsymbol{c} + \delta \boldsymbol{c}_R)}{\boldsymbol{\psi}^\top
+          \delta \boldsymbol{c}_q}
+
+      and the predictors are scaled to satisfy it, the tangent predictor
+      `\Delta\lambda = s_{ref} \Delta s/(\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q)`, without the sign rule, the sign of the load factor
+      increment following from the one of `\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q`. The step length `\Delta s` plays the role of the arc
+      length, with ``an.initialInc`` the first one, `\Delta s` keeping the
+      sign for which the controlled quantity increases with the load factor
+      at the origin. The path can be traced through the limit points of the
+      load and of the other degrees of freedom, e.g. snap-backs, as long as
+      the controlled quantity increases monotonically along it; at a limit
+      point of the controlled quantity `\boldsymbol{\psi}^\top \delta
+      \boldsymbol{c}_q` vanishes and the iterations fail or converge to
+      another part of the path. For the indirect displacement control, see
+      de Borst [5]_. The check against the doubling back below does not
+      apply, since the previous converged point does not satisfy the
+      constraint.
+
+    - ``method='generalized_displacement_control'``: the generalized
+      displacement control of Yang and Shieh [6]_. With `\delta
+      \boldsymbol{c}_q^{(k)}` the tangent `\boldsymbol{K}_T^{-1}
+      \boldsymbol{F}_{ext}` at the start of step `k` and `\langle a, b
+      \rangle_W = \boldsymbol{a}^\top \boldsymbol{W} \boldsymbol{b}`, with
+      the weights of ``an.arc_length_weights``, the predictor of step `k`
+      is `\Delta\lambda = s_k \Delta s \sqrt{|GSP_k|}`, `\Delta
+      \boldsymbol{c} = \Delta\lambda \, \delta \boldsymbol{c}_q^{(k)}`,
+      with the generalized stiffness parameter
+
+      .. math::
+
+          GSP_k = \frac{\langle \delta c_q^{(1)}, \delta c_q^{(1)}
+          \rangle_W}{\langle \delta c_q^{(k-1)}, \delta c_q^{(k)}
+          \rangle_W}, \qquad GSP_1 = 1
+
+      which decreases with the stiffness along the path and changes sign
+      where the tangent turns back, at the limit points of the load; the
+      sign `s_k = s_{k-1} \, \mathrm{sign}(GSP_k)`, `s_1 = 1`, then
+      reverses the load increment. The corrections satisfy
+
+      .. math::
+
+          \langle \delta c_q^{(k-1)}, \delta \boldsymbol{c}_R + \delta\lambda
+          \, \delta \boldsymbol{c}_q \rangle_W = 0, \qquad
+          \delta\lambda = -\frac{\langle \delta c_q^{(k-1)}, \delta
+          c_R \rangle_W}{\langle \delta c_q^{(k-1)}, \delta c_q
+          \rangle_W}
+
+      with `\delta c_q^{(0)} = \delta c_q^{(1)}`, i.e. they are orthogonal
+      to the tangent of the previous step, which does not depend on the
+      units of the load nor on a scale of the displacements. The step
+      length `\Delta s` is a load factor, ``an.initialInc`` the first one
+      and the largest, cut and adapted as the arc length, but never
+      increased beyond ``an.initialInc``, since growing it as the arc length
+      would defeat the scaling by `GSP_k`, which shortens the steps where
+      the structure softens: with longer steps the iterations may converge
+      beyond a limit point on another part of the path. ``an.maxArcLength``
+      bounds the sum of the `\Delta s`. With ``an.arc_length_weights =
+      None``, `GSP_k`, the predictor and `\delta\lambda` are Eqs. (33),
+      (34) and (30) of [6]_, with `\delta c_q^{(0)} = \delta c_q^{(1)}` as
+      there. [6]_ multiplies the load increment by `-1` when `GSP_k < 0`,
+      its step 2d, which keeps the displacements going forward only if the
+      reversal is relative to the previous step, `s_k = s_{k-1} \,
+      \mathrm{sign}(GSP_k)` as here, since `GSP_k` is negative only at
+      the step after each limit point. The weights and the adaptation of
+      `\Delta s` are additions of this implementation: in [6]_ `\Delta s`
+      is the first load increment throughout. The check against the
+      doubling back below does not apply.
+
+    With ``an.arc_length_line_search = True``, the whole correction
+    `(\delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \delta\lambda)`
+    is multiplied by the first factor `\eta` of ``LINE_SEARCH_ETAS``,
+    `1, 1/2, 1/4`, for which the norm of the residual of the convergence
+    criterion, see :func:`.newton_raphson._check_convergence`, decreases,
+    or by the factor of the smallest norm when none decreases it. The
+    internal force vector of the accepted point is reused in the residual
+    of the next iteration, such that the full correction costs no
+    additional evaluation. With `\eta < 1` the iterate leaves the
+    constraint surface, the next correction returning to it; the converged
+    point may thus be closer than `\Delta s` to the last one when the last
+    correction was reduced. Contrary to the line search of
+    :func:`.newton_raphson._NR_iterations`, there is no sufficient-decrease
+    test: the residual of the equilibrium equations alone is not the merit
+    function of the augmented system of the equilibrium equations and the
+    constraint, along whose Newton direction it need not decrease.
+
     The step fails when `\delta\lambda` cannot be computed or is not
-    finite, and when the converged increment points against the tangent
-    predictor `(\Delta c_{pred}, \Delta\lambda_{pred})` of the step,
+    finite, when the iterations are stopped by
+    :func:`.newton_raphson._check_divergence`, earlier with
+    ``an.early_divergence = True``, and when the converged increment points
+    against the predictor `(\Delta c_{pred}, \Delta\lambda_{pred})` of the
+    step,
     `\langle (\Delta c, \Delta\lambda), (\Delta c_{pred},
     \Delta\lambda_{pred}) \rangle \le 0`. The previous converged point is
     also at the distance `\Delta s` from the last one, and with long steps
@@ -207,6 +472,103 @@ def _solver_arc_length(an, method, silent=False):
     rule recommended by Ramm [3]_ (p. 76), who found that the ratio itself,
     as used by Crisfield [2]_ (Eq. 15), makes the number of iterations
     oscillate from step to step.
+
+    The tangent stiffness matrix is factorized with ``an.linear_solver``,
+    see :func:`.static._factorize`. With ``an.inertia = True``, it is
+    factorized at every converged state, the factorization being that of
+    the predictor of the next step, and its number of negative eigenvalues
+    and the sign of its determinant are recorded in
+    ``an.num_negative_eigvals`` and ``an.det_signs``, see
+    :func:`.newton_raphson._converged_state`: on a stable branch without
+    prestress-induced instabilities the count is zero, it increases by one
+    at each limit point of the load beyond which the branch is unstable,
+    and at each bifurcation point crossed without branching. A perturbation
+    whose shape keeps the path on a branch of a given symmetry, e.g.
+    axisymmetric, may thus leave many negative eigenvalues unnoticed
+    without this count.
+
+    With ``an.max_inertia_jump`` `= j`, which requires ``an.inertia`` and
+    ``an.linear_solver = 'pardiso'``, a converged step whose number of
+    negative eigenvalues differs by more than `j` from that of the last
+    converged state is repeated with a shorter arc length, as a step that
+    failed, unless the shorter arc length would be smaller than
+    ``an.minInc``. With `j = 1` the eigenvalues cross zero one at a time,
+    and a step over several critical points, e.g. beyond the limit load
+    of a cylinder under axial compression, is cut back to them.
+
+    With ``an.branch_switching`` `= n > 0`, which requires ``an.inertia``,
+    the path is switched to the bifurcated branch at the first `n`
+    bifurcation points crossed, with every method. A critical point is
+    crossed when the number of negative eigenvalues changes between two
+    converged states, increases or decreases, or, when it is not known
+    (``an.linear_solver = 'splu'``), when the sign of the determinant
+    changes. It is a bifurcation point when the load factor varies in the
+    same direction along the tangent predictors of the inner-product rule
+    at the two converged states, before and after the critical point, a
+    limit point when the direction is reversed. At a bifurcation, the
+    eigenvector `\boldsymbol{\phi}` of the eigenvalue that became negative,
+    or positive when the count decreased, is computed with
+    :func:`._critical_eigenvector`, with the sign for which
+    `\boldsymbol{\phi}^\top \boldsymbol{c} \ge 0`, i.e. the direction
+    of the deformation already present, e.g. of an imperfection, and the
+    next step starts from the predictor `(\Delta s \hat{\phi}, 0)` along it,
+    `\hat{\phi}` normalized in the inner product above, with `\Delta s`
+    the larger of the current arc length and that of the last step, which
+    crossed the critical point. With ``method='displacement_control'`` and
+    ``'generalized_displacement_control'``, whose step lengths are not arc
+    lengths, `\Delta s` is the length of the last increment in the inner
+    product above, multiplied by the growth of the step length since then
+    when it grew, as for the arc length. The step is corrected with the
+    spherical constraint of ``method='crisfield'`` of radius `\Delta s`,
+    whose root closest to the current
+    increment is on the bifurcated branch, which passes through the critical
+    point, at a distance smaller than `\Delta s`, and is tangent to
+    `\boldsymbol{\phi}` at it, whereas the linearized constraint of
+    ``method='riks'`` is singular there for a symmetric bifurcation. The
+    step is accepted when the cosine between its increment and the
+    predictor is at least ``BRANCH_SWITCH_MIN_COS``, otherwise it is
+    repeated with a shorter `\Delta s`, at most ``BRANCH_SWITCH_MAX_TRIES``
+    times, after which the switch is abandoned and the path continues on
+    the branch already traced. The index in ``an.increments`` of the state
+    from which the path was switched is appended to ``an.branch_points``.
+    The step after the switch starts along the tangent in the direction of
+    the switching increment: with the inner-product rule for
+    ``method='riks'`` and ``'crisfield'``; with
+    ``'displacement_control'``, the sign of `\Delta s` for which the
+    predictor makes a positive inner product with the switching increment;
+    with ``'generalized_displacement_control'``, the same sign of the load
+    increment, `GSP_k = \langle \delta c_q^{(1)}, \delta c_q^{(1)}
+    \rangle_W / \langle \delta c_q^{(k)}, \delta c_q^{(k)} \rangle_W`, i.e.
+    `\delta c_q^{(k-1)}` replaced by `\delta c_q^{(k)}`, and the
+    corrections orthogonal to `\delta c_q^{(k)}`, as at the first step,
+    since the tangent before the switch is that of the other branch.
+    The detection by the count of negative pivots and the switch along the
+    critical eigenvector follow Wagner and Wriggers [7]_, whose algorithm
+    (p. 106, step (c)) detects a stability point when the number of
+    negative diagonal elements of the factorization changes, and whose
+    classification by the current stiffness parameter, zero at the limit
+    points and not at the bifurcations, their Eq. (22), is replaced here by
+    the direction of the load along the tangents. In [7]_ the critical
+    point is first located by bisection, the eigenvector is added to the
+    displacements of the last converged state, `\bar{\boldsymbol{v}} +
+    \xi \boldsymbol{\phi}/\|\boldsymbol{\phi}\|` with `|\xi| =
+    \|\bar{\boldsymbol{v}}\|/\tau` and `\tau` of the order of 100, Eqs.
+    (24) and (25), and an equilibrium state is then found by the arc-length
+    method, repeated with another `\tau`, up to about three times, when it
+    falls back on the primary branch. Here the critical point is not
+    located, the perturbation is the predictor of an arc-length step from
+    the first state beyond the critical point, with the length of the
+    arc-length steps instead of `|\xi|`, and the shorter steps of the
+    repeated attempts play the role of the other values of `\tau`.
+
+    With ``an.restart_state``, the dictionary ``an.path_state`` saved after
+    a converged step of an analysis with the same method, the analysis
+    continues from that step, with its arc length and the directions of its
+    predictors, as the analysis that saved it would have, appending the
+    next converged increments to the empty ``an.increments`` and ``an.cs``.
+    ``an.path_state`` holds arrays and numbers, e.g. to be saved with
+    :mod:`pickle` and the analysis restarted with other options or after
+    the end of a job.
 
     When the load factor 1.0 is exceeded within a converged step, from
     `\lambda < 1` to `\lambda + \Delta\lambda > 1`, the step is replaced by
@@ -239,6 +601,25 @@ def _solver_arc_length(an, method, silent=False):
     convergence checks. At the converged state it is kept with the tangent
     stiffness matrix when the step is repeated with a shorter arc length.
 
+    With ``an.constraints`` and ``an.constraint_values``, the constraints
+    `\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}`, e.g. a
+    displacement prescribed in proportion to the load factor, linear in
+    `(\boldsymbol{c}, \lambda)`: the load solutions `\delta
+    \boldsymbol{c}_q` (and `\boldsymbol{u}_{ref}`) are those of the system
+    bordered by `\boldsymbol{d}`, `\boldsymbol{C}^\top \delta
+    \boldsymbol{c}_q = \boldsymbol{d}`, and the residual solutions `\delta
+    \boldsymbol{c}_R` those of the null border, see
+    :func:`.static._factorize`, such that every predictor, tangent,
+    of the displacement controls or the jump to `\lambda = 1`, and every
+    correction `\delta \boldsymbol{c}_R + \delta\lambda \, \delta
+    \boldsymbol{c}_q` satisfies `\boldsymbol{C}^\top \Delta \boldsymbol{c}
+    = \Delta\lambda \boldsymbol{d}`; the eigenvector predictor of the
+    branch switching, at a constant load, has the null border. Under a
+    prescribed displacement alone, `\boldsymbol{F}_{ext} = \boldsymbol{0}`,
+    `\boldsymbol{u}_{ref}` is the displacement of the linear solution, not
+    null, and the reactions of the constraints, in the internal force
+    vector, are the reference of the convergence criterion.
+
     References
     ----------
     .. [1] Riks, E., An incremental approach to the solution of snapping and
@@ -254,10 +635,26 @@ def _solver_arc_length(an, method, silent=False):
     .. [4] Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
        Structures, Volume 1: Essentials, John Wiley & Sons, Chichester,
        1991.
+    .. [5] de Borst, R., Computation of post-bifurcation and post-failure
+       behavior of strain-softening solids, Computers & Structures, 25(2),
+       211-224, 1987. https://doi.org/10.1016/0045-7949(87)90144-1
+    .. [6] Yang, Y.-B., Shieh, M.-S., Solution method for nonlinear problems
+       with multiple critical points, AIAA Journal, 28(12), 2110-2116, 1990.
+       https://doi.org/10.2514/3.10529
+    .. [7] Wagner, W., Wriggers, P., A simple method for the calculation of
+       postcritical branches, Engineering Computations, 5(2), 103-109, 1988.
+       https://doi.org/10.1108/eb023727
 
     """
-    if method not in ('riks', 'crisfield'):
+    if method not in METHODS:
         raise ValueError('Invalid arc-length method: %s' % method)
+    control = method == 'displacement_control'
+    gdc = method == 'generalized_displacement_control'
+    max_jump = _check_max_inertia_jump(an)
+    switches_left = int(an.branch_switching)
+    if switches_left > 0 and not an.inertia:
+        raise ValueError('Analysis.branch_switching requires '
+                         'Analysis.inertia = True')
     modified_NR = an.modified_NR
 
     fext = an.calc_fext(inc=1., silent=True)
@@ -265,30 +662,119 @@ def _solver_arc_length(an, method, silent=False):
     w = _weights(an, kC0)
     K0_abs = _abs_matrix(kC0)
     lbd_dependent = callbacks.is_load_factor_dependent(an)
+    # the values of the constraints C^T c = lbd d, the border of the
+    # solutions of the load vector
+    d = _constraint_values(an)
     if lbd_dependent:
         # -dR/dlbd at c = 0 and lbd = 0
         q0 = callbacks.calc_load_vector(an, np.zeros_like(fext), fext, 0.)
-        u_ref = solve(kC0, q0, silent=True)
+        u_ref = _linear_solve(an, kC0, q0, d)
     else:
-        u_ref = solve(kC0, fext, silent=True)
-    scale2 = u_ref.dot(u_ref)
+        u_ref = _linear_solve(an, kC0, fext, d)
+    C = _constraint_matrix(an)
+    proj = _residual_projector(an, w)
+
+    def residual(fint, lbd_total):
+        R = fint - lbd_total*fext
+        return R if proj is None else proj(R)
+
+    if an.arc_length_weights is None:
+        wa = np.ones_like(u_ref)
+    else:
+        wa = np.asarray(an.arc_length_weights, dtype=float)
+        if wa.shape != u_ref.shape:
+            raise ValueError('Analysis.arc_length_weights must have the shape %s'
+                             % (u_ref.shape,))
+        if not np.all(wa >= 0):
+            raise ValueError('Analysis.arc_length_weights must not be negative')
+    scale2 = u_ref.dot(wa*u_ref)
     if not scale2 > 0:
         scale2 = 1.
     psi2 = PSI**2
 
     def inner(dc1, dlbd1, dc2, dlbd2):
-        return dc1.dot(dc2)/scale2 + psi2*dlbd1*dlbd2
+        return dc1.dot(wa*dc2)/scale2 + psi2*dlbd1*dlbd2
+
+    if control:
+        if an.control_vector is None:
+            raise ValueError("NL_method='displacement_control' requires "
+                             "Analysis.control_vector")
+        psi_c = np.asarray(an.control_vector, dtype=float)
+        if psi_c.shape != u_ref.shape:
+            raise ValueError('Analysis.control_vector must have the shape %s'
+                             % (u_ref.shape,))
+        if an.control_scale is None:
+            s_ref = abs(psi_c.dot(u_ref))
+            # orthogonal to round-off, which depends on the platform
+            if not s_ref > (CONTROL_MIN_COS*np.linalg.norm(psi_c)
+                            *np.linalg.norm(u_ref)):
+                raise ValueError('The controlled quantity is null in the '
+                                 'linear solution, Analysis.control_scale '
+                                 'must be given')
+        else:
+            s_ref = float(an.control_scale)
+
+        def ctrl(dc):
+            # the controlled quantity, dimensionless
+            return psi_c.dot(dc)/s_ref
+
+    def wdot(a, b):
+        return a.dot(wa*b)
+
+    target = an.final_load_factor
+
+    def target_reached(lbd0, dlbd0):
+        # the step from lbd0 to lbd0 + dlbd0 exceeds the final load factor
+        return (target is not None and lbd0 + dlbd0 > target
+                and lbd0 < target)
 
     c = np.zeros_like(u_ref)
     lbd = 0.
     dc_last = None
     dlbd_last = None
     arc_length = None
+    arc_length_last = None
     total_arc_length = 0.
     step_cut = False
     solve_kT_conv = None
+    # factorization of the last converged state, with max_inertia_jump
+    solve_last = None
+    # direction of the load along the tangent, with the inner-product rule,
+    # at the last converged state and at the one before
+    s_tan = 1.
+    s_tan_prev = 1.
+    # branch switching: the inertia changed in the last step, the pending
+    # switch (eigenvector, eigenvalue, arc length before it, attempts)
+    check_switch = 0
+    switch = None
+    after_switch = False
+    # generalized displacement control
+    dq_first = None
+    dq_prev = None
+    gdc_sign = 1.
+    ctrl_sign = 1.
 
     step_num = 1
+
+    state = _restart_state(an, method)
+    if state is not None:
+        c = np.array(state['c'], dtype=float)
+        lbd = state['lbd']
+        dc_last = state['dc_last']
+        dlbd_last = state['dlbd_last']
+        arc_length = state['arc_length']
+        arc_length_last = state['arc_length_last']
+        max_arc_length_inc = state['max_arc_length_inc']
+        total_arc_length = state['total_arc_length']
+        s_tan_prev = state['s_tan_prev']
+        dq_first = state['dq_first']
+        dq_prev = state['dq_prev']
+        gdc_sign = state['gdc_sign']
+        ctrl_sign = state['ctrl_sign']
+        switches_left = min(switches_left, state['switches_left'])
+        after_switch = state.get('after_switch', False)
+        step_num = state['step_num']
+        msg('Restarting at load factor %1.5f' % lbd, level=1, silent=silent)
 
     while True:
         if step_num > MAX_NUM_STEPS:
@@ -303,7 +789,8 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 kT = callbacks.calc_kT(an, c, lbd)
             try:
-                solve_kT_conv = _factorize(kT)
+                solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver,
+                                           constraints=C, cache=_cache(an))
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
@@ -314,21 +801,124 @@ def _solver_arc_length(an, method, silent=False):
                 q_conv = q0
             else:
                 q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
-        dc_q_conv = solve_kT_conv(q_conv)
-        norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
+            if an.inertia:
+                solve_last = solve_kT_conv
+        if solve_kT_conv is not None:
+            dc_q_conv = solve_kT_conv(q_conv, d)
+        if solve_kT_conv is not None and dc_last is not None:
+            s_tan = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)) or 1.
+        if check_switch:
+            num_new = check_switch
+            check_switch = 0
+            # a bifurcation point when the load varies in the same direction
+            # along the tangents before and after it, a limit point otherwise
+            if s_tan == s_tan_prev:
+                nneg = solve_kT_conv.num_negative_eigvals
+                if nneg is None:
+                    # SuperLU: a negative determinant has at least one
+                    # negative eigenvalue
+                    nneg = 1 if solve_kT_conv.det_sign < 0 else 0
+                phi, mu = _critical_eigenvector(solve_kT_conv, c.shape[0],
+                                                nneg, num_new)
+                if phi.dot(c) < 0:
+                    phi = -phi
+                msg('Bifurcation point crossed, critical eigenvalue %1.5e, '
+                    'switching branch' % mu, level=1, silent=silent)
+                if control or gdc:
+                    # the step lengths are not arc lengths: the radius of
+                    # the switching step is the length of the last step,
+                    # with the growth of the step length since then, as the
+                    # arc length of the Riks and Crisfield methods
+                    radius = (np.sqrt(inner(dc_last, dlbd_last, dc_last,
+                                            dlbd_last))
+                              *max(arc_length/arc_length_last, 1.))
+                else:
+                    radius = None
+                switch = [phi, mu, arc_length, 0, radius]
+                if radius is None:
+                    arc_length = max(arc_length, arc_length_last)
+            else:
+                msg('Limit point crossed', level=2, silent=silent)
         if arc_length is None:
+            if gdc:
+                norm_q = 1.
+            elif control:
+                # the first step is initialInc in units of the scale, the
+                # controlled quantity increasing with the load factor along
+                # the initial tangent
+                norm_q = 1.
+                ctrl_sign = np.sign(ctrl(dc_q_conv)) or 1.
+            else:
+                norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
             arc_length = an.initialInc*norm_q
             max_arc_length_inc = max(an.maxInc, arc_length)
 
-        # tangent predictor
-        sign = 1.
-        if dc_last is not None:
-            sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
-            if sign == 0:
-                sign = 1.
-        dlbd = sign*arc_length/norm_q
-        dc = dlbd*dc_q_conv
-        # tangent predictor, the forward direction of the step
+        # radius of the spherical constraint of the corrections
+        radius = arc_length
+        if switch is not None:
+            # branch switching: the critical eigenvector, at a constant load
+            phi = switch[0]
+            if switch[4] is not None:
+                radius = switch[4]
+            dc = (radius/np.sqrt(inner(phi, 0., phi, 0.)))*phi
+            dlbd = 0.
+        elif gdc:
+            dq_step = dc_q_conv
+            if dq_first is None:
+                dq_first = dq_step
+            if dq_prev is None:
+                gsp = 1.
+                dq_ref = dq_step
+            elif after_switch:
+                # first step on the bifurcated branch: the stiffness
+                # parameter of the current tangent, the corrections
+                # orthogonal to it, and the load in the direction of the
+                # switching step
+                gsp = wdot(dq_first, dq_first)/wdot(dq_step, dq_step)
+                dq_ref = dq_step
+                gdc_sign = np.sign(inner(dq_step, 1., dc_last,
+                                         dlbd_last)) or 1.
+            else:
+                den = wdot(dq_prev, dq_step)
+                if den == 0:
+                    warn('Null generalized stiffness parameter! Analysis stopped',
+                         level=1, silent=silent)
+                    break
+                gsp = wdot(dq_first, dq_first)/den
+                dq_ref = dq_prev
+            sign = gdc_sign*np.sign(gsp)
+            dlbd = sign*arc_length*np.sqrt(abs(gsp))
+            dc = dlbd*dq_step
+            msg('Generalized stiffness parameter %1.5f' % gsp, level=2,
+                silent=silent)
+        elif control:
+            if after_switch:
+                # first step on the bifurcated branch: the controlled
+                # quantity varies as along the predictor in the direction
+                # of the switching step
+                s = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)
+                            *ctrl(dc_q_conv))
+                ctrl_sign = s or ctrl_sign
+            # psi^T dc = ds
+            ds = ctrl_sign*arc_length
+            den = ctrl(dc_q_conv)
+            if den == 0:
+                warn('The controlled quantity does not change along the predictor! Analysis stopped',
+                     level=1, silent=silent)
+                break
+            dlbd = ds/den
+            dc = dlbd*dc_q_conv
+        else:
+            # tangent predictor
+            norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
+            sign = 1.
+            if dc_last is not None:
+                sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
+                if sign == 0:
+                    sign = 1.
+            dlbd = sign*arc_length/norm_q
+            dc = dlbd*dc_q_conv
+        # the predictor, the forward direction of the step
         dc_pred = dc
         dlbd_pred = dlbd
 
@@ -338,16 +928,19 @@ def _solver_arc_length(an, method, silent=False):
         converged = False
         Rnorms = []
         solve_kT = solve_kT_conv
-        dc_q = dc_q_conv
-        # the last -dR/dlbd evaluated, with the tangent stiffness matrix
-        q_iter = q_conv
+        if solve_kT_conv is not None:
+            dc_q = dc_q_conv
+            # the last -dR/dlbd evaluated, with the tangent stiffness matrix
+            q_iter = q_conv
         iter_kT = 0
         iteration = 0
+        fint = None
         while True:
             iteration += 1
-            fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
+            if fint is None:
+                fint = callbacks.calc_fint(an, c + dc, lbd + dlbd)
             fext_total = (lbd + dlbd)*fext
-            R = fint - fext_total
+            R = residual(fint, lbd + dlbd)
             q_ref = None
             if lbd_dependent:
                 q_ref = (lbd + dlbd)*q_iter
@@ -359,7 +952,8 @@ def _solver_arc_length(an, method, silent=False):
             if conv:
                 converged = True
                 break
-            if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent):
+            if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent,
+                                 Rrel=Rrel):
                 break
 
             # with modified_NR the tangent of the last converged state is
@@ -369,7 +963,9 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 try:
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
-                                                            lbd + dlbd))
+                                                            lbd + dlbd),
+                                          linear_solver=an.linear_solver,
+                                          constraints=C, cache=_cache(an))
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
@@ -377,24 +973,35 @@ def _solver_arc_length(an, method, silent=False):
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
                     q_iter = callbacks.calc_load_vector(an, c + dc, fext,
                                                         lbd + dlbd)
-                    dc_q = solve_kT(q_iter)
+                    dc_q = solve_kT(q_iter, d)
                 else:
                     dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
-                                                               fext))
+                                                               fext), d)
                 iter_kT = 1
             dc_R = solve_kT(-R)
 
-            # linearized constraint
-            den = inner(dc, dlbd, dc_q, 1.)
-            g = 0.5*(inner(dc, dlbd, dc, dlbd) - arc_length**2)
             varlbd = None
-            if den != 0:
-                varlbd = -(g + inner(dc, dlbd, dc_R, 0.))/den
-            if method == 'crisfield':
+            if control and switch is None:
+                # psi^T (dc + dc_R + varlbd dc_q) = ds
+                den = ctrl(dc_q)
+                if den != 0:
+                    varlbd = (ds - ctrl(dc + dc_R))/den
+            elif gdc and switch is None:
+                # correction orthogonal to the tangent of the previous step
+                den = wdot(dq_ref, dc_q)
+                if den != 0:
+                    varlbd = -wdot(dq_ref, dc_R)/den
+            else:
+                # linearized constraint
+                den = inner(dc, dlbd, dc_q, 1.)
+                g = 0.5*(inner(dc, dlbd, dc, dlbd) - radius**2)
+                if den != 0:
+                    varlbd = -(g + inner(dc, dlbd, dc_R, 0.))/den
+            if method == 'crisfield' or switch is not None:
                 u = dc + dc_R
                 a = inner(dc_q, 1., dc_q, 1.)
                 b = 2*inner(u, dlbd, dc_q, 1.)
-                cc = inner(u, dlbd, u, dlbd) - arc_length**2
+                cc = inner(u, dlbd, u, dlbd) - radius**2
                 disc = b**2 - 4*a*cc
                 if disc >= 0:
                     sq = np.sqrt(disc)
@@ -409,27 +1016,76 @@ def _solver_arc_length(an, method, silent=False):
             if varlbd is None or not np.isfinite(varlbd):
                 warn('Diverged - arc-length constraint cannot be satisfied', level=2, silent=silent)
                 break
-            dc = dc + dc_R + varlbd*dc_q
-            dlbd = dlbd + varlbd
+            dc_corr = dc_R + varlbd*dc_q
+            eta = 1.
+            fint = None
+            if an.arc_length_line_search:
+                # backtracking on the whole correction, the first factor
+                # that decreases the norm of the residual is accepted,
+                # otherwise the one with the smallest norm
+                best = None
+                for eta_try in LINE_SEARCH_ETAS:
+                    lbd_try = lbd + dlbd + eta_try*varlbd
+                    fint_try = callbacks.calc_fint(an, c + dc + eta_try*dc_corr,
+                                                   lbd_try)
+                    Rnorm_try = _norm(residual(fint_try, lbd_try), w)
+                    if best is None or Rnorm_try < best[1]:
+                        best = (eta_try, Rnorm_try, fint_try)
+                    if Rnorm_try < Rnorm:
+                        break
+                eta, _, fint = best
+                if eta != 1.:
+                    msg('Line-search: eta = %1.5f' % eta, level=3, silent=silent)
+            dc = dc + eta*dc_corr
+            dlbd = dlbd + eta*varlbd
 
-        if converged and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0:
+        if (converged and not control and not gdc
+                and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0):
             # the increment points backwards, e.g. to the previous converged
             # point, which is also at the distance arc_length
             warn('Diverged - the step returned along the path already traced',
                  level=2, silent=silent)
             converged = False
 
+        if converged and switch is not None:
+            cos = (inner(dc, dlbd, dc_pred, dlbd_pred)
+                   /np.sqrt(inner(dc, dlbd, dc, dlbd)
+                            *inner(dc_pred, dlbd_pred, dc_pred, dlbd_pred)))
+            if cos < BRANCH_SWITCH_MIN_COS:
+                warn('Branch switching: the step converged at an angle of '
+                     '%1.1f degrees to the eigenvector'
+                     % np.degrees(np.arccos(min(cos, 1.))), level=2,
+                     silent=silent)
+                converged = False
+
+        solve_new = None
+        if converged and an.inertia and not target_reached(lbd, dlbd):
+            solve_new = _factorize_state(an, c + dc, lbd + dlbd,
+                                         silent=silent)
+            if (_inertia_jump(solve_last, solve_new, max_jump)
+                    and arc_length*INC_CUT_FACTOR >= an.minInc):
+                warn('The number of negative eigenvalues changed from %d to '
+                     '%d, by more than max_inertia_jump'
+                     % (solve_last.num_negative_eigvals,
+                        solve_new.num_negative_eigvals), level=2,
+                     silent=silent)
+                converged = False
+
         finished = False
-        if converged and lbd + dlbd > 1. and lbd < 1.:
-            msg('Load factor 1.0 exceeded, correcting to load factor 1.0...', level=1, silent=silent)
-            t = (1. - lbd)/dlbd
-            converged, dc1, _ = _NR_iterations(an, c, t*dc, 1., fext,
+        if converged and target_reached(lbd, dlbd):
+            msg('Load factor %1.5f exceeded, correcting to it...' % target,
+                level=1, silent=silent)
+            t = (target - lbd)/dlbd
+            converged, dc1, _ = _NR_iterations(an, c, t*dc, target, fext,
                     kT0=None, silent=silent, lbd_dependent=lbd_dependent,
-                    q=q_iter, w=w, K0_abs=K0_abs)
+                    q=q_iter, w=w, K0_abs=K0_abs, proj=proj)
             if converged:
-                msg('Converged at load factor 1.00000', level=2, silent=silent)
+                msg('Converged at load factor %1.5f' % target, level=2,
+                    silent=silent)
                 an.cs.append((c + dc1).copy())
-                an.increments.append(1.)
+                an.increments.append(target)
+                if an.inertia:
+                    _converged_state(an, c + dc1, target, silent=silent)
                 finished = True
 
         if finished:
@@ -438,29 +1094,88 @@ def _solver_arc_length(an, method, silent=False):
         if converged:
             c = c + dc
             lbd = lbd + dlbd
-            total_arc_length += arc_length
+            if switch is None or switch[4] is None:
+                total_arc_length += arc_length
             msg('Converged at load factor %1.5f, total arc length %1.5f' % (lbd, total_arc_length),
                 level=2, silent=silent)
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(lbd)
-            if lbd == 1.:
-                break
-            if total_arc_length >= an.maxArcLength:
-                msg('Maximum specified arc-length of %1.5f achieved' % an.maxArcLength,
-                    level=1, silent=silent)
-                break
+            solve_kT_conv = None
+            after_switch = switch is not None
+            if after_switch:
+                an.branch_points.append(len(an.increments) - 2)
+                switches_left -= 1
+                switch = None
+            if an.inertia:
+                # the factorization at the converged state, reused by the
+                # next step
+                _record_inertia(an, solve_new, silent=silent)
+                solve_kT_conv = solve_new
+                if solve_kT_conv is not None:
+                    q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
+                    if (switches_left > 0 and not after_switch
+                            and solve_last is not None):
+                        # number of eigenvalues that became negative, or
+                        # positive when negative
+                        n0 = solve_last.num_negative_eigvals
+                        n1 = solve_kT_conv.num_negative_eigvals
+                        if n0 is not None and n1 is not None:
+                            check_switch = n1 - n0
+                        else:
+                            check_switch = int(solve_kT_conv.det_sign
+                                               != solve_last.det_sign)
+                solve_last = solve_kT_conv
+            if gdc and not after_switch:
+                dq_prev = dq_step
+                gdc_sign = sign
+            s_tan_prev = s_tan
             dc_last = dc
             dlbd_last = dlbd
+            arc_length_last = arc_length
             factor = np.sqrt(DESIRED_NUM_ITER/max(iteration - 1, 1))
             factor = min(max(factor, MIN_GROWTH_FACTOR), MAX_GROWTH_FACTOR)
             if step_cut:
                 factor = min(factor, 1.)
             arc_length = min(factor*arc_length, max_arc_length_inc)
+            if gdc:
+                # the stiffness parameter scales the load increments
+                arc_length = min(arc_length, an.initialInc)
             step_cut = False
-            solve_kT_conv = None
             step_num += 1
+            an.path_state = dict(method=method, c=c.copy(), lbd=lbd,
+                    dc_last=dc_last.copy(), dlbd_last=dlbd_last,
+                    arc_length=arc_length, arc_length_last=arc_length_last,
+                    max_arc_length_inc=max_arc_length_inc,
+                    total_arc_length=total_arc_length, s_tan_prev=s_tan_prev,
+                    dq_first=dq_first, dq_prev=dq_prev, gdc_sign=gdc_sign,
+                    ctrl_sign=ctrl_sign, switches_left=switches_left,
+                    after_switch=after_switch, step_num=step_num)
+            if lbd == target:
+                break
+            if _stop(an, silent):
+                break
+            if total_arc_length >= an.maxArcLength:
+                msg('Maximum specified arc-length of %1.5f achieved' % an.maxArcLength,
+                    level=1, silent=silent)
+                break
+
+        elif switch is not None and switch[3] + 1 >= BRANCH_SWITCH_MAX_TRIES:
+            warn('Branch switching abandoned, the path continues on the '
+                 'branch already traced', level=1, silent=silent)
+            arc_length = switch[2]
+            switch = None
+            switches_left -= 1
+
+        elif switch is not None and switch[4] is not None:
+            # the radius of the switching step is cut, not the step length
+            switch[3] += 1
+            switch[4] *= INC_CUT_FACTOR
+            msg('Reseting the branch-switching step with the radius %1.5f'
+                % switch[4], level=1, silent=silent)
 
         else:
+            if switch is not None:
+                switch[3] += 1
             arc_length *= INC_CUT_FACTOR
             step_cut = True
             msg('Reseting step with reduced arc-length increment %1.5f' % arc_length,

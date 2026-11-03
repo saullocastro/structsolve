@@ -160,7 +160,7 @@ def test_freq_missing_mode_detected(monkeypatch):
     K, M = freq_matrices(True)
     sparse = freq_module._eigsh_freq
 
-    def missing_lowest(K, M, k, tol, sigma):
+    def missing_lowest(K, M, k, tol, sigma, linear_solver='splu'):
         lambda2, eigvecs = sparse(K, M, k + 1, tol, sigma)
         order = np.argsort(-lambda2)
         return lambda2[order[1:]], eigvecs[:, order[1:]]

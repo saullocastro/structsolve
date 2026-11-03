@@ -196,7 +196,8 @@ def test_lb_sparse_raises_when_verification_fails(monkeypatch):
 
     K, KG = load_saved_matrices('plate_ssss_Nxx')
 
-    def wrong_eigsh(K, KG, k, tol, silent, safety=10., mu_max=False):
+    def wrong_eigsh(K, KG, k, tol, silent, safety=10., mu_max=False,
+                    linear_solver='splu'):
         rng = np.random.RandomState(0)
         return -rng.rand(k), rng.randn(K.shape[0], k)
 
