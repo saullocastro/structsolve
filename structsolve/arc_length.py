@@ -36,9 +36,6 @@ MAX_NUM_STEPS = 1000
 #: Factors tried in turn by the line search of the corrections, with
 #: ``Analysis.arc_length_line_search = True``
 LINE_SEARCH_ETAS = (1., 0.5, 0.25)
-#: Rules of the sign of the tangent predictor,
-#: ``Analysis.arc_length_sign_rule``
-SIGN_RULES = ('inner_product', 'determinant')
 #: Methods of :func:`._solver_arc_length`
 METHODS = ('riks', 'crisfield', 'displacement_control',
            'generalized_displacement_control')
@@ -58,22 +55,16 @@ EIGVEC_NUM_GUARD = 2
 EIGVEC_MAX_ITER = 100
 #: Relative tolerance of the eigenvalues of the subspace iteration
 EIGVEC_TOL = 1.e-10
-#: ``Analysis.bifurcation_pinning``: largest cosine between the critical
-#: eigenvector and the load vector of a bifurcation mode
-PIN_MAX_COS = 1.e-3
-#: ``Analysis.bifurcation_pinning``: maximum number of iterations of the
-#: subspace iteration of the critical eigenvector
-PIN_MAX_ITER = 20
 #: Largest subspace of :func:`._critical_eigenvector`, whose size is
 #: doubled until it holds the negative eigenvalues
 EIGVEC_MAX_SIZE = 64
 
 
-def _eigs_near_zero(solve_kT, size, p, max_iter=None, start=None):
+def _eigs_near_zero(solve_kT, size, p, start=None):
     r"""The ``p`` eigenvalues of `\boldsymbol{K}_T` closest to zero and their
     eigenvectors, by the subspace iteration of :func:`._critical_eigenvector`,
-    with at most ``max_iter`` iterations, ``EIGVEC_MAX_ITER`` by default,
-    from the vectors ``start``, columns, completed by random vectors. With
+    with at most ``EIGVEC_MAX_ITER`` iterations, from the vectors ``start``,
+    columns, completed by random vectors. With
     ``'pardiso'`` the solutions of the factorization are used without the
     check of their residual and GMRES, see :func:`.static._factorize`: the
     tangent stiffness matrix near a critical point is almost singular, the
@@ -98,7 +89,7 @@ def _eigs_near_zero(solve_kT, size, p, max_iter=None, start=None):
         X[:k] = start[:, :k].T
     Y = np.column_stack([solve(x) for x in X])
     theta_old = None
-    for _ in range(EIGVEC_MAX_ITER if max_iter is None else max_iter):
+    for _ in range(EIGVEC_MAX_ITER):
         Q, _ = np.linalg.qr(Y)
         Y = np.column_stack([solve(q) for q in Q.T])
         H = Q.T @ Y
@@ -174,66 +165,6 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
         i = int(new[np.argmin(mus[new])])
     phi = vecs[:, i]
     return phi/np.linalg.norm(phi), float(mus[i])
-
-
-def _pin_bifurcation_mode(an, c, lbd, fext, C, d, solve_conv=None,
-                          q_conv=None, silent=False):
-    r"""The constraints of ``Analysis.bifurcation_pinning`` at the converged
-    state ``c``, ``lbd``
-
-    The eigenvector `\boldsymbol{\phi}` of the eigenvalue of
-    `\boldsymbol{K}_T` closest to zero, by the subspace iteration of
-    :func:`._eigs_near_zero` with the factorization ``solve_conv`` of the
-    converged state (computed when ``None``), is pinned when it is
-    orthogonal to the load vector `\boldsymbol{q}` (``q_conv``),
-    `|\boldsymbol{\phi}^\top \boldsymbol{q}| \le` ``PIN_MAX_COS``
-    `\|\boldsymbol{q}\|`, i.e. a bifurcation mode: the constraint
-    `\boldsymbol{\phi}^\top \Delta \boldsymbol{c} = 0` is added to the
-    constraints ``C`` and their values ``d``.
-
-    Returns
-    -------
-    pinned : tuple or None
-        ``(phi, C_pin, d_pin, solve_pin, q_conv)``, ``solve_pin`` the
-        factorization of the converged state with the constraints
-        ``C_pin``; ``None`` when the eigenvector is not orthogonal to the
-        load or the factorization failed.
-
-    """
-    from scipy.sparse import hstack, csc_matrix
-    try:
-        if solve_conv is None:
-            solve_conv = _factorize(callbacks.calc_kT(an, c, lbd),
-                                    linear_solver=an.linear_solver,
-                                    constraints=C, cache=_cache(an))
-        if q_conv is None:
-            q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
-        nneg = solve_conv.num_negative_eigvals or 0
-        size = c.shape[0]
-        mus, vecs = _eigs_near_zero(solve_conv, size,
-                                    min(max(nneg, 1) + EIGVEC_NUM_GUARD, size),
-                                    max_iter=PIN_MAX_ITER)
-        i = int(np.argmin(np.abs(mus)))
-        phi = vecs[:, i]/np.linalg.norm(vecs[:, i])
-        qnorm = np.linalg.norm(q_conv)
-        cos = abs(phi.dot(q_conv))/qnorm if qnorm > 0 else 0.
-        if not cos <= PIN_MAX_COS:
-            msg('Bifurcation pinning: the critical eigenvector, of the '
-                'eigenvalue %1.5e, is not orthogonal to the load (cosine '
-                '%1.1e)' % (mus[i], cos), level=2, silent=silent)
-            return None
-        col = csc_matrix(phi[:, None])
-        C_pin = col if C is None else hstack([C, col], format='csc')
-        d_pin = None if d is None else np.r_[d, 0.]
-        solve_pin = _factorize(callbacks.calc_kT(an, c, lbd),
-                               linear_solver=an.linear_solver,
-                               constraints=C_pin, cache=_cache(an))
-    except RuntimeError:
-        return None
-    msg('Bifurcation pinning: the amplitude of the critical eigenvector, of '
-        'the eigenvalue %1.5e and cosine %1.1e with the load, is held for the '
-        'step' % (mus[i], cos), level=1, silent=silent)
-    return phi, C_pin, d_pin, solve_pin, q_conv
 
 
 def _solver_arc_length(an, method, silent=False):
@@ -565,21 +496,6 @@ def _solver_arc_length(an, method, silent=False):
     and a step over several critical points, e.g. beyond the limit load
     of a cylinder under axial compression, is cut back to them.
 
-    With ``an.arc_length_sign_rule = 'determinant'``, which requires
-    ``an.inertia``, the sign of the tangent predictor is the product of the
-    signs of the determinant of the tangent stiffness matrix at the last
-    converged state and at the origin, instead of the sign of the inner
-    product above: the load increases on the branches whose determinant has
-    the sign of the initial, stable, state, and decreases on the others.
-    The load is thus reversed at every critical point crossed, at the limit
-    points as at the bifurcations, and the path cannot turn back on a
-    branch, e.g. towards the origin, without crossing a critical point.
-    It suits paths whose critical points are crossed one at a time, e.g.
-    with ``an.max_inertia_jump = 1``, and whose bifurcations are switched,
-    see below; at a bifurcation crossed without switching, the path
-    returns to it. After a branch switch, and when a determinant is null,
-    the inner product decides.
-
     With ``an.branch_switching`` `= n > 0`, which requires ``an.inertia``,
     the path is switched to the bifurcated branch at the first `n`
     bifurcation points crossed, with every method. A critical point is
@@ -617,8 +533,7 @@ def _solver_arc_length(an, method, silent=False):
     from which the path was switched is appended to ``an.branch_points``.
     The step after the switch starts along the tangent in the direction of
     the switching increment: with the inner-product rule for
-    ``method='riks'`` and ``'crisfield'``, also with
-    ``an.arc_length_sign_rule = 'determinant'``; with
+    ``method='riks'`` and ``'crisfield'``; with
     ``'displacement_control'``, the sign of `\Delta s` for which the
     predictor makes a positive inner product with the switching increment;
     with ``'generalized_displacement_control'``, the same sign of the load
@@ -645,43 +560,6 @@ def _solver_arc_length(an, method, silent=False):
     the first state beyond the critical point, with the length of the
     arc-length steps instead of `|\xi|`, and the shorter steps of the
     repeated attempts play the role of the other values of `\tau`.
-
-    With ``an.bifurcation_pinning`` `= n > 0`, a step whose iterations
-    failed `n` times in a row, a step accepted without any correction not
-    breaking the count, is repeated with the amplitude of the critical
-    eigenvector `\boldsymbol{\phi}` held: the eigenvector of the eigenvalue
-    of the tangent stiffness matrix at the last converged state closest to
-    zero, by :func:`._eigs_near_zero`, when it is orthogonal to the load
-    vector `\boldsymbol{q}`, `|\boldsymbol{\phi}^\top \boldsymbol{q}| \le`
-    ``PIN_MAX_COS`` `\|\boldsymbol{q}\|`, i.e. a bifurcation mode, see
-    :func:`._pin_bifurcation_mode`. The constraint `\boldsymbol{\phi}^\top
-    \Delta \boldsymbol{c} = 0` is added to ``an.constraints`` for the
-    iterations of that step only, its predictor included; the converged
-    state satisfies the equilibrium equations to the tolerance, the
-    residual along `\boldsymbol{\phi}` included, and the count of the
-    negative eigenvalues is that of the unconstrained tangent. Near a
-    bifurcation point the correction of the load factor of the arc-length
-    and displacement control methods is `\delta\lambda \approx -r_\phi/
-    q_\phi`, with `r_\phi` and `q_\phi` the components of the residual and
-    of the load vector along `\boldsymbol{\phi}`, both small, of the order
-    of the residual left by the tolerance and of the asymmetry of the load,
-    and independent of the step length: shorter steps do not converge,
-    and the steps accepted without correction creep along the predictor,
-    their residual growing to the tolerance. Holding the amplitude of
-    `\boldsymbol{\phi}` removes this division, and the step crosses the
-    bifurcation point on the branch already traced, also when a tiny
-    asymmetry of the model separates it from the crossing branch by less
-    than the tolerance; the next steps are free. On the DOE09 cylinder
-    (case 510, 57000 degrees of freedom, ``max_inertia_jump = 1``) the
-    stall at 4526.7 N was such a point: the eigenvalue closest to zero went
-    from `-9.3 \times 10^{-7}` to `-5.0 \times 10^{-8}` and `+4.8 \times
-    10^{-9}` (scaled tangent) between the states of the stall, its
-    eigenvector at `5.6 \times 10^{-8}` (cosine) from the load and, at the
-    end, along the increments, which crept at the relative residual
-    `10^{-4}` of the tolerance, the corrections going to `\delta\lambda
-    \approx -9 \times 10^{-4}` at every step length. With
-    ``an.bifurcation_pinning = 3`` the path passed it with three pinned
-    steps, and in 160 increments, with eight, rose again to 4615.2 N.
 
     With ``an.restart_state``, the dictionary ``an.path_state`` saved after
     a converged step of an analysis with the same method, the analysis
@@ -772,13 +650,6 @@ def _solver_arc_length(an, method, silent=False):
         raise ValueError('Invalid arc-length method: %s' % method)
     control = method == 'displacement_control'
     gdc = method == 'generalized_displacement_control'
-    if an.arc_length_sign_rule not in SIGN_RULES:
-        raise ValueError('Invalid arc_length_sign_rule: %s'
-                         % an.arc_length_sign_rule)
-    det_rule = an.arc_length_sign_rule == 'determinant'
-    if det_rule and not an.inertia:
-        raise ValueError("Analysis.arc_length_sign_rule = 'determinant' "
-                         "requires Analysis.inertia = True")
     max_jump = _check_max_inertia_jump(an)
     switches_left = int(an.branch_switching)
     if switches_left > 0 and not an.inertia:
@@ -868,9 +739,6 @@ def _solver_arc_length(an, method, silent=False):
     solve_kT_conv = None
     # factorization of the last converged state, with max_inertia_jump
     solve_last = None
-    # signs of the determinant of the last converged state and of the origin
-    det_conv = None
-    det_origin = None
     # direction of the load along the tangent, with the inner-product rule,
     # at the last converged state and at the one before
     s_tan = 1.
@@ -887,14 +755,6 @@ def _solver_arc_length(an, method, silent=False):
     ctrl_sign = 1.
 
     step_num = 1
-    # bifurcation pinning: consecutive failed attempts of the step, the
-    # pinned eigenvector and the constraints and their values with it
-    pinning = int(an.bifurcation_pinning or 0)
-    num_fails = 0
-    pin = None
-    C_it = C
-    d_it = d
-    q_conv = None
 
     state = _restart_state(an, method)
     if state is not None:
@@ -906,7 +766,6 @@ def _solver_arc_length(an, method, silent=False):
         arc_length_last = state['arc_length_last']
         max_arc_length_inc = state['max_arc_length_inc']
         total_arc_length = state['total_arc_length']
-        det_origin = state['det_origin']
         s_tan_prev = state['s_tan_prev']
         dq_first = state['dq_first']
         dq_prev = state['dq_prev']
@@ -944,11 +803,8 @@ def _solver_arc_length(an, method, silent=False):
                 q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
             if an.inertia:
                 solve_last = solve_kT_conv
-                det_conv = solve_kT_conv.det_sign
-                if det_origin is None:
-                    det_origin = det_conv
         if solve_kT_conv is not None:
-            dc_q_conv = solve_kT_conv(q_conv, d_it)
+            dc_q_conv = solve_kT_conv(q_conv, d)
         if solve_kT_conv is not None and dc_last is not None:
             s_tan = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)) or 1.
         if check_switch:
@@ -1057,11 +913,7 @@ def _solver_arc_length(an, method, silent=False):
             norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))
             sign = 1.
             if dc_last is not None:
-                if det_rule and not after_switch and det_conv and det_origin:
-                    # the load decreases when the determinant changed sign
-                    sign = det_conv*det_origin
-                else:
-                    sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
+                sign = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last))
                 if sign == 0:
                     sign = 1.
             dlbd = sign*arc_length/norm_q
@@ -1113,7 +965,7 @@ def _solver_arc_length(an, method, silent=False):
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
                                                             lbd + dlbd),
                                           linear_solver=an.linear_solver,
-                                          constraints=C_it, cache=_cache(an))
+                                          constraints=C, cache=_cache(an))
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
@@ -1121,10 +973,10 @@ def _solver_arc_length(an, method, silent=False):
                     # -dR/dlbd at the iterate of the tangent stiffness matrix
                     q_iter = callbacks.calc_load_vector(an, c + dc, fext,
                                                         lbd + dlbd)
-                    dc_q = solve_kT(q_iter, d_it)
+                    dc_q = solve_kT(q_iter, d)
                 else:
                     dc_q = solve_kT(callbacks.calc_load_vector(an, c + dc,
-                                                               fext), d_it)
+                                                               fext), d)
                 iter_kT = 1
             dc_R = solve_kT(-R)
 
@@ -1187,8 +1039,6 @@ def _solver_arc_length(an, method, silent=False):
             dc = dc + eta*dc_corr
             dlbd = dlbd + eta*varlbd
 
-        # the iterations of the step failed, counted by the pinning
-        iterations_failed = not converged
         if (converged and not control and not gdc
                 and inner(dc, dlbd, dc_pred, dlbd_pred) <= 0):
             # the increment points backwards, e.g. to the previous converged
@@ -1244,15 +1094,6 @@ def _solver_arc_length(an, method, silent=False):
         if converged:
             c = c + dc
             lbd = lbd + dlbd
-            if iteration > 1:
-                # a step accepted without correction, at the residual of the
-                # last converged state, is not counted as a success
-                num_fails = 0
-            if pin is not None:
-                # released at the next step
-                pin = None
-                C_it = C
-                d_it = d
             if switch is None or switch[4] is None:
                 total_arc_length += arc_length
             msg('Converged at load factor %1.5f, total arc length %1.5f' % (lbd, total_arc_length),
@@ -1272,7 +1113,6 @@ def _solver_arc_length(an, method, silent=False):
                 solve_kT_conv = solve_new
                 if solve_kT_conv is not None:
                     q_conv = callbacks.calc_load_vector(an, c, fext, lbd)
-                    det_conv = solve_kT_conv.det_sign
                     if (switches_left > 0 and not after_switch
                             and solve_last is not None):
                         # number of eigenvalues that became negative, or
@@ -1282,7 +1122,7 @@ def _solver_arc_length(an, method, silent=False):
                         if n0 is not None and n1 is not None:
                             check_switch = n1 - n0
                         else:
-                            check_switch = int(det_conv
+                            check_switch = int(solve_kT_conv.det_sign
                                                != solve_last.det_sign)
                 solve_last = solve_kT_conv
             if gdc and not after_switch:
@@ -1306,8 +1146,7 @@ def _solver_arc_length(an, method, silent=False):
                     dc_last=dc_last.copy(), dlbd_last=dlbd_last,
                     arc_length=arc_length, arc_length_last=arc_length_last,
                     max_arc_length_inc=max_arc_length_inc,
-                    total_arc_length=total_arc_length, det_origin=det_origin,
-                    s_tan_prev=s_tan_prev,
+                    total_arc_length=total_arc_length, s_tan_prev=s_tan_prev,
                     dq_first=dq_first, dq_prev=dq_prev, gdc_sign=gdc_sign,
                     ctrl_sign=ctrl_sign, switches_left=switches_left,
                     after_switch=after_switch, step_num=step_num)
@@ -1345,14 +1184,6 @@ def _solver_arc_length(an, method, silent=False):
                 warn('Minimum arc-length increment of %1.5f achieved! Analysis stopped at load factor %1.5f'
                      % (an.minInc, lbd), level=1, silent=silent)
                 break
-            num_fails += iterations_failed
-            if (pinning and pin is None and switch is None
-                    and num_fails >= pinning):
-                pinned = _pin_bifurcation_mode(an, c, lbd, fext, C, d,
-                                               solve_kT_conv, q_conv,
-                                               silent=silent)
-                if pinned is not None:
-                    pin, C_it, d_it, solve_kT_conv, q_conv = pinned
 
     msg('Finished Non-Linear Static Analysis', silent=silent)
     msg('    load factor %1.5f, total arc length %1.5f' % (lbd if not an.increments

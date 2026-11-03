@@ -7,47 +7,12 @@ load factor and the solution of the increment are appended to
 ``an.increments`` and ``an.cs``, and its inertia to
 ``an.num_negative_eigvals`` and ``an.det_signs`` with ``an.inertia =
 True``. The analysis stops when it returns ``True``, keeping the converged
-increments. Any callable with this signature is accepted; the factories
-below give two common ones. Together with ``Analysis.final_load_factor =
+increments. Any callable with this signature is accepted; the factory
+below gives a common one. Together with ``Analysis.final_load_factor =
 None``, the arc-length methods then trace a post-buckling path until the
 criterion is met, rather than until the load factor 1.
 
 """
-import numpy as np
-
-
-def beyond_limit_point(num_increments=0):
-    r"""Stop a given number of increments beyond the first limit point of
-    the load
-
-    The first limit point is the last converged increment before the first
-    decrease of the load factor along the path. The analysis stops after
-    ``num_increments`` converged increments beyond it, i.e. when the
-    increment of index `i_{lim}` + ``num_increments`` has converged, `i_{lim}`
-    being the index of the limit point in ``an.increments``.
-
-    Parameters
-    ----------
-    num_increments : int, optional
-        Number of increments beyond the limit point. With ``0`` the analysis
-        stops at the first increment whose load factor is smaller than the
-        previous one, the limit point being the previous increment.
-
-    Returns
-    -------
-    stop_criterion : callable
-        ``stop_criterion(an)``, see :mod:`.stopping`.
-
-    """
-    def stop_criterion(an):
-        lbds = np.asarray(an.increments)
-        drops = np.flatnonzero(np.diff(lbds) < 0)
-        if drops.size == 0:
-            return False
-        ilim = drops[0]
-        return len(lbds) - 1 >= ilim + max(num_increments, 1)
-
-    return stop_criterion
 
 
 def value_reached(func, value):

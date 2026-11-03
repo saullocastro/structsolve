@@ -19,8 +19,6 @@ Critical points
 
 .. autofunction:: structsolve.arc_length._eigs_near_zero
 
-.. autofunction:: structsolve.arc_length._pin_bifurcation_mode
-
 Constants
 ---------
 
@@ -45,7 +43,3 @@ Constants
 .. autodata:: structsolve.arc_length.EIGVEC_TOL
 
 .. autodata:: structsolve.arc_length.EIGVEC_MAX_SIZE
-
-.. autodata:: structsolve.arc_length.PIN_MAX_COS
-
-.. autodata:: structsolve.arc_length.PIN_MAX_ITER

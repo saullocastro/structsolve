@@ -123,6 +123,8 @@
   reported, since the parity then differs from the sign of the
   determinant. New `newton_raphson._eigvals_inertia`; `max_inertia_jump`
   now requires `linear_solver='pardiso'` or `inertia_num_eigvals`.
+  Validated only on synthetic problems: the follower-load wing box never
+  had a negative eigenvalue to count.
 - New `tests/test_inertia_unsymmetric.py`: the eigenvalues of ARPACK
   against `numpy.linalg.eigvals`, with null rows and with constraints
   (`Z^T K Z`); along the path of a non-normal unsymmetric tangent whose
@@ -215,9 +217,7 @@
   Newton-Raphson, arc-length and displacement control solvers, with its
   load factor, solution and inertia already recorded; the analysis stops
   when it returns `True`. New module `structsolve.stopping` with
-  `beyond_limit_point(num_increments)`, which stops a number of increments
-  beyond the first limit point of the load, and `value_reached(func,
-  value)`, e.g. a displacement measure.
+  `value_reached(func, value)`, e.g. a displacement measure.
 - New `Analysis.final_load_factor`, default `1.`: the load factor at which
   the non-linear analyses finish, exactly; with the arc-length and
   displacement control solvers it may be `None`, the path being then
@@ -252,16 +252,6 @@
   Tested on supercritical and subcritical symmetric bifurcations, whose
   branches `lambda P0 = k + beta v^2` are traced to 1e-6, and on the von
   Mises truss, whose limit points are not switched.
-- New `Analysis.arc_length_sign_rule`, default `'inner_product'` (the rule
-  of the previous versions), or `'determinant'`: with `inertia=True`, the
-  load factor increases while the determinant of the tangent stiffness
-  matrix has the sign of the one at the origin, and decreases otherwise.
-  The path then cannot turn back along a branch without crossing a
-  critical point. On the DOE09 cylinder the Crisfield run did exactly that
-  with the inner-product rule: it went round a loop of unstable branches
-  at about 4600 N and then went back along the fundamental path through
-  the origin into tension, all with an even number of negative
-  eigenvalues.
 - `Analysis.branch_switching` also with
   `NL_method='displacement_control'` and
   `'generalized_displacement_control'`: the switching step is the one of
@@ -289,40 +279,11 @@
   positive. With `'splu'` the change of the sign of the determinant was
   already detected in both directions, with `'pardiso'` only the
   increases were.
-- New `Analysis.bifurcation_pinning`, default `0`: a step of the arc-length
-  or displacement control methods whose iterations failed this number of
-  times in a row is repeated with the amplitude of the critical eigenvector
-  held (`phi^T dc = 0` added to the constraints for that step), when it is
-  orthogonal to the load (`|phi^T q| <= PIN_MAX_COS |q|`, `1e-3`); a step
-  accepted without correction does not reset the count. Found with the
-  stall of the DOE09 cylinder (case 510, 57000 degrees of freedom) with
-  `max_inertia_jump=1`, whose mechanism is: at 4526.7 N the path reaches
-  a bifurcation point whose eigenvector is orthogonal to the load to
-  5.6e-8 (cosine, from the tolerance 1e-6 of the eigenvector of the
-  2-wave perturbation, the problem being otherwise symmetric), with five
-  other eigenvalues of the scaled tangent within 2e-5 of zero; the Riks
-  correction of the load factor is then `-r_phi/q_phi`, the ratio of the
-  components along the eigenvector of the residual left by the tolerance
-  and of the load, about -9e-4 at every step length down to 1e-5, such
-  that the iterations diverge (the tangent was verified against finite
-  differences, the solutions to 1e-11); the shorter steps are accepted
-  at their predictor, at the relative residual 1e-4 of the tolerance, the
-  critical eigenvalue going from -9.3e-7 to -5.0e-8 and +4.8e-9 and the
-  increments along its eigenvector. Neither the sign rule (the restart
-  from the state before the stall with `'determinant'` stalls at the same
-  point), nor the line search, nor the relative tolerance 1e-6 (no step
-  converges), nor `branch_switching` (a limit point by the direction of
-  the load) passes it; the inertia-jump check is not involved (no step
-  was rejected by it there). With `bifurcation_pinning=3` the 80
-  increments of the run pass the stall with three pinned steps: limit
-  point at 4528.4 N, unloading to 4517.6 N at the 80th increment, 713 s
-  against 769 s without, the path identical before the stall. With 160
-  increments (8 pinned steps, 1383 s) the path unloads to 4420 N, follows
-  a stable branch (0 negative eigenvalues, max |w| from 0.73 to 0.99 mm)
-  up to 4540.4 N, and after two more critical points rises to 4615.2 N,
-  the region of the limit load of the default Riks run (4638.2 N, which
-  jumped from 0 to 4 negative eigenvalues in one step), the eigenvalues
-  crossing zero one at a time up to 4 negative ones.
+- Tried on the DOE09 cylinder and not kept: a sign rule of the tangent
+  predictor by the determinant of the tangent stiffness matrix, and the
+  pinning of the amplitude of the critical eigenvector at a bifurcation
+  point orthogonal to the load, where the run with `max_inertia_jump=1`
+  stalls at 4526.7 N.
 - `_critical_eigenvector` doubles its subspace, up to `EIGVEC_MAX_SIZE =
   64` vectors, until it holds the `num_neg` negative eigenvalues counted by
   the factorization: positive eigenvalues closer to zero, e.g. of weakly

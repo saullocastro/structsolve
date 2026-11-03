@@ -48,7 +48,7 @@ See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
 * version 0.10.0 (2026-11-03)
     - Arc-length corrections: line search and early divergence check; indirect displacement control and generalized displacement control; weights of the degrees of freedom in the arc-length norm
-    - Stability along the path: the number of negative eigenvalues of the tangent with PARDISO (`linear_solver='pardiso'`, `inertia=True`), increments cut when it jumps (`max_inertia_jump`), switching to the bifurcated branch along the critical eigenvector (`branch_switching`) and the determinant sign rule of the predictor
+    - Stability along the path: the number of negative eigenvalues of the tangent with PARDISO (`linear_solver='pardiso'`, `inertia=True`), increments cut when it jumps (`max_inertia_jump`) and switching to the bifurcated branch along the critical eigenvector (`branch_switching`)
     - Linear constraints of the solution, `C^T c = 0`, by a border of the factorizations; stop criteria and `final_load_factor`; restart of the non-linear analyses from `path_state`
     - Cheaper factorizations: the linear solutions use `linear_solver`, and the null rows and columns, the symmetry check and the scaling of PARDISO cost less
 

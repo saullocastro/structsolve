@@ -1,7 +1,7 @@
 """Tests of the critical points along the path of the arc-length methods
 
-``Analysis.branch_switching``, ``Analysis.max_inertia_jump`` and
-``Analysis.arc_length_sign_rule``, see :func:`.arc_length._solver_arc_length`.
+``Analysis.branch_switching`` and ``Analysis.max_inertia_jump``, see
+:func:`.arc_length._solver_arc_length`.
 The tests of ``max_inertia_jump`` need oneMKL, see :mod:`structsolve.pardiso`.
 
 """
@@ -279,100 +279,6 @@ def test_max_inertia_jump_requirements():
         p.an.static(NLgeom=True, silent=True)
 
 
-@pytest.mark.parametrize('method', METHODS)
-def test_determinant_sign_rule_limit_point(method):
-    """The determinant rule reverses the load at the limit point as the
-    inner-product rule does"""
-    p = von_mises_truss(frac=1.5, ks=0.5)
-    kwargs = dict(NL_method=method, initialInc=0.05, inertia=True)
-    p.analysis(**kwargs)
-    p.an.static(NLgeom=True, silent=True)
-    ref = np.asarray(p.an.increments)
-    p.analysis(arc_length_sign_rule='determinant', **kwargs)
-    p.an.static(NLgeom=True, silent=True)
-    check_equilibrium(p)
-    np.testing.assert_allclose(p.an.increments, ref)
-
-
-def test_determinant_sign_rule_bifurcation():
-    """At a bifurcation crossed without switching, the determinant rule
-    reverses the load, the inner-product rule does not"""
-    p = pitchforks()
-    kwargs = dict(NL_method='arc_length_riks', initialInc=0.1, inertia=True,
-                  final_load_factor=None,
-                  stop_criterion=lambda an: len(an.increments) >= 12)
-    p.analysis(**kwargs)
-    p.an.static(NLgeom=True, silent=True)
-    assert np.all(np.diff(p.an.increments) > 0)
-    p.analysis(arc_length_sign_rule='determinant', **kwargs)
-    p.an.static(NLgeom=True, silent=True)
-    check_equilibrium(p)
-    lbds = np.asarray(p.an.increments)
-    ilim = np.flatnonzero(np.diff(lbds) < 0)[0]
-    assert lbds[ilim] > 0.5
-
-
-def test_sign_rule_requirements():
-    p = pitchforks()
-    p.analysis(NL_method='arc_length_riks',
-               arc_length_sign_rule='determinant')
-    with pytest.raises(ValueError, match='inertia'):
-        p.an.static(NLgeom=True, silent=True)
-    p.analysis(NL_method='arc_length_riks', arc_length_sign_rule='abc')
-    with pytest.raises(ValueError, match='arc_length_sign_rule'):
-        p.an.static(NLgeom=True, silent=True)
-
-
-def test_pin_bifurcation_mode():
-    """The eigenvector of the eigenvalue closest to zero is pinned when it
-    is orthogonal to the load: at the fundamental state of a column just
-    below its bifurcation, the transverse displacement, whose eigenvalue is
-    2e-4, not the axial one; the solutions of the pinned factorization keep
-    it null"""
-    from structsolve.arc_length import _pin_bifurcation_mode
-    from structsolve.newton_raphson import _constraint_matrix
-    p = pitchforks()
-    an = p.analysis(NL_method='arc_length_riks')
-    lbd = 0.4999
-    c = np.array([-lbd*p.P0/10., 0.])
-    fext = p.calc_fext()
-    pinned = _pin_bifurcation_mode(an, c, lbd, fext, _constraint_matrix(an),
-                                   None, silent=True)
-    assert pinned is not None
-    phi, C_pin, d_pin, solve_pin, q = pinned
-    assert abs(abs(phi[1]) - 1) < 1e-12
-    assert C_pin.shape == (2, 1) and d_pin is None
-    x = solve_pin(np.array([1., 1.]))
-    assert abs(x[1]) < 1e-14
-    np.testing.assert_allclose(x[0], 1/10.)
-    # with a transverse load the eigenvector is not a bifurcation mode
-    p.fext[1] = 0.1
-    assert _pin_bifurcation_mode(an, c, lbd, p.calc_fext(),
-                                 _constraint_matrix(an), None,
-                                 silent=True) is None
-
-
-@pytest.mark.parametrize('method', METHODS + CONTROLS)
-def test_bifurcation_pinning_default_path(method):
-    """Without failed steps at a bifurcation the path is unchanged: the
-    symmetric bifurcation crossed without switching, and the limit points
-    of the von Mises truss, whose critical eigenvector is not orthogonal to
-    the load"""
-    for p, kwargs in ((pitchforks(), dict(final_load_factor=None,
-                       stop_criterion=lambda an: len(an.increments) >= 12)),
-                      (von_mises_truss(frac=1.5, ks=0.5), {})):
-        kw = dict(NL_method=method, initialInc=0.1, **kwargs)
-        if method == 'displacement_control':
-            kw['control_vector'] = np.array([-1., 0.]) if p.fext.size == 2 \
-                and p.fext[0] != 0 else np.array([0., -1.])
-        p.analysis(**kw)
-        p.an.static(NLgeom=True, silent=True)
-        ref = list(p.an.increments)
-        p.analysis(bifurcation_pinning=1, **kw)
-        p.an.static(NLgeom=True, silent=True)
-        assert p.an.increments == ref
-
-
 @pytest.mark.parametrize('method', ['arc_length_riks', 'displacement_control'])
 def test_branch_switching_abandoned(method, monkeypatch, capsys):
     """A switching step that converges at too large an angle to the
@@ -397,52 +303,3 @@ def test_branch_switching_abandoned(method, monkeypatch, capsys):
     assert all(c[1] == 0 for c in an.cs)
     assert an.increments[-1] > 0.6
     assert np.all(np.diff(an.increments) > 0)
-
-
-def test_pin_bifurcation_mode_factorization_fails(monkeypatch):
-    """Nothing is pinned when the factorization with the pinning
-    constraint fails"""
-    from structsolve import arc_length
-    from structsolve.newton_raphson import _constraint_matrix
-    factorize = arc_length._factorize
-
-    def failing(kT, constraints=None, **kwargs):
-        if constraints is not None:
-            raise RuntimeError('singular')
-        return factorize(kT, constraints=constraints, **kwargs)
-    monkeypatch.setattr(arc_length, '_factorize', failing)
-    p = pitchforks()
-    an = p.analysis(NL_method='arc_length_riks')
-    c = np.array([-0.4999*p.P0/10., 0.])
-    assert arc_length._pin_bifurcation_mode(an, c, 0.4999, p.calc_fext(),
-                                            _constraint_matrix(an), None,
-                                            silent=True) is None
-
-
-@pytest.mark.parametrize('method', METHODS)
-def test_bifurcation_pinning_after_failed_steps(method, capsys):
-    """After ``bifurcation_pinning`` failed attempts of a step, here two
-    attempts made to fail by a residual that is not finite, the next
-    attempt holds the amplitude of the bifurcation mode, the transverse
-    displacement, and converges; the pin is released at the next step"""
-    p = pitchforks()
-    fint = p.fint
-    fails = []
-
-    def failing_fint(c):
-        if len(p.an.increments) == 2 and len(fails) < 2:
-            fails.append(c.copy())
-            return np.full_like(c, np.nan)
-        return fint(c)
-    p.fint = failing_fint
-    p.analysis(NL_method=method, initialInc=0.1, bifurcation_pinning=2)
-    p.an.static(NLgeom=True, silent=False)
-    out = capsys.readouterr().out
-    assert len(fails) == 2
-    assert out.count('Bifurcation pinning: the amplitude') == 1
-    p.fint = fint
-    check_equilibrium(p)
-    an = p.an
-    assert an.increments[-1] == 1.
-    assert np.all(np.diff(an.increments) > 0)
-    assert all(abs(c[1]) < 1e-15 for c in an.cs)

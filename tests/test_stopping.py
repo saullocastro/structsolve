@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from analytic_problems import von_mises_truss, hardening_springs
-from structsolve.stopping import beyond_limit_point, value_reached
+from structsolve.stopping import value_reached
 from test_arc_length import check_equilibrium
 
 ARC_METHODS = ['arc_length_riks', 'arc_length_crisfield',
@@ -19,21 +19,6 @@ def kwargs_of(method):
     if method == 'displacement_control':
         return dict(control_vector=np.array([1., 0.]))
     return {}
-
-
-@pytest.mark.parametrize('num', [0, 1, 3])
-@pytest.mark.parametrize('method', ARC_METHODS)
-def test_beyond_limit_point(method, num):
-    p = von_mises_truss(frac=1.5, ks=0.5)
-    p.analysis(NL_method=method, initialInc=0.05, final_load_factor=None,
-               stop_criterion=beyond_limit_point(num), **kwargs_of(method))
-    p.an.static(NLgeom=True, silent=True)
-    check_equilibrium(p)
-    lbds = np.asarray(p.an.increments)
-    ilim = np.flatnonzero(np.diff(lbds) < 0)[0]
-    assert len(lbds) - 1 == ilim + max(num, 1)
-    assert np.all(np.diff(lbds[:ilim + 1]) > 0)
-    assert abs(lbds[ilim] - 1/1.5) < 0.05
 
 
 @pytest.mark.parametrize('method', ARC_METHODS)
