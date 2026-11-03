@@ -58,7 +58,26 @@ _mkl = None
 
 def load_mkl():
     """The function ``pardiso`` of the shared library ``mkl_rt``, loaded
-    once; raises :class:`ImportError` when it is not found"""
+    once
+
+    The library is looked for at the path of the environment variable
+    ``STRUCTSOLVE_MKL_RT``, otherwise by :func:`ctypes.util.find_library`,
+    otherwise under the ``lib`` or ``Library/bin`` folder of ``sys.prefix``
+    and then in any of its subfolders or of the user site, shorter paths
+    first. The first library that loads and has ``pardiso`` is kept for the
+    process.
+
+    Returns
+    -------
+    pardiso : ctypes function
+        The function ``pardiso`` of oneMKL, with its argument types set.
+
+    Raises
+    ------
+    ImportError
+        When no library ``mkl_rt`` with the function ``pardiso`` is found.
+
+    """
     global _mkl
     if _mkl is not None:
         return _mkl
@@ -103,7 +122,16 @@ def load_mkl():
 
 
 def available():
-    """Whether PARDISO can be used, i.e. ``mkl_rt`` is found"""
+    """Whether PARDISO can be used, i.e. ``mkl_rt`` is found
+
+    Calls :func:`load_mkl` and catches its :class:`ImportError`.
+
+    Returns
+    -------
+    available : bool
+        ``True`` when :func:`load_mkl` found the library.
+
+    """
     try:
         load_mkl()
     except ImportError:
@@ -112,7 +140,20 @@ def available():
 
 
 class PardisoError(RuntimeError):
-    """Error code of PARDISO, ``error`` not 0"""
+    """Error code of PARDISO, ``error`` not 0
+
+    Raised by the calls of :class:`PardisoSolver` when PARDISO returns a
+    non-zero error code; the message gives the phase and the code.
+
+    Parameters
+    ----------
+    phase : int
+        Phase of PARDISO that failed, e.g. ``12``, ``22`` or ``33``.
+    error : int
+        Error code returned by PARDISO, see the manual of oneMKL, e.g.
+        ``-4`` for a zero pivot.
+
+    """
     def __init__(self, phase, error):
         self.phase = phase
         self.error = error
@@ -135,6 +176,17 @@ class PardisoSolver(object):
     The matrix of the last factorization is kept, not copied, for the
     iterative refinement of :meth:`solve`, and must not be changed.
 
+    Parameters
+    ----------
+    mtype : int, optional
+        Matrix type of PARDISO, see the manual of oneMKL. Default ``-2``,
+        real symmetric indefinite.
+
+    Raises
+    ------
+    ImportError
+        When oneMKL is not found, see :func:`load_mkl`.
+
     """
     def __init__(self, mtype=-2):
         self._pardiso = load_mkl()
@@ -151,7 +203,12 @@ class PardisoSolver(object):
 
     @property
     def analyzed(self):
-        """Whether the solver holds an analysis, for the phase 22"""
+        """Whether the solver holds an analysis, for the phase 22
+
+        ``True`` after a factorization of phase 12, until
+        ``free(everything=True)``.
+
+        """
         return self._ia is not None
 
     def _call(self, phase, b=None):
@@ -185,7 +242,31 @@ class PardisoSolver(object):
         """Factorization of the CSR matrix ``A``, ``float64``, with the
         phase 12 (analysis and numerical factorization) or
         22 (numerical factorization with the analysis of the last phase 12,
-        ``A`` having its pattern)"""
+        ``A`` having its pattern)
+
+        The indices of ``A`` are sorted first when needed. The values of
+        ``A`` are kept, not copied, until the next factorization or
+        :meth:`free`.
+
+        Parameters
+        ----------
+        A : scipy.sparse.csr_matrix
+            Square ``float64`` matrix of size ``n x n``, its upper triangle
+            with every diagonal term stored for a symmetric ``mtype``.
+        phase : int, optional
+            ``12`` (default) or ``22``.
+
+        Raises
+        ------
+        ValueError
+            When ``A`` is not square, not ``float64``, has an empty row,
+            when ``phase`` is neither ``12`` nor ``22``, or for the phase
+            22 without the analysis of a matrix of the same size and number
+            of stored terms.
+        PardisoError
+            When PARDISO fails.
+
+        """
         n = A.shape[0]
         if A.shape[1] != n:
             raise ValueError('PardisoSolver: the matrix is not square')
@@ -213,7 +294,32 @@ class PardisoSolver(object):
 
     def solve(self, b):
         """Solution of the last factorization (phase 33), ``b`` of shape
-        ``(n,)`` or ``(n, nrhs)``"""
+        ``(n,)`` or ``(n, nrhs)``
+
+        ``b`` is converted to a Fortran-ordered ``float64`` array for
+        PARDISO, which applies its iterative refinement with the values of
+        the last factorization.
+
+        Parameters
+        ----------
+        b : array-like
+            Right-hand side(s), converted to ``float64``, of shape ``(n,)``
+            or ``(n, nrhs)``.
+
+        Returns
+        -------
+        x : ndarray
+            Solution of the shape of ``b``, C-contiguous.
+
+        Raises
+        ------
+        ValueError
+            When there is no factorization or ``b`` does not have ``n``
+            rows.
+        PardisoError
+            When PARDISO fails.
+
+        """
         if not self.factorized:
             raise ValueError('PardisoSolver: no factorization')
         b = np.asarray(b, dtype=np.float64)
@@ -226,7 +332,18 @@ class PardisoSolver(object):
     def free(self, everything=False):
         """Frees the memory of the factorization (phase 0), keeping the
         analysis for the phase 22, or all the memory of PARDISO (phase
-        -1)"""
+        -1)
+
+        Nothing is passed to PARDISO when the solver holds neither an
+        analysis nor a factorization.
+
+        Parameters
+        ----------
+        everything : bool, optional
+            Whether the analysis is freed as well (phase -1). Default
+            ``False``.
+
+        """
         if self.analyzed or self.factorized:
             self._call(-1 if everything else 0)
         self.factorized = False

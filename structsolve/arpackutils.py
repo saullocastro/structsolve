@@ -463,6 +463,12 @@ def pardiso_factorization(A):
     PARDISO of the matrix scaled to a unit diagonal, with the fallback on
     perturbed pivots, see its Notes.
 
+    Parameters
+    ----------
+    A : array or sparse matrix
+        Square symmetric matrix of size ``n x n``, converted to a CSR
+        ``float64`` matrix.
+
     Returns
     -------
     factorization : callable or None
@@ -508,6 +514,15 @@ def pardiso_solve(A, refine=True):
     its factorization is inaccurate, i.e. the relative residual of
     :func:`pardiso_factorization` is larger than ``PARDISO_ACCURACY_RTOL``,
     ``A`` is factorized by SuperLU instead, with a :class:`RuntimeWarning`.
+
+    Parameters
+    ----------
+    A : array or sparse matrix
+        Square symmetric matrix of size ``n x n``.
+    refine : bool, optional
+        Whether the solutions of PARDISO are improved by GMRES when their
+        relative residual is larger than ``static.PARDISO_REFINE_TOL``.
+        Default ``True``.
 
     Returns
     -------
@@ -624,6 +639,11 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0,
         The eigenvalues and the `\boldsymbol{M}`-orthonormal eigenvectors, by
         increasing `w` when computed in passes. ``w`` is a 1-D array of size
         ``k`` and ``x`` an array of shape ``(n, k)``.
+
+    Raises
+    ------
+    ValueError
+        When ``linear_solver`` is neither ``'splu'`` nor ``'pardiso'``.
 
     See Also
     --------

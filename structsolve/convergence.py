@@ -248,18 +248,27 @@ def crisfield_weights(K0):
 def scaled_norm(v, w):
     r"""Scaled norm `\|v\|_{\boldsymbol{d}}` of a force-like vector
 
+    The Euclidean norm of ``v`` with each squared entry weighted by ``w``;
+    the entries of null weight do not enter the norm. Used by
+    :func:`crisfield_zeta` and :func:`roundoff_floor`.
+
     Parameters
     ----------
     v : np.ndarray
-        Force-like vector, 1-D array of size ``n``.
+        Force-like vector, 1-D array of size ``n``, real or complex.
     w : np.ndarray
         Weights of :func:`crisfield_weights`, 1-D array of size ``n``.
 
     Returns
     -------
     norm : float
-        `\sqrt{\sum_j w_j v_j^2}`, of the dimension of the square root of an
-        energy.
+        The scaled norm, of the dimension of the square root of an energy.
+
+    Notes
+    -----
+    `\|v\|_{\boldsymbol{d}} = \sqrt{\sum_j w_j |v_j|^2}`, with
+    `w_j = 1/|d_j|`, the scaled norm of Crisfield's criterion, see the module
+    documentation.
 
     """
     v = np.asarray(v)
@@ -268,6 +277,11 @@ def scaled_norm(v, w):
 
 def crisfield_zeta(R, fext, fint, w, q=None, fext_inc=None):
     r"""Relative force imbalance `\zeta` of Crisfield's criterion
+
+    The scaled norm of the residual ``R`` divided by the largest scaled norm
+    of the references ``fext``, ``fint`` and, when given, ``q`` and
+    ``fext_inc``, all with the weights ``w``, see :func:`scaled_norm`.
+    ``inf`` when the references are null and the residual is not.
 
     Parameters
     ----------
@@ -319,6 +333,10 @@ def crisfield_zeta(R, fext, fint, w, q=None, fext_inc=None):
 
 def roundoff_floor(Kc_abs, w=None):
     r"""Round-off floor of the residual norm
+
+    ``ROUNDOFF_FACTOR`` times the machine precision times the norm of
+    ``Kc_abs``, in the norm of the convergence criterion: the scaled norm of
+    :func:`scaled_norm` with the weights ``w``, or the Euclidean norm.
 
     Parameters
     ----------
