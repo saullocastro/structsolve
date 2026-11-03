@@ -268,6 +268,73 @@
   at about 4600 N and then went back along the fundamental path through
   the origin into tension, all with an even number of negative
   eigenvalues.
+- `Analysis.branch_switching` also with
+  `NL_method='displacement_control'` and
+  `'generalized_displacement_control'`: the switching step is the one of
+  the arc-length methods, along the critical eigenvector, corrected with
+  the spherical constraint, whose radius is the length of the last
+  increment in the arc-length norm times the growth of the step length
+  since then (the arc length of the Riks and Crisfield methods). The next
+  step starts along the tangent in the direction of the switching
+  increment: the displacement control chooses the sign of its step
+  accordingly, the generalized displacement control restarts its stiffness
+  parameter from the current tangent, `GSP = <dq1, dq1>/<dq, dq>`, with the
+  corrections orthogonal to it, as at its first step. The symmetric
+  bifurcations of the tests are switched and their branches traced to
+  1e-6 with both methods, for the steps 0.07, 0.13 and 0.17 and the rising
+  and falling branches. On the DOE09 cylinder (80 increments) the
+  generalized displacement control with `branch_switching=1` switched at
+  4533.3 N, where the count fell from 4 to 2, and unloaded on the
+  bifurcated branch to 4432.5 N with 1 negative eigenvalue (456 s), where
+  without switching it rose again to 4504.2 N with 4.
+- `Analysis.branch_switching` also where the number of negative eigenvalues
+  decreases, e.g. a column unstable at the origin that the axial tension
+  stabilizes, as in the algorithm of Wagner and Wriggers (p. 106, step
+  (c): the number of negative diagonal elements changes); the eigenvector
+  is then that of the smallest positive eigenvalues, the first that became
+  positive. With `'splu'` the change of the sign of the determinant was
+  already detected in both directions, with `'pardiso'` only the
+  increases were.
+- New `Analysis.bifurcation_pinning`, default `0`: a step of the arc-length
+  or displacement control methods whose iterations failed this number of
+  times in a row is repeated with the amplitude of the critical eigenvector
+  held (`phi^T dc = 0` added to the constraints for that step), when it is
+  orthogonal to the load (`|phi^T q| <= PIN_MAX_COS |q|`, `1e-3`); a step
+  accepted without correction does not reset the count. Found with the
+  stall of the DOE09 cylinder (case 510, 57000 degrees of freedom) with
+  `max_inertia_jump=1`, whose mechanism is: at 4526.7 N the path reaches
+  a bifurcation point whose eigenvector is orthogonal to the load to
+  5.6e-8 (cosine, from the tolerance 1e-6 of the eigenvector of the
+  2-wave perturbation, the problem being otherwise symmetric), with five
+  other eigenvalues of the scaled tangent within 2e-5 of zero; the Riks
+  correction of the load factor is then `-r_phi/q_phi`, the ratio of the
+  components along the eigenvector of the residual left by the tolerance
+  and of the load, about -9e-4 at every step length down to 1e-5, such
+  that the iterations diverge (the tangent was verified against finite
+  differences, the solutions to 1e-11); the shorter steps are accepted
+  at their predictor, at the relative residual 1e-4 of the tolerance, the
+  critical eigenvalue going from -9.3e-7 to -5.0e-8 and +4.8e-9 and the
+  increments along its eigenvector. Neither the sign rule (the restart
+  from the state before the stall with `'determinant'` stalls at the same
+  point), nor the line search, nor the relative tolerance 1e-6 (no step
+  converges), nor `branch_switching` (a limit point by the direction of
+  the load) passes it; the inertia-jump check is not involved (no step
+  was rejected by it there). With `bifurcation_pinning=3` the 80
+  increments of the run pass the stall with three pinned steps: limit
+  point at 4528.4 N, unloading to 4517.6 N at the 80th increment, 713 s
+  against 769 s without, the path identical before the stall. With 160
+  increments (8 pinned steps, 1383 s) the path unloads to 4420 N, follows
+  a stable branch (0 negative eigenvalues, max |w| from 0.73 to 0.99 mm)
+  up to 4540.4 N, and after two more critical points rises to 4615.2 N,
+  the region of the limit load of the default Riks run (4638.2 N, which
+  jumped from 0 to 4 negative eigenvalues in one step), the eigenvalues
+  crossing zero one at a time up to 4 negative ones.
+- `_critical_eigenvector` doubles its subspace, up to `EIGVEC_MAX_SIZE =
+  64` vectors, until it holds the `num_neg` negative eigenvalues counted by
+  the factorization: positive eigenvalues closer to zero, e.g. of weakly
+  stiff in-plane terms of a Ritz model (about 1.5e-4 along the whole path
+  of the benchmark below, in the scaled unknowns), filled the `num_neg + 2`
+  vectors, and the eigenvector returned was not the critical one.
 - New tests in `tests/test_branch_switching.py`.
 
 ### Generalized displacement control
@@ -390,7 +457,7 @@
   up to the shortening 0.04 agree within 0.02. The perfect cylinder with
   `branch_switching`, 8 x 8 terms, bifurcates at 0.827 (0.833 read) and
   follows Fig. 6.3.4 (d) to the plateau.
-- Found with it, not changed: the count of negative eigenvalues of PARDISO
+- Found with it: the count of negative eigenvalues of PARDISO
   (`linear_solver='pardiso'`, about 20 perturbed pivots) found the first
   critical point at the load 0.90 instead of 0.83, and
   `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
@@ -398,7 +465,37 @@
   in-plane Ritz terms instead of the negative eigenvalue, such that the
   switch converged back on the fundamental path. The benchmark uses SuperLU
   and unknowns scaled to a unit diagonal; with 10 x 10 terms or more the
-  switch still fails.
+  switch still fails with SuperLU. Both fixed, see "Critical points along
+  the path" and "PARDISO with perturbed pivots": with
+  `linear_solver='pardiso'` the perfect cylinder now switches at the first
+  critical point, 0.8273, 0.8270 and 0.8267 with 8 x 8, 10 x 10 and 12 x 12
+  terms, where a dense eigenvalue analysis of the tangent has its first
+  negative eigenvalue, and follows the bifurcated branch down to the
+  plateau, 0.327, 0.326 and 0.326 (174 to 182 increments, 57 s, 189 s and
+  428 s on one thread).
+
+### PARDISO with perturbed pivots
+
+- `static._factorize` with `'pardiso'`: when the factorization with the
+  default parameters of PARDISO perturbs pivots, the matrix is factorized
+  again with `PARDISO_FALLBACK_IPARM = {24: 1}`, the two-level
+  factorization algorithm, and the factorization with fewer perturbed
+  pivots is kept (`solve_kT.pardiso_fallback`); with the cache of a
+  non-linear analysis the next factorizations of the pattern use these
+  parameters directly. The dense tangent of the benchmark below (8 x 8
+  terms, 114 degrees of freedom) had 18 to 20 perturbed pivots along the
+  path, solutions of relative residual 0.4 to 1 (before GMRES) and one
+  negative eigenvalue less than the dense eigenvalue analysis from the load
+  0.827 to 0.893; with `iparm(24) = 1` no pivot is perturbed, the
+  residuals are 1e-13 and the counts are those of the dense analysis at
+  every increment, with 8 x 8 and 12 x 12 terms. Neither the perturbation
+  `iparm(10)` (8, 13, 20), the scaling and weighted matching `iparm(11) =
+  iparm(13) = 1`, nor `iparm(21) = 3` changed the perturbed pivots; the
+  minimum degree ordering `iparm(2) = 0` fixed the benchmark but not a
+  dense random indefinite matrix of the same size, which `iparm(24) = 1`
+  fixed. The factorizations without perturbed pivots, e.g. all those of
+  the DOE09 cylinder, are unchanged. The solvers returned to the pool get
+  the default parameters back. New test in `tests/test_inertia.py`.
 
 ## 0.9.4 (2026-10-28)
 

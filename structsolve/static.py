@@ -32,6 +32,12 @@ PARDISO_GMRES_RTOL = 1.e-11
 #: ``'pardiso'``: relative residual after GMRES above which a warning is
 #: issued
 PARDISO_WARN_TOL = 1.e-6
+#: ``'pardiso'``: parameters, ``{i: iparm(i)}``, of the second
+#: factorization of a matrix whose first factorization, with the default
+#: parameters, perturbed pivots: ``iparm(24) = 1``, the two-level
+#: factorization algorithm instead of the classic one, see
+#: :func:`._factorize`
+PARDISO_FALLBACK_IPARM = {24: 1}
 #: ``Analysis.inertia_num_eigvals``: relative tolerance of ARPACK on the
 #: eigenvalues of smallest magnitude of a SuperLU factorization, see
 #: :func:`._smallest_eigvals`
@@ -51,9 +57,31 @@ CACHE_MAX_PARDISO_SOLVERS = 4
 
 
 def _pardiso_release(solver):
-    """Free the memory of a PARDISO solver and keep it for reuse"""
+    """Free the memory of a PARDISO solver and keep it for reuse, with the
+    default parameters of PARDISO, ``iparm(1) = 0``"""
     solver.free_memory(everything=True)
+    solver.iparm[:] = 0
     _pardiso_pool.append(solver)
+
+
+def _pardiso_factorize_fallback(A, iparm):
+    """Factorization of phase 12 of ``A`` by a new or pooled PARDISO solver
+    with the parameters ``iparm`` (the defaults filled by a previous
+    factorization), ``iparm(1) = 1``, and those of
+    ``PARDISO_FALLBACK_IPARM``; ``None`` when it fails"""
+    import pypardiso
+    solver = (_pardiso_pool.pop() if _pardiso_pool
+              else pypardiso.PyPardisoSolver(mtype=-2))
+    solver.iparm[:] = iparm
+    solver.set_iparm(1, 1)
+    for i, v in PARDISO_FALLBACK_IPARM.items():
+        solver.set_iparm(i, v)
+    try:
+        solver.factorize(A)
+    except Exception:
+        _pardiso_release(solver)
+        return None
+    return solver
 
 
 #: State of the private API of ``pypardiso`` used by the phase 22 of
@@ -632,7 +660,29 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     on the stable parts of an equilibrium path, it changes at the limit
     points and at the bifurcation points crossed. PARDISO perturbs the
     pivots that are too small, ``iparm(14)`` of them, which makes the count
-    uncertain when it is not zero. The diagonal of the tangent of a model
+    uncertain when it is not zero. When the first factorization perturbed
+    pivots, the matrix is factorized again with the parameters
+    ``PARDISO_FALLBACK_IPARM``, ``iparm(24) = 1``, the two-level
+    factorization algorithm, and the factorization with fewer perturbed
+    pivots is kept, ``solve_kT.pardiso_fallback`` telling whether it is
+    the second one; with ``cache``, the next factorizations of the same
+    pattern are then done with these parameters directly, with the phase
+    12. The tangent stiffness matrices of a Ritz model of a cylinder
+    (panels 0.15.0, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
+    of freedom, a dense matrix) and dense random indefinite matrices of
+    114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
+    default parameters (pypardiso 0.4.7, MKL 2026.1, ``iparm(10) = 8``,
+    ``iparm(11) = iparm(13) = 0``, ``iparm(21) = 1``, ``iparm(24) = 0``),
+    solutions of relative residual 0.4 to 1, recovered by the GMRES
+    below, and a number of negative pivots short by one, e.g. 0 from the
+    load factor 0.827 of the critical point, where a dense eigenvalue
+    analysis has one negative eigenvalue, up to 0.903; neither
+    ``iparm(10) = 13`` or ``20``, nor the scaling and the weighted
+    matching, ``iparm(11) = iparm(13) = 1``, nor ``iparm(21) = 3`` changed
+    it, and ``iparm(24) = 1`` gave no perturbed pivot, the counts of the
+    dense eigenvalue analysis along the whole path, and residuals of
+    ``1e-13``. The tangent of the DOE09 cylinder below, sparse, had no
+    perturbed pivot. The diagonal of the tangent of a model
     with derivatives of the displacements among its unknowns may span many
     orders of magnitude, which the scaling compensates. Every solution is
     checked against its relative residual `\|\boldsymbol{A} \boldsymbol{x} -
@@ -868,18 +918,42 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         As_upper = _scaled_upper(A, s)
     else:
         s, As_upper = scaled
-    if cache is not None:
-        solver, phase = cache.pardiso_solver()
-        gen = cache.gen
-    else:
-        solver = (_pardiso_pool.pop() if _pardiso_pool
-                  else pypardiso.PyPardisoSolver(mtype=-2))
-        phase = 12
-    try:
-        _pardiso_factorize(solver, As_upper, phase)
-    except Exception as e:
-        _pardiso_release(solver)
-        raise RuntimeError('PARDISO factorization failed: %s' % e)
+    fallback = (cache is not None
+                and getattr(cache, 'pardiso_fallback_gen', None) == cache.gen)
+    solver = None
+    if fallback:
+        # the first factorization of this pattern perturbed pivots
+        solver = _pardiso_factorize_fallback(As_upper, cache.pardiso_iparm)
+        cached = False
+    if solver is None:
+        if cache is not None:
+            solver, phase = cache.pardiso_solver()
+            gen = cache.gen
+        else:
+            solver = (_pardiso_pool.pop() if _pardiso_pool
+                      else pypardiso.PyPardisoSolver(mtype=-2))
+            phase = 12
+        cached = cache is not None
+        try:
+            _pardiso_factorize(solver, As_upper, phase)
+        except Exception as e:
+            _pardiso_release(solver)
+            raise RuntimeError('PARDISO factorization failed: %s' % e)
+        if not fallback and int(solver.iparm[13]) > 0:
+            # perturbed pivots: the parameters of the fallback
+            solver2 = _pardiso_factorize_fallback(As_upper, solver.iparm)
+            if (solver2 is not None
+                    and int(solver2.iparm[13]) < int(solver.iparm[13])):
+                if cache is not None:
+                    cache.pardiso_fallback_gen = cache.gen
+                    cache.pardiso_iparm = solver.iparm.copy()
+                    cache.release(solver, gen)
+                else:
+                    _pardiso_release(solver)
+                solver = solver2
+                cached = False
+            elif solver2 is not None:
+                _pardiso_release(solver2)
     iparms = solver.get_iparms()
 
     def precond(r):
@@ -906,12 +980,24 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         x[used_cols] = xu[m:]
         return x
 
+    def unrefined(b):
+        # the solution of the factorization, without the check of its
+        # residual and GMRES, for the subspace iterations of the
+        # eigenvectors, which tolerate it
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
+        bu = np.concatenate((border(None, np.float64),
+                             np.asarray(b[used_cols], dtype=np.float64)))
+        x[used_cols] = precond(bu)[m:]
+        return x
+
+    solve_kT.unrefined = unrefined
     solve_kT.linear_solver = 'pardiso'
     solve_kT.num_constraints = m
     solve_kT.num_negative_eigvals = int(iparms[23]) - m
     solve_kT.num_perturbed_pivots = int(iparms[14])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
-    if cache is not None:
+    solve_kT.pardiso_fallback = int(iparms[1]) == 1
+    if cached:
         weakref.finalize(solve_kT, cache.release, solver, gen)
     else:
         weakref.finalize(solve_kT, _pardiso_release, solver)

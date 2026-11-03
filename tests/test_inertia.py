@@ -105,6 +105,54 @@ def test_pardiso_gmres_refinement(monkeypatch):
     np.testing.assert_allclose(A @ x, b, rtol=0, atol=1e-8*np.abs(b).max())
 
 
+def dense_indefinite(n, nneg, seed=0):
+    """Dense symmetric matrix with ``nneg`` negative eigenvalues, the others
+    from 1e-4 to 1, in a random orthonormal basis"""
+    rng = np.random.default_rng(seed)
+    Q, _ = np.linalg.qr(rng.standard_normal((n, n)))
+    ev = np.r_[-np.logspace(-3, -2, nneg), np.logspace(-4, 0, n - nneg)]
+    A = (Q*ev) @ Q.T
+    return 0.5*(A + A.T)
+
+
+@needs_pardiso
+@pytest.mark.parametrize('with_cache', [False, True])
+def test_pardiso_fallback_dense_indefinite(with_cache):
+    """A dense indefinite matrix of 114 degrees of freedom, whose
+    factorization with the default parameters of PARDISO perturbs 34
+    pivots, has a wrong inertia (0 negative eigenvalues instead of 1) and
+    solutions of relative residual about 1 (pypardiso 0.4.7, MKL 2026.1);
+    the second factorization with ``PARDISO_FALLBACK_IPARM`` is exact"""
+    import pypardiso
+    from scipy.sparse import triu
+    from structsolve.static import _FactorizationCache
+    A = dense_indefinite(114, 1)
+    d = 1/np.sqrt(np.abs(A.diagonal()))
+    As = A*d[:, None]*d[None, :]
+    solver = pypardiso.PyPardisoSolver(mtype=-2)
+    solver.factorize(triu(csr_matrix(As), format='csr'))
+    default_perturbed = solver.get_iparm(14)
+    solver.free_memory(everything=True)
+    cache = _FactorizationCache() if with_cache else None
+    b = np.random.default_rng(1).standard_normal(A.shape[0])
+    for _ in range(2):
+        f = _factorize(csr_matrix(A), linear_solver='pardiso', cache=cache)
+        assert f.num_negative_eigvals == 1
+        assert f.num_perturbed_pivots == 0
+        assert f.pardiso_fallback == (default_perturbed > 0)
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            x = f(b)
+        np.testing.assert_allclose(A @ x, b, rtol=0, atol=1e-9*np.abs(b).max())
+    # the solvers returned to the pool have the default parameters
+    del f
+    import gc
+    gc.collect()
+    assert all(not s.iparm.any() for s in static_module._pardiso_pool)
+    if cache is not None:
+        cache.close()
+
+
 @needs_pardiso
 def test_pardiso_unsymmetric_falls_back_to_splu():
     rng = np.random.default_rng(0)
