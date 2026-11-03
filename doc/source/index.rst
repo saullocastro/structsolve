@@ -70,6 +70,7 @@ Usage examples
     ex_frequency.rst
     ex_newton_raphson.rst
     ex_arc_length.rst
+    ex_cylinder_postbuckling.rst
     ex_follower_loads.rst
     ex_prescribed_displacements.rst
 
