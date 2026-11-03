@@ -332,9 +332,11 @@ def run_riks(xi=0.1, m=12, n=12, umax=0.04, branch_switching=0, silent=False,
     if xi == 0:
         an.branch_switching = branch_switching
         an.inertia = True
-        # the sign of the determinant of SuperLU: the count of PARDISO,
-        # with about 20 perturbed pivots, lags the first critical point
-        # (one negative eigenvalue from lbd = 0.83 on, counted from 0.90)
+        # the sign of the determinant of SuperLU, as for the figure of the
+        # documentation; with linear_solver='pardiso' (keyword argument)
+        # the count is exact since the fallback of static._factorize for
+        # perturbed pivots, and the switch works also with 10 x 10 and
+        # 12 x 12 terms
         an.linear_solver = 'splu'
         an.initialInc = an.maxInc = 0.03
     an.minInc = 1e-5
