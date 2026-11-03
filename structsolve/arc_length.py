@@ -44,6 +44,9 @@ SIGN_RULES = ('inner_product', 'determinant')
 #: Methods of :func:`._solver_arc_length`
 METHODS = ('riks', 'crisfield', 'displacement_control',
            'generalized_displacement_control')
+#: Minimum cosine between ``an.control_vector`` and the linear solution for
+#: the default ``an.control_scale``; below it they are orthogonal
+CONTROL_MIN_COS = 1e-10
 #: Minimum cosine between the converged increment of a branch-switching
 #: step and its predictor, the critical eigenvector
 BRANCH_SWITCH_MIN_COS = 0.5
@@ -422,7 +425,9 @@ def _solver_arc_length(an, method, silent=False):
       with `\boldsymbol{\psi}` = ``an.control_vector`` and `s_{ref}` =
       ``an.control_scale``, by default `|\boldsymbol{\psi}^\top
       \boldsymbol{u}_{ref}|`, such that in the linear regime `\Delta s =
-      \Delta\lambda`; a unit vector `\boldsymbol{\psi}` controls the
+      \Delta\lambda`, which must then not be orthogonal to
+      `\boldsymbol{u}_{ref}` (cosine above ``CONTROL_MIN_COS``); a unit
+      vector `\boldsymbol{\psi}` controls the
       displacement of one degree of freedom, e.g. the end shortening, and a
       buckling mode controls its amplitude. The correction of the load
       factor satisfies the constraint exactly:
@@ -853,7 +858,9 @@ def _solver_arc_length(an, method, silent=False):
                              % (u_ref.shape,))
         if an.control_scale is None:
             s_ref = abs(psi_c.dot(u_ref))
-            if not s_ref > 0:
+            # orthogonal to round-off, which depends on the platform
+            if not s_ref > (CONTROL_MIN_COS*np.linalg.norm(psi_c)
+                            *np.linalg.norm(u_ref)):
                 raise ValueError('The controlled quantity is null in the '
                                  'linear solution, Analysis.control_scale '
                                  'must be given')

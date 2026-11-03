@@ -137,3 +137,9 @@ def test_errors():
                control_vector=np.array([u[1], -u[0]]))
     with pytest.raises(ValueError, match='control_scale'):
         p.an.static(NLgeom=True, silent=True)
+    # orthogonal to round-off: cosine of 1e-14
+    p = von_mises_truss(frac=FRAC, ks=0.5)
+    p.analysis(NL_method='displacement_control',
+               control_vector=np.array([u[1], -u[0]]) + 1e-14*u)
+    with pytest.raises(ValueError, match='control_scale'):
+        p.an.static(NLgeom=True, silent=True)
