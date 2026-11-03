@@ -164,6 +164,15 @@ class Analysis(object):
                                   ``linear_solver='pardiso'`` or
                                   ``inertia_num_eigvals``. Default is
                                   ``None``
+    ``bifurcation_pinning``       ``int`` `n`, an arc-length or displacement
+                                  control step that failed `n` times in a
+                                  row is repeated with the amplitude of the
+                                  critical eigenvector held, when it is
+                                  orthogonal to the load, such that the path
+                                  crosses a bifurcation point on the branch
+                                  already traced, see
+                                  :func:`.arc_length._solver_arc_length`.
+                                  Default is ``0``, never
     ``constraints``               ``array`` or sparse matrix `\boldsymbol{C}`,
                                   of shape ``(n, m)``, a 1-D array for one
                                   constraint: the linear constraints
@@ -399,7 +408,7 @@ class Analysis(object):
             'constraints', 'constraint_values', 'stop_criterion',
             'final_load_factor',
             'arc_length_sign_rule', 'branch_switching', 'max_inertia_jump',
-            'inertia_num_eigvals',
+            'inertia_num_eigvals', 'bifurcation_pinning',
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'modified_NR', 'compute_every_n',
@@ -432,6 +441,7 @@ class Analysis(object):
         self.branch_switching = 0
         self.max_inertia_jump = None
         self.inertia_num_eigvals = None
+        self.bifurcation_pinning = 0
         self.restart_state = None
         self.modified_NR = False
         self.compute_every_n = 6

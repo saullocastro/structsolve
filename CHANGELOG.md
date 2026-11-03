@@ -268,6 +268,35 @@
   at about 4600 N and then went back along the fundamental path through
   the origin into tension, all with an even number of negative
   eigenvalues.
+- `Analysis.branch_switching` also with
+  `NL_method='displacement_control'` and
+  `'generalized_displacement_control'`: the switching step is the one of
+  the arc-length methods, along the critical eigenvector, corrected with
+  the spherical constraint, whose radius is the length of the last
+  increment in the arc-length norm times the growth of the step length
+  since then (the arc length of the Riks and Crisfield methods). The next
+  step starts along the tangent in the direction of the switching
+  increment: the displacement control chooses the sign of its step
+  accordingly, the generalized displacement control restarts its stiffness
+  parameter from the current tangent, `GSP = <dq1, dq1>/<dq, dq>`, with the
+  corrections orthogonal to it, as at its first step. The symmetric
+  bifurcations of the tests are switched and their branches traced to
+  1e-6 with both methods, for the steps 0.07, 0.13 and 0.17 and the rising
+  and falling branches.
+- `Analysis.branch_switching` also where the number of negative eigenvalues
+  decreases, e.g. a column unstable at the origin that the axial tension
+  stabilizes, as in the algorithm of Wagner and Wriggers (p. 106, step
+  (c): the number of negative diagonal elements changes); the eigenvector
+  is then that of the smallest positive eigenvalues, the first that became
+  positive. With `'splu'` the change of the sign of the determinant was
+  already detected in both directions, with `'pardiso'` only the
+  increases were.
+- `_critical_eigenvector` doubles its subspace, up to `EIGVEC_MAX_SIZE =
+  64` vectors, until it holds the `num_neg` negative eigenvalues counted by
+  the factorization: positive eigenvalues closer to zero, e.g. of weakly
+  stiff in-plane terms of a Ritz model (about 1.5e-4 along the whole path
+  of the benchmark below, in the scaled unknowns), filled the `num_neg + 2`
+  vectors, and the eigenvector returned was not the critical one.
 - New tests in `tests/test_branch_switching.py`.
 
 ### Generalized displacement control
@@ -390,7 +419,7 @@
   up to the shortening 0.04 agree within 0.02. The perfect cylinder with
   `branch_switching`, 8 x 8 terms, bifurcates at 0.827 (0.833 read) and
   follows Fig. 6.3.4 (d) to the plateau.
-- Found with it, not changed: the count of negative eigenvalues of PARDISO
+- Found with it: the count of negative eigenvalues of PARDISO
   (`linear_solver='pardiso'`, about 20 perturbed pivots) found the first
   critical point at the load 0.90 instead of 0.83, and
   `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
@@ -398,7 +427,37 @@
   in-plane Ritz terms instead of the negative eigenvalue, such that the
   switch converged back on the fundamental path. The benchmark uses SuperLU
   and unknowns scaled to a unit diagonal; with 10 x 10 terms or more the
-  switch still fails.
+  switch still fails with SuperLU. Both fixed, see "Critical points along
+  the path" and "PARDISO with perturbed pivots": with
+  `linear_solver='pardiso'` the perfect cylinder now switches at the first
+  critical point, 0.8273, 0.8270 and 0.8267 with 8 x 8, 10 x 10 and 12 x 12
+  terms, where a dense eigenvalue analysis of the tangent has its first
+  negative eigenvalue, and follows the bifurcated branch down to the
+  plateau, 0.327, 0.326 and 0.326 (174 to 182 increments, 57 s, 189 s and
+  428 s on one thread).
+
+### PARDISO with perturbed pivots
+
+- `static._factorize` with `'pardiso'`: when the factorization with the
+  default parameters of PARDISO perturbs pivots, the matrix is factorized
+  again with `PARDISO_FALLBACK_IPARM = {24: 1}`, the two-level
+  factorization algorithm, and the factorization with fewer perturbed
+  pivots is kept (`solve_kT.pardiso_fallback`); with the cache of a
+  non-linear analysis the next factorizations of the pattern use these
+  parameters directly. The dense tangent of the benchmark below (8 x 8
+  terms, 114 degrees of freedom) had 18 to 20 perturbed pivots along the
+  path, solutions of relative residual 0.4 to 1 (before GMRES) and one
+  negative eigenvalue less than the dense eigenvalue analysis from the load
+  0.827 to 0.893; with `iparm(24) = 1` no pivot is perturbed, the
+  residuals are 1e-13 and the counts are those of the dense analysis at
+  every increment, with 8 x 8 and 12 x 12 terms. Neither the perturbation
+  `iparm(10)` (8, 13, 20), the scaling and weighted matching `iparm(11) =
+  iparm(13) = 1`, nor `iparm(21) = 3` changed the perturbed pivots; the
+  minimum degree ordering `iparm(2) = 0` fixed the benchmark but not a
+  dense random indefinite matrix of the same size, which `iparm(24) = 1`
+  fixed. The factorizations without perturbed pivots, e.g. all those of
+  the DOE09 cylinder, are unchanged. The solvers returned to the pool get
+  the default parameters back. New test in `tests/test_inertia.py`.
 
 ## 0.9.4 (2026-10-28)
 

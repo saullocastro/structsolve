@@ -231,6 +231,25 @@ def test_critical_eigenvector():
     assert abs(phi @ Q[:, 2]) < 1e-10
 
 
+@pytest.mark.parametrize('num_weak', [3, 10])
+def test_critical_eigenvector_weakly_stiff_modes(num_weak):
+    """Positive eigenvalues closer to zero than the negative one, e.g. of
+    weakly stiff terms of a Ritz model: the subspace grows until it holds
+    the negative eigenvalue"""
+    rng = np.random.default_rng(5)
+    n = 40
+    Q, _ = np.linalg.qr(rng.standard_normal((n, n)))
+    mus = np.r_[-2e-3, np.full(num_weak, 1.5e-4)*(1 + 0.01*np.arange(num_weak)),
+                np.linspace(1, 9, n - 1 - num_weak)]
+    K = Q @ np.diag(mus) @ Q.T
+    K = 0.5*(K + K.T)
+    from scipy.sparse import csc_matrix
+    solve = _factorize(csc_matrix(K))
+    phi, mu = _critical_eigenvector(solve, n, 1, 1)
+    assert abs(mu - (-2e-3)) < 1e-10
+    assert abs(abs(phi @ Q[:, 0]) - 1) < 1e-8
+
+
 @needs_pardiso
 @pytest.mark.parametrize('method', METHODS + ['NR'])
 def test_max_inertia_jump(method):
@@ -300,3 +319,53 @@ def test_sign_rule_requirements():
     p.analysis(NL_method='arc_length_riks', arc_length_sign_rule='abc')
     with pytest.raises(ValueError, match='arc_length_sign_rule'):
         p.an.static(NLgeom=True, silent=True)
+
+
+def test_pin_bifurcation_mode():
+    """The eigenvector of the eigenvalue closest to zero is pinned when it
+    is orthogonal to the load: at the fundamental state of a column just
+    below its bifurcation, the transverse displacement, whose eigenvalue is
+    2e-4, not the axial one; the solutions of the pinned factorization keep
+    it null"""
+    from structsolve.arc_length import _pin_bifurcation_mode
+    from structsolve.newton_raphson import _constraint_matrix
+    p = pitchforks()
+    an = p.analysis(NL_method='arc_length_riks')
+    lbd = 0.4999
+    c = np.array([-lbd*p.P0/10., 0.])
+    fext = p.calc_fext()
+    pinned = _pin_bifurcation_mode(an, c, lbd, fext, _constraint_matrix(an),
+                                   None, silent=True)
+    assert pinned is not None
+    phi, C_pin, d_pin, solve_pin, q = pinned
+    assert abs(abs(phi[1]) - 1) < 1e-12
+    assert C_pin.shape == (2, 1) and d_pin is None
+    x = solve_pin(np.array([1., 1.]))
+    assert abs(x[1]) < 1e-14
+    np.testing.assert_allclose(x[0], 1/10.)
+    # with a transverse load the eigenvector is not a bifurcation mode
+    p.fext[1] = 0.1
+    assert _pin_bifurcation_mode(an, c, lbd, p.calc_fext(),
+                                 _constraint_matrix(an), None,
+                                 silent=True) is None
+
+
+@pytest.mark.parametrize('method', METHODS + CONTROLS)
+def test_bifurcation_pinning_default_path(method):
+    """Without failed steps at a bifurcation the path is unchanged: the
+    symmetric bifurcation crossed without switching, and the limit points
+    of the von Mises truss, whose critical eigenvector is not orthogonal to
+    the load"""
+    for p, kwargs in ((pitchforks(), dict(final_load_factor=None,
+                       stop_criterion=lambda an: len(an.increments) >= 12)),
+                      (von_mises_truss(frac=1.5, ks=0.5), {})):
+        kw = dict(NL_method=method, initialInc=0.1, **kwargs)
+        if method == 'displacement_control':
+            kw['control_vector'] = np.array([-1., 0.]) if p.fext.size == 2 \
+                and p.fext[0] != 0 else np.array([0., -1.])
+        p.analysis(**kw)
+        p.an.static(NLgeom=True, silent=True)
+        ref = list(p.an.increments)
+        p.analysis(bifurcation_pinning=1, **kw)
+        p.an.static(NLgeom=True, silent=True)
+        assert p.an.increments == ref
