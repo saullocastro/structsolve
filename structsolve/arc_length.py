@@ -950,8 +950,14 @@ def _solver_arc_length(an, method, silent=False):
         # the secant predictor with full Newton-Raphson does not use the
         # tangent stiffness matrix at the last converged state, whose
         # factorization is skipped, unless -dR/dlbd depends on the load
-        # factor and must be evaluated together with the tangent
-        use_secant = secant and dc_last is not None
+        # factor and must be evaluated together with the tangent; the first
+        # step of the displacement control after a branch switch starts along
+        # the tangent, since the switching increment, from a state of the
+        # fundamental branch, may vary the controlled quantity in the
+        # direction opposite to the bifurcated branch, which then returns to
+        # the fundamental one
+        use_secant = (secant and dc_last is not None
+                      and not (control and after_switch))
         need_kT_conv = not use_secant or modified_NR or lbd_dependent
 
         # tangent stiffness matrix at the last converged state
@@ -1071,11 +1077,8 @@ def _solver_arc_length(an, method, silent=False):
                 # first step on the bifurcated branch: the controlled
                 # quantity varies as along the predictor in the direction
                 # of the switching step
-                if use_secant:
-                    s = np.sign(ctrl(dc_last))
-                else:
-                    s = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)
-                                *ctrl(dc_q_conv))
+                s = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)
+                            *ctrl(dc_q_conv))
                 ctrl_sign = s or ctrl_sign
             # psi^T dc = ds
             ds = ctrl_sign*arc_length

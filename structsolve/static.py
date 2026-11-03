@@ -167,6 +167,14 @@ class _PatternEntry(object):
 
     """
     def __init__(self, K, used_cols, C):
+        if C is not None:
+            # the sum of duplicated terms of the constraints would merge
+            # their tags into a wrong position, not detected by _positions
+            Cs = C.copy()
+            Cs.sum_duplicates()
+            if Cs.nnz != C.nnz:
+                raise ValueError('_FactorizationCache: duplicated terms of '
+                                 'the constraints')
         self.shape = K.shape
         self.indptr = K.indptr.copy()
         self.indices = K.indices.copy()
