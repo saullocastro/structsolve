@@ -108,6 +108,43 @@
   one negative eigenvalue exactly between the two limit points of the load;
   the same path with and without `inertia`. The tests of `'pardiso'` are
   skipped without `pypardiso`.
+- New `Analysis.inertia_num_eigvals`, default `None`: with `inertia=True`,
+  the number of negative real eigenvalues of a tangent stiffness matrix
+  factorized by SuperLU, e.g. unsymmetric under a follower load, where the
+  LU gives only the sign of the determinant, i.e. the parity of that
+  number. The `k = inertia_num_eigvals` eigenvalues of smallest magnitude
+  of the reduced tangent, on the space of the constraints, are computed at
+  every converged increment by shift-invert at `sigma = 0` with ARPACK
+  (`scipy.sparse.linalg.eigs` on the operator of the forward and backward
+  substitutions of the LU of the converged state, no new factorization),
+  new `static._smallest_eigvals` and `solve_kT.smallest_eigvals(k)` of the
+  SuperLU factorizations, and those that are real (`|Im| <=
+  INERTIA_REAL_RTOL = 1e-8` times the modulus) and negative are recorded in
+  `Analysis.num_negative_eigvals`, so that `max_inertia_jump` and the
+  detection of the crossings of `branch_switching` use them; the exact
+  count of PARDISO is kept for symmetric matrices. It detects the
+  divergence points, a real eigenvalue crossing zero; it does not detect
+  flutter, a complex pair crossing the imaginary axis being no static
+  critical point (their number among the `k` is logged). Negative real
+  eigenvalues beyond the `k` are missed, and an odd number of them is
+  reported, since the parity then differs from the sign of the
+  determinant. New `newton_raphson._eigvals_inertia`; `max_inertia_jump`
+  now requires `linear_solver='pardiso'` or `inertia_num_eigvals`.
+- New `tests/test_inertia_unsymmetric.py`: the eigenvalues of ARPACK
+  against `numpy.linalg.eigvals`, with null rows and with constraints
+  (`Z^T K Z`); along the path of a non-normal unsymmetric tangent whose
+  two real eigenvalues cross zero at `lbd = 0.27` and `0.63` and a complex
+  pair at `0.47`, the count goes 0, 1, 2 with Newton-Raphson, Riks and
+  Crisfield, as the dense eigenvalues, while the sign of the determinant
+  returns to +1; `max_inertia_jump = 1` separates two crossings at `0.25`
+  and `0.27`; the parity warning; on the symmetric von Mises truss the
+  count of SuperLU equals the inertia. Cost on hpc12 (8 threads), a grid
+  of 40000 hardening springs under a follower load with an unsymmetric
+  load stiffness: the ARPACK count took 1.1 s with `k = 6` and 2.8 s with
+  `k = 20` per converged increment, against 0.23 s for the SuperLU
+  factorization, its 20 smallest eigenvalues being clustered in [10.04,
+  12.39]; the Newton-Raphson analysis took 2.2 and 2.8 s per increment instead of
+  1.1 s, the Riks analysis 2.2 and 2.9 s instead of 1.1 s.
 
 ### Linear constraints of the solution
 
@@ -166,6 +203,17 @@
   against its bifurcated branch `v**2 = (EA lbd delta - k)/(EA/2 + beta)`;
   the restart; null values bitwise the homogeneous constraints; the
   validation.
+- New `tests/test_constraint_values_load_factor.py`: `constraint_values`
+  together with a `calc_fext` that depends on the load factor, the
+  springs of `tests/test_load_factor_dependent_load.py` whose node 3 is
+  prescribed by the null-space method, `x3 = 1.5 lbd`, under a load `80
+  lbd` on the node 2, with the node 1, `x1 = -0.5 lbd`, or the relative
+  displacement `x2 - x1 = -0.5 lbd` prescribed by the constraint: every
+  increment of Newton-Raphson, Riks, Crisfield, displacement control and
+  generalized displacement control against the problem with both
+  prescriptions eliminated by hand (one unknown, `brentq`) to `1e-8`, with
+  `'pardiso'` and modified Newton-Raphson; no change of the solvers was
+  needed.
 
 ### End of the non-linear analyses
 
@@ -306,6 +354,51 @@
   Riks, Crisfield and generalized displacement control analyses with
   constraints and `inertia`, and the Riks analysis beyond the limit point
   of the von Mises truss, bitwise those without the cache.
+- The phase 22 of PARDISO calls private functions of `pypardiso`
+  (`_check_A`, `_call_pardiso`, `_hash_csr_matrix`,
+  `_is_already_factorized`, with `set_phase(22)`), since `pypardiso` 0.4.7
+  has no public route to it: its `factorize` sets the phase 12, and its
+  `solve` solves with the phase 33 only when the copy or the hash of the
+  matrix stored by the factorization matches, otherwise with the phase 13,
+  correct but slow. The private API is now checked once per process
+  (attributes present, parameters of the methods those of 0.4.7), and the
+  first factorization of phase 22 is verified against a phase 12 of the
+  same matrix by the same solver (`iparm(14)`, `iparm(22)`, `iparm(23)`
+  and one solution to `1e-8`); when the API is missing, raises or fails
+  the check, the public `factorize` (phase 12) is used from then on, with
+  one `RuntimeWarning`. An exception that the phase 12 raises as well is a
+  failure of the factorization and is raised. New
+  `tests/test_pardiso_private_api.py`: a changed signature, a missing
+  method, a phase 22 that raises, does nothing or factorizes another
+  matrix, each giving one warning and the increments, solutions, counts of
+  negative eigenvalues and perturbed pivots of the private API, with
+  Newton-Raphson and Riks.
+
+### Benchmark: post-buckling of an axially compressed cylinder
+
+- New `benchmarks/simo1990_cylinder.py`, not run by pytest, and
+  documentation page `ex_cylinder_postbuckling`: the cylinder of Simo, Fox
+  and Rifai (1990), Section 6.3.4, Fig. 6.3.4, an `L/10 x 15 deg` section
+  of `panels` 0.15.0 (`cylshell_clpt_donnell`), traced with the Riks method
+  to twice the shortening of the linear buckling load. The imperfection is
+  added exactly for the Donnell kinematics, `fint(c + c0) - fint(c0) -
+  kG(N0) c`, checked against the gradient of the strain energy to 1.7e-10.
+  With 12 x 12 terms the limit loads are 0.727 (10 % imperfection) and
+  0.390 (50 %), against 0.715 and 0.411 read from the figure and 0.717 and
+  0.402 for Stanley's points, unchanged in the third digit from 10 x 10 to
+  14 x 14 terms; the snap-back, the plateau at 0.32 to 0.33 and the loads
+  up to the shortening 0.04 agree within 0.02. The perfect cylinder with
+  `branch_switching`, 8 x 8 terms, bifurcates at 0.827 (0.833 read) and
+  follows Fig. 6.3.4 (d) to the plateau.
+- Found with it, not changed: the count of negative eigenvalues of PARDISO
+  (`linear_solver='pardiso'`, about 20 perturbed pivots) found the first
+  critical point at the load 0.90 instead of 0.83, and
+  `arc_length._critical_eigenvector`, whose subspace has the `num_neg + 2`
+  eigenvalues closest to zero, returned an eigenvector of weakly stiff
+  in-plane Ritz terms instead of the negative eigenvalue, such that the
+  switch converged back on the fundamental path. The benchmark uses SuperLU
+  and unknowns scaled to a unit diagonal; with 10 x 10 terms or more the
+  switch still fails.
 
 ## 0.9.4 (2026-10-28)
 

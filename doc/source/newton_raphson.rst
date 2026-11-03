@@ -31,3 +31,10 @@ Constants
 .. autodata:: structsolve.newton_raphson.INC_GROWTH_FACTOR
 
 .. autodata:: structsolve.newton_raphson.INC_CUT_FACTOR
+
+Inertia of the tangent stiffness matrix
+---------------------------------------
+
+.. autofunction:: structsolve.newton_raphson._converged_state
+
+.. autofunction:: structsolve.newton_raphson._eigvals_inertia

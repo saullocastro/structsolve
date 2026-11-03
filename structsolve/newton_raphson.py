@@ -9,7 +9,7 @@ import numpy as np
 from scipy.sparse import csr_matrix, csc_matrix
 
 from .logger import msg, warn
-from .static import solve, _factorize
+from .static import solve, _factorize, _count_negative_real
 from . import callbacks
 from .convergence import check_convergence, crisfield_weights, scaled_norm
 
@@ -413,16 +413,74 @@ def _converged_state(an, c, lbd, silent=False):
 def _factorize_state(an, c, lbd, silent=False):
     r"""Factorization of the tangent stiffness matrix at ``c`` and ``lbd``
     with ``an.linear_solver`` and ``an.constraints``, see
-    :func:`.static._factorize`, ``None`` when it is singular"""
+    :func:`.static._factorize`, ``None`` when it is singular; with
+    ``an.inertia_num_eigvals``, the count of the negative real eigenvalues
+    of a SuperLU factorization, see :func:`._eigvals_inertia`"""
     try:
-        return _factorize(callbacks.calc_kT(an, c, lbd),
-                          linear_solver=an.linear_solver,
-                          constraints=_constraint_matrix(an),
-                          cache=_cache(an))
+        solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
+                              linear_solver=an.linear_solver,
+                              constraints=_constraint_matrix(an),
+                              cache=_cache(an))
     except RuntimeError:
         warn('Singular tangent stiffness matrix at the converged state',
              level=2, silent=silent)
         return None
+    if an.inertia_num_eigvals is not None:
+        _eigvals_inertia(solve_kT, an.inertia_num_eigvals, silent=silent)
+    return solve_kT
+
+
+def _eigvals_inertia(solve_kT, k, silent=False):
+    r"""The number of negative real eigenvalues among the ``k`` of smallest
+    magnitude of the SuperLU factorization ``solve_kT``, set as its
+    ``num_negative_eigvals``, see ``Analysis.inertia_num_eigvals``
+
+    Nothing is done when ``solve_kT`` already has a count, the exact one of
+    PARDISO. The eigenvalues are computed by
+    :func:`.static._smallest_eigvals` with the LU factorization of
+    ``solve_kT``, on the degrees of freedom whose row or column is not
+    null and on the space of the constraints. The attributes set on
+    ``solve_kT`` are:
+
+    - ``num_negative_eigvals``: the number of real eigenvalues that are
+      negative, ``None`` when ARPACK did not converge;
+    - ``num_complex_negative``: the number of complex eigenvalues with a
+      negative real part, among the ``k``;
+    - ``inertia_num_eigvals``: ``k``;
+    - ``inertia_complete``: ``False`` when the parity of the count differs
+      from the sign of the determinant, i.e. an odd number of negative real
+      eigenvalues lies beyond the ``k`` of smallest magnitude, with a
+      warning.
+
+    Returns
+    -------
+    nneg : int or None
+        ``solve_kT.num_negative_eigvals``.
+
+    """
+    if solve_kT.num_negative_eigvals is not None:
+        return solve_kT.num_negative_eigvals
+    if not hasattr(solve_kT, 'smallest_eigvals'):
+        return None
+    solve_kT.inertia_num_eigvals = k
+    solve_kT.num_complex_negative = None
+    solve_kT.inertia_complete = None
+    lam = solve_kT.smallest_eigvals(k)
+    if lam is None:
+        warn('ARPACK did not converge, the number of negative eigenvalues '
+             'is not known', level=2, silent=silent)
+        return None
+    nneg, ncomplex = _count_negative_real(lam)
+    solve_kT.num_negative_eigvals = nneg
+    solve_kT.num_complex_negative = ncomplex
+    # complex pairs have a positive product: the sign of the determinant is
+    # (-1)**(number of negative real eigenvalues)
+    solve_kT.inertia_complete = (-1)**nneg == solve_kT.det_sign
+    if not solve_kT.inertia_complete:
+        warn('An odd number of negative real eigenvalues lies beyond the '
+             '%d of smallest magnitude: increase Analysis.inertia_num_eigvals'
+             % k, level=2, silent=silent)
+    return nneg
 
 
 def _record_inertia(an, solve_kT, silent=False):
@@ -441,20 +499,38 @@ def _record_inertia(an, solve_kT, silent=False):
     if nneg is None:
         msg('Tangent stiffness matrix: sign of the determinant %+d'
             % solve_kT.det_sign, level=2, silent=silent)
+    elif solve_kT.num_perturbed_pivots is None:
+        msg('Tangent stiffness matrix: %d negative real eigenvalues and %d '
+            'complex with a negative real part among the %d of smallest '
+            'magnitude, sign of the determinant %+d'
+            % (nneg, solve_kT.num_complex_negative,
+               solve_kT.inertia_num_eigvals, solve_kT.det_sign), level=2,
+            silent=silent)
     else:
         msg('Tangent stiffness matrix: %d negative eigenvalues, %d perturbed pivots'
             % (nneg, solve_kT.num_perturbed_pivots), level=2, silent=silent)
 
 
 def _check_max_inertia_jump(an):
-    r"""Validate ``an.max_inertia_jump``, which requires ``an.inertia`` and
-    the counts of negative eigenvalues of ``an.linear_solver='pardiso'``"""
+    r"""Validate ``an.inertia_num_eigvals``, which requires ``an.inertia``,
+    and ``an.max_inertia_jump``, which requires ``an.inertia`` and the
+    counts of negative eigenvalues of ``an.linear_solver='pardiso'`` or of
+    ``an.inertia_num_eigvals``"""
+    k = an.inertia_num_eigvals
+    if k is not None:
+        if not an.inertia:
+            raise ValueError('Analysis.inertia_num_eigvals requires '
+                             'Analysis.inertia = True')
+        if isinstance(k, bool) or int(k) != k or k < 1:
+            raise ValueError('Analysis.inertia_num_eigvals must be a '
+                             'positive integer')
     max_jump = an.max_inertia_jump
     if max_jump is None:
         return None
-    if not an.inertia or an.linear_solver != 'pardiso':
+    if not an.inertia or (an.linear_solver != 'pardiso' and k is None):
         raise ValueError("Analysis.max_inertia_jump requires Analysis.inertia "
-                         "= True and Analysis.linear_solver = 'pardiso'")
+                         "= True and Analysis.linear_solver = 'pardiso' or "
+                         "Analysis.inertia_num_eigvals")
     if int(max_jump) != max_jump or max_jump < 1:
         raise ValueError('Analysis.max_inertia_jump must be a positive '
                          'integer')
@@ -464,11 +540,19 @@ def _check_max_inertia_jump(an):
 def _inertia_jump(solve_last, solve_new, max_jump):
     r"""Whether the number of negative eigenvalues changed by more than
     ``max_jump`` between the factorizations ``solve_last`` and ``solve_new``
-    of two converged states, ``False`` when a count is not known"""
+    of two converged states, ``False`` when a count is not known
+
+    The count of ``solve_last`` is computed when it has none but
+    ``solve_new`` has one of ``an.inertia_num_eigvals``, e.g. for the
+    factorization at the origin of the arc-length solvers, made before
+    the count was asked for, see :func:`._eigvals_inertia`."""
     if max_jump is None or solve_last is None or solve_new is None:
         return False
-    n0 = solve_last.num_negative_eigvals
     n1 = solve_new.num_negative_eigvals
+    n0 = solve_last.num_negative_eigvals
+    k = getattr(solve_new, 'inertia_num_eigvals', None)
+    if n0 is None and n1 is not None and k is not None:
+        n0 = _eigvals_inertia(solve_last, k, silent=True)
     if n0 is None or n1 is None:
         return False
     return abs(n1 - n0) > max_jump
