@@ -23,12 +23,12 @@ dependency of structsolve):
   limit load of the 50 % imperfection and the bifurcation and minimum loads
   of the perfect cylinder with both linear solvers (`m = n = 8`, about 1.5
   min); it is skipped where panels is not installed, and its ``'pardiso'``
-  case where pypardiso is not;
+  case where oneMKL is not;
 - the command line of ``simo1990_utils.py`` computed the convergence study
   and the figure of this page, from the root of the repository (``;``
   separates the paths on Windows, ``:`` elsewhere)::
 
-    PYTHONPATH=".;<panels>;<pypardiso>" python notebooks/simo1990_utils.py verify
+    PYTHONPATH=".;<panels>" python notebooks/simo1990_utils.py verify
     PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
     PYTHONPATH=... python notebooks/simo1990_utils.py perfect 8 8
     PYTHONPATH=... python notebooks/simo1990_utils.py perfect 12 12 10 pardiso

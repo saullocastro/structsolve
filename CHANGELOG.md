@@ -78,16 +78,16 @@
 - New `Analysis.linear_solver`, `'splu'` (default) or `'pardiso'`, the
   factorization of the tangent stiffness matrix of the non-linear solvers,
   argument `linear_solver` of `static._factorize`. `'pardiso'` needs the
-  package `pypardiso` (new optional dependency `structsolve[pardiso]`): the
+  shared library `mkl_rt` of Intel oneMKL (new optional dependency
+  `structsolve[pardiso]`, the package `mkl`), called through the new
+  module `structsolve.pardiso`, see below: the
   reduced matrix is scaled to a unit diagonal and its upper triangle
   factorized as real symmetric indefinite (`mtype=-2`); every solution is
   checked against its relative residual and, above `PARDISO_REFINE_TOL =
   1e-9`, improved by GMRES with the factorization as the preconditioner, a
   `RuntimeWarning` being issued above `PARDISO_WARN_TOL = 1e-6`. An
   unsymmetric matrix, e.g. with the load stiffness of a follower load, is
-  factorized by `'splu'` instead, with a `RuntimeWarning`. The solver
-  objects of `pypardiso` are kept and reused after their memory is freed,
-  since creating one took about 6.5 s on Windows with `pypardiso` 0.4.7.
+  factorized by `'splu'` instead, with a `RuntimeWarning`.
 - The callable returned by `static._factorize` has the attributes
   `linear_solver`, `det_sign`, the sign of the determinant, from the
   diagonal of `U` and the permutations of SuperLU, `num_negative_eigvals`,
@@ -107,7 +107,7 @@
   orders of magnitude, and, along the snap-through of the von Mises truss,
   one negative eigenvalue exactly between the two limit points of the load;
   the same path with and without `inertia`. The tests of `'pardiso'` are
-  skipped without `pypardiso`.
+  skipped without oneMKL.
 - New `Analysis.inertia_num_eigvals`, default `None`: with `inertia=True`,
   the number of negative real eigenvalues of a tangent stiffness matrix
   factorized by SuperLU, e.g. unsymmetric under a follower load, where the
@@ -426,26 +426,15 @@
   Riks, Crisfield and generalized displacement control analyses with
   constraints and `inertia`, and the Riks analysis beyond the limit point
   of the von Mises truss, bitwise those without the cache.
-- The phase 22 of PARDISO calls private functions of `pypardiso`
-  (`_check_A`, `_call_pardiso`, `_hash_csr_matrix`,
-  `_is_already_factorized`, with `set_phase(22)`), since `pypardiso` 0.4.7
-  has no public route to it: its `factorize` sets the phase 12, and its
-  `solve` solves with the phase 33 only when the copy or the hash of the
-  matrix stored by the factorization matches, otherwise with the phase 13,
-  correct but slow. The private API is now checked once per process
-  (attributes present, parameters of the methods those of 0.4.7), and the
-  first factorization of phase 22, of `2A` (exactly scaled, so that a
-  factorization of `A` still held by the solver cannot pass the check), is
-  verified against a phase 12 of `A` by the same solver (`iparm(14)`,
-  `iparm(22)`, `iparm(23)` and one solution to `1e-8`); when the API is missing, raises or fails
-  the check, the public `factorize` (phase 12) is used from then on, with
-  one `RuntimeWarning`. An exception that the phase 12 raises as well is a
-  failure of the factorization and is raised. New
-  `tests/test_pardiso_private_api.py`: a changed signature, a missing
-  method, a phase 22 that raises, does nothing or factorizes another
-  matrix, each giving one warning and the increments, solutions, counts of
-  negative eigenvalues and perturbed pivots of the private API, with
-  Newton-Raphson and Riks.
+- New module `structsolve.pardiso`: `PardisoSolver`, the interface to
+  PARDISO of Intel oneMKL through `ctypes`, which calls the phases 12, 22
+  (the numerical factorization with the analysis of the last phase 12),
+  33, 0 and -1 directly and keeps a reference to the values of the
+  factorized matrix only, for the iterative refinement of PARDISO.
+  `mkl_rt` is given by the environment variable `STRUCTSOLVE_MKL_RT`,
+  otherwise found by `ctypes.util.find_library`, in `lib` or
+  `Library/bin` of the environment, or under it or the user site, and
+  loaded once per process. New `tests/test_pardiso.py`.
 
 ### Benchmark: post-buckling of an axially compressed cylinder
 
@@ -504,8 +493,12 @@
   minimum degree ordering `iparm(2) = 0` fixed the benchmark but not a
   dense random indefinite matrix of the same size, which `iparm(24) = 1`
   fixed. The factorizations without perturbed pivots, e.g. all those of
-  the DOE09 cylinder, are unchanged. The solvers returned to the pool get
-  the default parameters back. New test in `tests/test_inertia.py`.
+  the DOE09 cylinder, are unchanged. New tests in `tests/test_inertia.py`,
+  one with a dense matrix (34 perturbed pivots with MKL 2026.1, none with
+  2026.2) and others that fake the perturbed pivots, for every MKL.
+- `solve_kT.pardiso_fallback` is set by `_factorize` instead of being read
+  from `iparm(1) = 1`, which MKL 2026.2 also sets with its default
+  parameters: the fallback was reported for every factorization.
 
 ## 0.9.4 (2026-10-28)
 

@@ -16,20 +16,17 @@ from analytic_problems import hardening_springs, Problem
 from test_branch_switching import pitchforks
 from structsolve import Analysis
 from structsolve.static import _factorize
+from structsolve.pardiso import available as pardiso_available
 
 METHODS = ['NR', 'arc_length_riks', 'arc_length_crisfield',
            'displacement_control', 'generalized_displacement_control']
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
-SOLVERS = ['splu'] + (['pardiso'] if has_pypardiso() else [])
+SOLVERS = ['splu'] + (['pardiso'] if has_pardiso() else [])
 
 
 def spring_chain(n=5, k=100.):

@@ -26,6 +26,7 @@ import pytest
 from scipy.optimize import brentq
 
 from test_load_factor_dependent_load import SpringsProblem
+from structsolve.pardiso import available as pardiso_available
 
 METHODS = ['NR', 'arc_length_riks', 'arc_length_crisfield',
            'displacement_control', 'generalized_displacement_control']
@@ -36,12 +37,8 @@ F = 80.
 CASES = {'node1': np.array([1., 0.]), 'relative': np.array([-1., 1.])}
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
 def spring_force(p, i, e):
@@ -103,7 +100,7 @@ def test_path(method, case):
     assert np.abs(an.cs[-1] - lin).max() > 0.05
 
 
-@pytest.mark.skipif(not has_pypardiso(), reason='pypardiso is not installed')
+@pytest.mark.skipif(not has_pardiso(), reason='oneMKL is not found')
 @pytest.mark.parametrize('method', ['NR', 'arc_length_riks'])
 def test_pardiso(method):
     out = []

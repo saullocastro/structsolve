@@ -17,6 +17,7 @@ from scipy.sparse import csc_matrix, csr_matrix
 
 from structsolve.static import _factorize, _FactorizationCache
 from analytic_problems import von_mises_truss, Problem
+from structsolve.pardiso import available as pardiso_available
 
 #NOTE structsolve.static is the function static(), exported by the package
 static_module = importlib.import_module('structsolve.static')
@@ -25,29 +26,33 @@ analysis_module = importlib.import_module('structsolve.analysis')
 LINEAR_SOLVERS = ['splu', 'pardiso']
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
 def solvers():
-    return [s for s in LINEAR_SOLVERS if s == 'splu' or has_pypardiso()]
+    return [s for s in LINEAR_SOLVERS if s == 'splu' or has_pardiso()]
 
 
 @pytest.fixture
 def phases(monkeypatch):
     """Count the phases of the PARDISO factorizations"""
+    from structsolve.pardiso import PardisoSolver
     count = Counter()
-    factorize = static_module._pardiso_factorize
+    factorize = PardisoSolver.factorize
 
-    def counted(solver, A, phase):
-        count[phase] += 1
-        return factorize(solver, A, phase)
+    count.fallbacks = 0
 
-    monkeypatch.setattr(static_module, '_pardiso_factorize', counted)
+    def counted(self, A, phase=12):
+        # the factorizations with PARDISO_FALLBACK_IPARM, which depend on
+        # the version of MKL, counted apart
+        if self.iparm[0] and self.iparm[23] == 1:
+            count.fallbacks += 1
+        else:
+            count[phase] += 1
+        return factorize(self, A, phase)
+
+    monkeypatch.setattr(PardisoSolver, 'factorize', counted)
     return count
 
 
@@ -111,7 +116,7 @@ def test_same_factorization(seed, border, symmetric, linear_solver):
     cache.close()
 
 
-@pytest.mark.skipif(not has_pypardiso(), reason='pypardiso is not installed')
+@pytest.mark.skipif(not has_pardiso(), reason='oneMKL is not found')
 def test_pardiso_phases(phases):
     """The analysis of PARDISO is reused while the pattern does not change,
     also by the factorizations that coexist, and redone when it changes"""
@@ -253,7 +258,7 @@ def test_analysis_identical(method, linear_solver, monkeypatch):
     assert an0.num_perturbed_pivots == an1.num_perturbed_pivots
 
 
-@pytest.mark.skipif(not has_pypardiso(), reason='pypardiso is not installed')
+@pytest.mark.skipif(not has_pardiso(), reason='oneMKL is not found')
 def test_analysis_limit_point(monkeypatch, phases):
     """Riks beyond the limit point of the von Mises truss with PARDISO:
     the same path and inertia, the analysis of PARDISO reused"""

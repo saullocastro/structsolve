@@ -136,7 +136,8 @@ class Analysis(object):
                                   ``'splu'`` (default), the sparse LU of
                                   SuperLU, or ``'pardiso'``, the symmetric
                                   indefinite factorization of PARDISO, which
-                                  requires ``pypardiso`` and gives the number
+                                  requires oneMKL, see :mod:`.pardiso`, and
+                                  gives the number
                                   of negative eigenvalues, see
                                   :func:`.static._factorize`
     ``inertia``                   ``bool``, the tangent stiffness matrix is

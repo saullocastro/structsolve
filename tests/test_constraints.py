@@ -12,17 +12,14 @@ from scipy.sparse import csc_matrix
 
 from analytic_problems import hardening_springs, Problem, convergence_orders
 from structsolve.static import _factorize
+from structsolve.pardiso import available as pardiso_available
 
 METHODS = ['NR', 'arc_length_riks', 'arc_length_crisfield',
            'displacement_control']
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
 def kwargs_of(method, n):
@@ -100,7 +97,7 @@ def free_floating_springs(P=20., n=4):
 
 
 @pytest.mark.parametrize('linear_solver', ['splu'] + (['pardiso'] if
-                                                       has_pypardiso() else []))
+                                                       has_pardiso() else []))
 @pytest.mark.parametrize('method', METHODS)
 def test_inertia_relief(method, linear_solver):
     """A structure without support under a self-equilibrated load: the
@@ -162,7 +159,7 @@ def test_linear_static():
 
 
 @pytest.mark.parametrize('linear_solver', ['splu'] + (['pardiso'] if
-                                                       has_pypardiso() else []))
+                                                       has_pardiso() else []))
 def test_bordered_factorization(linear_solver):
     """Solution on the space of the constraints, with null rows and
     columns and a constraint on them only, which is dropped; the inertia

@@ -14,6 +14,8 @@ import sys
 import numpy as np
 import pytest
 
+from structsolve.pardiso import available as pardiso_available
+
 # panels (which requires structsolve>=0.10.0) is not a dependency of
 # structsolve: these tests run where panels is installed, and are skipped
 # otherwise
@@ -95,7 +97,8 @@ def test_riks_perfect_cylinder_branch_switching(linear_solver):
     # eigenvector: by the sign of the determinant with 'splu', by the count
     # of negative eigenvalues with 'pardiso'
     if linear_solver == 'pardiso':
-        pytest.importorskip('pypardiso')
+        if not pardiso_available():
+            pytest.skip('oneMKL is not found')
     r = su.run_riks(0., 8, 8, umax=0.022, branch_switching=1, silent=True,
                     save=False, verbose=False, linear_solver=linear_solver)
     assert r['max_residual'] <= 1e-9

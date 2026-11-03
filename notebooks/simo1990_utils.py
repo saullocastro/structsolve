@@ -21,10 +21,10 @@ added here exactly for the Donnell kinematics with the Ritz vector ``c0`` of
 the imperfection, see :class:`ImperfectShell` and the documentation page.
 
 panels (which requires structsolve>=0.10.0) is not a dependency of
-structsolve. Run the command line with structsolve, panels 0.15.0 and
-pypardiso importable, from the root of the repository::
+structsolve. Run the command line with structsolve and panels 0.15.0
+importable, and oneMKL for 'pardiso', from the root of the repository::
 
-    PYTHONPATH=".;<panels>;<pypardiso>" python notebooks/simo1990_utils.py verify
+    PYTHONPATH=".;<panels>" python notebooks/simo1990_utils.py verify
     PYTHONPATH=... python notebooks/simo1990_utils.py lb 12 12
     PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
     PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.5 12 12

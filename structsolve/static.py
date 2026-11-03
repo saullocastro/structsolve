@@ -14,6 +14,7 @@ from scipy.sparse.linalg import (spsolve, splu, gmres, LinearOperator, eigs,
                                   ArpackError, ArpackNoConvergence)
 
 from .logger import msg
+from .pardiso import PardisoSolver, PardisoError, load_mkl
 from .sparseutils import remove_null_cols, _used_cols
 
 
@@ -47,9 +48,6 @@ INERTIA_ARPACK_TOL = 1.e-10
 #: `|\lambda|`, see :func:`._count_negative_real`
 INERTIA_REAL_RTOL = 1.e-8
 
-# instances of pypardiso.PyPardisoSolver whose memory was freed, reused by
-# the next factorizations, since creating one may take seconds
-_pardiso_pool = []
 #: Maximum number of PARDISO solvers that a cache of the factorizations
 #: keeps with the analysis of its pattern, for the phase 22, see
 #: :func:`._factorize`
@@ -57,166 +55,26 @@ CACHE_MAX_PARDISO_SOLVERS = 4
 
 
 def _pardiso_release(solver):
-    """Free the memory of a PARDISO solver and keep it for reuse, with the
-    default parameters of PARDISO, ``iparm(1) = 0``"""
-    solver.free_memory(everything=True)
-    solver.iparm[:] = 0
-    _pardiso_pool.append(solver)
+    """Free all the memory of a :class:`.PardisoSolver`"""
+    solver.free(everything=True)
 
 
 def _pardiso_factorize_fallback(A, iparm):
-    """Factorization of phase 12 of ``A`` by a new or pooled PARDISO solver
+    """Factorization of phase 12 of ``A`` by a new :class:`.PardisoSolver`
     with the parameters ``iparm`` (the defaults filled by a previous
     factorization), ``iparm(1) = 1``, and those of
     ``PARDISO_FALLBACK_IPARM``; ``None`` when it fails"""
-    import pypardiso
-    solver = (_pardiso_pool.pop() if _pardiso_pool
-              else pypardiso.PyPardisoSolver(mtype=-2))
+    solver = PardisoSolver()
     solver.iparm[:] = iparm
-    solver.set_iparm(1, 1)
+    solver.iparm[0] = 1
     for i, v in PARDISO_FALLBACK_IPARM.items():
-        solver.set_iparm(i, v)
+        solver.iparm[i - 1] = v
     try:
         solver.factorize(A)
-    except Exception:
+    except PardisoError:
         _pardiso_release(solver)
         return None
     return solver
-
-
-#: State of the private API of ``pypardiso`` used by the phase 22 of
-#: :func:`._pardiso_factorize`: ``None`` before its first use,
-#: ``'unverified'`` when it was found, ``True`` when its first phase 22 was
-#: verified, ``False`` when it is missing or failed, the public
-#: ``factorize`` (phase 12) being then used, see
-#: :func:`._pardiso_phase22_api`
-_pardiso_private_api = None
-#: The private methods and attributes of ``pypardiso.PyPardisoSolver`` used
-#: by the phase 22, with the names of the parameters of the methods, those
-#: of ``pypardiso`` 0.4.7
-_PARDISO_PRIVATE_API = dict(_check_A=('A',), _call_pardiso=('A', 'b'),
-                            _hash_csr_matrix=('matrix',),
-                            _is_already_factorized=('A',), set_phase=('phase',),
-                            factorized_A=None, size_limit_storage=None)
-
-
-def _pardiso_disable_private_api(reason):
-    """Use the public ``factorize`` of ``pypardiso`` from now on, with one
-    warning"""
-    global _pardiso_private_api
-    _pardiso_private_api = False
-    warnings.warn("linear_solver='pardiso': the private API of pypardiso "
-                  "that reuses the analysis of PARDISO (phase 22) is not "
-                  "usable (%s); the public factorize (phase 12), which "
-                  "repeats the analysis, is used instead" % reason,
-                  RuntimeWarning, stacklevel=4)
-
-
-def _pardiso_phase22_api(solver):
-    """Whether the private API of ``pypardiso`` of the phase 22 is usable,
-    checked once per process on the first solver: the attributes of
-    ``_PARDISO_PRIVATE_API`` present, the methods callable with the
-    parameters of ``pypardiso`` 0.4.7"""
-    global _pardiso_private_api
-    if _pardiso_private_api is not None:
-        return _pardiso_private_api
-    import inspect
-    for name, params in _PARDISO_PRIVATE_API.items():
-        if not hasattr(solver, name):
-            _pardiso_disable_private_api('PyPardisoSolver.%s is missing'
-                                         % name)
-            return False
-        if params is None:
-            continue
-        try:
-            found = tuple(inspect.signature(getattr(solver, name)).parameters)
-        except (TypeError, ValueError):
-            found = None
-        if found != params:
-            _pardiso_disable_private_api('PyPardisoSolver.%s%s instead of '
-                                         '%s' % (name, found, params))
-            return False
-    # verified by the first factorization of phase 22, see
-    # _pardiso_factorize
-    _pardiso_private_api = 'unverified'
-    return _pardiso_private_api
-
-
-def _pardiso_factorize_22(solver, A):
-    """Phase 22 with the private API of ``pypardiso``, as
-    ``pypardiso.PyPardisoSolver.factorize`` with the phase 22 instead of
-    12; the copy or the hash of ``A`` is stored such that ``solve`` finds
-    it factorized and solves with the phase 33"""
-    solver._check_A(A)
-    if A.nnz > solver.size_limit_storage:
-        solver.factorized_A = solver._hash_csr_matrix(A)
-    else:
-        solver.factorized_A = A.copy()
-    solver.set_phase(22)
-    solver._call_pardiso(A, np.zeros((A.shape[0], 1)))
-    if not solver._is_already_factorized(A):
-        raise RuntimeError('the matrix is not recognized as factorized')
-
-
-def _pardiso_factorize(solver, A, phase):
-    r"""Numerical factorization of ``A`` by the ``pypardiso.PyPardisoSolver``
-    ``solver``, with the phase 12 of PARDISO (analysis and factorization), or
-    22 (factorization only), which reuses the analysis of the last phase 12
-    of ``solver``, valid for a matrix of the same pattern
-
-    ``pypardiso`` 0.4.7 has no public route to the phase 22: its
-    ``factorize`` sets the phase 12, then calls the private ``_check_A``
-    and ``_call_pardiso``, and stores a copy of ``A``, or its hash for more
-    than ``size_limit_storage`` terms, which ``solve`` compares with its
-    matrix to solve with the phase 33, otherwise with the phase 13, i.e. a
-    new analysis and factorization, correct but slow. The phase 22 is that
-    sequence with ``set_phase(22)``, see :func:`._pardiso_factorize_22`.
-    The private API is checked once per process, see
-    :func:`._pardiso_phase22_api`, and the first factorization of phase 22
-    is verified against a factorization of phase 12 by the same solver: the
-    phase 22 factorizes ``2A``, which differs from any factorization the
-    solver may still hold, the phase 12 ``A``, with the same number of
-    negative and perturbed pivots (``iparm(23)``, ``iparm(22)`` and
-    ``iparm(14)``) and the same solution of one right-hand side, scaled by
-    2, to a relative difference of ``1e-8``. When the
-    API is missing, raises or fails this check, the public ``factorize``
-    (phase 12) is used from then on, with one :class:`RuntimeWarning`; an
-    exception that the phase 12 raises as well is a failure of the
-    factorization, not of the API, and is raised.
-
-    """
-    global _pardiso_private_api
-    if phase == 12 or not _pardiso_phase22_api(solver):
-        solver.factorize(A)
-        return
-    try:
-        if _pardiso_private_api is True:
-            _pardiso_factorize_22(solver, A)
-            return
-        # first use: the phase 22 of 2A verified against the phase 12 of A;
-        # 2A, scaled exactly, differs from any factorization that the
-        # solver may still hold, e.g. of A itself
-        A2 = A.copy()
-        A2.data *= 2
-        _pardiso_factorize_22(solver, A2)
-        iparm = solver.get_iparms()
-        b = np.linspace(1., 2., A.shape[0])
-        x22 = 2*solver.solve(A2, b)
-        ok = solver.phase == 33
-    except Exception as e:
-        solver.factorize(A)
-        _pardiso_disable_private_api('%s: %s' % (type(e).__name__, e))
-        return
-    solver.factorize(A)
-    iparm12 = solver.get_iparms()
-    x12 = solver.solve(A, b)
-    ok = (ok and all(iparm[i] == iparm12[i] for i in (14, 22, 23))
-          and np.linalg.norm(x22 - x12) <= 1e-8*np.linalg.norm(x12))
-    if ok:
-        _pardiso_private_api = True
-    else:
-        _pardiso_disable_private_api('the factorization of phase 22 differs '
-                                     'from that of phase 12')
 
 
 def _release_solvers(solvers):
@@ -277,17 +135,14 @@ class _FactorizationCache(object):
         solver that keeps the analysis of the current pattern, 12 otherwise"""
         if self.free_solvers:
             return self.free_solvers.pop(), 22
-        if _pardiso_pool:
-            return _pardiso_pool.pop(), 12
-        import pypardiso
-        return pypardiso.PyPardisoSolver(mtype=-2), 12
+        return PardisoSolver(), 12
 
     def release(self, solver, gen):
         """Free the factorization of ``solver`` and keep its analysis when it
         is of the current pattern, otherwise free all its memory"""
         if (not self.closed and gen == self.gen
                 and len(self.free_solvers) < CACHE_MAX_PARDISO_SOLVERS):
-            solver.free_memory(everything=False)
+            solver.free()
             self.free_solvers.append(solver)
         else:
             _pardiso_release(solver)
@@ -596,7 +451,8 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     linear_solver : str, optional
         ``'splu'`` (default) for the sparse LU factorization of SuperLU, or
         ``'pardiso'`` for the symmetric indefinite factorization of PARDISO,
-        which requires the package ``pypardiso``, see ``LINEAR_SOLVERS``.
+        which requires the shared library ``mkl_rt`` of Intel oneMKL, see
+        :mod:`.pardiso` and ``LINEAR_SOLVERS``.
     constraints : array-like, sparse matrix or None, optional
         The matrix `\boldsymbol{C}` of the linear constraints
         `\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}`, of shape ``(n, m)``
@@ -635,7 +491,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     RuntimeError
         When the matrix is singular, for ``'splu'``, or when PARDISO fails.
     ImportError
-        When ``linear_solver='pardiso'`` and ``pypardiso`` is not installed.
+        When ``linear_solver='pardiso'`` and oneMKL is not found.
     ValueError
         For an invalid ``linear_solver``.
 
@@ -678,7 +534,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     (panels 0.15.0, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
     of freedom, a dense matrix) and dense random indefinite matrices of
     114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
-    default parameters (pypardiso 0.4.7, MKL 2026.1, ``iparm(10) = 8``,
+    default parameters (MKL 2026.1, ``iparm(10) = 8``,
     ``iparm(11) = iparm(13) = 0``, ``iparm(21) = 1``, ``iparm(24) = 0``),
     solutions of relative residual 0.4 to 1, recovered by the GMRES
     below, and a number of negative pivots short by one, e.g. 0 from the
@@ -736,10 +592,8 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     inertia relief of the Riks analyses of a tow-steered cylinder for the
     DCSE website (2026), with a single constraint.
 
-    The memory of PARDISO is freed when ``solve_kT`` is deleted, and its
-    solver object is kept for the next factorizations, since creating one
-    took about 6.5 s on Windows with ``pypardiso`` 0.4.7, against
-    milliseconds for the factorization of a small matrix.
+    PARDISO is called through :class:`.PardisoSolver`, whose memory is
+    freed when ``solve_kT`` is deleted.
 
     With ``cache``, created by :meth:`.Analysis.static` for each non-linear
     analysis, along which the pattern of the tangent stiffness matrix
@@ -750,9 +604,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     factorization only gathers the values of ``kT``; and the analysis
     (reordering and symbolic factorization) of PARDISO, its phase 11, the
     next factorizations being its phase 22 instead of 12 with a solver
-    that keeps the analysis of the pattern, through the private API of
-    ``pypardiso``, checked and verified by :func:`._pardiso_factorize`,
-    which falls back to the phase 12 when it is not usable; up to
+    that keeps the analysis of the pattern; up to
     ``CACHE_MAX_PARDISO_SOLVERS`` such solvers are kept, since the
     factorizations of the last converged state and of the current
     iteration coexist. The pattern is the shape, ``indptr`` and
@@ -913,11 +765,7 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
     ``border``, see :func:`._factorize`; ``scaled``, the scaling and the
     scaled upper triangle of ``A``, is computed when ``None``"""
     m = border.kept.shape[0]
-    try:
-        import pypardiso
-    except ImportError:
-        raise ImportError("linear_solver='pardiso' requires the package "
-                          "pypardiso")
+    load_mkl()
     if scaled is None:
         d = np.abs(A.diagonal())
         d[d == 0] = 1.
@@ -940,13 +788,12 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
             solver, phase = cache.pardiso_solver()
             gen = cache.gen
         else:
-            solver = (_pardiso_pool.pop() if _pardiso_pool
-                      else pypardiso.PyPardisoSolver(mtype=-2))
+            solver = PardisoSolver()
             phase = 12
         cached = cache is not None
         try:
-            _pardiso_factorize(solver, As_upper, phase)
-        except Exception as e:
+            solver.factorize(As_upper, phase)
+        except PardisoError as e:
             _pardiso_release(solver)
             raise RuntimeError('PARDISO factorization failed: %s' % e)
         if not fallback and int(solver.iparm[13]) > 0:
@@ -965,10 +812,9 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
                 used_fallback = True
             elif solver2 is not None:
                 _pardiso_release(solver2)
-    iparms = solver.get_iparms()
 
     def precond(r):
-        return s*solver.solve(As_upper, np.ascontiguousarray(s*r))
+        return s*solver.solve(s*r)
 
     def solve_kT(b, d=None):
         x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
@@ -1004,8 +850,8 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
     solve_kT.unrefined = unrefined
     solve_kT.linear_solver = 'pardiso'
     solve_kT.num_constraints = m
-    solve_kT.num_negative_eigvals = int(iparms[23]) - m
-    solve_kT.num_perturbed_pivots = int(iparms[14])
+    solve_kT.num_negative_eigvals = int(solver.iparm[22]) - m
+    solve_kT.num_perturbed_pivots = int(solver.iparm[13])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
     solve_kT.pardiso_fallback = used_fallback
     if cached:

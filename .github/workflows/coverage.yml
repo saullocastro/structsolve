@@ -21,9 +21,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install ".[test]"
-    - name: Test with pytest and coverage report
+    - name: Test with pytest and coverage, without oneMKL
       run: |
-        coverage run -m pytest tests
+        STRUCTSOLVE_MKL_RT=/nonexistent/libmkl_rt.so coverage run -m pytest tests
+    - name: Install oneMKL, for linear_solver='pardiso'
+      run: |
+        python -m pip install ".[pardiso]"
+        python -c "import structsolve.pardiso as p; assert p.available()"
+    - name: Test with pytest and coverage, with oneMKL
+      run: |
+        coverage run --append -m pytest tests
         coverage report
     - name: "Upload coverage to Codecov"
       uses: codecov/codecov-action@v7

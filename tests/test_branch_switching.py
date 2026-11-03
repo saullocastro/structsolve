@@ -2,7 +2,7 @@
 
 ``Analysis.branch_switching``, ``Analysis.max_inertia_jump`` and
 ``Analysis.arc_length_sign_rule``, see :func:`.arc_length._solver_arc_length`.
-The tests of ``max_inertia_jump`` need ``pypardiso``.
+The tests of ``max_inertia_jump`` need oneMKL, see :mod:`structsolve.pardiso`.
 
 """
 import numpy as np
@@ -13,6 +13,7 @@ from test_arc_length import check_equilibrium
 from test_inertia import needs_pardiso
 from structsolve.arc_length import _critical_eigenvector
 from structsolve.static import _factorize
+from structsolve.pardiso import available as pardiso_available
 
 METHODS = ['arc_length_riks', 'arc_length_crisfield']
 CONTROLS = ['displacement_control', 'generalized_displacement_control']
@@ -176,7 +177,8 @@ def test_branch_switching_count_decrease(method, linear_solver):
     at `\lambda = 0.5`, where the branch of the buckled states, stable,
     falls back towards the origin"""
     if linear_solver == 'pardiso':
-        pytest.importorskip('pypardiso')
+        if not pardiso_available():
+            pytest.skip('oneMKL is not found')
     p = pitchforks(betas=[0.5], ks=[-1.], P0=-2.)
     p.analysis(NL_method=method, initialInc=0.13, inertia=True,
                branch_switching=1, final_load_factor=None,

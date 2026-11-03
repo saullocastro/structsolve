@@ -35,14 +35,11 @@ from scipy.sparse import csr_matrix
 
 from structsolve import Analysis
 from structsolve.static import _factorize, _count_negative_real
+from structsolve.pardiso import available as pardiso_available
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
 class LinearUnsymmetric(object):
@@ -154,7 +151,7 @@ METHODS = ['NR', 'arc_length_riks', 'arc_length_crisfield']
 
 
 @pytest.mark.parametrize('linear_solver',
-                         ['splu'] + (['pardiso'] if has_pypardiso() else []))
+                         ['splu'] + (['pardiso'] if has_pardiso() else []))
 @pytest.mark.parametrize('method', METHODS)
 def test_count_along_path(method, linear_solver):
     """Two real eigenvalues cross zero, 0 -> 1 -> 2, the sign of the

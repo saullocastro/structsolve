@@ -3,7 +3,7 @@ matrix along the path
 
 ``Analysis.linear_solver`` and ``Analysis.inertia``, see
 :func:`.static._factorize` and :func:`.newton_raphson._converged_state`.
-The tests of ``'pardiso'`` need ``pypardiso``.
+The tests of ``'pardiso'`` need oneMKL, see :mod:`structsolve.pardiso`.
 
 """
 import importlib
@@ -16,23 +16,20 @@ from scipy.sparse import csr_matrix
 from structsolve.static import _factorize, _permutation_sign
 from analytic_problems import von_mises_truss, linear_problem, Problem
 from test_arc_length import check_equilibrium
+from structsolve.pardiso import available as pardiso_available
 
 METHODS = ['arc_length_riks', 'arc_length_crisfield']
 
 
-def has_pypardiso():
-    try:
-        import pypardiso  # noqa: F401
-    except ImportError:
-        return False
-    return True
+def has_pardiso():
+    return pardiso_available()
 
 
 #NOTE structsolve.static is the function static(), exported by the package
 static_module = importlib.import_module('structsolve.static')
 
-needs_pardiso = pytest.mark.skipif(not has_pypardiso(),
-                                   reason='pypardiso is not installed')
+needs_pardiso = pytest.mark.skipif(not has_pardiso(),
+                                   reason='oneMKL is not found')
 
 
 def symmetric_indefinite(n, num_null, seed, spread=3.):
@@ -120,21 +117,20 @@ def dense_indefinite(n, nneg, seed=0):
 def test_pardiso_fallback_dense_indefinite(with_cache):
     """A dense indefinite matrix of 114 degrees of freedom, whose
     factorization with the default parameters of PARDISO perturbs 34
-    pivots, has a wrong inertia (0 negative eigenvalues instead of 1) and
-    solutions of relative residual about 1 (pypardiso 0.4.7, MKL 2026.1);
-    the second factorization with ``PARDISO_FALLBACK_IPARM`` is exact. MKL
-    2026.2 perturbs no pivot, and sets ``iparm(1) = 1`` with its default
-    parameters, which then do not tell the fallback"""
-    import pypardiso
+    pivots with MKL 2026.1, has then a wrong inertia (0 negative eigenvalues
+    instead of 1) and solutions of relative residual about 1; the second
+    factorization with ``PARDISO_FALLBACK_IPARM`` is exact. MKL 2026.2
+    perturbs no pivot"""
     from scipy.sparse import triu
+    from structsolve.pardiso import PardisoSolver
     from structsolve.static import _FactorizationCache
     A = dense_indefinite(114, 1)
     d = 1/np.sqrt(np.abs(A.diagonal()))
     As = A*d[:, None]*d[None, :]
-    solver = pypardiso.PyPardisoSolver(mtype=-2)
+    solver = PardisoSolver()
     solver.factorize(triu(csr_matrix(As), format='csr'))
-    default_perturbed = solver.get_iparm(14)
-    solver.free_memory(everything=True)
+    default_perturbed = int(solver.iparm[13])
+    solver.free(everything=True)
     cache = _FactorizationCache() if with_cache else None
     b = np.random.default_rng(1).standard_normal(A.shape[0])
     for _ in range(2):
@@ -146,13 +142,67 @@ def test_pardiso_fallback_dense_indefinite(with_cache):
             warnings.simplefilter('error')
             x = f(b)
         np.testing.assert_allclose(A @ x, b, rtol=0, atol=1e-9*np.abs(b).max())
-    # the solvers returned to the pool have the default parameters
-    del f
-    import gc
-    gc.collect()
-    assert all(not s.iparm.any() for s in static_module._pardiso_pool)
     if cache is not None:
         cache.close()
+
+
+def fake_perturbed_pivots(monkeypatch, default, fallback, fallback_fails=False):
+    """``PardisoSolver.factorize`` reporting ``default`` perturbed pivots
+    with the default parameters and ``fallback`` with those of
+    ``PARDISO_FALLBACK_IPARM``, which raises when ``fallback_fails``; returns
+    the list of the factorizations, ``(phase, is_fallback)``"""
+    from structsolve.pardiso import PardisoSolver, PardisoError
+    orig = PardisoSolver.factorize
+    calls = []
+
+    def factorize(self, A, phase=12):
+        is_fallback = bool(self.iparm[0]) and self.iparm[23] == 1
+        calls.append((phase, is_fallback))
+        if is_fallback and fallback_fails:
+            raise PardisoError(phase, -4)
+        orig(self, A, phase)
+        self.iparm[13] = fallback if is_fallback else default
+
+    monkeypatch.setattr(PardisoSolver, 'factorize', factorize)
+    return calls
+
+
+@needs_pardiso
+@pytest.mark.parametrize('with_cache', [False, True])
+def test_pardiso_fallback_used(monkeypatch, with_cache):
+    """The fallback, with fewer perturbed pivots, is kept; with a cache, the
+    next factorizations of the pattern use its parameters directly"""
+    from structsolve.static import _FactorizationCache
+    calls = fake_perturbed_pivots(monkeypatch, 34, 0)
+    A = csr_matrix(dense_indefinite(30, 1))
+    b = np.random.default_rng(1).standard_normal(A.shape[0])
+    cache = _FactorizationCache() if with_cache else None
+    for _ in range(2):
+        f = _factorize(A, linear_solver='pardiso', cache=cache)
+        assert f.pardiso_fallback
+        assert f.num_perturbed_pivots == 0
+        assert f.num_negative_eigvals == 1
+        np.testing.assert_allclose(A @ f(b), b, rtol=0, atol=1e-9*np.abs(b).max())
+    if with_cache:
+        assert calls == [(12, False), (12, True), (12, True)]
+        cache.close()
+    else:
+        assert calls == [(12, False), (12, True)]*2
+
+
+@needs_pardiso
+@pytest.mark.parametrize('fallback_fails', [False, True])
+def test_pardiso_fallback_discarded(monkeypatch, fallback_fails):
+    """The first factorization is kept when the fallback fails or does not
+    perturb fewer pivots"""
+    calls = fake_perturbed_pivots(monkeypatch, 3, 3, fallback_fails)
+    A = csr_matrix(dense_indefinite(30, 1))
+    f = _factorize(A, linear_solver='pardiso')
+    assert calls == [(12, False), (12, True)]
+    assert not f.pardiso_fallback
+    assert f.num_perturbed_pivots == 3
+    b = np.ones(A.shape[0])
+    np.testing.assert_allclose(A @ f(b), b, rtol=0, atol=1e-9)
 
 
 @needs_pardiso
@@ -180,7 +230,7 @@ def truss_det_sign(c):
 
 
 def solvers():
-    return ['splu'] + (['pardiso'] if has_pypardiso() else [])
+    return ['splu'] + (['pardiso'] if has_pardiso() else [])
 
 
 @pytest.mark.parametrize('linear_solver', solvers())
@@ -228,7 +278,7 @@ def test_inertia_same_path(method):
     without ``inertia``, and with ``'pardiso'``"""
     results = []
     for inertia, linear_solver in [(False, 'splu'), (True, 'splu')] + (
-            [(True, 'pardiso')] if has_pypardiso() else []):
+            [(True, 'pardiso')] if has_pardiso() else []):
         p = von_mises_truss(frac=1.5, ks=0.5)
         p.analysis(NL_method=method, initialInc=0.05, inertia=inertia,
                    linear_solver=linear_solver)
