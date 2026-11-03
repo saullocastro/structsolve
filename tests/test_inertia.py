@@ -122,7 +122,9 @@ def test_pardiso_fallback_dense_indefinite(with_cache):
     factorization with the default parameters of PARDISO perturbs 34
     pivots, has a wrong inertia (0 negative eigenvalues instead of 1) and
     solutions of relative residual about 1 (pypardiso 0.4.7, MKL 2026.1);
-    the second factorization with ``PARDISO_FALLBACK_IPARM`` is exact"""
+    the second factorization with ``PARDISO_FALLBACK_IPARM`` is exact. MKL
+    2026.2 perturbs no pivot, and sets ``iparm(1) = 1`` with its default
+    parameters, which then do not tell the fallback"""
     import pypardiso
     from scipy.sparse import triu
     from structsolve.static import _FactorizationCache

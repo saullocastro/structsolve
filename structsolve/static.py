@@ -932,6 +932,9 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         # the first factorization of this pattern perturbed pivots
         solver = _pardiso_factorize_fallback(As_upper, cache.pardiso_iparm)
         cached = False
+    # whether the factorization is that of the fallback, not given by
+    # iparm(1), which PARDISO may set to 1 with its default parameters
+    used_fallback = solver is not None
     if solver is None:
         if cache is not None:
             solver, phase = cache.pardiso_solver()
@@ -959,6 +962,7 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
                     _pardiso_release(solver)
                 solver = solver2
                 cached = False
+                used_fallback = True
             elif solver2 is not None:
                 _pardiso_release(solver2)
     iparms = solver.get_iparms()
@@ -1003,7 +1007,7 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
     solve_kT.num_negative_eigvals = int(iparms[23]) - m
     solve_kT.num_perturbed_pivots = int(iparms[14])
     solve_kT.det_sign = -1 if solve_kT.num_negative_eigvals % 2 else 1
-    solve_kT.pardiso_fallback = int(iparms[1]) == 1
+    solve_kT.pardiso_fallback = used_fallback
     if cached:
         weakref.finalize(solve_kT, cache.release, solver, gen)
     else:
