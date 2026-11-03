@@ -24,9 +24,6 @@ Structural analysis solvers tailored for semi-analytical models
 Currently these solvers are pretty much compatible with my other repository
 [panels](https://github.com/saullocastro/panels).
 
-The folder `notebooks/` holds validation notebooks against results of the
-literature, run with models of `panels`, see `notebooks/README.md`.
-
 
 Citing this library
 ===================
@@ -43,8 +40,6 @@ The documentation is available on: https://saullocastro.github.io/structsolve.
 
 History
 =======
-
-See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
 * version 0.10.0 (2026-11-03)
     - Arc-length corrections: line search and early divergence check; indirect displacement control and generalized displacement control; weights of the degrees of freedom in the arc-length norm
