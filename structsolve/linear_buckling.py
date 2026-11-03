@@ -1658,7 +1658,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     for the counts; otherwise SuperLU is used for that matrix, with a
     :class:`RuntimeWarning` for the operator of ARPACK, see
     :func:`.arpackutils.pardiso_solve` and :func:`_negative_pivots`. The
-    symmetric indefinite factorization of PARDISO (MKL 2026.2, default
+    symmetric indefinite factorization of PARDISO (MKL 2025.0, default
     parameters, ``iparm(2) = 2``, ``iparm(10) = 8``) of the Ritz models of
     the tests, e.g. ``cylinder_5panels`` (1140 dofs) and
     ``plate_ssss_Nxx`` (300 dofs), perturbed 5 to 80 pivots and gave

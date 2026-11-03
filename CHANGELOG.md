@@ -454,6 +454,52 @@
   from `iparm(1) = 1`, which MKL 2026.2 also sets with its default
   parameters: the fallback was reported for every factorization.
 
+### PARDISO in the symmetric eigenvalue analyses
+
+- New argument `linear_solver` of `lb()` and `freq()`, `'splu'` (default,
+  results bitwise unchanged) or `'pardiso'`: the factorizations of the
+  sparse solvers of symmetric matrices are done by PARDISO through
+  `static._factorize` (unit diagonal scaling, symmetric indefinite
+  factorization, fallback on perturbed pivots): the shifted matrix of the
+  Cayley or shift-invert mode, passed to `eigsh` as `OPinv`, also in the
+  passes of `arpackutils.capped_eigsh` (new argument `linear_solver`), the
+  stiffness matrix of the estimates of the shifts, and the matrices of the
+  inertia counts of `linear_buckling._negative_pivots`, whose count is then
+  the number of negative eigenvalues of PARDISO, known also where SuperLU
+  needs a row interchange. ARPACK remains the eigenvalue solver; the
+  solvers of unsymmetric matrices and the dense fallbacks are unchanged.
+  `ValueError` for another value, `ImportError` without oneMKL.
+- New `arpackutils.pardiso_factorization` and `arpackutils.pardiso_solve`:
+  a factorization of PARDISO is used only when the relative residual of
+  its solution for a random right-hand side is not larger than
+  `arpackutils.PARDISO_ACCURACY_RTOL = 1e-6` and, for the counts, no pivot
+  remains perturbed; SuperLU factorizes that matrix otherwise, with a
+  `RuntimeWarning` for the operator of ARPACK. The Ritz models of the tests
+  (`plate_ssss_Nxx`, 300 DOF, `cylinder_5panels`, 1140 DOF,
+  `blade_stiffened_penalty`, 3200 DOF) had 5 to 80 perturbed pivots with
+  the default parameters (MKL 2025.0, Windows) and residuals of 0.2 to
+  50, also for a positive definite `K`; the fallback `iparm(24) = 1` reported no
+  perturbed pivot for the plate and the cylinder but had residuals of 1 to
+  2e7 and wrong inertia, e.g. 10 negative eigenvalues instead of 9 for the
+  plate close to its 10th load multiplier. Neither `iparm(11) = iparm(13)
+  = 1` nor the minimum degree ordering `iparm(2) = 0` gave accurate
+  factorizations of all of them. These models therefore use SuperLU.
+- DOE09 cylinder (case 510, `ny = 60`, `KC0` and `KG` of the linear
+  buckling, 56519 DOF, 5.0 million terms, one DOF of the inertia relief
+  fixed), 20 eigenvalues, `freq` with `M = I`, hpc12 (AMD EPYC 9354P, MKL
+  2023.1), wall time of the call (of its factorizations): `lb` 289 s
+  (35 s, 5 factorizations) with `'splu'` and 140 s (7.4 s) with
+  `'pardiso'` on 1 thread, 297 s (38 s) and 87 s (4.1 s) on 8 threads;
+  `freq` 124 s (29 s, 3) and 55 s (4.5 s) on 1 thread, 125 s (30 s) and
+  23 s (2.6 s) on 8 threads. No factorization fell back to SuperLU, and the
+  eigenvalues agree to 2e-10 (`lb`) and 1.1e-9 (`freq`). Most of the time
+  is in the solutions of the ARPACK iterations.
+- New `tests/test_eigen_pardiso.py`, skipped without oneMKL except the
+  errors: `lb` and `freq` as with `'splu'`, the passes of `capped_eigsh`
+  with the cap of `ncv`, the counts where SuperLU needs a row interchange,
+  with perturbed pivots or an inaccurate factorization, complex right-hand
+  sides.
+
 ## 0.9.4 (2026-10-28)
 
 ### Python versions
