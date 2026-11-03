@@ -121,8 +121,8 @@ and the analysis may stop. Two checks:
 Examples
 --------
 
-The analytic problems of ``tests/analytic_problems.py``, see
-:doc:`ex_newton_raphson`. A finite-difference check of the tangent
+The analytic problems of ``tests/analytic_problems.py``. A
+finite-difference check of the tangent
 stiffness matrix:
 
 .. literalinclude:: ../../tests/test_newton_raphson.py

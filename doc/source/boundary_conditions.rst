@@ -61,15 +61,14 @@ The solvers return the reduced vectors `\boldsymbol{c}_r` and the eigenvectors i
 reduced coordinates, expanded by the user with `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r`. The
 partition of the free dofs is the particular case where `\boldsymbol{Z}` contains the
 columns of the identity matrix of the free dofs. Prescribed values different
-from zero add a particular solution, `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_p`, see
-:doc:`ex_prescribed_displacements`.
+from zero add a particular solution, `\boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_p`.
 
 
 Example
 -------
 
-The chain of hardening springs of ``tests/analytic_problems.py``, see
-:doc:`ex_newton_raphson`, with its free end constrained to zero:
+The chain of hardening springs of ``tests/analytic_problems.py``, with its
+free end constrained to zero:
 
 .. literalinclude:: ../../tests/analytic_problems.py
     :pyobject: hardening_springs
