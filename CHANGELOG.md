@@ -449,7 +449,12 @@
 
 ### Benchmark: post-buckling of an axially compressed cylinder
 
-- New `benchmarks/simo1990_cylinder.py`, not run by pytest, and
+- New folder `notebooks/`, as in `panels`: the notebook
+  `notebooks/simo1990_cylinder_postbuckling.ipynb`, stored with its
+  outputs, with the utilities and the command line of the convergence runs
+  in `notebooks/simo1990_utils.py`, the test
+  `tests/test_simo1990_cylinder.py` (skipped where `panels`, which is not a
+  dependency of structsolve, is not installed; about 1.5 min) and the
   documentation page `ex_cylinder_postbuckling`: the cylinder of Simo, Fox
   and Rifai (1990), Section 6.3.4, Fig. 6.3.4, an `L/10 x 15 deg` section
   of `panels` 0.15.0 (`cylshell_clpt_donnell`), traced with the Riks method

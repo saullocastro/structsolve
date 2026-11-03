@@ -7,9 +7,37 @@ benchmark of Simo, Fox and Rifai (1990) [1]_, Section 6.3.4,
 "Post-buckling analysis of a simply-supported cylinder; effect of initial
 imperfections", pp. 54-57, Fig. 6.3.4 on p. 56, after Stanley (1985) [2]_:
 radius `R = 36`, length `L = 100`, thickness `t = 0.125`, `E = 10^7`,
-`\nu = 0.3`, in consistent units. The script is
-``benchmarks/simo1990_cylinder.py``, which is not run by pytest; its
-docstring tells how to run it.
+`\nu = 0.3`, in consistent units.
+
+The model and the analyses are in ``notebooks/simo1990_utils.py`` of the
+repository, which needs `panels <https://github.com/saullocastro/panels>`_
+0.15.0 (which requires structsolve 0.10.0 or later, and is not a
+dependency of structsolve):
+
+- the notebook ``notebooks/simo1990_cylinder_postbuckling.ipynb``, stored
+  with its outputs, runs the checks of the imperfection, the 10 % and 50 %
+  imperfections and the perfect cylinder with ``linear_solver = 'pardiso'``
+  and ``'splu'`` with `m = n = 8` terms, compares them with the figure and
+  discusses them, in about 3.5 min;
+- the test ``tests/test_simo1990_cylinder.py`` checks the imperfection, the
+  limit load of the 50 % imperfection and the bifurcation and minimum loads
+  of the perfect cylinder with both linear solvers (`m = n = 8`, about 1.5
+  min); it is skipped where panels is not installed, and its ``'pardiso'``
+  case where pypardiso is not;
+- the command line of ``simo1990_utils.py`` computed the convergence study
+  and the figure of this page, from the root of the repository (``;``
+  separates the paths on Windows, ``:`` elsewhere)::
+
+    PYTHONPATH=".;<panels>;<pypardiso>" python notebooks/simo1990_utils.py verify
+    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
+    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 8 8
+    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 12 12 10 pardiso
+    PYTHONPATH=... python notebooks/simo1990_utils.py summary
+    PYTHONPATH=... python notebooks/simo1990_utils.py plot
+
+  ``riks`` and ``perfect`` save their paths in the directory of the
+  environment variable ``SIMO1990_OUT``, read by ``summary`` (the tables
+  below) and ``plot``, see the docstring of the module.
 
 The model
 ---------
@@ -107,18 +135,19 @@ stiffness matrix is `\boldsymbol{K}_{T,imp}(\boldsymbol{0})`. Panels'
 `\boldsymbol{K}_G(\boldsymbol{N}_0)`: it has the resultants of the linear part
 of the strains only (the geometric stiffness of the non-linear part is in
 ``calc_kC(c, NLgeom=True)``), such that it is homogeneous of degree one in
-``c``. The script integrates `\boldsymbol{K}_G(\boldsymbol{N}_0)` at the
+``c``. The module integrates `\boldsymbol{K}_G(\boldsymbol{N}_0)` at the
 Gauss points of the shell, with `\boldsymbol{N}_0` from
 :meth:`.Shell.stress` with ``NLgeom=True`` and the derivatives of Bardell's
 functions of :mod:`panels.bardell`. The callables passed to
 :class:`.Analysis` are:
 
-.. literalinclude:: ../../benchmarks/simo1990_cylinder.py
+.. literalinclude:: ../../notebooks/simo1990_utils.py
     :pyobject: ImperfectShell
 
-The command ``verify`` of the script checks, for `m = n = 8` and `\xi = 0.5`:
+The command ``verify`` of the module checks (also in the notebook and,
+for `m = n = 6`, in the test), for `m = n = 8` and `\xi = 0.5`:
 
-- the matrix of the script with the linear resultants equals
+- the matrix of the module with the linear resultants equals
   ``calc_kG(c)`` of panels to `8 \times 10^{-16}`, whereas with the complete
   resultants the two differ by `2 \times 10^{-3}` (relative maximum entry,
   random state), i.e. ``calc_kG(c)`` has no non-linear resultants;
@@ -151,7 +180,7 @@ deflections are those of `u(0, y)` over 61 points along the loaded edge.
 The perfect cylinder runs with ``inertia = True`` and ``branch_switching =
 10``, ``initialInc = maxInc = 0.03`` and the unknowns scaled to a unit
 diagonal of the linear stiffness matrix (the class ``ScaledModel`` of the
-script, which changes only the coordinates of the Ritz vector), with
+module, which changes only the coordinates of the Ritz vector), with
 ``linear_solver = 'splu'`` (the sign of the determinant, ``perfect 8 8``)
 or ``'pardiso'`` (the number of negative eigenvalues, ``perfect 12 12 10
 pardiso``). This benchmark found two weaknesses of structsolve, fixed in
@@ -172,7 +201,7 @@ Results
 -------
 
 The values read from Fig. 6.3.4 of [1]_ (`\pm 0.0003` in the axial
-deflection and `\pm 0.01` in the load, see the script for all the points)
+deflection and `\pm 0.01` in the load, see the module for all the points)
 against structsolve, with `m = n = 12` unless stated; `u_{max}` and
 `u_{avg}` are the maximum and the average axial deflection of the loaded
 edge, the first limit load is the first maximum of the load, the minimum
