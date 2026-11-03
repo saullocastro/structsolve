@@ -140,13 +140,11 @@ class Analysis(object):
                                   for an unsymmetric tangent stiffness
                                   matrix, the number of its negative real
                                   eigenvalues among the `k` of smallest
-                                  magnitude, by shift-invert with ARPACK and
-                                  the LU factorization of the converged
-                                  state, see
+                                  magnitude, scaled by the diagonal of the
+                                  linear stiffness matrix, by shift-invert
+                                  with ARPACK and the LU factorization of
+                                  the converged state, see
                                   :func:`.newton_raphson._eigvals_inertia`.
-                                  Validated only on synthetic problems,
-                                  the follower-load wing box never had a
-                                  negative eigenvalue to count.
                                   Default is ``None``, not computed
     ``max_inertia_jump``          ``int``, a converged increment whose number
                                   of negative eigenvalues changed by more
@@ -397,7 +395,8 @@ class Analysis(object):
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
             'too_slow_TOL',
             'increments', 'cs', 'last_analysis', 'calc_fext', 'calc_kC',
-            'calc_fint', 'calc_kG', '_factorization_cache']
+            'calc_fint', 'calc_kG', '_factorization_cache',
+            '_inertia_scaling']
 
 
     def __init__(self, calc_fext=None, calc_fint=None, calc_kC=None,
@@ -455,6 +454,8 @@ class Analysis(object):
         self.last_analysis = ''
         # pattern-dependent work of the factorizations of a running analysis
         self._factorization_cache = None
+        # scaling of the counts of inertia_num_eigvals of a running analysis
+        self._inertia_scaling = None
 
 
     def static(self, NLgeom=False, silent=False):
@@ -550,11 +551,13 @@ class Analysis(object):
             # the work of the factorizations that depends only on the
             # pattern of the tangent stiffness matrix is reused
             self._factorization_cache = _FactorizationCache()
+            self._inertia_scaling = None
             try:
                 solvers[self.NL_method](self, silent=silent)
             finally:
                 self._factorization_cache.close()
                 self._factorization_cache = None
+                self._inertia_scaling = None
 
         else:
             msg('Started Linear Static Analysis', silent=silent)

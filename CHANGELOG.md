@@ -106,11 +106,15 @@
   factorized by SuperLU, e.g. unsymmetric under a follower load, where the
   LU gives only the sign of the determinant, i.e. the parity of that
   number. The `k = inertia_num_eigvals` eigenvalues of smallest magnitude
-  of the reduced tangent, on the space of the constraints, are computed at
+  of the reduced tangent scaled by `S = |diag(K0)|^(-1/2)`, `K0` the linear
+  stiffness matrix, fixed along the path (`K_T v = mu S^-2 v`, a kinetic
+  criterion with a lumped stiffness-proportional mass, independent of the
+  units of the unknowns; new `newton_raphson._inertia_scaling`), on the
+  space of the constraints, are computed at
   every converged increment by shift-invert at `sigma = 0` with ARPACK
   (`scipy.sparse.linalg.eigs` on the operator of the forward and backward
   substitutions of the LU of the converged state, no new factorization),
-  new `static._smallest_eigvals` and `solve_kT.smallest_eigvals(k)` of the
+  new `static._smallest_eigvals` and `solve_kT.smallest_eigvals(k, s)` of the
   SuperLU factorizations, and those that are real (`|Im| <=
   INERTIA_REAL_RTOL = 1e-8` times the modulus) and negative are recorded in
   `Analysis.num_negative_eigvals`, so that `max_inertia_jump` and the
@@ -123,11 +127,20 @@
   reported, since the parity then differs from the sign of the
   determinant. New `newton_raphson._eigvals_inertia`; `max_inertia_jump`
   now requires `linear_solver='pardiso'` or `inertia_num_eigvals`.
-  Validated only on synthetic problems: the follower-load wing box never
-  had a negative eigenvalue to count.
+  Without the scaling, in the unknowns of a Ritz model, the eigenvalues
+  of smallest magnitude are those of its high-order terms: on the
+  cantilever cylinder of Schweizerhof and Ramm (1984) under follower
+  pressure in panels (Sanders, 14 x 8 terms, 260 unknowns), the negative
+  eigenvalue past the bifurcation was the 130th by magnitude and the count
+  of 20 missed it; with the scaling it is found with `k = 20`, at the
+  increment where the determinant changes sign. With the finite elements of
+  bfsccylinder the count goes from 0 to 1 at the limit point of that shell.
 - New `tests/test_inertia_unsymmetric.py`: the eigenvalues of ARPACK
   against `numpy.linalg.eigvals`, with null rows and with constraints
-  (`Z^T K Z`); along the path of a non-normal unsymmetric tangent whose
+  (`Z^T K Z`), also scaled (`S K S`); the counts of the same problem with
+  its unknowns scaled from 1e-3 to 1, as a Ritz model, unchanged; along
+  the path of a non-normal unsymmetric tangent, with a positive diagonal,
+  whose
   two real eigenvalues cross zero at `lbd = 0.27` and `0.63` and a complex
   pair at `0.47`, the count goes 0, 1, 2 with Newton-Raphson, Riks and
   Crisfield, as the dense eigenvalues, while the sign of the determinant

@@ -426,11 +426,27 @@ def _factorize_state(an, c, lbd, silent=False):
              level=2, silent=silent)
         return None
     if an.inertia_num_eigvals is not None:
-        _eigvals_inertia(solve_kT, an.inertia_num_eigvals, silent=silent)
+        _eigvals_inertia(solve_kT, an.inertia_num_eigvals, silent=silent,
+                         s=_inertia_scaling(an))
     return solve_kT
 
 
-def _eigvals_inertia(solve_kT, k, silent=False):
+def _inertia_scaling(an):
+    r"""The scaling `s_i = |K_{0,ii}|^{-1/2}` of the counts of
+    ``an.inertia_num_eigvals``, from the diagonal of the linear stiffness
+    matrix ``an.calc_kC()``, 1 for a null term, computed once per analysis,
+    see :func:`._eigvals_inertia`"""
+    s = getattr(an, '_inertia_scaling', None)
+    if s is None:
+        d = np.abs(np.asarray(an.calc_kC(silent=True).diagonal(),
+                              dtype=np.float64))
+        d[d == 0] = 1.
+        s = 1/np.sqrt(d)
+        an._inertia_scaling = s
+    return s
+
+
+def _eigvals_inertia(solve_kT, k, silent=False, s=None):
     r"""The number of negative real eigenvalues among the ``k`` of smallest
     magnitude of the SuperLU factorization ``solve_kT``, set as its
     ``num_negative_eigvals``, see ``Analysis.inertia_num_eigvals``
@@ -439,8 +455,22 @@ def _eigvals_inertia(solve_kT, k, silent=False):
     PARDISO. The eigenvalues are computed by
     :func:`.static._smallest_eigvals` with the LU factorization of
     ``solve_kT``, on the degrees of freedom whose row or column is not
-    null and on the space of the constraints. The attributes set on
-    ``solve_kT`` are:
+    null and on the space of the constraints, scaled by ``s``, of all the
+    degrees of freedom, when given: those of `\boldsymbol{K}_T
+    \boldsymbol{v} = \mu \boldsymbol{S}^{-2} \boldsymbol{v}`,
+    `\boldsymbol{S} = \mathrm{diag}(s)`. The analyses pass the scaling of
+    :func:`._inertia_scaling`, `\boldsymbol{S}^{-2} =
+    |\mathrm{diag}(\boldsymbol{K}_0)|`, the diagonal of the linear stiffness
+    matrix, fixed along the path: a kinetic criterion with a lumped
+    stiffness-proportional mass, whose eigenvalues vary continuously along
+    the path and cross zero where `\boldsymbol{K}_T` is singular, whatever
+    the units of the unknowns. In the unknowns themselves, the eigenvalues
+    of smallest magnitude are those of the unknowns of smallest stiffness,
+    e.g. the high-order terms of a Ritz model, not those that cross zero:
+    the cantilever cylinder of Schweizerhof and Ramm (1984) in panels
+    (Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
+    follower pressure, had its negative eigenvalue 130th by magnitude
+    without the scaling. The attributes set on ``solve_kT`` are:
 
     - ``num_negative_eigvals``: the number of real eigenvalues that are
       negative, ``None`` when ARPACK did not converge;
@@ -463,9 +493,10 @@ def _eigvals_inertia(solve_kT, k, silent=False):
     if not hasattr(solve_kT, 'smallest_eigvals'):
         return None
     solve_kT.inertia_num_eigvals = k
+    solve_kT.inertia_scaling = s
     solve_kT.num_complex_negative = None
     solve_kT.inertia_complete = None
-    lam = solve_kT.smallest_eigvals(k)
+    lam = solve_kT.smallest_eigvals(k, s)
     if lam is None:
         warn('ARPACK did not converge, the number of negative eigenvalues '
              'is not known', level=2, silent=silent)
@@ -552,7 +583,8 @@ def _inertia_jump(solve_last, solve_new, max_jump):
     n0 = solve_last.num_negative_eigvals
     k = getattr(solve_new, 'inertia_num_eigvals', None)
     if n0 is None and n1 is not None and k is not None:
-        n0 = _eigvals_inertia(solve_last, k, silent=True)
+        n0 = _eigvals_inertia(solve_last, k, silent=True,
+                              s=getattr(solve_new, 'inertia_scaling', None))
     if n0 is None or n1 is None:
         return False
     return abs(n1 - n0) > max_jump

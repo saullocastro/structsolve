@@ -488,9 +488,10 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
           border;
         - ``num_perturbed_pivots``: the number of pivots perturbed by
           PARDISO, ``None`` with ``'splu'``;
-        - ``smallest_eigvals``, with ``'splu'`` only: ``smallest_eigvals(k)``
-          returns the ``k`` eigenvalues of smallest magnitude of the reduced
-          matrix, on the space of the constraints, by shift-invert with
+        - ``smallest_eigvals``, with ``'splu'`` only: ``smallest_eigvals(k,
+          s=None)`` returns the ``k`` eigenvalues of smallest magnitude of
+          the reduced matrix, scaled by ``diag(s)`` on both sides when
+          given, on the space of the constraints, by shift-invert with
           ARPACK and this factorization, see :func:`._smallest_eigvals`.
 
     Raises
@@ -699,7 +700,8 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         return x
 
     diagU = lu.U.diagonal()
-    solve_kT.smallest_eigvals = lambda k: _smallest_eigvals(lu, m, k)
+    solve_kT.smallest_eigvals = lambda k, s=None: _smallest_eigvals(
+        lu, m, k, None if s is None else np.asarray(s)[used_cols])
     solve_kT.linear_solver = 'splu'
     solve_kT.det_sign = int(np.prod(np.sign(diagU))
                             *_permutation_sign(lu.perm_r)
@@ -711,7 +713,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     return solve_kT
 
 
-def _smallest_eigvals(lu, m, k):
+def _smallest_eigvals(lu, m, k, s=None):
     r"""The ``k`` eigenvalues of smallest magnitude of the matrix of the
     SuperLU factorization ``lu``, on the space of its ``m`` constraints
 
@@ -735,6 +737,16 @@ def _smallest_eigvals(lu, m, k):
     eigenvalues are computed with :func:`numpy.linalg.eigvals` from
     `\boldsymbol{T}` built column by column.
 
+    With the scaling ``s``, of the reduced degrees of freedom, the
+    eigenvalues are those of `\boldsymbol{S} \boldsymbol{K} \boldsymbol{S}`,
+    `\boldsymbol{S} = \mathrm{diag}(s)`, with the constraints
+    `\boldsymbol{S} \boldsymbol{C}`, from the operator `\boldsymbol{S}^{-1}
+    \boldsymbol{T} \boldsymbol{S}^{-1}`: those of `\boldsymbol{K}
+    \boldsymbol{v} = \lambda \boldsymbol{S}^{-2} \boldsymbol{v}`, with the
+    positive diagonal reference matrix `\boldsymbol{S}^{-2}`, see
+    :func:`.newton_raphson._eigvals_inertia`. ``smallest_eigvals(k, s)``
+    of :func:`._factorize` takes ``s`` of all the degrees of freedom.
+
     Returns
     -------
     lam : ndarray or None
@@ -747,16 +759,18 @@ def _smallest_eigvals(lu, m, k):
     k = int(k)
     if n == 0:
         return np.zeros(0, dtype=complex)
+    if s is None:
+        s = np.ones(n)
     if k >= n - 1:
         B = np.zeros((m + n, n))
-        B[m:] = np.eye(n)
-        nu = np.linalg.eigvals(lu.solve(B)[m:])
+        B[m:] = np.diag(1/s)
+        nu = np.linalg.eigvals(lu.solve(B)[m:]/s[:, None])
         nu = nu[np.abs(nu) > n*np.finfo(float).eps*np.abs(nu).max()]
     else:
         z = np.zeros(m)
         op = LinearOperator((n, n), dtype=np.float64,
                             matvec=lambda v: lu.solve(np.concatenate(
-                                (z, np.asarray(v, dtype=np.float64).ravel())))[m:])
+                                (z, np.asarray(v, dtype=np.float64).ravel()/s)))[m:]/s)
         try:
             nu = eigs(op, k=k, which='LM', tol=INERTIA_ARPACK_TOL,
                       ncv=arpack_ncv(k, n), return_eigenvectors=False,
