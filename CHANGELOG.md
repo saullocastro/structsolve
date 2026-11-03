@@ -432,10 +432,16 @@
 - `static._factorize` with `'pardiso'`: when the factorization with the
   default parameters of PARDISO perturbs pivots, the matrix is factorized
   again with `PARDISO_FALLBACK_IPARM = {24: 1}`, the two-level
-  factorization algorithm, and the factorization with fewer perturbed
-  pivots is kept (`solve_kT.pardiso_fallback`); with the cache of a
-  non-linear analysis the next factorizations of the pattern use these
-  parameters directly. The dense tangent of the benchmark below (8 x 8
+  factorization algorithm, kept (`solve_kT.pardiso_fallback`) only without
+  perturbed pivots and with a relative residual, without refinement, not
+  larger than `PARDISO_ACCURACY_RTOL = 1e-6`; otherwise SuperLU factorizes
+  the matrix, with a `RuntimeWarning`, and the count of negative
+  eigenvalues is unknown (`None`) instead of possibly wrong: with MKL
+  2025.0, the stiffness matrices of three Ritz models of `tests/data` had
+  fallbacks without perturbed pivots but residuals of 26 to 1.3e3, and
+  that of a plate a wrong count. With the cache of a non-linear analysis
+  the next factorizations of the pattern use the fallback, with the same
+  check, or SuperLU directly. The dense tangent of the benchmark below (8 x 8
   terms, 114 degrees of freedom) had 18 to 20 perturbed pivots along the
   path, solutions of relative residual 0.4 to 1 (before GMRES) and one
   negative eigenvalue less than the dense eigenvalue analysis from the load
@@ -449,7 +455,8 @@
   fixed. The factorizations without perturbed pivots, e.g. all those of
   the DOE09 cylinder, are unchanged. New tests in `tests/test_inertia.py`,
   one with a dense matrix (34 perturbed pivots with MKL 2026.1, none with
-  2026.2) and others that fake the perturbed pivots, for every MKL.
+  2026.2) and others that fake the perturbed pivots or the residual, for
+  every MKL.
 - `solve_kT.pardiso_fallback` is set by `_factorize` instead of being read
   from `iparm(1) = 1`, which MKL 2026.2 also sets with its default
   parameters: the fallback was reported for every factorization.

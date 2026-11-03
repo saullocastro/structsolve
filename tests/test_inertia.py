@@ -241,18 +241,48 @@ def test_pardiso_fallback_used(monkeypatch, with_cache):
 
 
 @needs_pardiso
+@pytest.mark.parametrize('with_cache', [False, True])
 @pytest.mark.parametrize('fallback_fails', [False, True])
-def test_pardiso_fallback_discarded(monkeypatch, fallback_fails):
-    """The first factorization is kept when the fallback fails or does not
-    perturb fewer pivots"""
+def test_pardiso_fallback_discarded(monkeypatch, fallback_fails, with_cache):
+    """When the fallback fails or still perturbs pivots, the matrix is
+    factorized by SuperLU, with a warning, and the count of negative
+    eigenvalues is unknown; with a cache, the next factorizations of the
+    pattern use SuperLU directly"""
+    from structsolve.static import _FactorizationCache
     calls = fake_perturbed_pivots(monkeypatch, 3, 3, fallback_fails)
     A = csr_matrix(dense_indefinite(30, 1))
-    f = _factorize(A, linear_solver='pardiso')
-    assert calls == [(12, False), (12, True)]
-    assert not f.pardiso_fallback
-    assert f.num_perturbed_pivots == 3
     b = np.ones(A.shape[0])
+    cache = _FactorizationCache() if with_cache else None
+    with pytest.warns(RuntimeWarning, match='PARDISO_FALLBACK_IPARM'):
+        f = _factorize(A, linear_solver='pardiso', cache=cache)
+    assert calls == [(12, False), (12, True)]
+    assert f.linear_solver == 'splu'
+    assert f.num_negative_eigvals is None
+    assert f.det_sign == -1
     np.testing.assert_allclose(A @ f(b), b, rtol=0, atol=1e-9)
+    if with_cache:
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            f = _factorize(A, linear_solver='pardiso', cache=cache)
+        assert len(calls) == 2
+        assert f.linear_solver == 'splu'
+        cache.close()
+
+
+@needs_pardiso
+def test_pardiso_inaccurate_fallback(monkeypatch):
+    """A fallback without perturbed pivots but with a residual above
+    PARDISO_ACCURACY_RTOL is not used, e.g. the stiffness matrix of
+    tests/data/cylinder_5panels with MKL 2025.0 (residual 1.3e3)"""
+    static_mod = importlib.import_module('structsolve.static')
+    calls = fake_perturbed_pivots(monkeypatch, 3, 0)
+    monkeypatch.setattr(static_mod, 'PARDISO_ACCURACY_RTOL', 0.)
+    A = csr_matrix(dense_indefinite(30, 1))
+    with pytest.warns(RuntimeWarning, match='inaccurate'):
+        f = _factorize(A, linear_solver='pardiso')
+    assert calls == [(12, False), (12, True)]
+    assert f.linear_solver == 'splu'
+    assert f.num_negative_eigvals is None
 
 
 @needs_pardiso

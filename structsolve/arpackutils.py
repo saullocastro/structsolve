@@ -45,6 +45,8 @@ from scipy.sparse import csc_matrix, csr_matrix
 from scipy.sparse.linalg import LinearOperator, splu
 from scipy.sparse.linalg import eigsh as _scipy_eigsh
 
+from .static import PARDISO_ACCURACY_RTOL as _static_accuracy_rtol
+
 #: Maximum ``ncv`` of :func:`capped_eigsh`. ``None``, the default, reads the
 #: environment variable ``STRUCTSOLVE_ARPACK_MAX_NCV`` and, when it is not
 #: defined, uses ``'auto'``: the cap :data:`DSTEQR_MAX_SIZE` is applied when
@@ -57,8 +59,10 @@ ARPACK_MAX_NCV = None
 #: of a factorization of PARDISO, without refinement, for a random
 #: right-hand side, above which SuperLU is used instead, see
 #: :func:`pardiso_solve`, and the count of negative pivots of PARDISO is
-#: not trusted, see :func:`.linear_buckling._negative_pivots`
-PARDISO_ACCURACY_RTOL = 1e-6
+#: not trusted, see :func:`.linear_buckling._negative_pivots`; that of
+#: :func:`.static._factorize` for the factorizations of the non-linear
+#: analyses
+PARDISO_ACCURACY_RTOL = _static_accuracy_rtol
 
 #: Largest tridiagonal matrix for which the faulty ``dsteqr`` is correct
 DSTEQR_MAX_SIZE = 32

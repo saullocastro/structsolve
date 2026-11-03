@@ -39,6 +39,10 @@ PARDISO_WARN_TOL = 1.e-6
 #: factorization algorithm instead of the classic one, see
 #: :func:`._factorize`
 PARDISO_FALLBACK_IPARM = {24: 1}
+#: ``'pardiso'``: largest relative residual, without refinement, of the
+#: factorization with ``PARDISO_FALLBACK_IPARM``, otherwise ``'splu'`` is used,
+#: see :func:`._factorize`
+PARDISO_ACCURACY_RTOL = 1.e-6
 #: ``Analysis.inertia_num_eigvals``: relative tolerance of ARPACK on the
 #: eigenvalues of smallest magnitude of a SuperLU factorization, see
 #: :func:`._smallest_eigvals`
@@ -529,11 +533,18 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     uncertain when it is not zero. When the first factorization perturbed
     pivots, the matrix is factorized again with the parameters
     ``PARDISO_FALLBACK_IPARM``, ``iparm(24) = 1``, the two-level
-    factorization algorithm, and the factorization with fewer perturbed
-    pivots is kept, ``solve_kT.pardiso_fallback`` telling whether it is
-    the second one; with ``cache``, the next factorizations of the same
-    pattern are then done with these parameters directly, with the phase
-    12. The tangent stiffness matrices of a Ritz model of a cylinder
+    factorization algorithm, kept, ``solve_kT.pardiso_fallback = True``,
+    only when no pivot is perturbed and the relative residual of its
+    solution of a random right-hand side, without refinement, is not
+    larger than ``PARDISO_ACCURACY_RTOL = 1e-6``; otherwise the matrix is
+    factorized by SuperLU, as ``'splu'``, with a :class:`RuntimeWarning`,
+    and ``num_negative_eigvals`` is ``None``: a factorization of
+    ``iparm(24) = 1`` without perturbed pivots had residuals up to 1e3 and
+    a wrong inertia for some Ritz models of the tests (MKL 2025.0). With
+    ``cache``, the next factorizations of the same pattern use the
+    fallback directly, with the phase 12 and the same check, or SuperLU
+    directly. The default factorizations without perturbed pivots are
+    not checked, at no cost. The tangent stiffness matrices of a Ritz model of a cylinder
     (panels 0.15.0, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
     of freedom, a dense matrix) and dense random indefinite matrices of
     114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
@@ -650,12 +661,15 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         if linear_solver == 'pardiso':
             A = entry.reduced_csr(K)
             if entry.is_symmetric(A):
-                return _factorize_pardiso(A, used_cols, border,
-                                          scaled=entry.scaled_upper(A),
-                                          cache=cache)
-            warnings.warn("linear_solver='pardiso': the matrix is "
-                          "unsymmetric, 'splu' is used instead",
-                          RuntimeWarning, stacklevel=3)
+                f = _factorize_pardiso(A, used_cols, border,
+                                       scaled=entry.scaled_upper(A),
+                                       cache=cache)
+                if f is not None:
+                    return f
+            else:
+                warnings.warn("linear_solver='pardiso': the matrix is "
+                              "unsymmetric, 'splu' is used instead",
+                              RuntimeWarning, stacklevel=3)
         lu = splu(entry.reduced_csc(K))
     else:
         kT_red, used_cols = remove_null_cols(kT, silent=True)
@@ -666,10 +680,13 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         if linear_solver == 'pardiso':
             A = csr_matrix(kT_red)
             if _is_symmetric(A):
-                return _factorize_pardiso(A, used_cols, border)
-            warnings.warn("linear_solver='pardiso': the matrix is "
-                          "unsymmetric, 'splu' is used instead",
-                          RuntimeWarning, stacklevel=3)
+                f = _factorize_pardiso(A, used_cols, border)
+                if f is not None:
+                    return f
+            else:
+                warnings.warn("linear_solver='pardiso': the matrix is "
+                              "unsymmetric, 'splu' is used instead",
+                              RuntimeWarning, stacklevel=3)
         lu = splu(csc_matrix(kT_red))
 
     def solve_kT(b, d=None):
@@ -762,6 +779,18 @@ def _count_negative_real(lam):
                                                                    & neg))
 
 
+def _pardiso_residual(solver, A, s, m):
+    r"""Relative residual `\|\boldsymbol{A} \boldsymbol{x} -
+    \boldsymbol{b}\|/\|\boldsymbol{b}\|`, without refinement, of the
+    solution of the reduced matrix ``A`` by the PARDISO ``solver`` of its
+    scaled upper triangle, scaling ``s``, for a fixed random
+    `\boldsymbol{b}` with a null border of ``m`` constraints"""
+    b = np.random.RandomState(42).standard_normal(A.shape[0])
+    b[:m] = 0.
+    x = s*solver.solve(s*b)
+    return np.linalg.norm(A @ x - b)/np.linalg.norm(b)
+
+
 def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
     """Symmetric indefinite factorization of PARDISO of the reduced matrix
     ``A``, bordered first by the constraints of the :class:`_Border`
@@ -776,17 +805,18 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         As_upper = _scaled_upper(A, s)
     else:
         s, As_upper = scaled
-    fallback = (cache is not None
-                and getattr(cache, 'pardiso_fallback_gen', None) == cache.gen)
-    solver = None
-    if fallback:
-        # the first factorization of this pattern perturbed pivots
+    # the factorization of this pattern, with the cache: None (default
+    # parameters), 'fallback' (PARDISO_FALLBACK_IPARM) or 'splu'
+    mode = None
+    if cache is not None and getattr(cache, 'pardiso_mode_gen', None) ==             cache.gen:
+        mode = cache.pardiso_mode
+    if mode == 'splu':
+        return None
+    used_fallback = mode == 'fallback'
+    if used_fallback:
         solver = _pardiso_factorize_fallback(As_upper, cache.pardiso_iparm)
         cached = False
-    # whether the factorization is that of the fallback, not given by
-    # iparm(1), which PARDISO may set to 1 with its default parameters
-    used_fallback = solver is not None
-    if solver is None:
+    else:
         if cache is not None:
             solver, phase = cache.pardiso_solver()
             gen = cache.gen
@@ -799,22 +829,38 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         except PardisoError as e:
             _pardiso_release(solver)
             raise RuntimeError('PARDISO factorization failed: %s' % e)
-        if not fallback and int(solver.iparm[13]) > 0:
+        if int(solver.iparm[13]) > 0:
             # perturbed pivots: the parameters of the fallback
-            solver2 = _pardiso_factorize_fallback(As_upper, solver.iparm)
-            if (solver2 is not None
-                    and int(solver2.iparm[13]) < int(solver.iparm[13])):
-                if cache is not None:
-                    cache.pardiso_fallback_gen = cache.gen
-                    cache.pardiso_iparm = solver.iparm.copy()
-                    cache.release(solver, gen)
-                else:
-                    _pardiso_release(solver)
-                solver = solver2
-                cached = False
-                used_fallback = True
-            elif solver2 is not None:
-                _pardiso_release(solver2)
+            iparm = solver.iparm.copy()
+            if cached:
+                cache.release(solver, gen)
+            else:
+                _pardiso_release(solver)
+            solver = _pardiso_factorize_fallback(As_upper, iparm)
+            cached = False
+            used_fallback = True
+            if cache is not None:
+                cache.pardiso_mode_gen = cache.gen
+                cache.pardiso_mode = 'fallback'
+                cache.pardiso_iparm = iparm
+    if used_fallback:
+        # without perturbed pivots, iparm(24) = 1 may still give a wrong
+        # factorization, whose inertia is then wrong as well
+        accurate = (solver is not None and int(solver.iparm[13]) == 0
+                    and _pardiso_residual(solver, A, s, m)
+                    <= PARDISO_ACCURACY_RTOL)
+        if not accurate:
+            if solver is not None:
+                _pardiso_release(solver)
+            if cache is not None:
+                cache.pardiso_mode_gen = cache.gen
+                cache.pardiso_mode = 'splu'
+            warnings.warn("linear_solver='pardiso': the factorization "
+                          "perturbed pivots, also with "
+                          "PARDISO_FALLBACK_IPARM, or is inaccurate; "
+                          "'splu' is used instead", RuntimeWarning,
+                          stacklevel=3)
+            return None
 
     def precond(r):
         return s*solver.solve(s*r)

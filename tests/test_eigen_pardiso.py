@@ -59,12 +59,15 @@ def test_lb_pardiso_as_splu():
 @pytest.mark.filterwarnings('ignore:linear_solver=.pardiso.:RuntimeWarning')
 @pytest.mark.parametrize('name', ['plate_ssss_Nxx', 'cylinder_5panels'])
 def test_lb_pardiso_inaccurate_as_splu(name):
-    """The Ritz models, whose factorizations by PARDISO are inaccurate, see
-    the Notes of lb(), with SuperLU instead"""
+    """The Ritz models, whose factorizations by PARDISO may be inaccurate
+    and then replaced by SuperLU, see the Notes of lb(): the load
+    multipliers of SuperLU, to the accuracy that the check of the
+    factorizations allows for these ill-conditioned matrices (with MKL
+    2026.2 PARDISO is accepted for cylinder_5panels, 1.5e-8 apart)"""
     K, KG = load_saved_matrices(name)
     w1, v1 = lb(K, KG, silent=True, num_eigvalues=10)
     w2, v2 = lb(K, KG, silent=True, num_eigvalues=10, linear_solver='pardiso')
-    assert_same_eigenpairs(w1, v1, w2, v2)
+    assert_same_eigenpairs(w1, v1, w2, v2, rtol=1e-6, max_angle=1e-3)
 
 
 @needs_pardiso
