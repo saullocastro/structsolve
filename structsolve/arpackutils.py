@@ -37,10 +37,11 @@ import io
 import os
 import re
 import sys
+import warnings
 
 import numpy as np
 from scipy.linalg import cholesky, eigh, solve_triangular
-from scipy.sparse import csc_matrix
+from scipy.sparse import csc_matrix, csr_matrix
 from scipy.sparse.linalg import LinearOperator, splu
 from scipy.sparse.linalg import eigsh as _scipy_eigsh
 
@@ -51,6 +52,13 @@ from scipy.sparse.linalg import eigsh as _scipy_eigsh
 #: ``0`` (or ``'none'``) disables the cap, an integer of at least ``3`` sets
 #: it.
 ARPACK_MAX_NCV = None
+
+#: ``linear_solver='pardiso'``: largest relative residual of the solution
+#: of a factorization of PARDISO, without refinement, for a random
+#: right-hand side, above which SuperLU is used instead, see
+#: :func:`pardiso_solve`, and the count of negative pivots of PARDISO is
+#: not trusted, see :func:`.linear_buckling._negative_pivots`
+PARDISO_ACCURACY_RTOL = 1e-6
 
 #: Largest tridiagonal matrix for which the faulty ``dsteqr`` is correct
 DSTEQR_MAX_SIZE = 32
@@ -442,7 +450,117 @@ def _rayleigh_ritz(A, M, V):
     return w, W @ Y
 
 
-def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
+def pardiso_factorization(A):
+    r"""Factorization of the symmetric sparse matrix ``A`` by PARDISO and
+    the relative residual of its solution for a random right-hand side
+
+    ``A`` is factorized by :func:`.static._factorize` with
+    ``linear_solver='pardiso'``: the symmetric indefinite factorization of
+    PARDISO of the matrix scaled to a unit diagonal, with the fallback on
+    perturbed pivots, see its Notes.
+
+    Returns
+    -------
+    factorization : callable or None
+        The ``solve_kT`` of :func:`.static._factorize`, with
+        ``num_negative_eigvals`` and ``num_perturbed_pivots``; ``None`` when
+        ``A`` has a null row, i.e. it is exactly singular, PARDISO failed,
+        or ``A`` is unsymmetric for :func:`.static._factorize`.
+    residual : float or None
+        `\|\boldsymbol{A} \boldsymbol{x} - \boldsymbol{b}\|/\|\boldsymbol{b}\|`
+        of the solution `\boldsymbol{x}` of the factorization, without
+        refinement, for a fixed random `\boldsymbol{b}`; ``None`` with
+        ``factorization``.
+
+    """
+    from .static import _factorize
+    A = csr_matrix(A, dtype=np.float64)
+    if np.count_nonzero(np.asarray(abs(A).sum(axis=1)).ravel()) < A.shape[0]:
+        return None, None
+    with warnings.catch_warnings():
+        # the warning of an unsymmetric matrix, for which SuperLU is used
+        warnings.simplefilter('ignore', RuntimeWarning)
+        try:
+            factorization = _factorize(A, linear_solver='pardiso')
+        except RuntimeError:
+            return None, None
+    if factorization.linear_solver != 'pardiso':
+        return None, None
+    b = np.random.RandomState(42).randn(A.shape[0])
+    residual = (np.linalg.norm(A @ factorization.unrefined(b) - b)
+                /np.linalg.norm(b))
+    return factorization, residual
+
+
+def pardiso_solve(A, refine=True):
+    r"""Solution function of the symmetric sparse matrix ``A`` factorized by
+    PARDISO, for the eigenvalue analyses with ``linear_solver='pardiso'``
+
+    ``A`` is factorized by :func:`pardiso_factorization`. With
+    ``refine=True`` every solution whose relative residual is larger than
+    ``static.PARDISO_REFINE_TOL`` is improved by GMRES, see
+    :func:`.static._factorize`; with ``refine=False`` the solution of the
+    factorization is returned as is, as by SuperLU. When PARDISO fails, or
+    its factorization is inaccurate, i.e. the relative residual of
+    :func:`pardiso_factorization` is larger than ``PARDISO_ACCURACY_RTOL``,
+    ``A`` is factorized by SuperLU instead, with a :class:`RuntimeWarning`.
+
+    Returns
+    -------
+    solve : callable
+        ``solve(b)`` returns `\boldsymbol{A}^{-1} \boldsymbol{b}` for a real
+        or complex ``b`` of shape ``(n,)``; its attribute ``linear_solver``
+        is ``'pardiso'`` or ``'splu'``, the solver used, and its attribute
+        ``factorization`` the ``solve_kT`` of :func:`.static._factorize`
+        with PARDISO, ``None`` with SuperLU, which holds the memory of
+        PARDISO, freed when it is deleted.
+
+    Raises
+    ------
+    RuntimeError
+        When SuperLU is used and ``A`` is exactly singular.
+    ImportError
+        When oneMKL is not found.
+
+    """
+    factorization, residual = pardiso_factorization(A)
+    if factorization is not None and residual <= PARDISO_ACCURACY_RTOL:
+        f = factorization if refine else factorization.unrefined
+        linear_solver = 'pardiso'
+    else:
+        if factorization is not None:
+            warnings.warn("linear_solver='pardiso': inaccurate factorization, "
+                          "relative residual %1.1e with %d perturbed pivots, "
+                          "'splu' is used instead"
+                          % (residual, factorization.num_perturbed_pivots),
+                          RuntimeWarning, stacklevel=2)
+        factorization = None
+        f = splu(csc_matrix(A)).solve
+        linear_solver = 'splu'
+
+    def solve(b):
+        b = np.asarray(b).ravel()
+        if np.iscomplexobj(b):
+            return (f(np.ascontiguousarray(b.real))
+                    + 1j*f(np.ascontiguousarray(b.imag)))
+        return f(b)
+
+    solve.linear_solver = linear_solver
+    solve.factorization = factorization
+    return solve
+
+
+def _pardiso_opinv(A, dtype):
+    """``LinearOperator`` of the solutions of ``A`` by :func:`pardiso_solve`,
+    the ``OPinv`` of :func:`scipy.sparse.linalg.eigsh`"""
+    solve = pardiso_solve(A)
+    n = A.shape[0]
+    return LinearOperator((n, n), dtype=dtype,
+                          matvec=lambda x: solve(np.asarray(x, dtype=dtype)))
+
+
+def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0,
+                 linear_solver='splu'):
     r""":func:`scipy.sparse.linalg.eigsh` with ``ncv`` from :func:`arpack_ncv`
 
     Solves `\boldsymbol{A} \boldsymbol{x} = w \boldsymbol{M} \boldsymbol{x}` with a positive definite ``M`` about the
@@ -465,6 +583,13 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
     Rayleigh-Ritz projection, see :func:`_rayleigh_ritz`, such that they are
     ``M``-orthonormal also across the passes.
 
+    With ``linear_solver='pardiso'``, ``A - sigma*M`` of the first call and
+    ``A - sigma_d*M`` of the passes are factorized by PARDISO instead, see
+    :func:`pardiso_solve`, and passed to :func:`scipy.sparse.linalg.eigsh`
+    as ``OPinv``, `(\boldsymbol{A} - \sigma \boldsymbol{M})^{-1}` in both the
+    shift-invert and the Cayley modes; SuperLU is used for a matrix whose
+    factorization by PARDISO is inaccurate.
+
     Parameters
     ----------
     A : sparse matrix
@@ -485,6 +610,9 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
         Relative accuracy of the eigenvalues, passed to
         :func:`scipy.sparse.linalg.eigsh`; ``0`` (default) means the machine
         precision.
+    linear_solver : str, optional
+        ``'splu'`` (default), the factorizations of SuperLU, or
+        ``'pardiso'``, those of PARDISO, see above.
 
     Returns
     -------
@@ -535,32 +663,44 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0):
 
     """
 
+    if linear_solver not in ('splu', 'pardiso'):
+        raise ValueError('Invalid linear_solver: %s' % linear_solver)
     n = A.shape[0]
+    dtype = np.result_type(A.dtype, M.dtype)
+    opinv = {}
+    if linear_solver == 'pardiso':
+        opinv['OPinv'] = _pardiso_opinv(A - sigma*M, dtype)
     max_ncv = arpack_max_ncv()
     max_k = n if max_ncv is None else (max_ncv - 1)//2
     if k <= max_k or min(n, max(2*k + 1, 20)) <= max_ncv:
         result = _scipy_eigsh(A=A, k=k, M=M, sigma=sigma, which=which,
                               mode=mode, tol=tol, ncv=arpack_ncv(k, n),
-                              **start_kwargs(n))
+                              **opinv, **start_kwargs(n))
+        del opinv
         release_memory()
         return result
     num_passes = -(-k//max_k)
     k_pass = -(-k//num_passes)
     ncv = min(n, max_ncv)
     w, V = _scipy_eigsh(A=A, k=k_pass, M=M, sigma=sigma, which=which,
-                        mode=mode, tol=tol, ncv=ncv, **start_kwargs(n))
+                        mode=mode, tol=tol, ncv=ncv, **opinv,
+                        **start_kwargs(n))
+    del opinv
     release_memory()
     far_shift = -sigma if mode == 'cayley' else sigma
-    dtype = np.result_type(A.dtype, M.dtype)
     while w.shape[0] < k:
         order = np.argsort(w, kind='stable')
         w, V = w[order], V[:, order]
         sigma_d = _deflation_shift(w, far_shift)
-        lu = splu(csc_matrix(A - sigma_d*M))
+        if linear_solver == 'pardiso':
+            solve = pardiso_solve(A - sigma_d*M)
+        else:
+            lu = splu(csc_matrix(A - sigma_d*M))
+            solve = lu.solve
         MV = M @ V
 
-        def matvec(x, V=V, MV=MV, lu=lu):
-            y = lu.solve(np.asarray(x, dtype=dtype).ravel())
+        def matvec(x, V=V, MV=MV, solve=solve):
+            y = solve(np.asarray(x, dtype=dtype).ravel())
             return y - V @ (MV.T @ y)
 
         OPinv = LinearOperator((n, n), matvec=matvec, dtype=dtype)

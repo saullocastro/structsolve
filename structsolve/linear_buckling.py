@@ -15,9 +15,13 @@ from scipy.sparse import csc_matrix, csr_matrix
 from scipy.sparse.linalg import eigs, splu, LinearOperator
 from scipy.linalg import eigh, eig, LinAlgError
 
-from .arpackutils import capped_eigsh, release_memory, start_kwargs
+from . import arpackutils
+from .arpackutils import (capped_eigsh, pardiso_factorization, pardiso_solve,
+                          release_memory, start_kwargs)
 from .logger import msg, warn
+from .pardiso import load_mkl
 from .sparseutils import remove_null_cols
+from .static import LINEAR_SOLVERS
 
 
 class DenseFallbackWarning(RuntimeWarning):
@@ -70,13 +74,42 @@ RIGID_BODY_RTOL = 100*np.finfo(float).eps
 BACKWARD_ERROR_RTOL = np.finfo(float).eps
 
 
-def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
+def _check_linear_solver(linear_solver):
+    """``ValueError`` for an invalid ``linear_solver`` of :func:`lb` or
+    :func:`.freq`, ``ImportError`` for ``'pardiso'`` without oneMKL"""
+    if linear_solver not in LINEAR_SOLVERS:
+        raise ValueError('Invalid linear_solver: %s' % linear_solver)
+    if linear_solver == 'pardiso':
+        load_mkl()
+
+
+def _solve_function(K, linear_solver):
+    """Solution function of ``K``, factorized by SuperLU with ``'splu'``
+    or by PARDISO with ``'pardiso'``, see
+    :func:`.arpackutils.pardiso_solve`, without its warnings, for the
+    estimates of the shifts, which check their residuals and fall back to
+    a default shift, e.g. for a singular ``K``"""
+    if linear_solver == 'pardiso':
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            solve = pardiso_solve(K)
+
+        def quiet(b):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore', RuntimeWarning)
+                return solve(b)
+
+        return quiet
+    return splu(csc_matrix(K)).solve
+
+
+def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3, linear_solver='splu'):
     r"""Largest `|\mu|` of ``KG u = mu K u``, estimated by power
     iterations, see :func:`_estimate_sigma`, or ``None`` when ``K`` is
     singular, not positive definite, or the linear solution is
-    inaccurate"""
+    inaccurate; ``K`` is factorized by :func:`_solve_function`"""
     try:
-        lu = splu(csc_matrix(K))
+        solve = _solve_function(K, linear_solver)
         x = np.random.RandomState(42).randn(K.shape[0])
         Kx = K @ x
         mu_max = 0.
@@ -86,7 +119,7 @@ def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
                 return None
             x = x / np.sqrt(xKx)
             rhs = KG @ x
-            y = lu.solve(rhs)
+            y = solve(rhs)
             Ky = K @ y
             if i == 0:
                 residual = np.linalg.norm(Ky - rhs)
@@ -107,7 +140,7 @@ def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3):
 
 
 def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
-                   mu_max=False):
+                   mu_max=False, linear_solver='splu'):
     r"""Shift of the Cayley mode used by :func:`lb`
 
     With ``sigma > 0``, ``eigsh(A=KG, M=K, sigma=sigma, mode='cayley',
@@ -126,13 +159,14 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
 
     """
     if mu_max is False:
-        mu_max = _estimate_mu_max(K, KG, max_iter=max_iter, rel_tol=rel_tol)
+        mu_max = _estimate_mu_max(K, KG, max_iter=max_iter, rel_tol=rel_tol,
+                                  linear_solver=linear_solver)
     if mu_max is None:
         return 1.
     return safety * mu_max
 
 
-def _negative_pivots(A):
+def _negative_pivots(A, linear_solver='splu'):
     r"""Number of negative eigenvalues of the symmetric sparse matrix ``A``
 
     ``A`` is factorized with a symmetric permutation and without row
@@ -141,13 +175,33 @@ def _negative_pivots(A):
     number of negative pivots is the number of negative eigenvalues of
     ``A``.
 
+    With ``linear_solver='pardiso'``, ``A`` is factorized by PARDISO
+    first, see :func:`.arpackutils.pardiso_factorization`, a symmetric
+    indefinite `\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with
+    Bunch-Kaufman pivoting, whose ``num_negative_eigvals`` is the count,
+    also when SuperLU would need a row interchange. It is trusted when no
+    pivot remains perturbed after the fallback of
+    :func:`.static._factorize` and the relative residual of the solution
+    for a random right-hand side is not larger than
+    ``arpackutils.PARDISO_ACCURACY_RTOL``, since a factorization of PARDISO
+    may be inaccurate, with a wrong inertia, without any perturbed pivot
+    reported, e.g. with ``iparm(24) = 1``. Otherwise, or when PARDISO
+    fails, the count is that of SuperLU above.
+
     Returns
     -------
     num : int or None
         ``None`` when the count is unknown: ``A`` is exactly singular, or a
-        zero pivot forced a row interchange.
+        zero pivot forced a row interchange in SuperLU, with ``'pardiso'``
+        when the count of PARDISO is not trusted either.
 
     """
+    if linear_solver == 'pardiso':
+        f, residual = pardiso_factorization(A)
+        if (f is not None and not f.num_perturbed_pivots
+                and residual <= arpackutils.PARDISO_ACCURACY_RTOL):
+            return f.num_negative_eigvals
+        del f
     try:
         lu = splu(csc_matrix(A), permc_spec='MMD_AT_PLUS_A',
                   diag_pivot_thresh=0., options=dict(SymmetricMode=True))
@@ -163,14 +217,14 @@ def _negative_pivots(A):
     return int(np.count_nonzero(d < 0))
 
 
-def _is_positive_definite(A):
+def _is_positive_definite(A, linear_solver='splu'):
     """Tells if the symmetric sparse matrix ``A`` is positive definite
 
     The Gaussian elimination of a positive definite matrix never finds a
     zero or negative pivot, see :func:`_negative_pivots`.
 
     """
-    return _negative_pivots(A) == 0
+    return _negative_pivots(A, linear_solver) == 0
 
 
 def _lu_solve(lu, b):
@@ -188,7 +242,8 @@ def _lu_solve(lu, b):
 
 
 def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
-                      check_inertia=True, K_positive_definite=None):
+                      check_inertia=True, K_positive_definite=None,
+                      linear_solver='splu'):
     r"""Verify the eigenpairs of ``(K + lambda*KG) @ u = 0``
 
 
@@ -210,7 +265,8 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
 
     Whether ``K`` is positive definite may be given as
     ``K_positive_definite``, a boolean or a function returning it, e.g. to
-    verify several solutions with one factorization of ``K``.
+    verify several solutions with one factorization of ``K``. The pivots
+    are counted by :func:`_negative_pivots` with ``linear_solver``.
 
     Returns
     -------
@@ -271,13 +327,15 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
     lam = lam[np.isreal(lam)].real
     positive = lam[lam > 0]
     if K_positive_definite is None:
-        K_positive_definite = _is_positive_definite
+        def K_positive_definite(K):
+            return _is_positive_definite(K, linear_solver)
     if positive.size and (K_positive_definite(K) if
                           callable(K_positive_definite) else
                           K_positive_definite):
         s = positive.max()*(1 - min_rel_gap)
         expected = int(np.count_nonzero(positive < s))
-        count = _negative_pivots(K + s*KG) if expected else None
+        count = (_negative_pivots(K + s*KG, linear_solver) if expected
+                 else None)
         if count is not None:
             if count > expected:
                 return ('{0} load multiplier(s) lower than {1} are missing'
@@ -287,7 +345,7 @@ def _check_eigenpairs(K, KG, eigvals, eigvecs, rtol, min_rel_gap=1e-4,
                         'only {2} exist'.format(expected, s, count))
             return None
         s = positive.min()*(1 - min_rel_gap)
-        if not _is_positive_definite(K + s*KG):
+        if not _is_positive_definite(K + s*KG, linear_solver):
             return ('at least one load multiplier lower than {0} is missing'
                     .format(positive.min()))
     return None
@@ -1105,7 +1163,8 @@ def _eigs_shift_search(K, KG, k, tol, check_rtol, silent):
     return mu, eigvecs
 
 
-def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
+def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False,
+                  linear_solver='splu'):
     r"""Solution with :func:`scipy.sparse.linalg.eigsh` in Cayley mode
 
     The shift is estimated with :func:`_estimate_sigma` and the given
@@ -1139,15 +1198,18 @@ def _eigsh_cayley(K, KG, k, tol, silent, safety=10., mu_max=False):
 
     """
 
-    sigma = _estimate_sigma(K, KG, safety=safety, mu_max=mu_max)
+    sigma = _estimate_sigma(K, KG, safety=safety, mu_max=mu_max,
+                            linear_solver=linear_solver)
     msg('sigma={0}'.format(sigma), level=4, silent=silent)
     k = min(k, K.shape[0] - 2)
     mu, eigvecs = capped_eigsh(A=KG, k=k, M=K, sigma=sigma, which='SM',
-                               mode='cayley', tol=tol)
+                               mode='cayley', tol=tol,
+                               linear_solver=linear_solver)
     return _sort_eigenpairs(mu, eigvecs)
 
 
-def _count_multipliers(K, KG, mu_max, sign, K_positive_definite):
+def _count_multipliers(K, KG, mu_max, sign, K_positive_definite,
+                       linear_solver='splu'):
     r"""Number of load multipliers of the given ``sign`` whose modulus is
     lower than ``INERTIA_COUNT_FACTOR/mu_max``, or ``None`` when unknown
 
@@ -1162,11 +1224,11 @@ def _count_multipliers(K, KG, mu_max, sign, K_positive_definite):
     if mu_max is None or not K_positive_definite(K):
         return None
     s = sign*INERTIA_COUNT_FACTOR/mu_max
-    return _negative_pivots(K + s*KG)
+    return _negative_pivots(K + s*KG, linear_solver)
 
 
 def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
-                      K_positive_definite=None):
+                      K_positive_definite=None, linear_solver='splu'):
     r"""The lowest positive load multipliers, completed by the negative ones
     closest to zero, with :func:`_eigsh_cayley`
 
@@ -1204,11 +1266,13 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
 
     """
     if mu_max is False:
-        mu_max = _estimate_mu_max(K, KG)
+        mu_max = _estimate_mu_max(K, KG, linear_solver=linear_solver)
     if K_positive_definite is None:
-        K_positive_definite = _is_positive_definite
+        def K_positive_definite(K):
+            return _is_positive_definite(K, linear_solver)
     kmax = min(k, K.shape[0] - 2)
-    num_pos = _count_multipliers(K, KG, mu_max, 1, K_positive_definite)
+    num_pos = _count_multipliers(K, KG, mu_max, 1, K_positive_definite,
+                                 linear_solver)
     msg('{0} positive load multipliers counted'.format(num_pos), level=4,
         silent=silent)
     mu = np.zeros(0)
@@ -1216,13 +1280,15 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
     if num_pos != 0:
         k1 = kmax if num_pos is None else min(kmax, num_pos)
         mu, eigvecs = _eigsh_cayley(K, KG, k1, tol, silent, safety=safety,
-                                    mu_max=mu_max)
+                                    mu_max=mu_max,
+                                    linear_solver=linear_solver)
         keep = (mu < 0) & ~_null_mu(mu, mu_max)
         mu, eigvecs = mu[keep], eigvecs[:, keep]
         if mu.size >= kmax:
             return mu[:kmax], eigvecs[:, :kmax]
     # the reversed load
-    num_neg = _count_multipliers(K, -KG, mu_max, 1, K_positive_definite)
+    num_neg = _count_multipliers(K, -KG, mu_max, 1, K_positive_definite,
+                                 linear_solver)
     msg('{0} negative load multipliers counted'.format(num_neg), level=4,
         silent=silent)
     if num_neg != 0:
@@ -1230,7 +1296,8 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
         if num_neg is not None:
             k2 = min(k2, num_neg)
         mu2, eigvecs2 = _eigsh_cayley(K, -KG, k2, tol, silent, safety=safety,
-                                      mu_max=mu_max)
+                                      mu_max=mu_max,
+                                      linear_solver=linear_solver)
         keep2 = (mu2 < 0) & ~_null_mu(mu2, mu_max)
         mu = np.concatenate((mu, -mu2[keep2]))
         eigvecs = np.concatenate((eigvecs, eigvecs2[:, keep2]), axis=1)
@@ -1239,7 +1306,8 @@ def _eigsh_both_signs(K, KG, k, tol, silent, safety=10., mu_max=False,
     return mu, eigvecs
 
 
-def _check_both_signs(K, KG, mu, eigvecs, rtol, K_positive_definite=None):
+def _check_both_signs(K, KG, mu, eigvecs, rtol, K_positive_definite=None,
+                      linear_solver='splu'):
     r"""Verify the eigenpairs of :func:`lb` with :func:`_check_eigenpairs`,
     the positive load multipliers with ``KG``, the negative ones with
     ``-KG``, i.e. the reversed load, such that the inertia check also tells
@@ -1255,13 +1323,15 @@ def _check_both_signs(K, KG, mu, eigvecs, rtol, K_positive_definite=None):
     negative = kept & (lam < 0)
     if np.any(positive):
         error = _check_eigenpairs(K, KG, lam[positive], eigvecs[:, positive],
-                                  rtol, K_positive_definite=K_positive_definite)
+                                  rtol, K_positive_definite=K_positive_definite,
+                                  linear_solver=linear_solver)
         if error is not None:
             return error
     if np.any(negative):
         error = _check_eigenpairs(K, -KG, -lam[negative],
                                   eigvecs[:, negative], rtol,
-                                  K_positive_definite=K_positive_definite)
+                                  K_positive_definite=K_positive_definite,
+                                  linear_solver=linear_solver)
         if error is not None:
             return 'reversed load: ' + error
     return None
@@ -1356,7 +1426,7 @@ def _sparse_first(analysis, strategies, verify, dense, dense_size,
 def lb(K, KG, tol=0, sparse_solver=True, silent=False,
        num_eigvalues=25, num_eigvalues_print=5,
        skip_null_cols=False, max_dense_size=2000, check_rtol=1e-3,
-       symmetric=None):
+       symmetric=None, linear_solver='splu'):
     r"""Linear buckling analysis
 
     Calculates the load multipliers ``lambda`` and the buckling modes ``u``
@@ -1476,6 +1546,11 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         of symmetric matrices, ``False`` forces the solvers of unsymmetric
         matrices, required e.g. when ``KG`` includes the load stiffness of
         follower loads, see above.
+    linear_solver : str, optional
+        ``'splu'`` (default) for the sparse factorizations of SuperLU, or
+        ``'pardiso'`` for those of PARDISO, which requires the shared
+        library ``mkl_rt`` of Intel oneMKL, see :mod:`structsolve.pardiso`,
+        in the sparse solvers of symmetric matrices only; see the Notes.
 
     Returns
     -------
@@ -1541,7 +1616,8 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
       positive one returned may be missing: the number of negative pivots of
       `\boldsymbol{K} + s \boldsymbol{K}_G`, for `s` slightly below that multiplier, is the number
       of load multipliers in `(0, s)` (Sylvester's law of inertia). The
-      factorization is done with SuperLU, without row interchanges. When a
+      factorization is done with SuperLU, without row interchanges, or with
+      PARDISO, see below. When a
       row interchange was needed and the count is unknown, `\boldsymbol{K} + s \boldsymbol{K}_G`
       must be positive definite for `s` slightly below the lowest positive
       load multiplier. See :func:`_check_eigenpairs`;
@@ -1559,6 +1635,40 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     ``num_eigvalues`` positive load multipliers exist, the Cayley mode with
     `-\boldsymbol{K}_G` gives the negative load multipliers closest to zero, see
     :func:`_eigsh_both_signs`.
+
+    **PARDISO.** With ``linear_solver='pardiso'``, the factorizations of the
+    sparse solvers of symmetric matrices are done by PARDISO, through
+    :func:`.static._factorize`: the symmetric indefinite factorization
+    `\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` of the matrix scaled to a unit
+    diagonal, with its fallback on perturbed pivots. ARPACK remains the
+    eigenvalue solver: the operator `(\boldsymbol{K}_G - \sigma
+    \boldsymbol{K})^{-1}` of the Cayley mode, also of the passes of
+    :func:`.arpackutils.capped_eigsh`, is passed to
+    :func:`scipy.sparse.linalg.eigsh` as ``OPinv``, each solution refined by
+    GMRES when its residual is too large, see
+    :func:`.arpackutils.pardiso_solve`; ``K`` of the power iterations of
+    :func:`_estimate_mu_max` and the matrices `\boldsymbol{K} + s
+    \boldsymbol{K}_G` of the inertia counts are factorized by PARDISO too.
+    The number of negative pivots is then the number of negative eigenvalues
+    given by PARDISO, exact also when SuperLU would need a row interchange,
+    for which its count is unknown. A factorization of PARDISO is used only
+    when it is accurate: the relative residual of its solution for a random
+    right-hand side must not be larger than
+    ``arpackutils.PARDISO_ACCURACY_RTOL``, and no pivot may remain perturbed
+    for the counts; otherwise SuperLU is used for that matrix, with a
+    :class:`RuntimeWarning` for the operator of ARPACK, see
+    :func:`.arpackutils.pardiso_solve` and :func:`_negative_pivots`. The
+    symmetric indefinite factorization of PARDISO (MKL 2026.2, default
+    parameters, ``iparm(2) = 2``, ``iparm(10) = 8``) of the Ritz models of
+    the tests, e.g. ``cylinder_5panels`` (1140 dofs) and
+    ``plate_ssss_Nxx`` (300 dofs), perturbed 5 to 80 pivots and gave
+    residuals of 1 to 50, also for a positive definite ``K``, and its
+    fallback ``iparm(24) = 1`` of :func:`.static._factorize` reported no
+    perturbed pivot with residuals of 1 to 2e7 and a wrong inertia; for
+    these models ``'pardiso'`` thus falls back to SuperLU. The
+    solvers of unsymmetric matrices and the dense fallbacks, also the sparse
+    factorization of ``K`` of :func:`_eigh_condensed`, keep SuperLU and
+    LAPACK.
 
     **Unsymmetric matrices**, e.g. ``KG`` with the load stiffness of a
     follower pressure that is not conservative, may have complex
@@ -1593,6 +1703,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     affected.
 
     """
+    _check_linear_solver(linear_solver)
     msg('Running linear buckling analysis...', silent=silent)
 
     msg('Eigenvalue solver... ', level=2, silent=silent)
@@ -1623,26 +1734,30 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
 
         def mu_max():
             if 'mu_max' not in once:
-                once['mu_max'] = _estimate_mu_max(K, KG)
+                once['mu_max'] = _estimate_mu_max(
+                    K, KG, linear_solver=linear_solver)
             return once['mu_max']
 
         def K_positive_definite(K):
             if 'pd' not in once:
-                once['pd'] = _is_positive_definite(K)
+                once['pd'] = _is_positive_definite(K, linear_solver)
             return once['pd']
 
         def verify(mu, eigvecs):
             return _check_both_signs(K, KG, mu, eigvecs, check_rtol,
-                    K_positive_definite=K_positive_definite)
+                    K_positive_definite=K_positive_definite,
+                    linear_solver=linear_solver)
 
         strategies = [
             ('eigsh() in Cayley mode',
              lambda: _eigsh_both_signs(K, KG, num_eigvalues, tol, silent,
-                    mu_max=mu_max(), K_positive_definite=K_positive_definite)),
+                    mu_max=mu_max(), K_positive_definite=K_positive_definite,
+                    linear_solver=linear_solver)),
             ('eigsh() in Cayley mode with a 10 times larger shift',
              lambda: _eigsh_both_signs(K, KG, num_eigvalues, tol, silent,
                     safety=100., mu_max=mu_max(),
-                    K_positive_definite=K_positive_definite)),
+                    K_positive_definite=K_positive_definite,
+                    linear_solver=linear_solver)),
         ]
         dense = ('eigh() with condensed dofs',
                  lambda: _eigh_condensed(K, KG, num_eigvalues))

@@ -13,18 +13,24 @@ from scipy.linalg import eigh, LinAlgError
 
 from .arpackutils import capped_eigsh, release_memory, start_kwargs
 from .linear_buckling import (BACKWARD_ERROR_RTOL, RIGID_BODY_RTOL,
-                              _backward_errors, _eig_complex,
-                              _negative_pivots, _relative_residuals,
+                              _backward_errors, _check_linear_solver,
+                              _eig_complex, _negative_pivots,
+                              _relative_residuals, _solve_function,
                               _sparse_first, is_symmetric)
 from .logger import msg, warn
 from .sparseutils import remove_null_cols
 
 
-def _estimate_sigma(K, M):
+def _estimate_sigma(K, M, linear_solver='splu'):
+    """Negative shift of :func:`freq`, see its Notes; ``K`` is factorized
+    by :func:`.linear_buckling._solve_function`"""
     try:
         rhs = M @ np.random.RandomState(42).randn(K.shape[0])
         try:
-            y = splu(csc_matrix(K)).solve(rhs)
+            if linear_solver == 'pardiso':
+                y = _solve_function(K, linear_solver)(rhs)
+            else:
+                y = splu(csc_matrix(K)).solve(rhs)
         except RuntimeError:
             # exactly singular
             return -1.
@@ -81,7 +87,7 @@ def _failed_residuals(K, M, lambda2, eigvecs, check_rtol):
 
 
 def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
-                min_rel_gap=1e-4):
+                min_rel_gap=1e-4, linear_solver='splu'):
     r"""Verify the eigenpairs of ``(K + lambda2*M) @ u = 0``
 
 
@@ -94,7 +100,8 @@ def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
       negative pivots of ``K - s M`` for ``s`` slightly lower, by the
       relative gap ``min_rel_gap``. The check is skipped
       when the count is unknown, see
-      :func:`.linear_buckling._negative_pivots`, or when ``s`` is zero.
+      :func:`.linear_buckling._negative_pivots`, called with
+      ``linear_solver``, or when ``s`` is zero.
 
     Returns
     -------
@@ -140,17 +147,19 @@ def _check_freq(K, M, lambda2, eigvecs, check_rtol, symmetric,
             return 'no finite eigenvalue was found'
         s = w2.max() - min_rel_gap*abs(w2.max())
         expected = int(np.count_nonzero(w2 < s))
-        count = _negative_pivots(K - s*M) if s != 0 else None
+        count = (_negative_pivots(K - s*M, linear_solver) if s != 0
+                 else None)
         if count is not None and count != expected:
             return ('{0} eigenvalues omega**2 lower than {1} exist, {2} were '
                     'found'.format(count, s, expected))
     return None
 
 
-def _eigsh_freq(K, M, k, tol, sigma):
+def _eigsh_freq(K, M, k, tol, sigma, linear_solver='splu'):
     """:func:`.arpackutils.capped_eigsh` in shift-invert mode"""
     eigvals, eigvecs = capped_eigsh(A=K, k=k, M=M, sigma=sigma, which='LM',
-                                    mode='normal', tol=tol)
+                                    mode='normal', tol=tol,
+                                    linear_solver=linear_solver)
     return -eigvals, eigvecs
 
 
@@ -204,7 +213,7 @@ def _dense_freq(K, M, k, sigma, symmetric):
 def freq(K, M, tol=0, sparse_solver=True,
         silent=False, sort=True, num_eigvalues=25,
         num_eigvalues_print=5, skip_null_cols=False, symmetric=False,
-        check_rtol=1e-6, max_dense_size=2000):
+        check_rtol=1e-6, max_dense_size=2000, linear_solver='splu'):
     r"""Frequency analysis
 
     Calculates the eigenvalues ``lambda2`` and eigenvectors ``u`` of the
@@ -317,6 +326,12 @@ def freq(K, M, tol=0, sparse_solver=True,
         Maximum size of the dense problem solved as a last resort when the
         sparse solver failed, see above. Larger problems raise a
         ``RuntimeError`` instead, and ``0`` disables the dense fallback.
+    linear_solver : str, optional
+        ``'splu'`` (default) for the sparse factorizations of SuperLU, or
+        ``'pardiso'`` for those of PARDISO, which requires the shared
+        library ``mkl_rt`` of Intel oneMKL, see :mod:`structsolve.pardiso`,
+        with ``symmetric=True`` (or ``None`` detecting symmetric matrices)
+        only; see the Notes.
 
     Returns
     -------
@@ -366,6 +381,20 @@ def freq(K, M, tol=0, sparse_solver=True,
     `\omega_n^2` returned, is the number of eigenvalues below `s`
     (Sylvester's law of inertia), see :func:`_check_freq`.
 
+    **PARDISO.** With ``linear_solver='pardiso'`` and symmetric matrices,
+    ``K`` of the estimate of the shift, `\boldsymbol{K} - \sigma
+    \boldsymbol{M}` of the shift-invert mode, passed to
+    :func:`scipy.sparse.linalg.eigsh` as ``OPinv`` (also in the passes of
+    :func:`.arpackutils.capped_eigsh`), and `\boldsymbol{K} - s
+    \boldsymbol{M}` of the inertia count are factorized by PARDISO, the
+    symmetric indefinite factorization of :func:`.static._factorize`, see
+    :func:`.lb`; ARPACK remains the eigenvalue solver. The count of negative
+    eigenvalues of PARDISO is exact also when SuperLU would need a row
+    interchange. As in :func:`.lb`, SuperLU is used instead for a matrix
+    whose factorization by PARDISO is inaccurate or, for the count, keeps
+    perturbed pivots. The general solver of unsymmetric matrices,
+    :func:`scipy.sparse.linalg.eigs`, and the dense solvers are unchanged.
+
     :func:`scipy.sparse.linalg.eigsh` uses ARPACK's symmetric drivers, which
     return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
     2025.0.0 and ``ncv > 32``, see :func:`.lb` and
@@ -392,6 +421,7 @@ def freq(K, M, tol=0, sparse_solver=True,
        Stability, Pergamon Press, Oxford, 1963.
 
     """
+    _check_linear_solver(linear_solver)
     msg('Running frequency analysis...', silent=silent)
 
     msg('Eigenvalue solver... ', level=2, silent=silent)
@@ -409,14 +439,15 @@ def freq(K, M, tol=0, sparse_solver=True,
     if sparse_solver:
         Keff = csr_matrix(Keff)
         Meff = csr_matrix(Meff)
-        sigma = _estimate_sigma(Keff, Meff)
         if symmetric:
+            sigma = _estimate_sigma(Keff, Meff, linear_solver)
             strategies = [('eigsh() in shift-invert mode (sigma={0})'.format(
                            sigma), lambda: _eigsh_freq(Keff, Meff, k, tol,
-                                                       sigma))]
+                                                       sigma, linear_solver))]
             dense = ('eigh()', lambda: _dense_freq(Keff, Meff, k, sigma,
                                                    True))
         else:
+            sigma = _estimate_sigma(Keff, Meff)
             #NOTE Looking for better performance with symmetric matrices, I
             #     tried using sparseutils.sparse.is_symmetric and eigsh, but
             #     it seems not to improve speed (I did not try passing only
@@ -428,7 +459,8 @@ def freq(K, M, tol=0, sparse_solver=True,
                                                   False))
         (lambda2, peigvecs), _ = _sparse_first('Frequency analysis',
                 strategies, lambda l2, v: _check_freq(Keff, Meff, l2, v,
-                    check_rtol, symmetric), dense, Keff.shape[0],
+                    check_rtol, symmetric, linear_solver=linear_solver),
+                dense, Keff.shape[0],
                 max_dense_size, silent,
                 hint=' Try sparse_solver=False or a larger max_dense_size.')
     else:

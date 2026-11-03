@@ -157,7 +157,8 @@ def test_lb_estimates_once_for_all_attempts(monkeypatch):
     eigsh_cayley = linear_buckling._eigsh_cayley
     attempts = []
 
-    def first_fails(K, KG, k, tol, silent, safety=10., mu_max=False):
+    def first_fails(K, KG, k, tol, silent, safety=10., mu_max=False,
+                    linear_solver='splu'):
         attempts.append(safety)
         mu, v = eigsh_cayley(K, KG, k, tol, silent, safety=safety,
                              mu_max=mu_max)
