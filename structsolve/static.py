@@ -173,10 +173,12 @@ def _pardiso_factorize(solver, A, phase):
     sequence with ``set_phase(22)``, see :func:`._pardiso_factorize_22`.
     The private API is checked once per process, see
     :func:`._pardiso_phase22_api`, and the first factorization of phase 22
-    is verified against a factorization of phase 12 of the same matrix by
-    the same solver: the same number of negative and perturbed pivots
-    (``iparm(23)``, ``iparm(22)`` and ``iparm(14)``) and the same solution
-    of one right-hand side, to a relative difference of ``1e-8``. When the
+    is verified against a factorization of phase 12 by the same solver: the
+    phase 22 factorizes ``2A``, which differs from any factorization the
+    solver may still hold, the phase 12 ``A``, with the same number of
+    negative and perturbed pivots (``iparm(23)``, ``iparm(22)`` and
+    ``iparm(14)``) and the same solution of one right-hand side, scaled by
+    2, to a relative difference of ``1e-8``. When the
     API is missing, raises or fails this check, the public ``factorize``
     (phase 12) is used from then on, with one :class:`RuntimeWarning`; an
     exception that the phase 12 raises as well is a failure of the
@@ -188,13 +190,18 @@ def _pardiso_factorize(solver, A, phase):
         solver.factorize(A)
         return
     try:
-        _pardiso_factorize_22(solver, A)
         if _pardiso_private_api is True:
+            _pardiso_factorize_22(solver, A)
             return
-        # first use: verified against the phase 12
+        # first use: the phase 22 of 2A verified against the phase 12 of A;
+        # 2A, scaled exactly, differs from any factorization that the
+        # solver may still hold, e.g. of A itself
+        A2 = A.copy()
+        A2.data *= 2
+        _pardiso_factorize_22(solver, A2)
         iparm = solver.get_iparms()
         b = np.linspace(1., 2., A.shape[0])
-        x22 = solver.solve(A, b)
+        x22 = 2*solver.solve(A2, b)
         ok = solver.phase == 33
     except Exception as e:
         solver.factorize(A)

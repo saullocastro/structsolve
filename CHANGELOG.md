@@ -429,9 +429,10 @@
   matrix stored by the factorization matches, otherwise with the phase 13,
   correct but slow. The private API is now checked once per process
   (attributes present, parameters of the methods those of 0.4.7), and the
-  first factorization of phase 22 is verified against a phase 12 of the
-  same matrix by the same solver (`iparm(14)`, `iparm(22)`, `iparm(23)`
-  and one solution to `1e-8`); when the API is missing, raises or fails
+  first factorization of phase 22, of `2A` (exactly scaled, so that a
+  factorization of `A` still held by the solver cannot pass the check), is
+  verified against a phase 12 of `A` by the same solver (`iparm(14)`,
+  `iparm(22)`, `iparm(23)` and one solution to `1e-8`); when the API is missing, raises or fails
   the check, the public `factorize` (phase 12) is used from then on, with
   one `RuntimeWarning`. An exception that the phase 12 raises as well is a
   failure of the factorization and is raised. New
