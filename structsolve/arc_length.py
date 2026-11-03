@@ -36,8 +36,6 @@ MAX_NUM_STEPS = 1000
 #: Factors tried in turn by the line search of the corrections, with
 #: ``Analysis.arc_length_line_search = True``
 LINE_SEARCH_ETAS = (1., 0.5, 0.25)
-#: Predictors of the arc-length methods, ``Analysis.arc_length_predictor``
-PREDICTORS = ('tangent', 'secant')
 #: Rules of the sign of the tangent predictor,
 #: ``Analysis.arc_length_sign_rule``
 SIGN_RULES = ('inner_product', 'determinant')
@@ -347,20 +345,6 @@ def _solver_arc_length(an, method, silent=False):
     1), (\delta \boldsymbol{c}_q, 1) \rangle}` at the origin, corresponds to a load factor
     increment of ``an.initialInc`` along the initial tangent.
 
-    With ``an.arc_length_predictor = 'secant'``, the steps after the first
-    one start instead from the increment of the previous converged step
-    scaled to the new arc length, `(\Delta c, \Delta\lambda) = (\Delta
-    s/\Delta s_{prev}) (\Delta c_{prev}, \Delta\lambda_{prev})`, which
-    continues the path in the direction already traced, without the sign
-    rule. Beyond a limit point the tangent predictor `\delta
-    \boldsymbol{c}_q` is dominated by the eigenvectors of `\boldsymbol{K}_T` whose
-    eigenvalues are close to zero, which may turn the path back and forth
-    when there are many of them, e.g. after the bifurcations of a cylinder
-    under axial compression. With full Newton-Raphson the factorization of
-    `\boldsymbol{K}_T` at the last converged state is then not needed and it is
-    skipped, unless ``calc_fext`` accepts ``lbd``, whose `-\partial
-    \boldsymbol{R}/\partial \lambda` is evaluated together with the tangent.
-
     At each iteration, the residual is `\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c} +
     \Delta \boldsymbol{c}) - (\lambda + \Delta\lambda) \boldsymbol{F}_{ext}`, with `\partial
     \boldsymbol{R}/\partial \lambda = -\boldsymbol{F}_{ext}`, and the bordered system
@@ -578,9 +562,8 @@ def _solver_arc_length(an, method, silent=False):
     converged state is repeated with a shorter arc length, as a step that
     failed, unless the shorter arc length would be smaller than
     ``an.minInc``. With `j = 1` the eigenvalues cross zero one at a time,
-    and a predictor that steps over several critical points, e.g. the
-    secant predictor on a cylinder under axial compression, is cut back
-    to them.
+    and a step over several critical points, e.g. beyond the limit load
+    of a cylinder under axial compression, is cut back to them.
 
     With ``an.arc_length_sign_rule = 'determinant'``, which requires
     ``an.inertia``, the sign of the tangent predictor is the product of the
@@ -748,7 +731,7 @@ def _solver_arc_length(an, method, silent=False):
     bordered by `\boldsymbol{d}`, `\boldsymbol{C}^\top \delta
     \boldsymbol{c}_q = \boldsymbol{d}`, and the residual solutions `\delta
     \boldsymbol{c}_R` those of the null border, see
-    :func:`.static._factorize`, such that every predictor, tangent, secant,
+    :func:`.static._factorize`, such that every predictor, tangent,
     of the displacement controls or the jump to `\lambda = 1`, and every
     correction `\delta \boldsymbol{c}_R + \delta\lambda \, \delta
     \boldsymbol{c}_q` satisfies `\boldsymbol{C}^\top \Delta \boldsymbol{c}
@@ -789,13 +772,6 @@ def _solver_arc_length(an, method, silent=False):
         raise ValueError('Invalid arc-length method: %s' % method)
     control = method == 'displacement_control'
     gdc = method == 'generalized_displacement_control'
-    if an.arc_length_predictor not in PREDICTORS:
-        raise ValueError('Invalid arc_length_predictor: %s'
-                         % an.arc_length_predictor)
-    secant = an.arc_length_predictor == 'secant'
-    if gdc and secant:
-        raise ValueError("arc_length_predictor='secant' is not valid with "
-                         "NL_method='generalized_displacement_control'")
     if an.arc_length_sign_rule not in SIGN_RULES:
         raise ValueError('Invalid arc_length_sign_rule: %s'
                          % an.arc_length_sign_rule)
@@ -947,21 +923,8 @@ def _solver_arc_length(an, method, silent=False):
                  % (MAX_NUM_STEPS, lbd), level=1, silent=silent)
             break
 
-        # the secant predictor with full Newton-Raphson does not use the
-        # tangent stiffness matrix at the last converged state, whose
-        # factorization is skipped, unless -dR/dlbd depends on the load
-        # factor and must be evaluated together with the tangent; the first
-        # step of the displacement control after a branch switch starts along
-        # the tangent, since the switching increment, from a state of the
-        # fundamental branch, may vary the controlled quantity in the
-        # direction opposite to the bifurcated branch, which then returns to
-        # the fundamental one
-        use_secant = (secant and dc_last is not None
-                      and not (control and after_switch))
-        need_kT_conv = not use_secant or modified_NR or lbd_dependent
-
         # tangent stiffness matrix at the last converged state
-        if solve_kT_conv is None and need_kT_conv:
+        if solve_kT_conv is None:
             if step_num == 1 and modified_NR and not an.kT_initial_state:
                 kT = kC0
             else:
@@ -1082,25 +1045,13 @@ def _solver_arc_length(an, method, silent=False):
                 ctrl_sign = s or ctrl_sign
             # psi^T dc = ds
             ds = ctrl_sign*arc_length
-            if use_secant:
-                den = ctrl(dc_last)
-                dc_dir, dlbd_dir = dc_last, dlbd_last
-            else:
-                den = ctrl(dc_q_conv)
-                dc_dir, dlbd_dir = dc_q_conv, 1.
+            den = ctrl(dc_q_conv)
             if den == 0:
                 warn('The controlled quantity does not change along the predictor! Analysis stopped',
                      level=1, silent=silent)
                 break
-            dlbd = dlbd_dir*ds/den
-            dc = (ds/den)*dc_dir
-        elif use_secant:
-            # secant predictor: the previous converged increment scaled to
-            # the arc length
-            factor = arc_length/np.sqrt(inner(dc_last, dlbd_last, dc_last,
-                                              dlbd_last))
-            dc = factor*dc_last
-            dlbd = factor*dlbd_last
+            dlbd = ds/den
+            dc = dlbd*dc_q_conv
         else:
             # tangent predictor
             norm_q = np.sqrt(inner(dc_q_conv, 1., dc_q_conv, 1.))

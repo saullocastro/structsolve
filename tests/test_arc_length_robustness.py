@@ -1,7 +1,6 @@
 """Tests of the options for the robustness of the arc-length methods
 
-``Analysis.arc_length_line_search``, ``Analysis.arc_length_predictor`` and
-``Analysis.early_divergence``, see :func:`.arc_length._solver_arc_length`
+``Analysis.arc_length_line_search`` and ``Analysis.early_divergence``, see :func:`.arc_length._solver_arc_length`
 and :func:`.newton_raphson._check_divergence`, on the analytic problems of
 ``test_arc_length.py``: alone and together, the snap-through, the
 snap-back and the long steps through the limit point are traced as with
@@ -23,24 +22,9 @@ METHODS = ['arc_length_riks', 'arc_length_crisfield']
 
 OPTIONS = {
     'line_search': dict(arc_length_line_search=True),
-    'secant': dict(arc_length_predictor='secant'),
     'early_divergence': dict(early_divergence=True),
-    'all': dict(arc_length_line_search=True, arc_length_predictor='secant',
-                early_divergence=True),
+    'all': dict(arc_length_line_search=True, early_divergence=True),
 }
-
-
-def count_kT(p):
-    """Wrap ``p.calc_kG`` to count the evaluations of the tangent stiffness
-    matrix"""
-    calls = []
-    calc_kG = p.calc_kG
-
-    def wrapped(c=None, NLgeom=False, silent=True):
-        calls.append(len(p.an.increments))
-        return calc_kG(c=c, NLgeom=NLgeom, silent=silent)
-    p.calc_kG = wrapped
-    return calls
 
 
 @pytest.mark.parametrize('options', list(OPTIONS))
@@ -92,19 +76,20 @@ def test_no_doubling_back(method, options):
 
 @pytest.mark.parametrize('method', METHODS)
 def test_defaults_unchanged(method):
-    """The defaults are the former behaviour: no line search, tangent
-    predictor, the divergence checks of ``NUM_ITER_BEFORE_DIVERGENCE_CHECK``"""
+    """The defaults are the former behaviour: no line search, the
+    divergence checks of ``NUM_ITER_BEFORE_DIVERGENCE_CHECK``"""
     an = Analysis()
     assert an.arc_length_line_search is False
-    assert an.arc_length_predictor == 'tangent'
     assert an.early_divergence is False
     p = von_mises_truss(frac=1.5)
     p.analysis(NL_method=method, initialInc=0.05)
     p.an.static(NLgeom=True, silent=True)
     q = von_mises_truss(frac=1.5)
-    q.analysis(NL_method=method, initialInc=0.05, **OPTIONS['all'])
+    q.analysis(NL_method=method, initialInc=0.05,
+               arc_length_line_search=False, early_divergence=False)
     q.an.static(NLgeom=True, silent=True)
-    assert len(p.fint_calls) != len(q.fint_calls)
+    assert p.an.increments == q.an.increments
+    assert len(p.fint_calls) == len(q.fint_calls)
 
 
 @pytest.mark.parametrize('method', METHODS)
@@ -137,54 +122,6 @@ def test_line_search_reduces_correction(method, capsys):
     check_equilibrium(p)
     assert p.an.increments[-1] == 1.0
     assert out.count('Line-search: eta') > 0
-
-
-@pytest.mark.parametrize('method', METHODS)
-def test_secant_predictor(method):
-    """From the second step on, the first iterate of a step is the last
-    converged point plus the previous increment scaled to the arc length,
-    and the tangent stiffness matrix is not evaluated at the converged
-    state: one evaluation less per step than with the tangent predictor"""
-    p = hardening_springs()
-    kT_calls = count_kT(p)
-    p.analysis(NL_method=method, initialInc=0.1, arc_length_predictor='secant')
-    p.an.static(NLgeom=True, silent=True)
-    check_equilibrium(p)
-    cs = [np.zeros(4)] + list(p.an.cs)
-    lbds = [0.] + list(p.an.increments)
-    inc = np.asarray(p.an.increments)
-    assert inc[-1] == 1.0
-    assert np.all(np.diff(inc) > 0)
-    np.testing.assert_allclose(p.an.cs[-1], p.solve_reference(), rtol=1e-5)
-    for step in range(1, len(p.an.increments) - 1):
-        first = [c for s, c in p.fint_calls if s == step][0]
-        d_prev = cs[step] - cs[step - 1]
-        d_pred = first - cs[step]
-        # parallel and in the same direction
-        cos = d_pred.dot(d_prev)/np.linalg.norm(d_pred)/np.linalg.norm(d_prev)
-        assert cos > 1 - 1e-12, (step, cos)
-
-    q = hardening_springs()
-    kT_calls_tangent = count_kT(q)
-    q.analysis(NL_method=method, initialInc=0.1)
-    q.an.static(NLgeom=True, silent=True)
-    # the steps of the two predictors differ in their number of corrections,
-    # the tangent predictor evaluates kT once more per step
-    for calls, pp in ((kT_calls, p), (kT_calls_tangent, q)):
-        per_step = [calls.count(i) for i in range(len(pp.an.increments))]
-        corr = [n - 1 for n in pp.calls_per_step()]
-        extra = 0 if pp is p else 1
-        # the first step always starts from the tangent; the last step
-        # through lbd = 1 adds the iterations at lbd = 1
-        for i in range(1, len(per_step) - 1):
-            assert per_step[i] == corr[i] + extra, (pp is p, i, per_step, corr)
-
-
-def test_invalid_predictor():
-    p = hardening_springs()
-    p.analysis(NL_method='arc_length_riks', arc_length_predictor='chord')
-    with pytest.raises(ValueError, match='arc_length_predictor'):
-        p.an.static(NLgeom=True, silent=True)
 
 
 def test_early_divergence_check():

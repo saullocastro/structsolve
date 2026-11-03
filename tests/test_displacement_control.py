@@ -25,7 +25,7 @@ def truss_load_factor(w):
     return (w**3 - 3*w**2 + 2*w)/(FRAC*FLIM)
 
 
-@pytest.mark.parametrize('options', [{}, dict(arc_length_predictor='secant'),
+@pytest.mark.parametrize('options', [{},
                                      dict(arc_length_line_search=True),
                                      dict(early_divergence=True)])
 def test_snap_back_apex_control(options):

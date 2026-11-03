@@ -82,11 +82,6 @@ class Analysis(object):
                                   methods, see
                                   :func:`.arc_length._solver_arc_length`.
                                   Default is ``False``
-    ``arc_length_predictor``      ``str``, predictor of the arc-length methods,
-                                  ``'tangent'`` (default) or ``'secant'``, the
-                                  previous converged increment scaled to the
-                                  new arc length, see
-                                  :func:`.arc_length._solver_arc_length`
     ``arc_length_sign_rule``      ``str``, rule of the sign of the tangent
                                   predictor of the arc-length methods,
                                   ``'inner_product'`` (default), with the
@@ -403,7 +398,7 @@ class Analysis(object):
 
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
-            'arc_length_line_search', 'arc_length_predictor',
+            'arc_length_line_search',
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
             'constraints', 'constraint_values', 'stop_criterion',
@@ -427,7 +422,6 @@ class Analysis(object):
         self.line_search = False
         self.max_iter_line_search = 20
         self.arc_length_line_search = False
-        self.arc_length_predictor = 'tangent'
         self.early_divergence = False
         self.arc_length_weights = None
         self.control_vector = None

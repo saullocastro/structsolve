@@ -373,32 +373,6 @@ def test_bifurcation_pinning_default_path(method):
         assert p.an.increments == ref
 
 
-@pytest.mark.parametrize('beta', [0.5, -0.5])
-def test_branch_switching_controls_secant(beta):
-    """With the secant predictor, the first step of the displacement
-    control after the switch starts along the tangent, as with the tangent
-    predictor: the switching increment, from a state of the fundamental
-    branch beyond the bifurcation, reduces the shortening of the column,
-    the controlled quantity, and the secant along it returned to the
-    fundamental branch"""
-    p = pitchforks(betas=[beta])
-    p.analysis(NL_method='displacement_control', initialInc=0.13,
-               inertia=True, branch_switching=1, final_load_factor=None,
-               arc_length_predictor='secant',
-               stop_criterion=lambda an: len(an.increments) >= 15,
-               **control_kwargs('displacement_control'))
-    p.an.static(NLgeom=True, silent=True)
-    check_equilibrium(p)
-    an = p.an
-    assert len(an.branch_points) == 1
-    res, v = bifurcated_residual(p, 0)
-    np.testing.assert_allclose(res, 0, atol=1e-6)
-    v = np.abs(v)
-    assert np.all(np.diff(v) > 0)
-    lbds = np.asarray(an.increments[an.branch_points[0] + 1:])
-    assert np.all(lbds > 0.5) if beta > 0 else np.all(lbds < 0.5)
-
-
 @pytest.mark.parametrize('method', ['arc_length_riks', 'displacement_control'])
 def test_branch_switching_abandoned(method, monkeypatch, capsys):
     """A switching step that converges at too large an angle to the

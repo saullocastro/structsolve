@@ -65,13 +65,6 @@ def test_units_of_the_load():
                                rtol=1e-8)
 
 
-def test_secant_not_valid():
-    p = hardening_springs()
-    p.analysis(NL_method=METHOD, arc_length_predictor='secant')
-    with pytest.raises(ValueError, match='secant'):
-        p.an.static(NLgeom=True, silent=True)
-
-
 def test_exact_final_load_factor():
     """A linear problem, whose stiffness parameter is 1, reaches the final
     load factor exactly with steps of ``initialInc``"""

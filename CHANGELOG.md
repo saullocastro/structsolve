@@ -12,13 +12,6 @@
   of the accepted point is reused, such that a full correction costs no
   additional evaluation. `Analysis.line_search` still applies to
   Newton-Raphson only.
-- New `Analysis.arc_length_predictor`, `'tangent'` (default) or
-  `'secant'`: from the second step on, the secant predictor is the previous
-  converged increment scaled to the new arc length, without the sign rule
-  of the tangent predictor, which beyond a limit point is dominated by the
-  near-singular directions of the tangent stiffness matrix. With full
-  Newton-Raphson, the factorization of the tangent at the converged state is
-  then skipped, unless `calc_fext` accepts `lbd`.
 - New `Analysis.early_divergence`, default `False`, for Newton-Raphson and
   the arc-length methods: a step is stopped, and its increment cut, as soon
   as its relative residual exceeds `EARLY_DIVERGENCE_MAX_RREL = 1e3`, or,
@@ -51,8 +44,8 @@
   with `method='displacement_control'`, new module
   `structsolve.displacement_control`; `initialInc`, `minInc`, `maxInc` and
   `maxArcLength` are in units of `s_ref`, the first step being
-  `initialInc`, and the line search, the secant predictor and the early
-  divergence check apply. The path is traced as long as the controlled
+  `initialInc`, and the line search and the early divergence check
+  apply. The path is traced as long as the controlled
   quantity increases along it.
 - New `tests/test_displacement_control.py`: on the von Mises truss loaded
   through a soft spring at 1.5 times its limit load, with a snap-through in
@@ -181,7 +174,7 @@
   in `(c, lbd)`, the solutions of the load vector, `dc_q`, the linear
   solution `u_ref` of the arc-length scale and the first Newton-Raphson
   predictor have the border `d`, and those of the residual a null border:
-  every predictor (tangent, secant, displacement control, generalized
+  every predictor (tangent, displacement control, generalized
   displacement control, the jump to `final_load_factor`, the restart) and
   every correction satisfy `C^T Dc = Dlbd d`, while the eigenvector
   predictor of the branch switching, at constant load, keeps a null
@@ -240,7 +233,8 @@
   increment, as a failed one, in all the non-linear solvers. With `1` the
   eigenvalues cross zero one at a time. On the DOE09 cylinder (case 510)
   the tangent predictor jumped from 0 to 4 negative eigenvalues in one
-  step at 4615 N, and the secant predictor reached 31-34 of them.
+  step at 4615 N, and a secant predictor (the previous increment scaled
+  to the arc length), tried and not kept, reached 31-34 of them.
 - New `Analysis.branch_switching`, default `0`: with `inertia=True`, the
   arc-length methods switch to the bifurcated branch at the first
   `branch_switching` bifurcation points crossed. A crossing is detected by
@@ -425,7 +419,8 @@
   pattern, the null rows or the constraints change; the Newton-Raphson,
   Riks, Crisfield and generalized displacement control analyses with
   constraints and `inertia`, and the Riks analysis beyond the limit point
-  of the von Mises truss, bitwise those without the cache.
+  of the von Mises truss, bitwise those without the cache. Constraints
+  given with duplicated terms are not cached.
 - New module `structsolve.pardiso`: `PardisoSolver`, the interface to
   PARDISO of Intel oneMKL through `ctypes`, which calls the phases 12, 22
   (the numerical factorization with the analysis of the last phase 12),
