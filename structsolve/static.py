@@ -10,7 +10,8 @@ import weakref
 
 import numpy as np
 from scipy.sparse import bmat, csc_matrix, csr_matrix
-from scipy.sparse.linalg import spsolve, splu, gmres, LinearOperator
+from scipy.sparse.linalg import (spsolve, splu, gmres, LinearOperator, eigs,
+                                  ArpackError, ArpackNoConvergence)
 
 from .logger import msg
 from .sparseutils import remove_null_cols, _used_cols
@@ -31,6 +32,14 @@ PARDISO_GMRES_RTOL = 1.e-11
 #: ``'pardiso'``: relative residual after GMRES above which a warning is
 #: issued
 PARDISO_WARN_TOL = 1.e-6
+#: ``Analysis.inertia_num_eigvals``: relative tolerance of ARPACK on the
+#: eigenvalues of smallest magnitude of a SuperLU factorization, see
+#: :func:`._smallest_eigvals`
+INERTIA_ARPACK_TOL = 1.e-10
+#: ``Analysis.inertia_num_eigvals``: an eigenvalue `\lambda` computed by
+#: ARPACK is real when `|\mathrm{Im}(\lambda)| \le` this factor times
+#: `|\lambda|`, see :func:`._count_negative_real`
+INERTIA_REAL_RTOL = 1.e-8
 
 # instances of pypardiso.PyPardisoSolver whose memory was freed, reused by
 # the next factorizations, since creating one may take seconds
@@ -47,15 +56,69 @@ def _pardiso_release(solver):
     _pardiso_pool.append(solver)
 
 
-def _pardiso_factorize(solver, A, phase):
-    """Numerical factorization of ``A`` by the ``pypardiso.PyPardisoSolver``
-    ``solver``, with the phase 12 of PARDISO (analysis and factorization), or
-    22 (factorization only), which reuses the analysis of the last phase 12
-    of ``solver``, valid for a matrix of the same pattern"""
-    if phase == 12:
-        solver.factorize(A)
-        return
-    # as pypardiso.PyPardisoSolver.factorize, with the phase 22 instead of 12
+#: State of the private API of ``pypardiso`` used by the phase 22 of
+#: :func:`._pardiso_factorize`: ``None`` before its first use,
+#: ``'unverified'`` when it was found, ``True`` when its first phase 22 was
+#: verified, ``False`` when it is missing or failed, the public
+#: ``factorize`` (phase 12) being then used, see
+#: :func:`._pardiso_phase22_api`
+_pardiso_private_api = None
+#: The private methods and attributes of ``pypardiso.PyPardisoSolver`` used
+#: by the phase 22, with the names of the parameters of the methods, those
+#: of ``pypardiso`` 0.4.7
+_PARDISO_PRIVATE_API = dict(_check_A=('A',), _call_pardiso=('A', 'b'),
+                            _hash_csr_matrix=('matrix',),
+                            _is_already_factorized=('A',), set_phase=('phase',),
+                            factorized_A=None, size_limit_storage=None)
+
+
+def _pardiso_disable_private_api(reason):
+    """Use the public ``factorize`` of ``pypardiso`` from now on, with one
+    warning"""
+    global _pardiso_private_api
+    _pardiso_private_api = False
+    warnings.warn("linear_solver='pardiso': the private API of pypardiso "
+                  "that reuses the analysis of PARDISO (phase 22) is not "
+                  "usable (%s); the public factorize (phase 12), which "
+                  "repeats the analysis, is used instead" % reason,
+                  RuntimeWarning, stacklevel=4)
+
+
+def _pardiso_phase22_api(solver):
+    """Whether the private API of ``pypardiso`` of the phase 22 is usable,
+    checked once per process on the first solver: the attributes of
+    ``_PARDISO_PRIVATE_API`` present, the methods callable with the
+    parameters of ``pypardiso`` 0.4.7"""
+    global _pardiso_private_api
+    if _pardiso_private_api is not None:
+        return _pardiso_private_api
+    import inspect
+    for name, params in _PARDISO_PRIVATE_API.items():
+        if not hasattr(solver, name):
+            _pardiso_disable_private_api('PyPardisoSolver.%s is missing'
+                                         % name)
+            return False
+        if params is None:
+            continue
+        try:
+            found = tuple(inspect.signature(getattr(solver, name)).parameters)
+        except (TypeError, ValueError):
+            found = None
+        if found != params:
+            _pardiso_disable_private_api('PyPardisoSolver.%s%s instead of '
+                                         '%s' % (name, found, params))
+            return False
+    # verified by the first factorization of phase 22, see
+    # _pardiso_factorize
+    _pardiso_private_api = 'unverified'
+    return _pardiso_private_api
+
+
+def _pardiso_factorize_22(solver, A):
+    """Phase 22 with the private API of ``pypardiso``, as
+    ``pypardiso.PyPardisoSolver.factorize`` with the phase 22 instead of
+    12; the copy or the hash of ``A`` is stored such that ``solve`` finds
+    it factorized and solves with the phase 33"""
     solver._check_A(A)
     if A.nnz > solver.size_limit_storage:
         solver.factorized_A = solver._hash_csr_matrix(A)
@@ -63,6 +126,62 @@ def _pardiso_factorize(solver, A, phase):
         solver.factorized_A = A.copy()
     solver.set_phase(22)
     solver._call_pardiso(A, np.zeros((A.shape[0], 1)))
+    if not solver._is_already_factorized(A):
+        raise RuntimeError('the matrix is not recognized as factorized')
+
+
+def _pardiso_factorize(solver, A, phase):
+    r"""Numerical factorization of ``A`` by the ``pypardiso.PyPardisoSolver``
+    ``solver``, with the phase 12 of PARDISO (analysis and factorization), or
+    22 (factorization only), which reuses the analysis of the last phase 12
+    of ``solver``, valid for a matrix of the same pattern
+
+    ``pypardiso`` 0.4.7 has no public route to the phase 22: its
+    ``factorize`` sets the phase 12, then calls the private ``_check_A``
+    and ``_call_pardiso``, and stores a copy of ``A``, or its hash for more
+    than ``size_limit_storage`` terms, which ``solve`` compares with its
+    matrix to solve with the phase 33, otherwise with the phase 13, i.e. a
+    new analysis and factorization, correct but slow. The phase 22 is that
+    sequence with ``set_phase(22)``, see :func:`._pardiso_factorize_22`.
+    The private API is checked once per process, see
+    :func:`._pardiso_phase22_api`, and the first factorization of phase 22
+    is verified against a factorization of phase 12 of the same matrix by
+    the same solver: the same number of negative and perturbed pivots
+    (``iparm(23)``, ``iparm(22)`` and ``iparm(14)``) and the same solution
+    of one right-hand side, to a relative difference of ``1e-8``. When the
+    API is missing, raises or fails this check, the public ``factorize``
+    (phase 12) is used from then on, with one :class:`RuntimeWarning`; an
+    exception that the phase 12 raises as well is a failure of the
+    factorization, not of the API, and is raised.
+
+    """
+    global _pardiso_private_api
+    if phase == 12 or not _pardiso_phase22_api(solver):
+        solver.factorize(A)
+        return
+    try:
+        _pardiso_factorize_22(solver, A)
+        if _pardiso_private_api is True:
+            return
+        # first use: verified against the phase 12
+        iparm = solver.get_iparms()
+        b = np.linspace(1., 2., A.shape[0])
+        x22 = solver.solve(A, b)
+        ok = solver.phase == 33
+    except Exception as e:
+        solver.factorize(A)
+        _pardiso_disable_private_api('%s: %s' % (type(e).__name__, e))
+        return
+    solver.factorize(A)
+    iparm12 = solver.get_iparms()
+    x12 = solver.solve(A, b)
+    ok = (ok and all(iparm[i] == iparm12[i] for i in (14, 22, 23))
+          and np.linalg.norm(x22 - x12) <= 1e-8*np.linalg.norm(x12))
+    if ok:
+        _pardiso_private_api = True
+    else:
+        _pardiso_disable_private_api('the factorization of phase 22 differs '
+                                     'from that of phase 12')
 
 
 def _release_solvers(solvers):
@@ -470,7 +589,11 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         - ``num_constraints``: the number ``m`` of constraints of the
           border;
         - ``num_perturbed_pivots``: the number of pivots perturbed by
-          PARDISO, ``None`` with ``'splu'``.
+          PARDISO, ``None`` with ``'splu'``;
+        - ``smallest_eigvals``, with ``'splu'`` only: ``smallest_eigvals(k)``
+          returns the ``k`` eigenvalues of smallest magnitude of the reduced
+          matrix, on the space of the constraints, by shift-invert with
+          ARPACK and this factorization, see :func:`._smallest_eigvals`.
 
     Raises
     ------
@@ -570,7 +693,9 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     factorization only gathers the values of ``kT``; and the analysis
     (reordering and symbolic factorization) of PARDISO, its phase 11, the
     next factorizations being its phase 22 instead of 12 with a solver
-    that keeps the analysis of the pattern; up to
+    that keeps the analysis of the pattern, through the private API of
+    ``pypardiso``, checked and verified by :func:`._pardiso_factorize`,
+    which falls back to the phase 12 when it is not usable; up to
     ``CACHE_MAX_PARDISO_SOLVERS`` such solvers are kept, since the
     factorizations of the last converged state and of the current
     iteration coexist. The pattern is the shape, ``indptr`` and
@@ -645,6 +770,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         return x
 
     diagU = lu.U.diagonal()
+    solve_kT.smallest_eigvals = lambda k: _smallest_eigvals(lu, m, k)
     solve_kT.linear_solver = 'splu'
     solve_kT.det_sign = int(np.prod(np.sign(diagU))
                             *_permutation_sign(lu.perm_r)
@@ -654,6 +780,74 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     solve_kT.num_constraints = m
 
     return solve_kT
+
+
+def _smallest_eigvals(lu, m, k):
+    r"""The ``k`` eigenvalues of smallest magnitude of the matrix of the
+    SuperLU factorization ``lu``, on the space of its ``m`` constraints
+
+    The matrix is the reduced matrix `\boldsymbol{K}` of
+    :func:`._factorize`, bordered first by ``m`` constraints
+    `\boldsymbol{C}`. Shift-invert at `\sigma = 0` with ARPACK,
+    :func:`scipy.sparse.linalg.eigs`, on the operator `\boldsymbol{T}
+    \boldsymbol{b} = \boldsymbol{x}`, the solution of the bordered system
+    `\boldsymbol{K} \boldsymbol{x} + \boldsymbol{C} \boldsymbol{\mu} =
+    \boldsymbol{b}`, `\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}`,
+    by the forward and backward substitutions of ``lu``, which is not
+    factorized again: an eigenvalue `\nu \ne 0` of `\boldsymbol{T}` has its
+    eigenvector `\boldsymbol{b}` in the null space of
+    `\boldsymbol{C}^\top`, and `\boldsymbol{P} \boldsymbol{K} \boldsymbol{b}
+    = \boldsymbol{b}/\nu`, `\boldsymbol{P}` the orthogonal projection on
+    that space, i.e. `\lambda = 1/\nu` is an eigenvalue of
+    `\boldsymbol{Z}^\top \boldsymbol{K} \boldsymbol{Z}`, `\boldsymbol{Z}` an
+    orthonormal basis of the null space of `\boldsymbol{C}^\top`; the range
+    of `\boldsymbol{C}`, of `\nu = 0`, is not among the largest `|\nu|`.
+    With ``k`` larger than the size minus 2, the limit of ARPACK, all the
+    eigenvalues are computed with :func:`numpy.linalg.eigvals` from
+    `\boldsymbol{T}` built column by column.
+
+    Returns
+    -------
+    lam : ndarray or None
+        The eigenvalues, complex, sorted by increasing magnitude, ``None``
+        when ARPACK did not converge.
+
+    """
+    from .arpackutils import arpack_ncv, release_memory, start_kwargs
+    n = lu.shape[0] - m
+    k = int(k)
+    if n == 0:
+        return np.zeros(0, dtype=complex)
+    if k >= n - 1:
+        B = np.zeros((m + n, n))
+        B[m:] = np.eye(n)
+        nu = np.linalg.eigvals(lu.solve(B)[m:])
+        nu = nu[np.abs(nu) > n*np.finfo(float).eps*np.abs(nu).max()]
+    else:
+        z = np.zeros(m)
+        op = LinearOperator((n, n), dtype=np.float64,
+                            matvec=lambda v: lu.solve(np.concatenate(
+                                (z, np.asarray(v, dtype=np.float64).ravel())))[m:])
+        try:
+            nu = eigs(op, k=k, which='LM', tol=INERTIA_ARPACK_TOL,
+                      ncv=arpack_ncv(k, n), return_eigenvectors=False,
+                      **start_kwargs(n))
+        except (ArpackNoConvergence, ArpackError):
+            return None
+        finally:
+            release_memory()
+        nu = nu[nu != 0]
+    lam = 1./nu.astype(complex)
+    return lam[np.argsort(np.abs(lam), kind='stable')][:k]
+
+
+def _count_negative_real(lam):
+    r"""The number of real eigenvalues ``lam`` that are negative, and of the
+    complex ones with a negative real part, see ``INERTIA_REAL_RTOL``"""
+    real = np.abs(lam.imag) <= INERTIA_REAL_RTOL*np.abs(lam)
+    neg = lam.real < 0
+    return int(np.count_nonzero(real & neg)), int(np.count_nonzero(~real
+                                                                   & neg))
 
 
 def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
