@@ -107,7 +107,28 @@ def _estimate_mu_max(K, KG, max_iter=50, rel_tol=1e-3, linear_solver='splu'):
     r"""Largest `|\mu|` of ``KG u = mu K u``, estimated by power
     iterations, see :func:`_estimate_sigma`, or ``None`` when ``K`` is
     singular, not positive definite, or the linear solution is
-    inaccurate; ``K`` is factorized by :func:`_solve_function`"""
+    inaccurate; ``K`` is factorized by :func:`_solve_function`
+
+    At most ``max_iter`` iterations from a fixed random vector, stopped
+    when the estimate increases by less than ``rel_tol`` of its value.
+
+    Notes
+    -----
+    Power iterations on `\boldsymbol{K}^{-1} \boldsymbol{K}_G`: with
+    `\|\boldsymbol{x}\|_{\boldsymbol{K}} = 1`, the ratio is
+    `\|\boldsymbol{y}\|_{\boldsymbol{K}}`, `\boldsymbol{y} =
+    \boldsymbol{K}^{-1} \boldsymbol{K}_G \boldsymbol{x}`, with
+    `\|\boldsymbol{x}\|_{\boldsymbol{K}}^2 = \boldsymbol{x}^\top \boldsymbol{K}
+    \boldsymbol{x}`. For a symmetric `\boldsymbol{K}_G` and a positive
+    definite `\boldsymbol{K}`, the operator is self-adjoint in the
+    `\boldsymbol{K}` inner product, and the ratio is not larger than the
+    largest `|\mu|` and increases towards it; the largest ratio found is
+    returned. A non-positive `\boldsymbol{x}^\top \boldsymbol{K}
+    \boldsymbol{x}` tells that `\boldsymbol{K}` is not positive definite, and
+    a relative residual of the first solution larger than `10^{-6}` that the
+    solution is inaccurate.
+
+    """
     try:
         solve = _solve_function(K, linear_solver)
         x = np.random.RandomState(42).randn(K.shape[0])
@@ -143,19 +164,24 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
                    mu_max=False, linear_solver='splu'):
     r"""Shift of the Cayley mode used by :func:`lb`
 
+    The largest `|\mu|` of ``KG u = mu K u``, estimated by
+    :func:`_estimate_mu_max`, times ``safety``. The default shift ``1.`` is
+    returned when ``K`` is singular, not positive definite, or the linear
+    solution is inaccurate. An estimate of :func:`_estimate_mu_max` may be
+    given as ``mu_max``, e.g. to try another ``safety`` factor.
+
+    Notes
+    -----
     With ``sigma > 0``, ``eigsh(A=KG, M=K, sigma=sigma, mode='cayley',
     which='SM')`` returns the eigenvalues `\mu` of ``KG u = mu K u`` with the
     smallest `|(\mu + \sigma)/(\mu - \sigma)|`. This ordering selects the most
     negative `\mu`, i.e. the lowest positive load multipliers `-1/\mu`, only
     when `\sigma` is larger than `|\mu|` of these critical eigenvalues.
-    Otherwise the eigenvalues closest to `-\sigma` are returned.
-
-    The largest `|\mu|` is estimated with power iterations on
-    `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, whose norm ratio in the `\boldsymbol{K}`-norm increases towards the
-    largest `|\mu|`, and multiplied by ``safety``. The default shift ``1.`` is
-    returned when ``K`` is singular, not positive definite, or the linear
-    solution is inaccurate. An estimate of :func:`_estimate_mu_max` may be
-    given as ``mu_max``, e.g. to try another ``safety`` factor.
+    Otherwise the eigenvalues closest to `-\sigma` are returned. Hence the
+    shift is the largest `|\mu|`, estimated with power iterations on
+    `\boldsymbol{K}^{-1} \boldsymbol{K}_G`, whose norm ratio in the
+    `\boldsymbol{K}`-norm increases towards the largest `|\mu|`, times a
+    safety factor.
 
     """
     if mu_max is False:
@@ -169,24 +195,19 @@ def _estimate_sigma(K, KG, safety=10., max_iter=50, rel_tol=1e-3,
 def _negative_pivots(A, linear_solver='splu'):
     r"""Number of negative eigenvalues of the symmetric sparse matrix ``A``
 
-    ``A`` is factorized with a symmetric permutation and without row
-    interchanges, i.e. `\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with the pivots `\boldsymbol{D}` on
-    the diagonal of `\boldsymbol{U} = \boldsymbol{D} \boldsymbol{L}^\top`. By Sylvester's law of inertia, the
-    number of negative pivots is the number of negative eigenvalues of
-    ``A``.
+    The negative pivots of a SuperLU factorization of ``A`` with a symmetric
+    permutation and without row interchanges are counted.
 
     With ``linear_solver='pardiso'``, ``A`` is factorized by PARDISO
-    first, see :func:`.arpackutils.pardiso_factorization`, a symmetric
-    indefinite `\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with
-    Bunch-Kaufman pivoting, whose ``num_negative_eigvals`` is the count,
-    also when SuperLU would need a row interchange. It is trusted when no
-    pivot remains perturbed after the fallback of
-    :func:`.static._factorize` and the relative residual of the solution
-    for a random right-hand side is not larger than
+    first, see :func:`.arpackutils.pardiso_factorization`, whose
+    ``num_negative_eigvals`` is the count, also when SuperLU would need a
+    row interchange. It is trusted when no pivot remains perturbed after
+    the fallback of :func:`.static._factorize` and the relative residual of
+    the solution for a random right-hand side is not larger than
     ``arpackutils.PARDISO_ACCURACY_RTOL``, since a factorization of PARDISO
     may be inaccurate, with a wrong inertia, without any perturbed pivot
     reported, e.g. with ``iparm(24) = 1``. Otherwise, or when PARDISO
-    fails, the count is that of SuperLU above.
+    fails, the count is that of SuperLU.
 
     Returns
     -------
@@ -194,6 +215,17 @@ def _negative_pivots(A, linear_solver='splu'):
         ``None`` when the count is unknown: ``A`` is exactly singular, or a
         zero pivot forced a row interchange in SuperLU, with ``'pardiso'``
         when the count of PARDISO is not trusted either.
+
+    Notes
+    -----
+    Without row interchanges, the factorization is
+    `\boldsymbol{\Pi} \boldsymbol{A} \boldsymbol{\Pi}^\top = \boldsymbol{L}
+    \boldsymbol{D} \boldsymbol{L}^\top`, with the pivots `\boldsymbol{D}` on
+    the diagonal of `\boldsymbol{U} = \boldsymbol{D} \boldsymbol{L}^\top`. By
+    Sylvester's law of inertia, the number of negative pivots is the number
+    of negative eigenvalues of `\boldsymbol{A}`. PARDISO computes a symmetric
+    indefinite `\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top` with
+    Bunch-Kaufman pivoting, whose inertia is that of `\boldsymbol{A}` as well.
 
     """
     if linear_solver == 'pardiso':
@@ -220,6 +252,11 @@ def _negative_pivots(A, linear_solver='splu'):
 def _is_positive_definite(A, linear_solver='splu'):
     """Tells if the symmetric sparse matrix ``A`` is positive definite
 
+    ``True`` when :func:`_negative_pivots` counts no negative pivot,
+    ``False`` otherwise, also when the count is unknown.
+
+    Notes
+    -----
     The Gaussian elimination of a positive definite matrix never finds a
     zero or negative pivot, see :func:`_negative_pivots`.
 
@@ -602,8 +639,21 @@ def _sort_eigenpairs(mu, eigvecs, scale=None):
 def _eigh_condensed(K, KG, k):
     r"""Dense solution after condensing out the dofs where ``KG`` is null
 
-    With the dofs split in `b`, where `\boldsymbol{K}_G` has non-null rows, and `a`,
-    where it does not, the static condensation of the `a` dofs gives:
+    The dofs whose row of ``KG`` is null are condensed out with a SuperLU
+    factorization of ``K``, and the condensed problem is solved with
+    :func:`scipy.linalg.eigh`, which requires a positive definite condensed
+    ``K``. Returns the first ``k`` eigenvalues `\mu` of
+    `\boldsymbol{K}_G \boldsymbol{u} = \mu \boldsymbol{K} \boldsymbol{u}` in the
+    order of :func:`_sort_eigenpairs`, i.e. the positive load multipliers
+    first, and the corresponding eigenvectors of all the dofs. The null
+    `\mu` of :func:`_null_mu_pencil` are set to 0. Raises a ``ValueError``
+    when ``KG`` is a null matrix.
+
+    Notes
+    -----
+    With the dofs split in `b`, where `\boldsymbol{K}_G` has non-null rows,
+    and `a`, where it does not, the static condensation of the `a` dofs
+    gives:
 
     .. math::
 
@@ -611,11 +661,12 @@ def _eigh_condensed(K, KG, k):
          + \lambda \boldsymbol{K}_{G_{bb}}) \boldsymbol{u}_b = \boldsymbol{0}, \qquad
         \boldsymbol{u}_a = -\boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab} \boldsymbol{u}_b
 
-    solved with :func:`scipy.linalg.eigh`, which requires a positive
-    definite Schur complement. Returns the first ``k`` eigenvalues `\mu` of
-    `K_G u = \mu K u` in the order of :func:`_sort_eigenpairs`, i.e. the
-    positive load multipliers first, and the corresponding eigenvectors.
-    The null `\mu` of :func:`_null_mu_pencil` are set to 0.
+    solved as `\boldsymbol{K}_{G_{bb}} \boldsymbol{u}_b = \mu \boldsymbol{S}
+    \boldsymbol{u}_b`, `\mu = -1/\lambda`, with the Schur complement
+    `\boldsymbol{S} = \boldsymbol{K}_{bb} - \boldsymbol{K}_{ba}
+    \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab}`, which must be positive
+    definite. Both matrices are symmetrized, `(\boldsymbol{A} +
+    \boldsymbol{A}^\top)/2`, against the round-off of the condensation.
 
     """
     active = np.asarray(abs(KG).sum(axis=1)).ravel() > 0
@@ -843,13 +894,24 @@ def _eig_condensed(K, KG, k):
     condensed out with an LU factorization of ``K``, and the condensed
     problem is solved with :func:`scipy.linalg.eig`, through the complex
     LAPACK driver ``zggev``, see :func:`_eig_complex`. Neither converting to
-    the standard problem `(\boldsymbol{K}_{bb} - \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1} \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}` (``dgeev``) nor limiting the
-    threads of BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL
-    2025.0.0. The ``k`` returned eigenpairs, see :func:`_general_eigenpairs`,
-    are real when they are all real, and complex eigenvectors are
-    back-substituted with the real factorization of `\boldsymbol{K}_{aa}`. The null
-    `\mu` of :func:`_null_mu_pencil`, e.g. the round-off splitting of a
-    defective null eigenvalue, are set to 0.
+    a standard eigenvalue problem (``dgeev``) nor limiting the threads of
+    BLAS/LAPACK avoids the crash of ``dggev`` with Intel MKL 2025.0.0. The
+    ``k`` returned eigenpairs, see :func:`_general_eigenpairs`, are real
+    when they are all real, and complex eigenvectors are back-substituted
+    with the real factorization of the condensed dofs. The null `\mu` of
+    :func:`_null_mu_pencil`, e.g. the round-off splitting of a defective
+    null eigenvalue, are set to 0. Raises a ``ValueError`` when ``KG`` is a
+    null matrix.
+
+    Notes
+    -----
+    The static condensation of :func:`_eigh_condensed`, with `a` the dofs
+    where both the row and the column of `\boldsymbol{K}_G` are null, such
+    that `\boldsymbol{K}_{G_{ab}}` and `\boldsymbol{K}_{G_{ba}}` are null
+    for an unsymmetric `\boldsymbol{K}_G` too. The standard problem that was
+    tried, and also crashed, is that of `(\boldsymbol{K}_{bb} -
+    \boldsymbol{K}_{ba} \boldsymbol{K}_{aa}^{-1}
+    \boldsymbol{K}_{ab})^{-1} \boldsymbol{K}_{G_{bb}}`.
 
     """
     KG = csr_matrix(KG)
@@ -917,7 +979,18 @@ def _permutation_parity(p):
 
 def _det_sign(lu):
     r"""Sign of the determinant of a real matrix from its SuperLU
-    factorization `\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c = \boldsymbol{L} \boldsymbol{U}`, with a unit `\boldsymbol{L}`"""
+    factorization ``lu``, ``1``, ``-1`` or ``0`` for a null pivot
+
+    Notes
+    -----
+    With `\boldsymbol{\Pi}_r \boldsymbol{A} \boldsymbol{\Pi}_c =
+    \boldsymbol{L} \boldsymbol{U}` and a unit lower triangular
+    `\boldsymbol{L}`, `\det \boldsymbol{A} = \det \boldsymbol{\Pi}_r \,
+    \det \boldsymbol{\Pi}_c \prod_i U_{ii}`, the determinant of a
+    permutation matrix being the parity of the permutation, see
+    :func:`_permutation_parity`.
+
+    """
     d = lu.U.diagonal()
     return (int(np.prod(np.sign(d))) * _permutation_parity(lu.perm_r)
             * _permutation_parity(lu.perm_c))
@@ -1213,12 +1286,18 @@ def _count_multipliers(K, KG, mu_max, sign, K_positive_definite,
     r"""Number of load multipliers of the given ``sign`` whose modulus is
     lower than ``INERTIA_COUNT_FACTOR/mu_max``, or ``None`` when unknown
 
-    By Sylvester's law of inertia, for a positive definite ``K``, the number
-    of negative pivots of `\boldsymbol{K} + s \boldsymbol{K}_G` is the number of load multipliers
-    in `(0, s)` for `s > 0`, and in `(s, 0)` for `s < 0`, see
-    :func:`_check_eigenpairs` and :func:`_negative_pivots`. ``None`` is
-    returned when ``mu_max`` is unknown, ``K`` is not positive definite, or
-    the count is unknown.
+    The count is the number of negative pivots of ``K + s*KG``,
+    ``s = sign*INERTIA_COUNT_FACTOR/mu_max``, from :func:`_negative_pivots`.
+    ``None`` is returned when ``mu_max`` is unknown, ``K`` is not positive
+    definite (``K_positive_definite(K)`` is false), or the count is unknown.
+
+    Notes
+    -----
+    By Sylvester's law of inertia, for a positive definite `\boldsymbol{K}`,
+    the number of negative pivots of `\boldsymbol{K} + s \boldsymbol{K}_G` is
+    the number of load multipliers in `(0, s)` for `s > 0`, and in
+    `(s, 0)` for `s < 0`, see :func:`_check_eigenpairs` and
+    :func:`_negative_pivots`.
 
     """
     if mu_max is None or not K_positive_definite(K):
@@ -1701,6 +1780,20 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
     solvers of unsymmetric matrices therefore call :func:`scipy.linalg.eig`
     with complex matrices, i.e. ``zgeev`` and ``zggev``, which are not
     affected.
+
+    Examples
+    --------
+    The two lowest load multipliers:
+
+    >>> from scipy.sparse import diags
+    >>> from structsolve import lb
+    >>> K = diags([4., 9., 16., 25.]).tocsr()
+    >>> KG = diags([-1., -1., -1., -1.]).tocsr()
+    >>> eigvals, eigvecs = lb(K, KG, num_eigvalues=2, silent=True)
+    >>> eigvals
+    array([4., 9.])
+    >>> eigvecs.shape
+    (4, 2)
 
     """
     _check_linear_solver(linear_solver)

@@ -420,6 +420,20 @@ def freq(K, M, tol=0, sparse_solver=True,
     .. [2] Bolotin, V.V., Nonconservative Problems of the Theory of Elastic
        Stability, Pergamon Press, Oxford, 1963.
 
+    Examples
+    --------
+    The two lowest natural frequencies, in rad/s:
+
+    >>> import numpy as np
+    >>> from scipy.sparse import diags
+    >>> from structsolve import freq
+    >>> K = diags([4., 9., 16., 25.]).tocsr()
+    >>> M = diags([1., 1., 1., 1.]).tocsr()
+    >>> lambda2, eigvecs = freq(K, M, num_eigvalues=2, symmetric=True,
+    ...                         silent=True)
+    >>> np.sqrt(-lambda2)
+    array([2., 3.])
+
     """
     _check_linear_solver(linear_solver)
     msg('Running frequency analysis...', silent=silent)

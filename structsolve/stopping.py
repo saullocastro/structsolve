@@ -18,6 +18,9 @@ criterion is met, rather than until the load factor 1.
 def value_reached(func, value):
     r"""Stop when a quantity of the solution reaches a value
 
+    Factory of a ``stop_criterion`` that evaluates ``func`` on the last
+    converged solution ``an.cs[-1]`` and compares it with ``value``.
+
     Parameters
     ----------
     func : callable

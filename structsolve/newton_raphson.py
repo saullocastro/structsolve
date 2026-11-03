@@ -122,10 +122,29 @@ def _residual_projector(an, w):
     r"""Projection of the residual that removes the reactions of the
     constraints ``an.constraints``, ``None`` without constraints
 
+    The convergence criteria and the line searches measure the projected
+    residual `\boldsymbol{R}_p`: the residual `\boldsymbol{R}` minus the
+    reactions of the constraints that minimize its norm, in the norm of the
+    convergence criterion, weighted by ``w``.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object.
+    w : array-like or None
+        Weights of Crisfield's criterion, see :func:`._weights`.
+
+    Returns
+    -------
+    proj : callable or None
+        ``proj(R)`` returns `\boldsymbol{R}_p`.
+
+    Notes
+    -----
     With the constraints `\boldsymbol{C}^\top \boldsymbol{c} = \boldsymbol{0}`,
     the equilibrium is `\boldsymbol{R} + \boldsymbol{C} \boldsymbol{\mu} =
     \boldsymbol{0}`, `\boldsymbol{\mu}` the reactions of the constraints. The
-    convergence criteria and the line searches measure
+    projected residual is
 
     .. math::
 
@@ -139,18 +158,6 @@ def _residual_projector(an, w):
     projection of `\boldsymbol{R}` orthogonal to the columns of
     `\boldsymbol{C}` in the inner product of the criterion, `^{+}` the
     pseudo-inverse, for constraints that are not independent.
-
-    Parameters
-    ----------
-    an : :class:`.Analysis`
-        Analysis object.
-    w : array-like or None
-        Weights of Crisfield's criterion, see :func:`._weights`.
-
-    Returns
-    -------
-    proj : callable or None
-        ``proj(R)`` returns `\boldsymbol{R}_p`.
 
     """
     C = _constraint_matrix(an)
@@ -459,18 +466,8 @@ def _eigvals_inertia(solve_kT, k, silent=False, s=None):
     degrees of freedom, when given: those of `\boldsymbol{K}_T
     \boldsymbol{v} = \mu \boldsymbol{S}^{-2} \boldsymbol{v}`,
     `\boldsymbol{S} = \mathrm{diag}(s)`. The analyses pass the scaling of
-    :func:`._inertia_scaling`, `\boldsymbol{S}^{-2} =
-    |\mathrm{diag}(\boldsymbol{K}_0)|`, the diagonal of the linear stiffness
-    matrix, fixed along the path: a kinetic criterion with a lumped
-    stiffness-proportional mass, whose eigenvalues vary continuously along
-    the path and cross zero where `\boldsymbol{K}_T` is singular, whatever
-    the units of the unknowns. In the unknowns themselves, the eigenvalues
-    of smallest magnitude are those of the unknowns of smallest stiffness,
-    e.g. the high-order terms of a Ritz model, not those that cross zero:
-    the cantilever cylinder of Schweizerhof and Ramm (1984) in panels
-    (Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
-    follower pressure, had its negative eigenvalue 130th by magnitude
-    without the scaling. The attributes set on ``solve_kT`` are:
+    :func:`._inertia_scaling`, from the diagonal of the linear stiffness
+    matrix. The attributes set on ``solve_kT`` are:
 
     - ``num_negative_eigvals``: the number of real eigenvalues that are
       negative, ``None`` when ARPACK did not converge;
@@ -486,6 +483,33 @@ def _eigvals_inertia(solve_kT, k, silent=False, s=None):
     -------
     nneg : int or None
         ``solve_kT.num_negative_eigvals``.
+
+    Notes
+    -----
+    With `\boldsymbol{S}^{-2} = |\mathrm{diag}(\boldsymbol{K}_0)|`, the
+    diagonal of the linear stiffness matrix, fixed along the path, the
+    eigenvalue problem is a kinetic criterion with a lumped
+    stiffness-proportional mass, whose eigenvalues vary continuously along
+    the path and cross zero where `\boldsymbol{K}_T` is singular, whatever
+    the units of the unknowns. In the unknowns themselves, the eigenvalues
+    of smallest magnitude are those of the unknowns of smallest stiffness,
+    e.g. the high-order terms of a Ritz model, not those that cross zero:
+    the cantilever cylinder of Schweizerhof and Ramm [1]_ in panels
+    (Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
+    follower pressure, had its negative eigenvalue 130th by magnitude
+    without the scaling.
+
+    Complex eigenvalues come in conjugate pairs of positive product, hence
+    the sign of `\det \boldsymbol{K}_T` is `(-1)^{n}`, `n` the number of
+    negative real eigenvalues, and a parity of the count that differs from
+    the sign of the determinant tells that an odd number of negative real
+    eigenvalues lies beyond the ``k`` computed.
+
+    References
+    ----------
+    .. [1] Schweizerhof, K., Ramm, E., Displacement dependent pressure loads
+       in nonlinear finite element analyses, Computers & Structures, 18(6),
+       1099-1114, 1984. https://doi.org/10.1016/0045-7949(84)90154-8
 
     """
     if solve_kT.num_negative_eigvals is not None:

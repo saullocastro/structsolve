@@ -410,6 +410,17 @@ def solve(a, b, silent=False, **kwargs):
     only when they are null, otherwise the full system has no solution,
     since a null row and column make ``a`` singular.
 
+    Examples
+    --------
+    The null row and column of the third degree of freedom are removed:
+
+    >>> import numpy as np
+    >>> from scipy.sparse import diags
+    >>> from structsolve import solve
+    >>> solve(diags([2., 4., 0.]).tocsr(), np.array([2., 2., 0.]),
+    ...       silent=True)
+    array([1. , 0.5, 0. ])
+
     """
     a, used_cols = remove_null_cols(a, silent=silent)
     px = spsolve(a, b[used_cols], **kwargs)
@@ -717,6 +728,25 @@ def _smallest_eigvals(lu, m, k, s=None):
     r"""The ``k`` eigenvalues of smallest magnitude of the matrix of the
     SuperLU factorization ``lu``, on the space of its ``m`` constraints
 
+    The matrix is the reduced matrix of :func:`._factorize`, bordered first
+    by ``m`` constraints. ARPACK, :func:`scipy.sparse.linalg.eigs`, is used
+    in shift-invert mode at a null shift with the forward and backward
+    substitutions of ``lu``, which is not factorized again. With ``k``
+    larger than the size minus 2, the limit of ARPACK, all the eigenvalues
+    are computed with :func:`numpy.linalg.eigvals` from the inverse built
+    column by column. With the scaling ``s``, of the reduced degrees of
+    freedom, the eigenvalues are those of the scaled matrix, see Notes and
+    :func:`.newton_raphson._eigvals_inertia`. ``smallest_eigvals(k, s)``
+    of :func:`._factorize` takes ``s`` of all the degrees of freedom.
+
+    Returns
+    -------
+    lam : ndarray or None
+        The eigenvalues, complex, sorted by increasing magnitude, ``None``
+        when ARPACK did not converge.
+
+    Notes
+    -----
     The matrix is the reduced matrix `\boldsymbol{K}` of
     :func:`._factorize`, bordered first by ``m`` constraints
     `\boldsymbol{C}`. Shift-invert at `\sigma = 0` with ARPACK,
@@ -733,9 +763,7 @@ def _smallest_eigvals(lu, m, k, s=None):
     `\boldsymbol{Z}^\top \boldsymbol{K} \boldsymbol{Z}`, `\boldsymbol{Z}` an
     orthonormal basis of the null space of `\boldsymbol{C}^\top`; the range
     of `\boldsymbol{C}`, of `\nu = 0`, is not among the largest `|\nu|`.
-    With ``k`` larger than the size minus 2, the limit of ARPACK, all the
-    eigenvalues are computed with :func:`numpy.linalg.eigvals` from
-    `\boldsymbol{T}` built column by column.
+    For large ``k``, `\boldsymbol{T}` is built column by column.
 
     With the scaling ``s``, of the reduced degrees of freedom, the
     eigenvalues are those of `\boldsymbol{S} \boldsymbol{K} \boldsymbol{S}`,
@@ -744,14 +772,7 @@ def _smallest_eigvals(lu, m, k, s=None):
     \boldsymbol{T} \boldsymbol{S}^{-1}`: those of `\boldsymbol{K}
     \boldsymbol{v} = \lambda \boldsymbol{S}^{-2} \boldsymbol{v}`, with the
     positive diagonal reference matrix `\boldsymbol{S}^{-2}`, see
-    :func:`.newton_raphson._eigvals_inertia`. ``smallest_eigvals(k, s)``
-    of :func:`._factorize` takes ``s`` of all the degrees of freedom.
-
-    Returns
-    -------
-    lam : ndarray or None
-        The eigenvalues, complex, sorted by increasing magnitude, ``None``
-        when ARPACK did not converge.
+    :func:`.newton_raphson._eigvals_inertia`.
 
     """
     from .arpackutils import arpack_ncv, release_memory, start_kwargs
@@ -929,7 +950,6 @@ def static(K, fext, silent=False):
     r"""Linear static analysis
 
     Solves the linear system ``K u = fext`` using :func:`.solve`. For linear and
-
     non-linear static analyses based on callables that calculate the force
     vectors and stiffness matrices, see :class:`.Analysis`.
 
@@ -952,6 +972,23 @@ def static(K, fext, silent=False):
         ``[1.]``, the load factor of the solution.
     cs : list
         List with the solution vector.
+
+    Raises
+    ------
+    NotImplementedError
+        For a geometrically non-linear analysis, not implemented in this
+        function (the flag is fixed to ``False``, so it is not raised); use
+        :meth:`.Analysis.static`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from scipy.sparse import diags
+    >>> from structsolve import static
+    >>> increments, cs = static(diags([2., 4.]).tocsr(), np.array([2., 2.]),
+    ...                         silent=True)
+    >>> increments, cs[0]
+    ([1.0], array([1. , 0.5]))
 
     """
     increments = []
