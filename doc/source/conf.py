@@ -39,10 +39,13 @@ extensions = [
     'numpydoc',
     'sphinx.ext.mathjax',
     'nbsphinx',
+    'nbsphinx_link',
 ]
 
 # the notebooks are stored with their outputs, executed against the code of
-# the repository, and they are not executed when building the documentation
+# the repository, and they are not executed when building the documentation;
+# each one is linked into the documentation from the folder notebooks/ by a
+# .nblink file of nbsphinx-link
 nbsphinx_execute = 'never'
 
 # Add any paths that contain templates here, relative to this directory.

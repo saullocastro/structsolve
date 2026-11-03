@@ -4,5 +4,6 @@ sphinx
 numpydoc
 pydata-sphinx-theme
 nbsphinx
+nbsphinx-link
 ipykernel
 matplotlib

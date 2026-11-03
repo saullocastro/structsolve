@@ -32,8 +32,7 @@ from structsolve.pardiso import available as pardiso_available
 # otherwise
 pytest.importorskip('panels')
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                '..', 'notebooks'))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import simo1990_utils as su # noqa: E402
 
 

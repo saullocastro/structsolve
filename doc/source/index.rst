@@ -65,14 +65,14 @@ Usage examples
 .. toctree::
     :maxdepth: 1
 
-    ex_linear_static.rst
-    ex_linear_buckling.rst
-    ex_frequency.rst
-    ex_newton_raphson.rst
-    ex_arc_length.rst
-    ex_cylinder_postbuckling.rst
-    ex_follower_loads.rst
-    ex_prescribed_displacements.rst
+    notebooks/ex_linear_static.nblink
+    notebooks/ex_linear_buckling.nblink
+    notebooks/ex_frequency.nblink
+    notebooks/ex_newton_raphson.nblink
+    notebooks/ex_arc_length.nblink
+    notebooks/ex_cylinder_postbuckling.nblink
+    notebooks/ex_follower_loads.nblink
+    notebooks/ex_prescribed_displacements.nblink
 
 
 Tutorials
@@ -81,7 +81,8 @@ Tutorials
 .. toctree::
     :maxdepth: 1
 
-    tutorial_von_mises_truss.ipynb
+    notebooks/tutorial_von_mises_truss.nblink
+    notebooks/simo1990_cylinder_postbuckling.nblink
 
 
 structsolve API
