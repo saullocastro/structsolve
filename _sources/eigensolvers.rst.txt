@@ -98,6 +98,28 @@ fallback returns the lowest frequencies, or the eigenvalues closest to the
 shift for unsymmetric matrices.
 
 
+Factorizations with PARDISO
+---------------------------
+
+``linear_solver='pardiso'`` of :func:`.lb` and :func:`.freq` (default
+``'splu'``, SuperLU) factorizes the matrices of the sparse solvers of
+symmetric matrices with PARDISO of Intel oneMKL, see
+:mod:`structsolve.pardiso`, through :func:`.static._factorize`: the
+shifted matrix of the Cayley or shift-invert mode, passed to
+:func:`scipy.sparse.linalg.eigsh` as ``OPinv``, also in the passes of
+:func:`.arpackutils.capped_eigsh`, the stiffness matrix of the estimates of
+the shifts, and the shifted matrices of the inertia counts, whose number of
+negative pivots is then that of the symmetric indefinite factorization of
+PARDISO, known also where SuperLU would need a row interchange. ARPACK
+remains the eigenvalue solver. A factorization of PARDISO is used only when
+the relative residual of its solution for a random right-hand side is not
+larger than ``arpackutils.PARDISO_ACCURACY_RTOL`` and, for the counts, no
+pivot remains perturbed; SuperLU factorizes that matrix otherwise, see
+:func:`.arpackutils.pardiso_solve` and
+:func:`.linear_buckling._negative_pivots`. The solvers of unsymmetric
+matrices and the dense fallbacks are unchanged.
+
+
 Intel MKL and ARPACK
 --------------------
 

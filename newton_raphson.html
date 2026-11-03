@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.9.4 documentation</title>
+    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.10.0 documentation</title>
   
   
   
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=82662543"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.4" />
+  <meta name="docsearch:version" content="0.10.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -100,7 +100,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.4 documentation</p>
+    <p class="title logo__title">structsolve 0.10.0 documentation</p>
   
 </a></div>
     
@@ -226,6 +226,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -285,14 +292,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -312,7 +319,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -326,7 +333,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -427,6 +434,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -474,14 +488,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -505,6 +519,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Static analyses (<code class="docutils literal notranslate"><span class="pre">structsolve.analysis</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="static.html">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pardiso.html">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="linear_buckling.html">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
@@ -551,7 +566,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -605,8 +620,10 @@ The divergence and too-slow checks are only activated after
 <p>After a step that converged without being cut, the load increment is
 multiplied by <code class="docutils literal notranslate"><span class="pre">INC_GROWTH_FACTOR</span></code>, limited by <code class="docutils literal notranslate"><span class="pre">an.maxInc</span></code>. The last
 step is adjusted such that the analysis finishes at a load factor of
-exactly <code class="docutils literal notranslate"><span class="pre">1.0</span></code>. The analysis stops earlier, keeping the converged
-increments, when the load increment becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code>.</p>
+exactly <code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span></code>, <code class="docutils literal notranslate"><span class="pre">1.0</span></code> by default. The analysis stops
+earlier, keeping the converged increments, when the load increment
+becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code> or when <code class="docutils literal notranslate"><span class="pre">an.stop_criterion(an)</span></code>
+returns <code class="docutils literal notranslate"><span class="pre">True</span></code> after a converged step, see <code class="xref py py-mod docutils literal notranslate"><span class="pre">stopping</span></code>.</p>
 <p>The callables of <code class="docutils literal notranslate"><span class="pre">an</span></code> that declare the optional keyword arguments
 <code class="docutils literal notranslate"><span class="pre">inc</span></code>, <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">lbd</span></code> receive the current load factor and
 configuration, see <a class="reference internal" href="callbacks.html#module-structsolve.callbacks" title="structsolve.callbacks"><code class="xref py py-mod docutils literal notranslate"><span class="pre">callbacks</span></code></a>.</p>
@@ -666,6 +683,16 @@ predictors, are described in <a class="reference internal" href="#r8758224270d5-
 pp. 8-13), with the quadratic and the linear convergence rates.</p>
 <p>The step that would end within <code class="docutils literal notranslate"><span class="pre">max(an.minInc,</span> <span class="pre">1e-12)</span></code> of the load
 factor 1.0, or beyond it, is replaced by the step to exactly 1.0.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.constraint_values</span></code>, the values <span class="math notranslate nohighlight">\(\boldsymbol{d}\)</span> of the
+constraints <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}\)</span>
+of <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code>, the linear solution of the first predictor is
+that of the bordered system with the values <span class="math notranslate nohighlight">\(\boldsymbol{d}\)</span>, see
+<a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, such that <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \Delta
+\boldsymbol{c} = \Delta\lambda \boldsymbol{d}\)</span> for every predictor,
+scaled from the previous converged increment, and the corrections keep
+it, their border being null. A prescribed displacement then needs no
+external load: the reactions of the constraints, part of the internal
+force vector, are the reference of the convergence criterion.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="r8758224270d5-1" role="doc-biblioentry">
@@ -767,12 +794,13 @@ problem both vanish at equilibrium and cannot be the reference.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.newton_raphson._check_divergence">
-<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_check_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rnorm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rnorms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._check_divergence" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_check_divergence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rnorm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rnorms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rrel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._check_divergence" title="Link to this definition">#</a></dt>
 <dd><p>Check if the iterations of a step must be stopped without convergence</p>
 <p>The iterations are stopped when the residual is not finite, when
 <code class="docutils literal notranslate"><span class="pre">an.maxNumIter</span></code> corrections were performed, and, after
 <code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code> iterations, when the residual
-diverges or when the convergence is too slow.</p>
+diverges or when the convergence is too slow. With
+<code class="docutils literal notranslate"><span class="pre">an.early_divergence</span> <span class="pre">=</span> <span class="pre">True</span></code> a diverging step is also stopped earlier.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -787,6 +815,9 @@ current norm is appended to it.</p>
 <dt><strong>iteration</strong><span class="classifier">int</span></dt><dd><p>Current iteration, starting at 1.</p>
 </dd>
 <dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
+</dd>
+<dt><strong>Rrel</strong><span class="classifier">float or None, optional</span></dt><dd><p>Relative residual of the current iteration, see
+<a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a>, used by the early divergence check.</p>
 </dd>
 </dl>
 </dd>
@@ -816,11 +847,24 @@ residual in the first iterations is normal, especially in
 postbuckling. The checks only compare norms of the same step with each
 other, and with the scaled norm of Crisfield’s criterion they do not
 depend on the units of the degrees of freedom.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.early_divergence</span> <span class="pre">=</span> <span class="pre">True</span></code>, a diverging step is stopped
+without waiting for <code class="docutils literal notranslate"><span class="pre">NUM_ITER_BEFORE_DIVERGENCE_CHECK</span></code> iterations,
+such that its load or arc-length increment is cut before the
+iterations are spent, when:</p>
+<ul class="simple">
+<li><p>the relative residual <code class="docutils literal notranslate"><span class="pre">Rrel</span></code> is larger than
+<code class="docutils literal notranslate"><span class="pre">EARLY_DIVERGENCE_MAX_RREL</span></code>, at any iteration;</p></li>
+<li><p><span class="math notranslate nohighlight">\(j &gt;\)</span> <code class="docutils literal notranslate"><span class="pre">EARLY_DIVERGENCE_NUM_ITER</span></code> and <span class="math notranslate nohighlight">\(r_j &gt;\)</span>
+<code class="docutils literal notranslate"><span class="pre">EARLY_DIVERGENCE_FACTOR</span></code> <span class="math notranslate nohighlight">\(\min(r_1, ..., r_{j-1})\)</span>.</p></li>
+</ul>
+<p>These are the criteria with which the Riks analyses of a tow-steered
+cylinder of the DCSE website (2026) gave up the increments that would
+not converge beyond the limit point.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.newton_raphson._NR_iterations">
-<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_NR_iterations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd_dependent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K0_abs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._NR_iterations" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_NR_iterations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fext</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kT0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd_dependent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K0_abs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">proj</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._NR_iterations" title="Link to this definition">#</a></dt>
 <dd><p>Newton-Raphson iterations at a fixed load factor</p>
 <p>Corrects the predictor <code class="docutils literal notranslate"><span class="pre">dc</span></code> at the load factor <code class="docutils literal notranslate"><span class="pre">total</span></code> until the
 convergence criteria of <a class="reference internal" href="#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">_check_convergence()</span></code></a> are satisfied, or
@@ -829,7 +873,8 @@ singular tangent stiffness matrix. The tangent stiffness matrix is
 <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> at the current iterate, see
 <a class="reference internal" href="callbacks.html#structsolve.callbacks.calc_kT" title="structsolve.callbacks.calc_kT"><code class="xref py py-func docutils literal notranslate"><span class="pre">callbacks.calc_kT()</span></code></a>; its updates and the line search are
 controlled by <code class="docutils literal notranslate"><span class="pre">an.modified_NR</span></code>, <code class="docutils literal notranslate"><span class="pre">an.compute_every_n</span></code>,
-<code class="docutils literal notranslate"><span class="pre">an.line_search</span></code> and <code class="docutils literal notranslate"><span class="pre">an.max_iter_line_search</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">an.line_search</span></code> and <code class="docutils literal notranslate"><span class="pre">an.max_iter_line_search</span></code>, the early divergence
+check by <code class="docutils literal notranslate"><span class="pre">an.early_divergence</span></code>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl>
@@ -866,6 +911,10 @@ when <code class="docutils literal notranslate"><span class="pre">None</span></c
 <dt><strong>K0_abs</strong><span class="classifier">sparse matrix or None, optional</span></dt><dd><p><span class="math notranslate nohighlight">\(|K_{C0}|\)</span> of the round-off floor of the convergence criteria, see
 <a class="reference internal" href="convergence_api.html#structsolve.convergence.check_convergence" title="structsolve.convergence.check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">convergence.check_convergence()</span></code></a>, computed from <code class="docutils literal notranslate"><span class="pre">calc_kC()</span></code>
 when <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>proj</strong><span class="classifier">callable or None, optional</span></dt><dd><p>Projection of the residual that removes the reactions of
+<code class="docutils literal notranslate"><span class="pre">an.constraints</span></code>, see <code class="xref py py-func docutils literal notranslate"><span class="pre">_residual_projector()</span></code>, computed when
+<code class="docutils literal notranslate"><span class="pre">None</span></code> and <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code> is given.</p>
 </dd>
 </dl>
 </dd>
@@ -996,6 +1045,91 @@ without being cut</p>
 </dd></dl>
 
 </section>
+<section id="inertia-of-the-tangent-stiffness-matrix">
+<h2>Inertia of the tangent stiffness matrix<a class="headerlink" href="#inertia-of-the-tangent-stiffness-matrix" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.newton_raphson._converged_state">
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_converged_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lbd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._converged_state" title="Link to this definition">#</a></dt>
+<dd><p>Factorization of the tangent stiffness matrix at a converged state,
+recording its inertia</p>
+<p>Used with <code class="docutils literal notranslate"><span class="pre">an.inertia</span> <span class="pre">=</span> <span class="pre">True</span></code>. The tangent stiffness matrix at <code class="docutils literal notranslate"><span class="pre">c</span></code>
+and the load factor <code class="docutils literal notranslate"><span class="pre">lbd</span></code> is factorized with <code class="docutils literal notranslate"><span class="pre">an.linear_solver</span></code>, see
+<a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, and the number of its negative eigenvalues,
+the sign of its determinant and the number of perturbed pivots are
+appended to <code class="docutils literal notranslate"><span class="pre">an.num_negative_eigvals</span></code>, <code class="docutils literal notranslate"><span class="pre">an.det_signs</span></code> and
+<code class="docutils literal notranslate"><span class="pre">an.num_perturbed_pivots</span></code>; for a singular matrix <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">0</span></code> and
+<code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object.</p>
+</dd>
+<dt><strong>c</strong><span class="classifier">array-like</span></dt><dd><p>Converged solution.</p>
+</dd>
+<dt><strong>lbd</strong><span class="classifier">float</span></dt><dd><p>Converged load factor.</p>
+</dd>
+<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>solve_kT</strong><span class="classifier">callable or None</span></dt><dd><p>The factorization, see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, <code class="docutils literal notranslate"><span class="pre">None</span></code> when the
+matrix is singular.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.newton_raphson._eigvals_inertia">
+<span class="sig-prename descclassname"><span class="pre">structsolve.newton_raphson.</span></span><span class="sig-name descname"><span class="pre">_eigvals_inertia</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.newton_raphson._eigvals_inertia" title="Link to this definition">#</a></dt>
+<dd><p>The number of negative real eigenvalues among the <code class="docutils literal notranslate"><span class="pre">k</span></code> of smallest
+magnitude of the SuperLU factorization <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code>, set as its
+<code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code>, see <code class="docutils literal notranslate"><span class="pre">Analysis.inertia_num_eigvals</span></code></p>
+<p>Nothing is done when <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> already has a count, the exact one of
+PARDISO. The eigenvalues are computed by
+<a class="reference internal" href="static.html#structsolve.static._smallest_eigvals" title="structsolve.static._smallest_eigvals"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._smallest_eigvals()</span></code></a> with the LU factorization of
+<code class="docutils literal notranslate"><span class="pre">solve_kT</span></code>, on the degrees of freedom whose row or column is not
+null and on the space of the constraints, scaled by <code class="docutils literal notranslate"><span class="pre">s</span></code>, of all the
+degrees of freedom, when given: those of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T
+\boldsymbol{v} = \mu \boldsymbol{S}^{-2} \boldsymbol{v}\)</span>,
+<span class="math notranslate nohighlight">\(\boldsymbol{S} = \mathrm{diag}(s)\)</span>. The analyses pass the scaling of
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_inertia_scaling()</span></code>, <span class="math notranslate nohighlight">\(\boldsymbol{S}^{-2} =
+|\mathrm{diag}(\boldsymbol{K}_0)|\)</span>, the diagonal of the linear stiffness
+matrix, fixed along the path: a kinetic criterion with a lumped
+stiffness-proportional mass, whose eigenvalues vary continuously along
+the path and cross zero where <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is singular, whatever
+the units of the unknowns. In the unknowns themselves, the eigenvalues
+of smallest magnitude are those of the unknowns of smallest stiffness,
+e.g. the high-order terms of a Ritz model, not those that cross zero:
+the cantilever cylinder of Schweizerhof and Ramm (1984) in panels
+(Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
+follower pressure, had its negative eigenvalue 130th by magnitude
+without the scaling. The attributes set on <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code>: the number of real eigenvalues that are
+negative, <code class="docutils literal notranslate"><span class="pre">None</span></code> when ARPACK did not converge;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_complex_negative</span></code>: the number of complex eigenvalues with a
+negative real part, among the <code class="docutils literal notranslate"><span class="pre">k</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code>: <code class="docutils literal notranslate"><span class="pre">k</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">inertia_complete</span></code>: <code class="docutils literal notranslate"><span class="pre">False</span></code> when the parity of the count differs
+from the sign of the determinant, i.e. an odd number of negative real
+eigenvalues lies beyond the <code class="docutils literal notranslate"><span class="pre">k</span></code> of smallest magnitude, with a
+warning.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>nneg</strong><span class="classifier">int or None</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">solve_kT.num_negative_eigvals</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -1033,7 +1167,7 @@ without being cut</p>
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -1061,6 +1195,11 @@ without being cut</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.newton_raphson.INC_CUT_FACTOR"><code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inertia-of-the-tangent-stiffness-matrix">Inertia of the tangent stiffness matrix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.newton_raphson._converged_state"><code class="docutils literal notranslate"><span class="pre">_converged_state()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.newton_raphson._eigvals_inertia"><code class="docutils literal notranslate"><span class="pre">_eigvals_inertia()</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
@@ -1086,8 +1225,8 @@ without being cut</p>
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1120,7 +1259,7 @@ without being cut</p>
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

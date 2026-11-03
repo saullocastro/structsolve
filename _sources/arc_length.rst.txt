@@ -12,6 +12,13 @@ Riks and Crisfield methods
 
 .. autofunction:: structsolve.arc_length_crisfield._solver_arc_length_crisfield
 
+Critical points
+---------------
+
+.. autofunction:: structsolve.arc_length._critical_eigenvector
+
+.. autofunction:: structsolve.arc_length._eigs_near_zero
+
 Constants
 ---------
 
@@ -24,3 +31,15 @@ Constants
 .. autodata:: structsolve.arc_length.MIN_GROWTH_FACTOR
 
 .. autodata:: structsolve.arc_length.MAX_NUM_STEPS
+
+.. autodata:: structsolve.arc_length.BRANCH_SWITCH_MIN_COS
+
+.. autodata:: structsolve.arc_length.BRANCH_SWITCH_MAX_TRIES
+
+.. autodata:: structsolve.arc_length.EIGVEC_NUM_GUARD
+
+.. autodata:: structsolve.arc_length.EIGVEC_MAX_ITER
+
+.. autodata:: structsolve.arc_length.EIGVEC_TOL
+
+.. autodata:: structsolve.arc_length.EIGVEC_MAX_SIZE

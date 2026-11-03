@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.9.4 documentation</title>
+    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.10.0 documentation</title>
   
   
   
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=82662543"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -48,11 +48,11 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Frequency analysis (structsolve.freq)" href="freq.html" />
-    <link rel="prev" title="Linear static analysis (structsolve.static)" href="static.html" />
+    <link rel="prev" title="PARDISO of Intel oneMKL (structsolve.pardiso)" href="pardiso.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.4" />
+  <meta name="docsearch:version" content="0.10.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -100,7 +100,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.4 documentation</p>
+    <p class="title logo__title">structsolve 0.10.0 documentation</p>
   
 </a></div>
     
@@ -226,6 +226,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -285,14 +292,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -312,7 +319,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -326,7 +333,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -427,6 +434,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -474,14 +488,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -505,6 +519,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Static analyses (<code class="docutils literal notranslate"><span class="pre">structsolve.analysis</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="static.html">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pardiso.html">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
@@ -551,7 +566,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -578,7 +593,7 @@
 <h1>Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)<a class="headerlink" href="#linear-buckling-analysis-structsolve-linear-buckling" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.lb">
-<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">lb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.lb" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.</span></span><span class="sig-name descname"><span class="pre">lb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">K</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">KG</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sparse_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_eigvalues_print</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_null_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_dense_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check_rtol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'splu'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.lb" title="Link to this definition">#</a></dt>
 <dd><p>Linear buckling analysis</p>
 <p>Calculates the load multipliers <code class="docutils literal notranslate"><span class="pre">lambda</span></code> and the buckling modes <code class="docutils literal notranslate"><span class="pre">u</span></code>
 of the linear buckling problem of <code class="docutils literal notranslate"><span class="pre">K</span></code> and <code class="docutils literal notranslate"><span class="pre">KG</span></code>, i.e. the eigenpairs
@@ -693,6 +708,11 @@ of symmetric matrices, <code class="docutils literal notranslate"><span class="p
 matrices, required e.g. when <code class="docutils literal notranslate"><span class="pre">KG</span></code> includes the load stiffness of
 follower loads, see above.</p>
 </dd>
+<dt><strong>linear_solver</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'splu'</span></code> (default) for the sparse factorizations of SuperLU, or
+<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> for those of PARDISO, which requires the shared
+library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> of Intel oneMKL, see <a class="reference internal" href="pardiso.html#module-structsolve.pardiso" title="structsolve.pardiso"><code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code></a>,
+in the sparse solvers of symmetric matrices only; see the Notes.</p>
+</dd>
 </dl>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -757,7 +777,8 @@ eigenpair must not be larger than <code class="docutils literal notranslate"><sp
 positive one returned may be missing: the number of negative pivots of
 <span class="math notranslate nohighlight">\(\boldsymbol{K} + s \boldsymbol{K}_G\)</span>, for <span class="math notranslate nohighlight">\(s\)</span> slightly below that multiplier, is the number
 of load multipliers in <span class="math notranslate nohighlight">\((0, s)\)</span> (Sylvester’s law of inertia). The
-factorization is done with SuperLU, without row interchanges. When a
+factorization is done with SuperLU, without row interchanges, or with
+PARDISO, see below. When a
 row interchange was needed and the count is unknown, <span class="math notranslate nohighlight">\(\boldsymbol{K} + s \boldsymbol{K}_G\)</span>
 must be positive definite for <span class="math notranslate nohighlight">\(s\)</span> slightly below the lowest positive
 load multiplier. See <code class="xref py py-func docutils literal notranslate"><span class="pre">_check_eigenpairs()</span></code>;</p></li>
@@ -775,6 +796,39 @@ eigenvalues of the cluster of the null <span class="math notranslate nohighlight
 <code class="docutils literal notranslate"><span class="pre">num_eigvalues</span></code> positive load multipliers exist, the Cayley mode with
 <span class="math notranslate nohighlight">\(-\boldsymbol{K}_G\)</span> gives the negative load multipliers closest to zero, see
 <code class="xref py py-func docutils literal notranslate"><span class="pre">_eigsh_both_signs()</span></code>.</p>
+<p><strong>PARDISO.</strong> With <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code>, the factorizations of the
+sparse solvers of symmetric matrices are done by PARDISO, through
+<a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>: the symmetric indefinite factorization
+<span class="math notranslate nohighlight">\(\boldsymbol{L} \boldsymbol{D} \boldsymbol{L}^\top\)</span> of the matrix scaled to a unit
+diagonal, with its fallback on perturbed pivots. ARPACK remains the
+eigenvalue solver: the operator <span class="math notranslate nohighlight">\((\boldsymbol{K}_G - \sigma
+\boldsymbol{K})^{-1}\)</span> of the Cayley mode, also of the passes of
+<a class="reference internal" href="arpackutils.html#structsolve.arpackutils.capped_eigsh" title="structsolve.arpackutils.capped_eigsh"><code class="xref py py-func docutils literal notranslate"><span class="pre">arpackutils.capped_eigsh()</span></code></a>, is passed to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> as <code class="docutils literal notranslate"><span class="pre">OPinv</span></code>, each solution refined by
+GMRES when its residual is too large, see
+<a class="reference internal" href="arpackutils.html#structsolve.arpackutils.pardiso_solve" title="structsolve.arpackutils.pardiso_solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">arpackutils.pardiso_solve()</span></code></a>; <code class="docutils literal notranslate"><span class="pre">K</span></code> of the power iterations of
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_estimate_mu_max()</span></code> and the matrices <span class="math notranslate nohighlight">\(\boldsymbol{K} + s
+\boldsymbol{K}_G\)</span> of the inertia counts are factorized by PARDISO too.
+The number of negative pivots is then the number of negative eigenvalues
+given by PARDISO, exact also when SuperLU would need a row interchange,
+for which its count is unknown. A factorization of PARDISO is used only
+when it is accurate: the relative residual of its solution for a random
+right-hand side must not be larger than
+<code class="docutils literal notranslate"><span class="pre">arpackutils.PARDISO_ACCURACY_RTOL</span></code>, and no pivot may remain perturbed
+for the counts; otherwise SuperLU is used for that matrix, with a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> for the operator of ARPACK, see
+<a class="reference internal" href="arpackutils.html#structsolve.arpackutils.pardiso_solve" title="structsolve.arpackutils.pardiso_solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">arpackutils.pardiso_solve()</span></code></a> and <code class="xref py py-func docutils literal notranslate"><span class="pre">_negative_pivots()</span></code>. The
+symmetric indefinite factorization of PARDISO (MKL 2025.0, default
+parameters, <code class="docutils literal notranslate"><span class="pre">iparm(2)</span> <span class="pre">=</span> <span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">iparm(10)</span> <span class="pre">=</span> <span class="pre">8</span></code>) of the Ritz models of
+the tests, e.g. <code class="docutils literal notranslate"><span class="pre">cylinder_5panels</span></code> (1140 dofs) and
+<code class="docutils literal notranslate"><span class="pre">plate_ssss_Nxx</span></code> (300 dofs), perturbed 5 to 80 pivots and gave
+residuals of 1 to 50, also for a positive definite <code class="docutils literal notranslate"><span class="pre">K</span></code>, and its
+fallback <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code> of <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a> reported no
+perturbed pivot with residuals of 1 to 2e7 and a wrong inertia; for
+these models <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> thus falls back to SuperLU. The
+solvers of unsymmetric matrices and the dense fallbacks, also the sparse
+factorization of <code class="docutils literal notranslate"><span class="pre">K</span></code> of <code class="xref py py-func docutils literal notranslate"><span class="pre">_eigh_condensed()</span></code>, keep SuperLU and
+LAPACK.</p>
 <p><strong>Unsymmetric matrices</strong>, e.g. <code class="docutils literal notranslate"><span class="pre">KG</span></code> with the load stiffness of a
 follower pressure that is not conservative, may have complex
 eigenvalues. The search of shifts of <code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_shift_search()</span></code> finds
@@ -864,12 +918,12 @@ It can be turned into an error with
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="static.html"
+       href="pardiso.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</p>
+        <p class="prev-next-title">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</p>
       </div>
     </a>
     <a class="right-next"
@@ -888,7 +942,7 @@ It can be turned into an error with
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -928,8 +982,8 @@ It can be turned into an error with
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -962,7 +1016,7 @@ It can be turned into an error with
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

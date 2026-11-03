@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.9.4 documentation</title>
+    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.10.0 documentation</title>
   
   
   
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=82662543"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -48,11 +48,11 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Prescribed displacements imposed exactly" href="ex_prescribed_displacements.html" />
-    <link rel="prev" title="Non-linear static analysis with the arc-length methods" href="ex_arc_length.html" />
+    <link rel="prev" title="Post-buckling of an axially compressed cylinder" href="ex_cylinder_postbuckling.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.4" />
+  <meta name="docsearch:version" content="0.10.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -100,7 +100,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.4 documentation</p>
+    <p class="title logo__title">structsolve 0.10.0 documentation</p>
   
 </a></div>
     
@@ -225,6 +225,13 @@
 </li>
 
 
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
     Follower loads and unsymmetric matrices
@@ -285,14 +292,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -312,7 +319,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -326,7 +333,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -426,6 +433,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="#" aria-current="page">
     Follower loads and unsymmetric matrices
@@ -474,14 +488,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -538,7 +552,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Follower loads and unsymmetric matrices</span></li>
@@ -650,6 +664,64 @@ vector of the current configuration:</p>
     <span class="k">assert</span> <span class="n">p_c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">p_c</span> <span class="o">&gt;</span> <span class="mf">1.7</span><span class="p">,</span> <span class="n">errors_c</span>
     <span class="n">p_const</span><span class="p">,</span> <span class="n">errors_const</span> <span class="o">=</span> <span class="n">worst</span><span class="p">[</span><span class="kc">False</span><span class="p">]</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors_const</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors_c</span><span class="p">),</span> <span class="p">(</span><span class="n">errors_c</span><span class="p">,</span> <span class="n">errors_const</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="inertia-of-unsymmetric-tangent-stiffness-matrices">
+<h2>Inertia of unsymmetric tangent stiffness matrices<a class="headerlink" href="#inertia-of-unsymmetric-tangent-stiffness-matrices" title="Link to this heading">#</a></h2>
+<p>The symmetric indefinite factorization of PARDISO counts the negative
+eigenvalues of a symmetric tangent stiffness matrix (<code class="docutils literal notranslate"><span class="pre">Analysis.inertia</span></code>
+with <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code>); an unsymmetric one is factorized by
+SuperLU, whose LU factorization gives only the sign of the determinant,
+the parity of the number of negative real eigenvalues. With
+<code class="docutils literal notranslate"><span class="pre">Analysis.inertia_num_eigvals</span> <span class="pre">=</span> <span class="pre">k</span></code>, the number of negative real
+eigenvalues among the <span class="math notranslate nohighlight">\(k\)</span> of smallest magnitude is computed at every
+converged increment by shift-invert at <span class="math notranslate nohighlight">\(\sigma = 0\)</span> with ARPACK, with the
+LU factorization of the converged state, and recorded in
+<code class="docutils literal notranslate"><span class="pre">Analysis.num_negative_eigvals</span></code>, such that <code class="docutils literal notranslate"><span class="pre">max_inertia_jump</span></code> applies,
+see <a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._eigvals_inertia" title="structsolve.newton_raphson._eigvals_inertia"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._eigvals_inertia()</span></code></a>.</p>
+<p>It detects the divergence points, where a real eigenvalue crosses zero,
+the static critical points of the path: limit points and bifurcations. It
+does not detect flutter: a complex pair <span class="math notranslate nohighlight">\(a \pm i b\)</span> whose real part
+becomes negative is not a static critical point, the tangent staying
+regular, and it is not counted (the number of such pairs among the <span class="math notranslate nohighlight">\(k\)</span> is
+logged), the kinetic criterion of <a class="reference internal" href="freq.html#structsolve.freq" title="structsolve.freq"><code class="xref py py-func docutils literal notranslate"><span class="pre">freq()</span></code></a> being needed, see below.
+Negative real eigenvalues beyond the <span class="math notranslate nohighlight">\(k\)</span> of smallest magnitude are missed;
+an odd number of them is reported, since the parity of the count then
+differs from the sign of the determinant.</p>
+<p>A problem whose tangent is <span class="math notranslate nohighlight">\(\mathrm{diag}(k_0, \boldsymbol{S}
+(\boldsymbol{D}_0 + \lambda \boldsymbol{D}_1) \boldsymbol{S}^{-1})\)</span>, with
+two real eigenvalues crossing zero at <span class="math notranslate nohighlight">\(\lambda = 0.27\)</span> and <span class="math notranslate nohighlight">\(0.63\)</span> and a
+complex pair at <span class="math notranslate nohighlight">\(0.47\)</span>: the count goes 0, 1, 2, the sign of the
+determinant +1, -1, +1, and the count agrees with
+<code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.linalg.eigvals()</span></code> at every increment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">'linear_solver'</span><span class="p">,</span>
+                         <span class="p">[</span><span class="s1">'splu'</span><span class="p">]</span> <span class="o">+</span> <span class="p">([</span><span class="s1">'pardiso'</span><span class="p">]</span> <span class="k">if</span> <span class="n">has_pardiso</span><span class="p">()</span> <span class="k">else</span> <span class="p">[]))</span>
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s1">'method'</span><span class="p">,</span> <span class="n">METHODS</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_count_along_path</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">linear_solver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Two real eigenvalues cross zero, 0 -&gt; 1 -&gt; 2, the sign of the</span>
+<span class="sd">    determinant returning to +1, and a complex pair crosses the imaginary</span>
+<span class="sd">    axis, which is not counted"""</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">LinearUnsymmetric</span><span class="p">([</span><span class="mf">0.27</span><span class="p">,</span> <span class="mf">0.63</span><span class="p">],</span> <span class="n">complex_crossings</span><span class="o">=</span><span class="p">[</span><span class="mf">0.47</span><span class="p">])</span>
+    <span class="n">an</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">NL_method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">inertia</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inertia_num_eigvals</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+                    <span class="n">linear_solver</span><span class="o">=</span><span class="n">linear_solver</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">maxInc</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">warns</span><span class="p">(</span><span class="ne">RuntimeWarning</span><span class="p">)</span> <span class="k">if</span> <span class="n">linear_solver</span> <span class="o">==</span> <span class="s1">'pardiso'</span> \
+            <span class="k">else</span> <span class="n">_nowarn</span><span class="p">():</span>
+        <span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">an</span><span class="o">.</span><span class="n">num_negative_eigvals</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">lbd</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">nneg</span><span class="p">,</span> <span class="n">det</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">,</span> <span class="n">counts</span><span class="p">,</span> <span class="n">an</span><span class="o">.</span><span class="n">det_signs</span><span class="p">):</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lbd</span><span class="o">/</span><span class="n">p</span><span class="o">.</span><span class="n">k0</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-12</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">nneg</span> <span class="o">==</span> <span class="n">dense_count</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">K</span><span class="p">(</span><span class="n">lbd</span><span class="p">),</span> <span class="mi">6</span><span class="p">)</span> <span class="o">==</span> <span class="n">dense_count</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">K</span><span class="p">(</span><span class="n">lbd</span><span class="p">))</span>
+        <span class="k">assert</span> <span class="n">nneg</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">lbd</span> <span class="o">&gt;</span> <span class="mf">0.27</span><span class="p">)</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">lbd</span> <span class="o">&gt;</span> <span class="mf">0.63</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">det</span> <span class="o">==</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">**</span><span class="n">nneg</span>
+    <span class="k">assert</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">counts</span><span class="p">))</span> <span class="o">==</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="n">an</span><span class="o">.</span><span class="n">det_signs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="c1"># the complex pair has a negative real part at the end</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvals</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">K</span><span class="p">(</span><span class="mf">1.</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">((</span><span class="n">lam</span><span class="o">.</span><span class="n">real</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1.</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="n">an</span><span class="o">.</span><span class="n">num_perturbed_pivots</span> <span class="o">==</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -787,12 +859,12 @@ use all these features, see <code class="docutils literal notranslate"><span cla
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="ex_arc_length.html"
+       href="ex_cylinder_postbuckling.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Non-linear static analysis with the arc-length methods</p>
+        <p class="prev-next-title">Post-buckling of an axially compressed cylinder</p>
       </div>
     </a>
     <a class="right-next"
@@ -811,7 +883,7 @@ use all these features, see <code class="docutils literal notranslate"><span cla
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -824,6 +896,7 @@ use all these features, see <code class="docutils literal notranslate"><span cla
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#non-linear-analyses">Non-linear analyses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inertia-of-unsymmetric-tangent-stiffness-matrices">Inertia of unsymmetric tangent stiffness matrices</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-static-analysis">Linear static analysis</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#linear-buckling-with-unsymmetric-matrices">Linear buckling with unsymmetric matrices</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flutter-the-kinetic-criterion">Flutter: the kinetic criterion</a></li>
@@ -852,8 +925,8 @@ use all these features, see <code class="docutils literal notranslate"><span cla
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -886,7 +959,7 @@ use all these features, see <code class="docutils literal notranslate"><span cla
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

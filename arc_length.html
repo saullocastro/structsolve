@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.9.4 documentation</title>
+    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.10.0 documentation</title>
   
   
   
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=82662543"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.4" />
+  <meta name="docsearch:version" content="0.10.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -100,7 +100,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.4 documentation</p>
+    <p class="title logo__title">structsolve 0.10.0 documentation</p>
   
 </a></div>
     
@@ -226,6 +226,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -285,14 +292,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -312,7 +319,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -326,7 +333,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -427,6 +434,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -474,14 +488,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -505,6 +519,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Static analyses (<code class="docutils literal notranslate"><span class="pre">structsolve.analysis</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="static.html">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pardiso.html">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="linear_buckling.html">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
@@ -551,7 +566,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -580,7 +595,8 @@
 <p>The Riks and Crisfield methods share the implementation of
 <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">_solver_arc_length()</span></code></a>, and are selected with
 <code class="docutils literal notranslate"><span class="pre">Analysis.NL_method</span> <span class="pre">=</span> <span class="pre">'arc_length_riks'</span></code> or
-<code class="docutils literal notranslate"><span class="pre">Analysis.NL_method</span> <span class="pre">=</span> <span class="pre">'arc_length_crisfield'</span></code>. The module-level constants
+<code class="docutils literal notranslate"><span class="pre">Analysis.NL_method</span> <span class="pre">=</span> <span class="pre">'arc_length_crisfield'</span></code>, as does the indirect
+displacement control, <code class="docutils literal notranslate"><span class="pre">Analysis.NL_method</span> <span class="pre">=</span> <span class="pre">'displacement_control'</span></code>. The module-level constants
 control the arc-length scaling and adaptation.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.arc_length._solver_arc_length">
@@ -605,8 +621,11 @@ control how often the tangent stiffness matrix is updated. A step that
 fails is repeated with the arc length multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>.
 The analysis stops when:</p>
 <ul class="simple">
-<li><p>the load factor reaches 1.0, the last solution being computed at a load
-factor of exactly 1.0</p></li>
+<li><p>the load factor reaches <code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span></code>, 1.0 by default, the
+last solution being computed at exactly this load factor; never with
+<code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span> <span class="pre">=</span> <span class="pre">None</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">an.stop_criterion(an)</span></code> returns <code class="docutils literal notranslate"><span class="pre">True</span></code> after a converged step, see
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">stopping</span></code></p></li>
 <li><p>the cumulative arc length reaches <code class="docutils literal notranslate"><span class="pre">an.maxArcLength</span></code></p></li>
 <li><p>the arc length becomes smaller than <code class="docutils literal notranslate"><span class="pre">an.minInc</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">MAX_NUM_STEPS</span></code> steps converged</p></li>
@@ -621,7 +640,8 @@ configuration, see <a class="reference internal" href="callbacks.html#module-str
 <dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object, the converged load factors and solutions are appended
 to <code class="docutils literal notranslate"><span class="pre">an.increments</span></code> and <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>.</p>
 </dd>
-<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'riks'</span></code> or <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>.</p>
+<dt><strong>method</strong><span class="classifier">str</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'riks'</span></code>, <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>, <code class="docutils literal notranslate"><span class="pre">'displacement_control'</span></code> or
+<code class="docutils literal notranslate"><span class="pre">'generalized_displacement_control'</span></code>.</p>
 </dd>
 <dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>A boolean to tell whether the log messages should be printed.</p>
 </dd>
@@ -643,7 +663,18 @@ p. 271), where the displacement term is not scaled and the load term is
 <span class="math notranslate nohighlight">\(\psi^2 \Delta\lambda^2 \boldsymbol{F}_{ext}^\top \boldsymbol{F}_{ext}\)</span>. <span class="math notranslate nohighlight">\(\psi\)</span> is the
 constant <code class="docutils literal notranslate"><span class="pre">PSI</span></code>,
 and <span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}^\top \boldsymbol{u}_{ref}\)</span> is
-replaced by 1 when it is null. With the inner product</p>
+replaced by 1 when it is null.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.arc_length_weights</span></code> <span class="math notranslate nohighlight">\(= \boldsymbol{w}\)</span>, the products of
+displacements in the constraint, and in the inner product below, are
+weighted, <span class="math notranslate nohighlight">\(\boldsymbol{a}^\top \boldsymbol{W} \boldsymbol{b}\)</span> with <span class="math notranslate nohighlight">\(\boldsymbol{W} =
+\mathrm{diag}(\boldsymbol{w})\)</span>, also in the scale <span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}^\top
+\boldsymbol{W} \boldsymbol{u}_{ref}\)</span>. When the unknowns mix translations with
+their derivatives or with rotations, of other units and magnitudes, the
+weights 1 for the translations and 0 for the others measure the arc
+length on the translations only. The arc length is then independent of
+the units of the degrees of freedom of null weight, as is Crisfield’s
+convergence criterion, see <a class="reference internal" href="convergence_api.html#module-structsolve.convergence" title="structsolve.convergence"><code class="xref py py-mod docutils literal notranslate"><span class="pre">convergence</span></code></a>.</p>
+<p>With the inner product</p>
 <div class="math notranslate nohighlight">
 \[\langle (a, \alpha), (b, \beta) \rangle =
 \frac{\boldsymbol{a}^\top \boldsymbol{b}}{\boldsymbol{u}_{ref}^\top \boldsymbol{u}_{ref}} + \psi^2 \alpha \beta\]</div>
@@ -715,19 +746,116 @@ constraint
 root that maximizes the inner product of the new increment with the
 current one <span class="math notranslate nohighlight">\((\Delta c, \Delta\lambda)\)</span> is chosen, i.e. the smallest
 angle, since both have the length <span class="math notranslate nohighlight">\(\Delta s\)</span>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">method='displacement_control'</span></code>: indirect displacement control, the
+arc-length constraint being replaced by the linear constraint</p>
+<div class="math notranslate nohighlight">
+\[\frac{\boldsymbol{\psi}^\top \Delta \boldsymbol{c}}{s_{ref}} = \Delta s\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{\psi}\)</span> = <code class="docutils literal notranslate"><span class="pre">an.control_vector</span></code> and <span class="math notranslate nohighlight">\(s_{ref}\)</span> =
+<code class="docutils literal notranslate"><span class="pre">an.control_scale</span></code>, by default <span class="math notranslate nohighlight">\(|\boldsymbol{\psi}^\top
+\boldsymbol{u}_{ref}|\)</span>, such that in the linear regime <span class="math notranslate nohighlight">\(\Delta s =
+\Delta\lambda\)</span>, which must then not be orthogonal to
+<span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}\)</span> (cosine above <code class="docutils literal notranslate"><span class="pre">CONTROL_MIN_COS</span></code>); a unit
+vector <span class="math notranslate nohighlight">\(\boldsymbol{\psi}\)</span> controls the
+displacement of one degree of freedom, e.g. the end shortening, and a
+buckling mode controls its amplitude. The correction of the load
+factor satisfies the constraint exactly:</p>
+<div class="math notranslate nohighlight">
+\[\delta\lambda = \frac{s_{ref} \Delta s - \boldsymbol{\psi}^\top
+(\Delta \boldsymbol{c} + \delta \boldsymbol{c}_R)}{\boldsymbol{\psi}^\top
+\delta \boldsymbol{c}_q}\]</div>
+<p>and the predictors are scaled to satisfy it, the tangent predictor
+<span class="math notranslate nohighlight">\(\Delta\lambda = s_{ref} \Delta s/(\boldsymbol{\psi}^\top \delta
+\boldsymbol{c}_q)\)</span>, without the sign rule, the sign of the load factor
+increment following from the one of <span class="math notranslate nohighlight">\(\boldsymbol{\psi}^\top \delta
+\boldsymbol{c}_q\)</span>. The step length <span class="math notranslate nohighlight">\(\Delta s\)</span> plays the role of the arc
+length, with <code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code> the first one, <span class="math notranslate nohighlight">\(\Delta s\)</span> keeping the
+sign for which the controlled quantity increases with the load factor
+at the origin. The path can be traced through the limit points of the
+load and of the other degrees of freedom, e.g. snap-backs, as long as
+the controlled quantity increases monotonically along it; at a limit
+point of the controlled quantity <span class="math notranslate nohighlight">\(\boldsymbol{\psi}^\top \delta
+\boldsymbol{c}_q\)</span> vanishes and the iterations fail or converge to
+another part of the path. For the indirect displacement control, see
+de Borst <a class="reference internal" href="#rdc0da8cb83d2-5" id="id7">[5]</a>. The check against the doubling back below does not
+apply, since the previous converged point does not satisfy the
+constraint.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">method='generalized_displacement_control'</span></code>: the generalized
+displacement control of Yang and Shieh <a class="reference internal" href="#rdc0da8cb83d2-6" id="id8">[6]</a>. With <span class="math notranslate nohighlight">\(\delta
+\boldsymbol{c}_q^{(k)}\)</span> the tangent <span class="math notranslate nohighlight">\(\boldsymbol{K}_T^{-1}
+\boldsymbol{F}_{ext}\)</span> at the start of step <span class="math notranslate nohighlight">\(k\)</span> and <span class="math notranslate nohighlight">\(\langle a, b
+\rangle_W = \boldsymbol{a}^\top \boldsymbol{W} \boldsymbol{b}\)</span>, with
+the weights of <code class="docutils literal notranslate"><span class="pre">an.arc_length_weights</span></code>, the predictor of step <span class="math notranslate nohighlight">\(k\)</span>
+is <span class="math notranslate nohighlight">\(\Delta\lambda = s_k \Delta s \sqrt{|GSP_k|}\)</span>, <span class="math notranslate nohighlight">\(\Delta
+\boldsymbol{c} = \Delta\lambda \, \delta \boldsymbol{c}_q^{(k)}\)</span>,
+with the generalized stiffness parameter</p>
+<div class="math notranslate nohighlight">
+\[GSP_k = \frac{\langle \delta c_q^{(1)}, \delta c_q^{(1)}
+\rangle_W}{\langle \delta c_q^{(k-1)}, \delta c_q^{(k)}
+\rangle_W}, \qquad GSP_1 = 1\]</div>
+<p>which decreases with the stiffness along the path and changes sign
+where the tangent turns back, at the limit points of the load; the
+sign <span class="math notranslate nohighlight">\(s_k = s_{k-1} \, \mathrm{sign}(GSP_k)\)</span>, <span class="math notranslate nohighlight">\(s_1 = 1\)</span>, then
+reverses the load increment. The corrections satisfy</p>
+<div class="math notranslate nohighlight">
+\[\langle \delta c_q^{(k-1)}, \delta \boldsymbol{c}_R + \delta\lambda
+\, \delta \boldsymbol{c}_q \rangle_W = 0, \qquad
+\delta\lambda = -\frac{\langle \delta c_q^{(k-1)}, \delta
+c_R \rangle_W}{\langle \delta c_q^{(k-1)}, \delta c_q
+\rangle_W}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\delta c_q^{(0)} = \delta c_q^{(1)}\)</span>, i.e. they are orthogonal
+to the tangent of the previous step, which does not depend on the
+units of the load nor on a scale of the displacements. The step
+length <span class="math notranslate nohighlight">\(\Delta s\)</span> is a load factor, <code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code> the first one
+and the largest, cut and adapted as the arc length, but never
+increased beyond <code class="docutils literal notranslate"><span class="pre">an.initialInc</span></code>, since growing it as the arc length
+would defeat the scaling by <span class="math notranslate nohighlight">\(GSP_k\)</span>, which shortens the steps where
+the structure softens: with longer steps the iterations may converge
+beyond a limit point on another part of the path. <code class="docutils literal notranslate"><span class="pre">an.maxArcLength</span></code>
+bounds the sum of the <span class="math notranslate nohighlight">\(\Delta s\)</span>. With <code class="docutils literal notranslate"><span class="pre">an.arc_length_weights</span> <span class="pre">=</span>
+<span class="pre">None</span></code>, <span class="math notranslate nohighlight">\(GSP_k\)</span>, the predictor and <span class="math notranslate nohighlight">\(\delta\lambda\)</span> are Eqs. (33),
+(34) and (30) of <a class="reference internal" href="#rdc0da8cb83d2-6" id="id9">[6]</a>, with <span class="math notranslate nohighlight">\(\delta c_q^{(0)} = \delta c_q^{(1)}\)</span> as
+there. <a class="reference internal" href="#rdc0da8cb83d2-6" id="id10">[6]</a> multiplies the load increment by <span class="math notranslate nohighlight">\(-1\)</span> when <span class="math notranslate nohighlight">\(GSP_k &lt; 0\)</span>,
+its step 2d, which keeps the displacements going forward only if the
+reversal is relative to the previous step, <span class="math notranslate nohighlight">\(s_k = s_{k-1} \,
+\mathrm{sign}(GSP_k)\)</span> as here, since <span class="math notranslate nohighlight">\(GSP_k\)</span> is negative only at
+the step after each limit point. The weights and the adaptation of
+<span class="math notranslate nohighlight">\(\Delta s\)</span> are additions of this implementation: in <a class="reference internal" href="#rdc0da8cb83d2-6" id="id11">[6]</a> <span class="math notranslate nohighlight">\(\Delta s\)</span>
+is the first load increment throughout. The check against the
+doubling back below does not apply.</p>
+</li>
 </ul>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.arc_length_line_search</span> <span class="pre">=</span> <span class="pre">True</span></code>, the whole correction
+<span class="math notranslate nohighlight">\((\delta \boldsymbol{c}_R + \delta\lambda \, \delta \boldsymbol{c}_q, \delta\lambda)\)</span>
+is multiplied by the first factor <span class="math notranslate nohighlight">\(\eta\)</span> of <code class="docutils literal notranslate"><span class="pre">LINE_SEARCH_ETAS</span></code>,
+<span class="math notranslate nohighlight">\(1, 1/2, 1/4\)</span>, for which the norm of the residual of the convergence
+criterion, see <a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_convergence" title="structsolve.newton_raphson._check_convergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_convergence()</span></code></a>, decreases,
+or by the factor of the smallest norm when none decreases it. The
+internal force vector of the accepted point is reused in the residual
+of the next iteration, such that the full correction costs no
+additional evaluation. With <span class="math notranslate nohighlight">\(\eta &lt; 1\)</span> the iterate leaves the
+constraint surface, the next correction returning to it; the converged
+point may thus be closer than <span class="math notranslate nohighlight">\(\Delta s\)</span> to the last one when the last
+correction was reduced. Contrary to the line search of
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._NR_iterations" title="structsolve.newton_raphson._NR_iterations"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._NR_iterations()</span></code></a>, there is no sufficient-decrease
+test: the residual of the equilibrium equations alone is not the merit
+function of the augmented system of the equilibrium equations and the
+constraint, along whose Newton direction it need not decrease.</p>
 <p>The step fails when <span class="math notranslate nohighlight">\(\delta\lambda\)</span> cannot be computed or is not
-finite, and when the converged increment points against the tangent
-predictor <span class="math notranslate nohighlight">\((\Delta c_{pred}, \Delta\lambda_{pred})\)</span> of the step,
+finite, when the iterations are stopped by
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._check_divergence" title="structsolve.newton_raphson._check_divergence"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._check_divergence()</span></code></a>, earlier with
+<code class="docutils literal notranslate"><span class="pre">an.early_divergence</span> <span class="pre">=</span> <span class="pre">True</span></code>, and when the converged increment points
+against the predictor <span class="math notranslate nohighlight">\((\Delta c_{pred}, \Delta\lambda_{pred})\)</span> of the
+step,
 <span class="math notranslate nohighlight">\(\langle (\Delta c, \Delta\lambda), (\Delta c_{pred},
 \Delta\lambda_{pred}) \rangle \le 0\)</span>. The previous converged point is
 also at the distance <span class="math notranslate nohighlight">\(\Delta s\)</span> from the last one, and with long steps
 or near a limit point the iterations may converge to it and then trace
-the path backwards, the “doubling back” that <a class="reference internal" href="#rdc0da8cb83d2-2" id="id7">[2]</a> (p. 56) avoids with
+the path backwards, the “doubling back” that <a class="reference internal" href="#rdc0da8cb83d2-2" id="id12">[2]</a> (p. 56) avoids with
 the choice of the root. The accepted points are thus on the side of the
 tangent predictor of the hyperplane normal to it, in the inner product
 above, through the last converged point, as the points of the plane of
-Riks <a class="reference internal" href="#rdc0da8cb83d2-1" id="id8">[1]</a>, normal to the tangent at the distance <span class="math notranslate nohighlight">\(\Delta s\)</span> from the
+Riks <a class="reference internal" href="#rdc0da8cb83d2-1" id="id13">[1]</a>, normal to the tangent at the distance <span class="math notranslate nohighlight">\(\Delta s\)</span> from the
 last converged point. With full Newton-Raphson, <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is updated at
 every iteration at the current iterate <span class="math notranslate nohighlight">\((c + \Delta c, \lambda +
 \Delta\lambda)\)</span>; with
@@ -744,9 +872,102 @@ step that was repeated, and the limit is in fact
 <code class="docutils literal notranslate"><span class="pre">max(an.maxInc,</span> <span class="pre">initial</span> <span class="pre">arc</span> <span class="pre">length)</span></code>. When a step fails, the arc length
 is multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code> and the step is repeated from the
 same tangent predictor direction. The square root of the ratio is the
-rule recommended by Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id9">[3]</a> (p. 76), who found that the ratio itself,
-as used by Crisfield <a class="reference internal" href="#rdc0da8cb83d2-2" id="id10">[2]</a> (Eq. 15), makes the number of iterations
+rule recommended by Ramm <a class="reference internal" href="#rdc0da8cb83d2-3" id="id14">[3]</a> (p. 76), who found that the ratio itself,
+as used by Crisfield <a class="reference internal" href="#rdc0da8cb83d2-2" id="id15">[2]</a> (Eq. 15), makes the number of iterations
 oscillate from step to step.</p>
+<p>The tangent stiffness matrix is factorized with <code class="docutils literal notranslate"><span class="pre">an.linear_solver</span></code>,
+see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>. With <code class="docutils literal notranslate"><span class="pre">an.inertia</span> <span class="pre">=</span> <span class="pre">True</span></code>, it is
+factorized at every converged state, the factorization being that of
+the predictor of the next step, and its number of negative eigenvalues
+and the sign of its determinant are recorded in
+<code class="docutils literal notranslate"><span class="pre">an.num_negative_eigvals</span></code> and <code class="docutils literal notranslate"><span class="pre">an.det_signs</span></code>, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._converged_state" title="structsolve.newton_raphson._converged_state"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._converged_state()</span></code></a>: on a stable branch without
+prestress-induced instabilities the count is zero, it increases by one
+at each limit point of the load beyond which the branch is unstable,
+and at each bifurcation point crossed without branching. A perturbation
+whose shape keeps the path on a branch of a given symmetry, e.g.
+axisymmetric, may thus leave many negative eigenvalues unnoticed
+without this count.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.max_inertia_jump</span></code> <span class="math notranslate nohighlight">\(= j\)</span>, which requires <code class="docutils literal notranslate"><span class="pre">an.inertia</span></code> and
+<code class="docutils literal notranslate"><span class="pre">an.linear_solver</span> <span class="pre">=</span> <span class="pre">'pardiso'</span></code>, a converged step whose number of
+negative eigenvalues differs by more than <span class="math notranslate nohighlight">\(j\)</span> from that of the last
+converged state is repeated with a shorter arc length, as a step that
+failed, unless the shorter arc length would be smaller than
+<code class="docutils literal notranslate"><span class="pre">an.minInc</span></code>. With <span class="math notranslate nohighlight">\(j = 1\)</span> the eigenvalues cross zero one at a time,
+and a step over several critical points, e.g. beyond the limit load
+of a cylinder under axial compression, is cut back to them.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.branch_switching</span></code> <span class="math notranslate nohighlight">\(= n &gt; 0\)</span>, which requires <code class="docutils literal notranslate"><span class="pre">an.inertia</span></code>,
+the path is switched to the bifurcated branch at the first <span class="math notranslate nohighlight">\(n\)</span>
+bifurcation points crossed, with every method. A critical point is
+crossed when the number of negative eigenvalues changes between two
+converged states, increases or decreases, or, when it is not known
+(<code class="docutils literal notranslate"><span class="pre">an.linear_solver</span> <span class="pre">=</span> <span class="pre">'splu'</span></code>), when the sign of the determinant
+changes. It is a bifurcation point when the load factor varies in the
+same direction along the tangent predictors of the inner-product rule
+at the two converged states, before and after the critical point, a
+limit point when the direction is reversed. At a bifurcation, the
+eigenvector <span class="math notranslate nohighlight">\(\boldsymbol{\phi}\)</span> of the eigenvalue that became negative,
+or positive when the count decreased, is computed with
+<a class="reference internal" href="#structsolve.arc_length._critical_eigenvector" title="structsolve.arc_length._critical_eigenvector"><code class="xref py py-func docutils literal notranslate"><span class="pre">_critical_eigenvector()</span></code></a>, with the sign for which
+<span class="math notranslate nohighlight">\(\boldsymbol{\phi}^\top \boldsymbol{c} \ge 0\)</span>, i.e. the direction
+of the deformation already present, e.g. of an imperfection, and the
+next step starts from the predictor <span class="math notranslate nohighlight">\((\Delta s \hat{\phi}, 0)\)</span> along it,
+<span class="math notranslate nohighlight">\(\hat{\phi}\)</span> normalized in the inner product above, with <span class="math notranslate nohighlight">\(\Delta s\)</span>
+the larger of the current arc length and that of the last step, which
+crossed the critical point. With <code class="docutils literal notranslate"><span class="pre">method='displacement_control'</span></code> and
+<code class="docutils literal notranslate"><span class="pre">'generalized_displacement_control'</span></code>, whose step lengths are not arc
+lengths, <span class="math notranslate nohighlight">\(\Delta s\)</span> is the length of the last increment in the inner
+product above, multiplied by the growth of the step length since then
+when it grew, as for the arc length. The step is corrected with the
+spherical constraint of <code class="docutils literal notranslate"><span class="pre">method='crisfield'</span></code> of radius <span class="math notranslate nohighlight">\(\Delta s\)</span>,
+whose root closest to the current
+increment is on the bifurcated branch, which passes through the critical
+point, at a distance smaller than <span class="math notranslate nohighlight">\(\Delta s\)</span>, and is tangent to
+<span class="math notranslate nohighlight">\(\boldsymbol{\phi}\)</span> at it, whereas the linearized constraint of
+<code class="docutils literal notranslate"><span class="pre">method='riks'</span></code> is singular there for a symmetric bifurcation. The
+step is accepted when the cosine between its increment and the
+predictor is at least <code class="docutils literal notranslate"><span class="pre">BRANCH_SWITCH_MIN_COS</span></code>, otherwise it is
+repeated with a shorter <span class="math notranslate nohighlight">\(\Delta s\)</span>, at most <code class="docutils literal notranslate"><span class="pre">BRANCH_SWITCH_MAX_TRIES</span></code>
+times, after which the switch is abandoned and the path continues on
+the branch already traced. The index in <code class="docutils literal notranslate"><span class="pre">an.increments</span></code> of the state
+from which the path was switched is appended to <code class="docutils literal notranslate"><span class="pre">an.branch_points</span></code>.
+The step after the switch starts along the tangent in the direction of
+the switching increment: with the inner-product rule for
+<code class="docutils literal notranslate"><span class="pre">method='riks'</span></code> and <code class="docutils literal notranslate"><span class="pre">'crisfield'</span></code>; with
+<code class="docutils literal notranslate"><span class="pre">'displacement_control'</span></code>, the sign of <span class="math notranslate nohighlight">\(\Delta s\)</span> for which the
+predictor makes a positive inner product with the switching increment;
+with <code class="docutils literal notranslate"><span class="pre">'generalized_displacement_control'</span></code>, the same sign of the load
+increment, <span class="math notranslate nohighlight">\(GSP_k = \langle \delta c_q^{(1)}, \delta c_q^{(1)}
+\rangle_W / \langle \delta c_q^{(k)}, \delta c_q^{(k)} \rangle_W\)</span>, i.e.
+<span class="math notranslate nohighlight">\(\delta c_q^{(k-1)}\)</span> replaced by <span class="math notranslate nohighlight">\(\delta c_q^{(k)}\)</span>, and the
+corrections orthogonal to <span class="math notranslate nohighlight">\(\delta c_q^{(k)}\)</span>, as at the first step,
+since the tangent before the switch is that of the other branch.
+The detection by the count of negative pivots and the switch along the
+critical eigenvector follow Wagner and Wriggers <a class="reference internal" href="#rdc0da8cb83d2-7" id="id16">[7]</a>, whose algorithm
+(p. 106, step (c)) detects a stability point when the number of
+negative diagonal elements of the factorization changes, and whose
+classification by the current stiffness parameter, zero at the limit
+points and not at the bifurcations, their Eq. (22), is replaced here by
+the direction of the load along the tangents. In <a class="reference internal" href="#rdc0da8cb83d2-7" id="id17">[7]</a> the critical
+point is first located by bisection, the eigenvector is added to the
+displacements of the last converged state, <span class="math notranslate nohighlight">\(\bar{\boldsymbol{v}} +
+\xi \boldsymbol{\phi}/\|\boldsymbol{\phi}\|\)</span> with <span class="math notranslate nohighlight">\(|\xi| =
+\|\bar{\boldsymbol{v}}\|/\tau\)</span> and <span class="math notranslate nohighlight">\(\tau\)</span> of the order of 100, Eqs.
+(24) and (25), and an equilibrium state is then found by the arc-length
+method, repeated with another <span class="math notranslate nohighlight">\(\tau\)</span>, up to about three times, when it
+falls back on the primary branch. Here the critical point is not
+located, the perturbation is the predictor of an arc-length step from
+the first state beyond the critical point, with the length of the
+arc-length steps instead of <span class="math notranslate nohighlight">\(|\xi|\)</span>, and the shorter steps of the
+repeated attempts play the role of the other values of <span class="math notranslate nohighlight">\(\tau\)</span>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.restart_state</span></code>, the dictionary <code class="docutils literal notranslate"><span class="pre">an.path_state</span></code> saved after
+a converged step of an analysis with the same method, the analysis
+continues from that step, with its arc length and the directions of its
+predictors, as the analysis that saved it would have, appending the
+next converged increments to the empty <code class="docutils literal notranslate"><span class="pre">an.increments</span></code> and <code class="docutils literal notranslate"><span class="pre">an.cs</span></code>.
+<code class="docutils literal notranslate"><span class="pre">an.path_state</span></code> holds arrays and numbers, e.g. to be saved with
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">pickle</span></code> and the analysis restarted with other options or after
+the end of a job.</p>
 <p>When the load factor 1.0 is exceeded within a converged step, from
 <span class="math notranslate nohighlight">\(\lambda &lt; 1\)</span> to <span class="math notranslate nohighlight">\(\lambda + \Delta\lambda &gt; 1\)</span>, the step is replaced by
 Newton-Raphson iterations at exactly <span class="math notranslate nohighlight">\(\lambda = 1\)</span>, see
@@ -775,25 +996,43 @@ once per update of the tangent stiffness matrix, and used in the
 bordered solution; the last one evaluated is the reference of the next
 convergence checks. At the converged state it is kept with the tangent
 stiffness matrix when the step is repeated with a shorter arc length.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code> and <code class="docutils literal notranslate"><span class="pre">an.constraint_values</span></code>, the constraints
+<span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{c} = \lambda \boldsymbol{d}\)</span>, e.g. a
+displacement prescribed in proportion to the load factor, linear in
+<span class="math notranslate nohighlight">\((\boldsymbol{c}, \lambda)\)</span>: the load solutions <span class="math notranslate nohighlight">\(\delta
+\boldsymbol{c}_q\)</span> (and <span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}\)</span>) are those of the system
+bordered by <span class="math notranslate nohighlight">\(\boldsymbol{d}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \delta
+\boldsymbol{c}_q = \boldsymbol{d}\)</span>, and the residual solutions <span class="math notranslate nohighlight">\(\delta
+\boldsymbol{c}_R\)</span> those of the null border, see
+<a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, such that every predictor, tangent,
+of the displacement controls or the jump to <span class="math notranslate nohighlight">\(\lambda = 1\)</span>, and every
+correction <span class="math notranslate nohighlight">\(\delta \boldsymbol{c}_R + \delta\lambda \, \delta
+\boldsymbol{c}_q\)</span> satisfies <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \Delta \boldsymbol{c}
+= \Delta\lambda \boldsymbol{d}\)</span>; the eigenvector predictor of the
+branch switching, at a constant load, has the null border. Under a
+prescribed displacement alone, <span class="math notranslate nohighlight">\(\boldsymbol{F}_{ext} = \boldsymbol{0}\)</span>,
+<span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}\)</span> is the displacement of the linear solution, not
+null, and the reactions of the constraints, in the internal force
+vector, are the reference of the convergence criterion.</p>
 <p class="rubric">References</p>
 <div role="list" class="citation-list">
 <div class="citation" id="rdc0da8cb83d2-1" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id8">2</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id3">1</a>,<a role="doc-backlink" href="#id13">2</a>)</span>
 <p>Riks, E., An incremental approach to the solution of snapping and
 buckling problems, International Journal of Solids and Structures,
 15(7), 529-551, 1979. <a class="reference external" href="https://doi.org/10.1016/0020-7683(79)90081-7">https://doi.org/10.1016/0020-7683(79)90081-7</a></p>
 </div>
 <div class="citation" id="rdc0da8cb83d2-2" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id7">2</a>,<a role="doc-backlink" href="#id10">3</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id6">1</a>,<a role="doc-backlink" href="#id12">2</a>,<a role="doc-backlink" href="#id15">3</a>)</span>
 <p>Crisfield, M.A., A fast incremental/iterative solution procedure
 that handles “snap-through”, Computers &amp; Structures, 13(1-3), 55-62,
 1981. <a class="reference external" href="https://doi.org/10.1016/0045-7949(81)90108-5">https://doi.org/10.1016/0045-7949(81)90108-5</a></p>
 </div>
 <div class="citation" id="rdc0da8cb83d2-3" role="doc-biblioentry">
 <span class="label"><span class="fn-bracket">[</span>3<span class="fn-bracket">]</span></span>
-<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id9">2</a>)</span>
+<span class="backrefs">(<a role="doc-backlink" href="#id4">1</a>,<a role="doc-backlink" href="#id14">2</a>)</span>
 <p>Ramm, E., Strategies for tracing the nonlinear response near
 limit points, in: Wunderlich, W., Stein, E., Bathe, K.J. (eds.),
 Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
@@ -805,6 +1044,26 @@ Nonlinear Finite Element Analysis in Structural Mechanics, Springer,
 <p>Crisfield, M.A., Non-linear Finite Element Analysis of Solids and
 Structures, Volume 1: Essentials, John Wiley &amp; Sons, Chichester,
 1991.</p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-5" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id7">5</a><span class="fn-bracket">]</span></span>
+<p>de Borst, R., Computation of post-bifurcation and post-failure
+behavior of strain-softening solids, Computers &amp; Structures, 25(2),
+211-224, 1987. <a class="reference external" href="https://doi.org/10.1016/0045-7949(87)90144-1">https://doi.org/10.1016/0045-7949(87)90144-1</a></p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-6" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>6<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id8">1</a>,<a role="doc-backlink" href="#id9">2</a>,<a role="doc-backlink" href="#id10">3</a>,<a role="doc-backlink" href="#id11">4</a>)</span>
+<p>Yang, Y.-B., Shieh, M.-S., Solution method for nonlinear problems
+with multiple critical points, AIAA Journal, 28(12), 2110-2116, 1990.
+<a class="reference external" href="https://doi.org/10.2514/3.10529">https://doi.org/10.2514/3.10529</a></p>
+</div>
+<div class="citation" id="rdc0da8cb83d2-7" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>7<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id16">1</a>,<a role="doc-backlink" href="#id17">2</a>)</span>
+<p>Wagner, W., Wriggers, P., A simple method for the calculation of
+postcritical branches, Engineering Computations, 5(2), 103-109, 1988.
+<a class="reference external" href="https://doi.org/10.1108/eb023727">https://doi.org/10.1108/eb023727</a></p>
 </div>
 </div>
 </dd></dl>
@@ -830,6 +1089,77 @@ normal plane), see <a class="reference internal" href="#structsolve.arc_length._
 <p class="rubric">Notes</p>
 <p>The quadratic (spherical) arc-length constraint is solved exactly at
 every iteration, see <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
+</dd></dl>
+
+</section>
+<section id="critical-points">
+<h2>Critical points<a class="headerlink" href="#critical-points" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.arc_length._critical_eigenvector">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">_critical_eigenvector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_neg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length._critical_eigenvector" title="Link to this definition">#</a></dt>
+<dd><p>Eigenvector of the tangent stiffness matrix whose eigenvalue just
+became negative</p>
+<p>Subspace iteration with the inverse of the factorization <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code>,
+see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, and the Rayleigh-Ritz projection of the
+inverse on the orthonormalized subspace, which gives the eigenvalues of
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero and their eigenvectors in the
+Euclidean inner product, see <a class="reference internal" href="#structsolve.arc_length._eigs_near_zero" title="structsolve.arc_length._eigs_near_zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a>. The subspace has
+<code class="docutils literal notranslate"><span class="pre">num_neg</span> <span class="pre">+</span> <span class="pre">EIGVEC_NUM_GUARD</span></code> vectors, <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> being the number of
+negative eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>, and is iterated until the
+Ritz values change by less than <code class="docutils literal notranslate"><span class="pre">EIGVEC_TOL</span></code>, at most
+<code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code> times. When fewer than <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> of the Ritz
+values are negative, i.e. positive eigenvalues are closer to zero than
+some negative ones, e.g. of weakly stiff terms of a Ritz model, the
+size of the subspace is doubled and the iteration repeated, up to
+<code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_SIZE</span></code> vectors. Without a count of negative eigenvalues
+(<code class="docutils literal notranslate"><span class="pre">'splu'</span></code>), <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> is 1 when the determinant is negative and 0
+otherwise. With <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code> the factorization
+is the bordered one, whose solutions satisfy the constraints, and the
+eigenpairs are those of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> restricted to them.</p>
+<p>Of the negative eigenvalues found, the <code class="docutils literal notranslate"><span class="pre">num_new</span></code> closest to zero are
+taken as those that became negative in the last step, and the most
+negative of them is the critical one, the first that became negative.
+Without negative eigenvalue, the one closest to zero is taken. With
+<code class="docutils literal notranslate"><span class="pre">num_new</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> eigenvalues became positive in the last
+step, the subspace has <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> more vectors, and the critical one
+is the largest of the <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> smallest positive eigenvalues, the
+first that became positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>phi</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvector, of unit Euclidean norm.</p>
+</dd>
+<dt><strong>mu</strong><span class="classifier">float</span></dt><dd><p>Its eigenvalue.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.arc_length._eigs_near_zero">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">_eigs_near_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length._eigs_near_zero" title="Link to this definition">#</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">p</span></code> eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero and their
+eigenvectors, by the subspace iteration of <a class="reference internal" href="#structsolve.arc_length._critical_eigenvector" title="structsolve.arc_length._critical_eigenvector"><code class="xref py py-func docutils literal notranslate"><span class="pre">_critical_eigenvector()</span></code></a>,
+with at most <code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code> iterations, from the vectors <code class="docutils literal notranslate"><span class="pre">start</span></code>,
+columns, completed by random vectors. With
+<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> the solutions of the factorization are used without the
+check of their residual and GMRES, see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>: the
+tangent stiffness matrix near a critical point is almost singular, the
+GMRES of its solutions took about one second each for the DOE09
+cylinder (57000 degrees of freedom), against 0.03 s for those of the
+factorization alone, and the subspace iteration converges to the
+eigenvectors closest to zero without them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mus</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvalues, not sorted.</p>
+</dd>
+<dt><strong>vecs</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvectors, the columns, orthonormal.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -863,6 +1193,46 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
 <dt class="sig sig-object py" id="structsolve.arc_length.MAX_NUM_STEPS">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">MAX_NUM_STEPS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1000</span></span><a class="headerlink" href="#structsolve.arc_length.MAX_NUM_STEPS" title="Link to this definition">#</a></dt>
 <dd><p>Maximum number of converged steps of an arc-length analysis</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.BRANCH_SWITCH_MIN_COS">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">BRANCH_SWITCH_MIN_COS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0.5</span></span><a class="headerlink" href="#structsolve.arc_length.BRANCH_SWITCH_MIN_COS" title="Link to this definition">#</a></dt>
+<dd><p>Minimum cosine between the converged increment of a branch-switching
+step and its predictor, the critical eigenvector</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.BRANCH_SWITCH_MAX_TRIES">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">BRANCH_SWITCH_MAX_TRIES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">3</span></span><a class="headerlink" href="#structsolve.arc_length.BRANCH_SWITCH_MAX_TRIES" title="Link to this definition">#</a></dt>
+<dd><p>Number of attempts of a branch-switching step, each with the arc length
+multiplied by <code class="docutils literal notranslate"><span class="pre">INC_CUT_FACTOR</span></code>, before the switch is abandoned</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.EIGVEC_NUM_GUARD">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">EIGVEC_NUM_GUARD</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">2</span></span><a class="headerlink" href="#structsolve.arc_length.EIGVEC_NUM_GUARD" title="Link to this definition">#</a></dt>
+<dd><p>Number of eigenpairs computed besides the negative eigenvalues by the
+subspace iteration of the critical eigenvector</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.EIGVEC_MAX_ITER">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">EIGVEC_MAX_ITER</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">100</span></span><a class="headerlink" href="#structsolve.arc_length.EIGVEC_MAX_ITER" title="Link to this definition">#</a></dt>
+<dd><p>Maximum number of iterations of the subspace iteration</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.EIGVEC_TOL">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">EIGVEC_TOL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-10</span></span><a class="headerlink" href="#structsolve.arc_length.EIGVEC_TOL" title="Link to this definition">#</a></dt>
+<dd><p>Relative tolerance of the eigenvalues of the subspace iteration</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.arc_length.EIGVEC_MAX_SIZE">
+<span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">EIGVEC_MAX_SIZE</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">64</span></span><a class="headerlink" href="#structsolve.arc_length.EIGVEC_MAX_SIZE" title="Link to this definition">#</a></dt>
+<dd><p>Largest subspace of <a class="reference internal" href="#structsolve.arc_length._critical_eigenvector" title="structsolve.arc_length._critical_eigenvector"><code class="xref py py-func docutils literal notranslate"><span class="pre">_critical_eigenvector()</span></code></a>, whose size is
+doubled until it holds the negative eigenvalues</p>
 </dd></dl>
 
 </section>
@@ -903,7 +1273,7 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -921,12 +1291,23 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length_crisfield._solver_arc_length_crisfield"><code class="docutils literal notranslate"><span class="pre">_solver_arc_length_crisfield()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#critical-points">Critical points</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length._critical_eigenvector"><code class="docutils literal notranslate"><span class="pre">_critical_eigenvector()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length._eigs_near_zero"><code class="docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#constants">Constants</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.PSI"><code class="docutils literal notranslate"><span class="pre">PSI</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.DESIRED_NUM_ITER"><code class="docutils literal notranslate"><span class="pre">DESIRED_NUM_ITER</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.MAX_GROWTH_FACTOR"><code class="docutils literal notranslate"><span class="pre">MAX_GROWTH_FACTOR</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.MIN_GROWTH_FACTOR"><code class="docutils literal notranslate"><span class="pre">MIN_GROWTH_FACTOR</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.MAX_NUM_STEPS"><code class="docutils literal notranslate"><span class="pre">MAX_NUM_STEPS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.BRANCH_SWITCH_MIN_COS"><code class="docutils literal notranslate"><span class="pre">BRANCH_SWITCH_MIN_COS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.BRANCH_SWITCH_MAX_TRIES"><code class="docutils literal notranslate"><span class="pre">BRANCH_SWITCH_MAX_TRIES</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.EIGVEC_NUM_GUARD"><code class="docutils literal notranslate"><span class="pre">EIGVEC_NUM_GUARD</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.EIGVEC_MAX_ITER"><code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.EIGVEC_TOL"><code class="docutils literal notranslate"><span class="pre">EIGVEC_TOL</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length.EIGVEC_MAX_SIZE"><code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_SIZE</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -954,8 +1335,8 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -988,7 +1369,7 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>

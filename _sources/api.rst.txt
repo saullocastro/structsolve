@@ -11,6 +11,7 @@ The main classes and functions are available directly from the
 
     analysis.rst
     static.rst
+    pardiso.rst
     linear_buckling.rst
     freq.rst
     newton_raphson.rst

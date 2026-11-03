@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.9.4 documentation</title>
+    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.10.0 documentation</title>
   
   
   
@@ -26,18 +26,18 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=c5ca06ca"></script>
+    <script src="_static/documentation_options.js?v=82662543"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -47,12 +47,12 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Linear buckling analysis (structsolve.linear_buckling)" href="linear_buckling.html" />
+    <link rel="next" title="PARDISO of Intel oneMKL (structsolve.pardiso)" href="pardiso.html" />
     <link rel="prev" title="Static analyses (structsolve.analysis)" href="analysis.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.9.4" />
+  <meta name="docsearch:version" content="0.10.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -100,7 +100,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.9.4 documentation</p>
+    <p class="title logo__title">structsolve 0.10.0 documentation</p>
   
 </a></div>
     
@@ -226,6 +226,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -285,14 +292,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -312,7 +319,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -326,7 +333,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -427,6 +434,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
@@ -474,14 +488,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -505,6 +519,7 @@
   <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="analysis.html">Static analyses (<code class="docutils literal notranslate"><span class="pre">structsolve.analysis</span></code>)</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Linear static analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.static</span></code>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pardiso.html">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="linear_buckling.html">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="freq.html">Frequency analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.freq</span></code>)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="newton_raphson.html">Newton-Raphson solver (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.newton_raphson</span></code>)</a></li>
@@ -551,7 +566,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -651,6 +666,271 @@ only when they are null, otherwise the full system has no solution,
 since a null row and column make <code class="docutils literal notranslate"><span class="pre">a</span></code> singular.</p>
 </dd></dl>
 
+<section id="factorizations-of-the-tangent-stiffness-matrix">
+<h2>Factorizations of the tangent stiffness matrix<a class="headerlink" href="#factorizations-of-the-tangent-stiffness-matrix" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.static._factorize">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">_factorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'splu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.static._factorize" title="Link to this definition">#</a></dt>
+<dd><p>Factorization of the tangent stiffness matrix</p>
+<p>Null rows and columns are removed, the corresponding values of the
+solution are zero, as in <a class="reference internal" href="#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a>. The factorization is reused by
+the non-linear solvers while the tangent stiffness matrix is not
+updated.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>kT</strong><span class="classifier">sparse matrix</span></dt><dd><p>Tangent stiffness matrix.</p>
+</dd>
+<dt><strong>linear_solver</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'splu'</span></code> (default) for the sparse LU factorization of SuperLU, or
+<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> for the symmetric indefinite factorization of PARDISO,
+which requires the shared library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> of Intel oneMKL, see
+<a class="reference internal" href="pardiso.html#module-structsolve.pardiso" title="structsolve.pardiso"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pardiso</span></code></a> and <code class="docutils literal notranslate"><span class="pre">LINEAR_SOLVERS</span></code>.</p>
+</dd>
+<dt><strong>constraints</strong><span class="classifier">array-like, sparse matrix or None, optional</span></dt><dd><p>The matrix <span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span> of the linear constraints
+<span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}\)</span>, of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">m)</span></code>
+for <code class="docutils literal notranslate"><span class="pre">m</span></code> constraints, see the Notes. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) for none.</p>
+</dd>
+<dt><strong>cache</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">_FactorizationCache</span></code> or None, optional</span></dt><dd><p>Cache of the work that depends only on the sparsity pattern of
+<code class="docutils literal notranslate"><span class="pre">kT</span></code>, reused by the next factorizations of a matrix of the same
+pattern, see the Notes. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) for none.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>solve_kT</strong><span class="classifier">callable</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">solve_kT(b,</span> <span class="pre">d=None)</span></code> returns the solution <code class="docutils literal notranslate"><span class="pre">x</span></code> of <code class="docutils literal notranslate"><span class="pre">kT</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">b</span></code>,
+or of the system bordered by the constraints, whose values are
+<code class="docutils literal notranslate"><span class="pre">d</span></code>, of shape <code class="docutils literal notranslate"><span class="pre">(m,)</span></code>, zeros when <code class="docutils literal notranslate"><span class="pre">None</span></code>, see the Notes; it
+has the attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">linear_solver</span></code>: the linear solver used, <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> when
+<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> fell back to it for an unsymmetric matrix;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">det_sign</span></code>: the sign of the determinant of the reduced matrix,
+<code class="docutils literal notranslate"><span class="pre">1</span></code> or <code class="docutils literal notranslate"><span class="pre">-1</span></code>, on the space of the constraints when given;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code>: the number of negative eigenvalues of the
+reduced matrix with <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, on the space of the
+constraints when given, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_constraints</span></code>: the number <code class="docutils literal notranslate"><span class="pre">m</span></code> of constraints of the
+border;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_perturbed_pivots</span></code>: the number of pivots perturbed by
+PARDISO, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">smallest_eigvals</span></code>, with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> only: <code class="docutils literal notranslate"><span class="pre">smallest_eigvals(k,</span>
+<span class="pre">s=None)</span></code> returns the <code class="docutils literal notranslate"><span class="pre">k</span></code> eigenvalues of smallest magnitude of
+the reduced matrix, scaled by <code class="docutils literal notranslate"><span class="pre">diag(s)</span></code> on both sides when
+given, on the space of the constraints, by shift-invert with
+ARPACK and this factorization, see <a class="reference internal" href="#structsolve.static._smallest_eigvals" title="structsolve.static._smallest_eigvals"><code class="xref py py-func docutils literal notranslate"><span class="pre">_smallest_eigvals()</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>RuntimeError</dt><dd><p>When the matrix is singular, for <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, or when PARDISO fails.</p>
+</dd>
+<dt>ImportError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code> and oneMKL is not found.</p>
+</dd>
+<dt>ValueError</dt><dd><p>For an invalid <code class="docutils literal notranslate"><span class="pre">linear_solver</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, the reduced matrix is factorized once with SuperLU,
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.splu()</span></code> with its default options, i.e. a
+sparse LU factorization <span class="math notranslate nohighlight">\(\boldsymbol{P}_r \boldsymbol{A} \boldsymbol{P}_c = \boldsymbol{L}
+\boldsymbol{U}\)</span> with row and column permutations, valid for unsymmetric
+matrices. Each call of <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> is then only a forward and a
+backward substitution, which is why the factorization is reused while
+the tangent stiffness matrix is not updated, e.g. in the modified
+Newton-Raphson method and in the two solutions of the bordered system
+of the arc-length methods. <span class="math notranslate nohighlight">\(\boldsymbol{L}\)</span> having a unit diagonal, the sign
+of the determinant is the product of the signs of the diagonal of
+<span class="math notranslate nohighlight">\(\boldsymbol{U}\)</span> and of the two permutations; for a symmetric matrix it is
+<span class="math notranslate nohighlight">\((-1)^{n_{neg}}\)</span>, with <span class="math notranslate nohighlight">\(n_{neg}\)</span> its number of negative eigenvalues,
+which LU does not give.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, the reduced matrix <span class="math notranslate nohighlight">\(\boldsymbol{A}\)</span> is scaled to a unit
+diagonal, <span class="math notranslate nohighlight">\(\boldsymbol{A}_s = \boldsymbol{D} \boldsymbol{A} \boldsymbol{D}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{D} =
+\mathrm{diag}(|a_{ii}|^{-1/2})\)</span>, a null diagonal term being replaced by
+1, and the upper triangle of <span class="math notranslate nohighlight">\(\boldsymbol{A}_s\)</span> is factorized by PARDISO as
+a real symmetric indefinite matrix (<code class="docutils literal notranslate"><span class="pre">mtype=-2</span></code>), <span class="math notranslate nohighlight">\(\boldsymbol{L} \boldsymbol{D}
+\boldsymbol{L}^\top\)</span> with Bunch-Kaufman pivoting. By Sylvester’s law of
+inertia, the number of negative pivots, <code class="docutils literal notranslate"><span class="pre">iparm(23)</span></code> of PARDISO, is
+the number of negative eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{A}_s\)</span>, hence of
+<span class="math notranslate nohighlight">\(\boldsymbol{A}\)</span>, the congruence by <span class="math notranslate nohighlight">\(\boldsymbol{D}\)</span> preserving the inertia: zero
+on the stable parts of an equilibrium path, it changes at the limit
+points and at the bifurcation points crossed. PARDISO perturbs the
+pivots that are too small, <code class="docutils literal notranslate"><span class="pre">iparm(14)</span></code> of them, which makes the count
+uncertain when it is not zero. When the first factorization perturbed
+pivots, the matrix is factorized again with the parameters
+<code class="docutils literal notranslate"><span class="pre">PARDISO_FALLBACK_IPARM</span></code>, <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code>, the two-level
+factorization algorithm, kept, <code class="docutils literal notranslate"><span class="pre">solve_kT.pardiso_fallback</span> <span class="pre">=</span> <span class="pre">True</span></code>,
+only when no pivot is perturbed and the relative residual of its
+solution of a random right-hand side, without refinement, is not
+larger than <code class="docutils literal notranslate"><span class="pre">PARDISO_ACCURACY_RTOL</span> <span class="pre">=</span> <span class="pre">1e-6</span></code>; otherwise the matrix is
+factorized by SuperLU, as <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>: a factorization of
+<code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code> without perturbed pivots had residuals up to 1e3 and
+a wrong inertia for some Ritz models of the tests (MKL 2025.0). With
+<code class="docutils literal notranslate"><span class="pre">cache</span></code>, the next factorizations of the same pattern use the
+fallback directly, with the phase 12 and the same check, or SuperLU
+directly. The default factorizations without perturbed pivots are
+not checked, at no cost. The tangent stiffness matrices of a Ritz model of a cylinder
+(panels 0.15.0, <code class="docutils literal notranslate"><span class="pre">cylshell_clpt_donnell</span></code>, 8 x 8 terms, 114 degrees
+of freedom, a dense matrix) and dense random indefinite matrices of
+114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
+default parameters (MKL 2026.1, <code class="docutils literal notranslate"><span class="pre">iparm(10)</span> <span class="pre">=</span> <span class="pre">8</span></code>,
+<code class="docutils literal notranslate"><span class="pre">iparm(11)</span> <span class="pre">=</span> <span class="pre">iparm(13)</span> <span class="pre">=</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">iparm(21)</span> <span class="pre">=</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">0</span></code>),
+solutions of relative residual 0.4 to 1, recovered by the GMRES
+below, and a number of negative pivots short by one, e.g. 0 from the
+load factor 0.827 of the critical point, where a dense eigenvalue
+analysis has one negative eigenvalue, up to 0.903; neither
+<code class="docutils literal notranslate"><span class="pre">iparm(10)</span> <span class="pre">=</span> <span class="pre">13</span></code> or <code class="docutils literal notranslate"><span class="pre">20</span></code>, nor the scaling and the weighted
+matching, <code class="docutils literal notranslate"><span class="pre">iparm(11)</span> <span class="pre">=</span> <span class="pre">iparm(13)</span> <span class="pre">=</span> <span class="pre">1</span></code>, nor <code class="docutils literal notranslate"><span class="pre">iparm(21)</span> <span class="pre">=</span> <span class="pre">3</span></code> changed
+it, and <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code> gave no perturbed pivot, the counts of the
+dense eigenvalue analysis along the whole path, and residuals of
+<code class="docutils literal notranslate"><span class="pre">1e-13</span></code>. The tangent of the DOE09 cylinder below, sparse, had no
+perturbed pivot. The diagonal of the tangent of a model
+with derivatives of the displacements among its unknowns may span many
+orders of magnitude, which the scaling compensates. Every solution is
+checked against its relative residual <span class="math notranslate nohighlight">\(\|\boldsymbol{A} \boldsymbol{x} -
+\boldsymbol{b}\|/\|\boldsymbol{b}\|\)</span> and, when it is larger than
+<code class="docutils literal notranslate"><span class="pre">PARDISO_REFINE_TOL</span></code>, improved by GMRES with the factorization as the
+preconditioner, to the relative tolerance <code class="docutils literal notranslate"><span class="pre">PARDISO_GMRES_RTOL</span></code>; a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> is issued when the residual remains larger than
+<code class="docutils literal notranslate"><span class="pre">PARDISO_WARN_TOL</span></code>. These are the settings of the Riks analyses of a
+tow-steered cylinder for the DCSE website (2026), where the
+unsymmetric LU of PARDISO was wrong and its Cholesky factorization
+failed beyond the limit point. The symmetric factorization would be
+wrong for an unsymmetric matrix, e.g. with the load stiffness of a
+follower load: <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> is then used, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>.
+With <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, the bordered system</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{bmatrix} \boldsymbol{0} &amp; \boldsymbol{C}^\top \\
+\boldsymbol{C} &amp; \boldsymbol{K}_T \end{bmatrix}
+\begin{Bmatrix} \boldsymbol{\mu} \\ \boldsymbol{x} \end{Bmatrix} =
+\begin{Bmatrix} \boldsymbol{d} \\ \boldsymbol{b} \end{Bmatrix}\end{split}\]</div>
+<p>is factorized instead, the border first, such that no row of the upper
+triangle factorized by PARDISO is empty, and <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> returns
+<span class="math notranslate nohighlight">\(\boldsymbol{x}\)</span>, which satisfies <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{x} =
+\boldsymbol{d}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{\mu}\)</span> being the Lagrange multipliers,
+the reactions of the constraints, <span class="math notranslate nohighlight">\(\boldsymbol{d} = \boldsymbol{0}\)</span>
+unless <code class="docutils literal notranslate"><span class="pre">d</span></code> is given, e.g. a prescribed displacement. The rows of
+<span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span> of the null rows and columns of <code class="docutils literal notranslate"><span class="pre">kT</span></code> are removed,
+and the constraints left without any non-zero term, satisfied with
+<span class="math notranslate nohighlight">\(d_j = 0\)</span>, are dropped; a non-zero <span class="math notranslate nohighlight">\(d_j\)</span> of such a constraint raises a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code>, the degrees of freedom of the null rows and
+columns being zero. The
+bordered matrix is indefinite even when <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is positive
+definite on the space of the constraints: for <span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span> of full
+rank its inertia is that of <span class="math notranslate nohighlight">\(\boldsymbol{Z}^\top \boldsymbol{K}_T
+\boldsymbol{Z}\)</span> plus <span class="math notranslate nohighlight">\(m\)</span> positive and <span class="math notranslate nohighlight">\(m\)</span> negative eigenvalues,
+<span class="math notranslate nohighlight">\(\boldsymbol{Z}\)</span> a basis of the null space of <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top\)</span>
+(Gould, N.I.M., On practical conditions for the existence and
+uniqueness of solutions to the general equality quadratic programming
+problem, Mathematical Programming, 32, 90-99, 1985), hence
+<code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code> is the number of negative pivots minus <span class="math notranslate nohighlight">\(m\)</span>,
+and <code class="docutils literal notranslate"><span class="pre">det_sign</span></code> is multiplied by <span class="math notranslate nohighlight">\((-1)^m\)</span>. This is the border of the
+inertia relief of the Riks analyses of a tow-steered cylinder for the
+DCSE website (2026), with a single constraint.</p>
+<p>PARDISO is called through <a class="reference internal" href="pardiso.html#structsolve.pardiso.PardisoSolver" title="structsolve.pardiso.PardisoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PardisoSolver</span></code></a>, whose memory is
+freed when <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> is deleted.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">cache</span></code>, created by <a class="reference internal" href="analysis.html#structsolve.Analysis.static" title="structsolve.Analysis.static"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Analysis.static()</span></code></a> for each non-linear
+analysis, along which the pattern of the tangent stiffness matrix
+usually does not change, the work that depends only on the pattern is
+done once per pattern: the indices of the reduced and bordered matrix,
+of its CSC form, of the transposed terms of the symmetry check, of its
+diagonal and of the scaled upper triangle, from which each
+factorization only gathers the values of <code class="docutils literal notranslate"><span class="pre">kT</span></code>; and the analysis
+(reordering and symbolic factorization) of PARDISO, its phase 11, the
+next factorizations being its phase 22 instead of 12 with a solver
+that keeps the analysis of the pattern; up to
+<code class="docutils literal notranslate"><span class="pre">CACHE_MAX_PARDISO_SOLVERS</span></code> such solvers are kept, since the
+factorizations of the last converged state and of the current
+iteration coexist. The pattern is the shape, <code class="docutils literal notranslate"><span class="pre">indptr</span></code> and
+<code class="docutils literal notranslate"><span class="pre">indices</span></code> of <code class="docutils literal notranslate"><span class="pre">kT</span></code> in CSR form, compared at every call, the
+degrees of freedom whose row or column is not null, which depend on
+the values, since explicit zeros do not count, computed at every call,
+and <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, compared with its values; any change rebuilds the
+cache. The values enter only through the gathered terms, and the
+symmetry check, the scaling and the null rows and columns are evaluated
+at every call, such that the factorization is bitwise the one without
+the cache, verified by the tests, also the inertia and the perturbed
+pivots of PARDISO (with <code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS=1</span></code>; the analysis of PARDISO
+depends only on the pattern, with its default <code class="docutils literal notranslate"><span class="pre">iparm(11)</span> <span class="pre">=</span> <span class="pre">iparm(13)</span>
+<span class="pre">=</span> <span class="pre">0</span></code> for symmetric indefinite matrices). A matrix that is not
+<code class="docutils literal notranslate"><span class="pre">float64</span></code> or whose CSR form has duplicated or unsorted terms is
+factorized without the cache. On a symmetric matrix of 57000 degrees
+of freedom with 4.5 million terms, the factorization took 1.65 s
+without and 0.40 s with the cache with <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, with or without
+one constraint, and 1.1 s with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, whose preprocessing went
+from 0.11 s to 0.05 s, SuperLU computing its ordering at every
+factorization.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.static._smallest_eigvals">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">_smallest_eigvals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lu</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.static._smallest_eigvals" title="Link to this definition">#</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> eigenvalues of smallest magnitude of the matrix of the
+SuperLU factorization <code class="docutils literal notranslate"><span class="pre">lu</span></code>, on the space of its <code class="docutils literal notranslate"><span class="pre">m</span></code> constraints</p>
+<p>The matrix is the reduced matrix <span class="math notranslate nohighlight">\(\boldsymbol{K}\)</span> of
+<a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a>, bordered first by <code class="docutils literal notranslate"><span class="pre">m</span></code> constraints
+<span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span>. Shift-invert at <span class="math notranslate nohighlight">\(\sigma = 0\)</span> with ARPACK,
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>, on the operator <span class="math notranslate nohighlight">\(\boldsymbol{T}
+\boldsymbol{b} = \boldsymbol{x}\)</span>, the solution of the bordered system
+<span class="math notranslate nohighlight">\(\boldsymbol{K} \boldsymbol{x} + \boldsymbol{C} \boldsymbol{\mu} =
+\boldsymbol{b}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}\)</span>,
+by the forward and backward substitutions of <code class="docutils literal notranslate"><span class="pre">lu</span></code>, which is not
+factorized again: an eigenvalue <span class="math notranslate nohighlight">\(\nu \ne 0\)</span> of <span class="math notranslate nohighlight">\(\boldsymbol{T}\)</span> has its
+eigenvector <span class="math notranslate nohighlight">\(\boldsymbol{b}\)</span> in the null space of
+<span class="math notranslate nohighlight">\(\boldsymbol{C}^\top\)</span>, and <span class="math notranslate nohighlight">\(\boldsymbol{P} \boldsymbol{K} \boldsymbol{b}
+= \boldsymbol{b}/\nu\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{P}\)</span> the orthogonal projection on
+that space, i.e. <span class="math notranslate nohighlight">\(\lambda = 1/\nu\)</span> is an eigenvalue of
+<span class="math notranslate nohighlight">\(\boldsymbol{Z}^\top \boldsymbol{K} \boldsymbol{Z}\)</span>, <span class="math notranslate nohighlight">\(\boldsymbol{Z}\)</span> an
+orthonormal basis of the null space of <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top\)</span>; the range
+of <span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span>, of <span class="math notranslate nohighlight">\(\nu = 0\)</span>, is not among the largest <span class="math notranslate nohighlight">\(|\nu|\)</span>.
+With <code class="docutils literal notranslate"><span class="pre">k</span></code> larger than the size minus 2, the limit of ARPACK, all the
+eigenvalues are computed with <code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.linalg.eigvals()</span></code> from
+<span class="math notranslate nohighlight">\(\boldsymbol{T}\)</span> built column by column.</p>
+<p>With the scaling <code class="docutils literal notranslate"><span class="pre">s</span></code>, of the reduced degrees of freedom, the
+eigenvalues are those of <span class="math notranslate nohighlight">\(\boldsymbol{S} \boldsymbol{K} \boldsymbol{S}\)</span>,
+<span class="math notranslate nohighlight">\(\boldsymbol{S} = \mathrm{diag}(s)\)</span>, with the constraints
+<span class="math notranslate nohighlight">\(\boldsymbol{S} \boldsymbol{C}\)</span>, from the operator <span class="math notranslate nohighlight">\(\boldsymbol{S}^{-1}
+\boldsymbol{T} \boldsymbol{S}^{-1}\)</span>: those of <span class="math notranslate nohighlight">\(\boldsymbol{K}
+\boldsymbol{v} = \lambda \boldsymbol{S}^{-2} \boldsymbol{v}\)</span>, with the
+positive diagonal reference matrix <span class="math notranslate nohighlight">\(\boldsymbol{S}^{-2}\)</span>, see
+<a class="reference internal" href="newton_raphson.html#structsolve.newton_raphson._eigvals_inertia" title="structsolve.newton_raphson._eigvals_inertia"><code class="xref py py-func docutils literal notranslate"><span class="pre">newton_raphson._eigvals_inertia()</span></code></a>. <code class="docutils literal notranslate"><span class="pre">smallest_eigvals(k,</span> <span class="pre">s)</span></code>
+of <a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a> takes <code class="docutils literal notranslate"><span class="pre">s</span></code> of all the degrees of freedom.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>lam</strong><span class="classifier">ndarray or None</span></dt><dd><p>The eigenvalues, complex, sorted by increasing magnitude, <code class="docutils literal notranslate"><span class="pre">None</span></code>
+when ARPACK did not converge.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.static._pardiso_factorize_fallback">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">_pardiso_factorize_fallback</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">A</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iparm</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.static._pardiso_factorize_fallback" title="Link to this definition">#</a></dt>
+<dd><p>Factorization of phase 12 of <code class="docutils literal notranslate"><span class="pre">A</span></code> by a new <a class="reference internal" href="pardiso.html#structsolve.pardiso.PardisoSolver" title="structsolve.pardiso.PardisoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PardisoSolver</span></code></a>
+with the parameters <code class="docutils literal notranslate"><span class="pre">iparm</span></code> (the defaults filled by a previous
+factorization), <code class="docutils literal notranslate"><span class="pre">iparm(1)</span> <span class="pre">=</span> <span class="pre">1</span></code>, and those of
+<code class="docutils literal notranslate"><span class="pre">PARDISO_FALLBACK_IPARM</span></code>; <code class="docutils literal notranslate"><span class="pre">None</span></code> when it fails</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.static.PARDISO_FALLBACK_IPARM">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">PARDISO_FALLBACK_IPARM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{24:</span> <span class="pre">1}</span></span><a class="headerlink" href="#structsolve.static.PARDISO_FALLBACK_IPARM" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>: parameters, <code class="docutils literal notranslate"><span class="pre">{i:</span> <span class="pre">iparm(i)}</span></code>, of the second
+factorization of a matrix whose first factorization, with the default
+parameters, perturbed pivots: <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code>, the two-level
+factorization algorithm instead of the classic one, see
+<a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a></p>
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -673,11 +953,11 @@ since a null row and column make <code class="docutils literal notranslate"><spa
       </div>
     </a>
     <a class="right-next"
-       href="linear_buckling.html"
+       href="pardiso.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Linear buckling analysis (<code class="docutils literal notranslate"><span class="pre">structsolve.linear_buckling</span></code>)</p>
+        <p class="prev-next-title">PARDISO of Intel oneMKL (<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.pardiso</span></code>)</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -688,7 +968,7 @@ since a null row and column make <code class="docutils literal notranslate"><spa
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -702,6 +982,13 @@ since a null row and column make <code class="docutils literal notranslate"><spa
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static"><code class="docutils literal notranslate"><span class="pre">static()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.solve"><code class="docutils literal notranslate"><span class="pre">solve()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#factorizations-of-the-tangent-stiffness-matrix">Factorizations of the tangent stiffness matrix</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static._factorize"><code class="docutils literal notranslate"><span class="pre">_factorize()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static._smallest_eigvals"><code class="docutils literal notranslate"><span class="pre">_smallest_eigvals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static._pardiso_factorize_fallback"><code class="docutils literal notranslate"><span class="pre">_pardiso_factorize_fallback()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static.PARDISO_FALLBACK_IPARM"><code class="docutils literal notranslate"><span class="pre">PARDISO_FALLBACK_IPARM</span></code></a></li>
+</ul>
+</li>
 </ul>
   </nav></div>
 
@@ -727,8 +1014,8 @@ since a null row and column make <code class="docutils literal notranslate"><spa
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -761,7 +1048,7 @@ since a null row and column make <code class="docutils literal notranslate"><spa
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>
