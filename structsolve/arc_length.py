@@ -689,7 +689,9 @@ def _solver_arc_length(an, method, silent=False):
     eigenvector at `5.6 \times 10^{-8}` (cosine) from the load and, at the
     end, along the increments, which crept at the relative residual
     `10^{-4}` of the tolerance, the corrections going to `\delta\lambda
-    \approx -9 \times 10^{-4}` at every step length.
+    \approx -9 \times 10^{-4}` at every step length. With
+    ``an.bifurcation_pinning = 3`` the path passed it with three pinned
+    steps, and in 160 increments, with eight, rose again to 4615.2 N.
 
     With ``an.restart_state``, the dictionary ``an.path_state`` saved after
     a converged step of an analysis with the same method, the analysis

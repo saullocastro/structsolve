@@ -282,7 +282,11 @@
   corrections orthogonal to it, as at its first step. The symmetric
   bifurcations of the tests are switched and their branches traced to
   1e-6 with both methods, for the steps 0.07, 0.13 and 0.17 and the rising
-  and falling branches.
+  and falling branches. On the DOE09 cylinder (80 increments) the
+  generalized displacement control with `branch_switching=1` switched at
+  4533.3 N, where the count fell from 4 to 2, and unloaded on the
+  bifurcated branch to 4432.5 N with 1 negative eigenvalue (456 s), where
+  without switching it rose again to 4504.2 N with 4.
 - `Analysis.branch_switching` also where the number of negative eigenvalues
   decreases, e.g. a column unstable at the origin that the axial tension
   stabilizes, as in the algorithm of Wagner and Wriggers (p. 106, step
@@ -291,6 +295,40 @@
   positive. With `'splu'` the change of the sign of the determinant was
   already detected in both directions, with `'pardiso'` only the
   increases were.
+- New `Analysis.bifurcation_pinning`, default `0`: a step of the arc-length
+  or displacement control methods whose iterations failed this number of
+  times in a row is repeated with the amplitude of the critical eigenvector
+  held (`phi^T dc = 0` added to the constraints for that step), when it is
+  orthogonal to the load (`|phi^T q| <= PIN_MAX_COS |q|`, `1e-3`); a step
+  accepted without correction does not reset the count. Found with the
+  stall of the DOE09 cylinder (case 510, 57000 degrees of freedom) with
+  `max_inertia_jump=1`, whose mechanism is: at 4526.7 N the path reaches
+  a bifurcation point whose eigenvector is orthogonal to the load to
+  5.6e-8 (cosine, from the tolerance 1e-6 of the eigenvector of the
+  2-wave perturbation, the problem being otherwise symmetric), with five
+  other eigenvalues of the scaled tangent within 2e-5 of zero; the Riks
+  correction of the load factor is then `-r_phi/q_phi`, the ratio of the
+  components along the eigenvector of the residual left by the tolerance
+  and of the load, about -9e-4 at every step length down to 1e-5, such
+  that the iterations diverge (the tangent was verified against finite
+  differences, the solutions to 1e-11); the shorter steps are accepted
+  at their predictor, at the relative residual 1e-4 of the tolerance, the
+  critical eigenvalue going from -9.3e-7 to -5.0e-8 and +4.8e-9 and the
+  increments along its eigenvector. Neither the sign rule (the restart
+  from the state before the stall with `'determinant'` stalls at the same
+  point), nor the line search, nor the relative tolerance 1e-6 (no step
+  converges), nor `branch_switching` (a limit point by the direction of
+  the load) passes it; the inertia-jump check is not involved (no step
+  was rejected by it there). With `bifurcation_pinning=3` the 80
+  increments of the run pass the stall with three pinned steps: limit
+  point at 4528.4 N, unloading to 4517.6 N at the 80th increment, 713 s
+  against 769 s without, the path identical before the stall. With 160
+  increments (8 pinned steps, 1383 s) the path unloads to 4420 N, follows
+  a stable branch (0 negative eigenvalues, max |w| from 0.73 to 0.99 mm)
+  up to 4540.4 N, and after two more critical points rises to 4615.2 N,
+  the region of the limit load of the default Riks run (4638.2 N, which
+  jumped from 0 to 4 negative eigenvalues in one step), the eigenvalues
+  crossing zero one at a time up to 4 negative ones.
 - `_critical_eigenvector` doubles its subspace, up to `EIGVEC_MAX_SIZE =
   64` vectors, until it holds the `num_neg` negative eigenvalues counted by
   the factorization: positive eigenvalues closer to zero, e.g. of weakly
