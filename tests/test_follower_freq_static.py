@@ -1,7 +1,16 @@
 r"""Follower forces and unsymmetric matrices in :func:`freq` and the static
 analyses
 
-Ziegler's double pendulum: two rigid bars of length ``l``, rotational springs
+Verifies :func:`freq` with unsymmetric stiffness matrices on Ziegler's
+double pendulum under a follower force, Ziegler (1952), against its
+analytical flutter load and natural frequencies; that :func:`lb` finds no
+divergence load for it; and :func:`solve`, :func:`static` and the linear
+static analysis of :class:`structsolve.Analysis` with unsymmetric matrices
+and configuration-dependent loads, against direct dense solutions.
+
+Notes
+-----
+Ziegler's double pendulum [1]_: two rigid bars of length ``l``, rotational springs
 ``k`` at the base and at the middle hinge, masses ``2m`` at the middle hinge
 and ``m`` at the tip, and a follower force ``P`` at the tip, tangential to the
 upper bar. With the absolute rotations of the bars as degrees of freedom:
@@ -14,7 +23,13 @@ upper bar. With the absolute rotations of the bars as degrees of freedom:
 The stiffness matrix is unsymmetric and never singular, ``det K = k**2``, so
 the static (divergence) criterion of :func:`lb` finds no critical load, and
 the system loses stability by flutter at ``P_f = (7/2 - sqrt(2)) k/l``, where
-two natural frequencies coalesce (Ziegler, 1952).
+two natural frequencies coalesce.
+
+References
+----------
+.. [1] Ziegler, H., Die Stabilitätskriterien der Elastomechanik,
+   Ingenieur-Archiv, 20(1), 49-56, 1952. https://doi.org/10.1007/BF00536796
+
 """
 import warnings
 

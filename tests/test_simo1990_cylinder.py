@@ -1,11 +1,22 @@
 r"""Post-buckling of an axially compressed cylinder, Simo, Fox and Rifai (1990)
 
-Benchmark of Section 6.3.4, Fig. 6.3.4 of Simo, Fox and Rifai (1990), with
-the model of ``notebooks/simo1990_utils.py``, see the notebook
-``notebooks/simo1990_cylinder_postbuckling.ipynb`` and the documentation
-page ``ex_cylinder_postbuckling``. The values of the figure were read with
-a precision of about +-0.0003 in the axial deflection and +-0.01 in the
-load normalized by the linear buckling load.
+Verifies the Riks method and the branch switching of
+:class:`structsolve.Analysis` on the benchmark of Section 6.3.4, Fig. 6.3.4
+of Simo, Fox and Rifai (1990), with the Ritz model of panels built by the
+module ``simo1990_utils.py`` of the tests, against the values read from the
+figure for Simo et al. and for Stanley (1985). The values of the figure
+were read with a precision of about +-0.0003 in the axial deflection and of
+about +-0.01 in the load normalized by the linear buckling load. The tests
+are skipped where panels is not installed.
+
+References
+----------
+.. [1] Simo, J.C., Fox, D.D. and Rifai, M.S., On a stress resultant
+   geometrically exact shell model. Part III: Computational aspects of the
+   nonlinear theory, Computer Methods in Applied Mechanics and Engineering,
+   79(1), 21-70, 1990. https://doi.org/10.1016/0045-7825(90)90094-3
+.. [2] Stanley, G.M., Continuum-based shell elements, PhD dissertation,
+   Applied Mechanics Division, Stanford University, 1985.
 
 """
 import os
@@ -27,6 +38,12 @@ import simo1990_utils as su # noqa: E402
 
 
 def test_imperfection_identities():
+    """The model of the imperfect shell of ``simo1990_utils.py``: its
+    geometric stiffness matrix of the linear membrane resultants against
+    ``calc_kG`` of panels, null internal forces at ``c = 0``, the perfect
+    shell without imperfection, and the tangent stiffness matrix and the
+    internal forces against central finite differences of the internal
+    forces and of the strain energy"""
     s, lbd_cr, mode = su.normalized_shell(6, 6)
     size = s.get_size()
     rng = np.random.default_rng(1)
@@ -71,7 +88,33 @@ def test_imperfection_identities():
 
 
 def test_riks_imperfect_cylinder_50pct():
-    # Fig. 6.3.4 (a), imperfection of 50 % of the thickness, 8 x 8 terms
+    """Fig. 6.3.4 (a) of Simo, Fox and Rifai (1990), imperfection of 50 %
+    of the thickness, 8 x 8 terms: the linear buckling load, the limit load
+    and the post-buckling plateau of the Riks path against the values read
+    for Simo et al. and for Stanley (1985)
+
+    Notes
+    -----
+    Values read from Fig. 6.3.4 (a) of [1]_ and [2]_, in the load
+    normalized by the linear buckling load and the maximum axial deflection
+    of the loaded edge, against those of the test (8 x 8 terms):
+
+    - limit load: 0.411 at 0.0108 for [1]_, 0.402 at 0.0106 for [2]_; 0.393
+      at 0.0107 (0.390 with 12 x 12 terms);
+    - post-buckling plateau: 0.315 at 0.015 to 0.020 for [1]_, 0.297 at
+      0.0175 for [2]_; 0.323 at 0.0173.
+
+    References
+    ----------
+    .. [1] Simo, J.C., Fox, D.D. and Rifai, M.S., On a stress resultant
+       geometrically exact shell model. Part III: Computational aspects of
+       the nonlinear theory, Computer Methods in Applied Mechanics and
+       Engineering, 79(1), 21-70, 1990.
+       https://doi.org/10.1016/0045-7825(90)90094-3
+    .. [2] Stanley, G.M., Continuum-based shell elements, PhD dissertation,
+       Applied Mechanics Division, Stanford University, 1985.
+
+    """
     r = su.run_riks(0.5, 8, 8, umax=0.021, silent=True, save=False,
                     verbose=False)
     # linear buckling load of the diamond mode, 0.47 % above the classical
@@ -79,23 +122,49 @@ def test_riks_imperfect_cylinder_50pct():
     assert abs(r['lbd_cr'] - 1.00472) <= 1e-5
     assert r['max_residual'] <= 1e-9
     v = su.path_values(r['lbds'], r['u'][:, 1])
-    # limit load: 0.411 at 0.0108 read for Simo et al., 0.402 at 0.0106 for
-    # Stanley; 0.393 at 0.0107 (0.390 with 12 x 12 terms)
+    # limit load, see the Notes
     assert abs(v['P_lim'] - 0.411) <= 0.025
     assert abs(v['P_lim'] - 0.402) <= 0.015
     assert abs(v['u_lim'] - 0.0108) <= 0.0005
-    # post-buckling plateau: 0.315 at 0.015 to 0.020 read for Simo et al.,
-    # 0.297 at 0.0175 for Stanley; 0.323 at 0.0173
+    # post-buckling plateau, see the Notes
     assert abs(v['P_min'] - 0.315) <= 0.015
     assert abs(v['P(0.02)'] - 0.315) <= 0.015
 
 
 @pytest.mark.parametrize('linear_solver', ['splu', 'pardiso'])
 def test_riks_perfect_cylinder_branch_switching(linear_solver):
-    # Fig. 6.3.4 (d), the perfect cylinder, 8 x 8 terms, unknowns scaled to
-    # a unit diagonal, switch at the first bifurcation along the critical
-    # eigenvector: by the sign of the determinant with 'splu', by the count
-    # of negative eigenvalues with 'pardiso'
+    """Fig. 6.3.4 (d) of Simo, Fox and Rifai (1990), the perfect cylinder,
+    8 x 8 terms: the first bifurcation, the snap-back of the bifurcated
+    branch and its minimum load against the values read for Simo et al.
+
+    The unknowns are scaled to a unit diagonal and the path switches at the
+    first bifurcation along the critical eigenvector, detected by the sign
+    of the determinant with ``'splu'`` and by the count of negative
+    eigenvalues with ``'pardiso'``.
+
+    Notes
+    -----
+    Values read from Fig. 6.3.4 (d) of [1]_, in the load normalized by the
+    linear buckling load and the maximum axial deflection of the loaded
+    edge, against those of the test (8 x 8 terms):
+
+    - bifurcation: 0.833 at 0.0183; 0.827 at 0.0182, where a dense
+      eigenvalue analysis of the tangent stiffness matrix has its first
+      negative eigenvalue (0.8273, 0.8270 and 0.8267 with 8 x 8, 10 x 10
+      and 12 x 12 terms);
+    - snap-back of the bifurcated branch: 0.0149 at the load 0.457; 0.0145
+      at 0.453;
+    - minimum post-buckling load: 0.333 at 0.020; 0.327 at 0.0208.
+
+    References
+    ----------
+    .. [1] Simo, J.C., Fox, D.D. and Rifai, M.S., On a stress resultant
+       geometrically exact shell model. Part III: Computational aspects of
+       the nonlinear theory, Computer Methods in Applied Mechanics and
+       Engineering, 79(1), 21-70, 1990.
+       https://doi.org/10.1016/0045-7825(90)90094-3
+
+    """
     if linear_solver == 'pardiso':
         if not pardiso_available():
             pytest.skip('oneMKL is not found')
@@ -105,20 +174,15 @@ def test_riks_perfect_cylinder_branch_switching(linear_solver):
     assert len(r['branch_points']) == 1
     lbds, u_max = r['lbds'], r['u'][:, 1]
     ib = r['branch_points'][0]
-    # bifurcation: 0.833 at 0.0183 read for Simo et al.; 0.827 at 0.0182,
-    # where a dense eigenvalue analysis of the tangent stiffness matrix has
-    # its first negative eigenvalue (0.8273, 0.8270 and 0.8267 with 8 x 8,
-    # 10 x 10 and 12 x 12 terms)
+    # bifurcation, see the Notes
     assert abs(lbds[ib] - 0.827) <= 0.005
     assert abs(u_max[ib] - 0.0183) <= 0.0003
     v = su.path_values(lbds, u_max)
     assert v['P_lim'] == lbds[ib]
-    # snap-back of the bifurcated branch: 0.0149 at the load 0.457 read for
-    # Simo et al.; 0.0145 at 0.453
+    # snap-back of the bifurcated branch, see the Notes
     assert abs(v['u_back'] - 0.0149) <= 0.0006
     assert abs(v['P_back'] - 0.457) <= 0.01
-    # minimum post-buckling load: 0.333 at 0.020 read for Simo et al.; 0.327
-    # at 0.0208
+    # minimum post-buckling load, see the Notes
     assert abs(v['P_min'] - 0.327) <= 0.003
     assert abs(v['P_min'] - 0.333) <= 0.01
     assert abs(v['u_min'] - 0.020) <= 0.001

@@ -1,5 +1,16 @@
 r"""Arc-length methods on the modal model of a low sinusoidal arch
 
+Verifies the arc-length methods ``'arc_length_riks'`` and
+``'arc_length_crisfield'`` of :class:`structsolve.Analysis`, with both
+convergence criteria, on the model with two harmonics of a low arch hinged
+at both ends under a sinusoidal load, Fung and Kaplan (1952), against their
+closed-form solutions: the symmetric path with its limit points and null
+loads, Eqs. (23) and (25), the bifurcation point, Eq. (31), and the path of
+the arch with an imperfection of the second harmonic, Eqs. (15) and (27).
+The equilibrium equations are checked at every converged point.
+
+Notes
+-----
 Fung and Kaplan [1]_ expand the initial and the deflected center lines of a
 low arch hinged at both ends in the sine series `y_0 = \sum a_m L \sin(m \pi
 x/L)` and `y = \sum b_m L \sin(m \pi x/L)`, and give the equations of
@@ -106,14 +117,19 @@ def path(p):
 def check_symmetric_path(p):
     """Eq. (23), both limit points, Eq. (25), and the null loads
 
+    Checks the converged points of ``p`` against Eq. (23) of Fung and
+    Kaplan, both limit loads, Eq. (25), to a tolerance ``3 B1_lim h**2 +
+    h**3`` set by the step ``h`` in ``B1`` around them, ``B1_lim > 0`` the
+    modulus of ``B1`` at the limit points, and the two null loads. Returns
+    the index of the converged point of maximum load before the
+    snap-through.
+
+    Notes
+    -----
     The exact limit point lies between the neighbours of the converged point
     of extreme load, at a distance ``d <= h`` of it in ``B1``, and Eq. (23)
-    gives exactly ``|R - R_lim| = 3 B1_lim d**2 + d**3`` with ``B1_lim > 0``
-    the modulus of ``B1`` at the limit points, hence the tolerance ``3 B1_lim
-    h**2 + h**3`` justified by the step size.
-
-    Returns the index of the converged point of maximum load before the
-    snap-through.
+    gives exactly ``|R - R_lim| = 3 B1_lim d**2 + d**3``, hence the
+    tolerance ``3 B1_lim h**2 + h**3``, justified by the step size.
 
     """
     lam1 = p.lam1
@@ -148,13 +164,26 @@ def test_fung_kaplan_symmetric_path(method, convergence, lam1):
     r"""Symmetric path through both limit points and the null loads
 
     The arc length is limited to 0.05, about the increment of ``B1`` of each
-    step, hence a tolerance of the limit loads of about 1e-2. With
-    `\lambda_1^2 = 4.84 < 5.5`, the stiffness of the second harmonic,
-    ``kT[1, 1]``, is positive up to the limit point: no bifurcation before
-    it. With `\lambda_1^2 = 6.25`,
-    it changes sign before the limit point, at the bifurcation point `B_1 =
-    1.5`, `R = 7.0`, Eq. (31); the perfect arch remains on the symmetric
-    path.
+    step, hence a tolerance of the limit loads of about 1e-2. The stiffness
+    of the second harmonic, ``kT[1, 1]``, changes sign after the upper
+    limit point with `\lambda_1^2 = 4.84`, and before it with `\lambda_1^2
+    = 6.25`, at the bifurcation point `B_1 = 1.5`, `R = 7.0` of Eq. (31) of
+    Fung and Kaplan; the perfect arch remains on the symmetric path.
+
+    Notes
+    -----
+    The arch buckles at the upper limit point when `\lambda_1^2 < 5.5` and
+    at the bifurcation point `B_1 = \sqrt{\lambda_1^2 - 4}`, `R = \lambda_1
+    + 3\sqrt{\lambda_1^2 - 4}` otherwise, Eqs. (30) and (31) of [1]_: with
+    `\lambda_1^2 = 4.84`, ``kT[1, 1]`` is positive up to the limit point, no
+    bifurcation before it.
+
+    References
+    ----------
+    .. [1] Fung, Y. C. and Kaplan, A., Buckling of low arches or curved
+       beams of small curvature, NACA Technical Note 2840, National Advisory
+       Committee for Aeronautics, Washington, 1952.
+       https://ntrs.nasa.gov/citations/19930083579
 
     """
     p = arch(lam1)
@@ -198,10 +227,23 @@ def test_fung_kaplan_default_settings(method, convergence, lam1):
 def imperfect_extremes(lam1, lam2):
     r"""Maximum and minimum loads of the path of the imperfect arch
 
-    With `B_2 \neq 0`, Eq. (15) of Fung and Kaplan gives `B_1^2 = \lambda_1^2
-    + 4\lambda_2^2 - 4 + 4\lambda_2/B_2 - 4B_2^2` and `R = \lambda_1 + B_1
-    (3 - 4\lambda_2/B_2)`, with `B_1 > 0` before the snap-through and `B_1 <
-    0` after it.
+    Returns, for the maximum and then the minimum load, ``(B2, R, R(B2))``:
+    the value of ``B2`` at the extreme, the extreme load and the load as a
+    function of ``B2``, from Eq. (15) of Fung and Kaplan.
+
+    Notes
+    -----
+    With `B_2 \neq 0`, Eq. (15) of [1]_ gives `B_1^2 = \lambda_1^2 +
+    4\lambda_2^2 - 4 + 4\lambda_2/B_2 - 4B_2^2` and `R = \lambda_1 + B_1 (3
+    - 4\lambda_2/B_2)`, with `B_1 > 0` before the snap-through and `B_1 < 0`
+    after it.
+
+    References
+    ----------
+    .. [1] Fung, Y. C. and Kaplan, A., Buckling of low arches or curved
+       beams of small curvature, NACA Technical Note 2840, National Advisory
+       Committee for Aeronautics, Washington, 1952.
+       https://ntrs.nasa.gov/citations/19930083579
 
     """
     def B1R(B2, sign):
@@ -223,12 +265,26 @@ def imperfect_extremes(lam1, lam2):
 def test_fung_kaplan_asymmetric_path(method, convergence):
     r"""Imperfect arch, `\lambda_1 = 2.5`, `\lambda_2 = 10^{-3}`
 
-    The path follows the asymmetric path, Eq. (27), with a maximum load
-    below the bifurcation load of the perfect arch, `R = 7.0`, Eq. (31).
-    The extreme loads are compared with those of Eq. (15) as a function of
-    ``B2``, ``R(B2)``: the exact extreme lies between the neighbours of the
-    converged point of extreme load, at a distance ``d <= h`` of it in
-    ``B2``, and ``|R - R_ext| <= max|R''| h**2/2`` over this interval.
+    The path follows the asymmetric path, Eq. (27) of Fung and Kaplan, with
+    a maximum load below the bifurcation load of the perfect arch, `R =
+    7.0`, Eq. (31). The extreme loads are compared with those of Eq. (15) as
+    a function of ``B2``, ``R(B2)``, to a tolerance ``max|R''| h**2/2`` set
+    by the step ``h`` in ``B2`` around them.
+
+    Notes
+    -----
+    The exact extreme lies between the neighbours of the converged point of
+    extreme load, at a distance ``d <= h`` of it in ``B2``, and ``|R -
+    R_ext| <= max|R''| h**2/2`` over this interval. The second harmonic
+    reaches its maximum on the asymmetric path, `B_2 = \sqrt{\lambda_1^2 -
+    4}/2` at `B_1 = 0`, from Eq. (27) of [1]_, `B_1 = (R - \lambda_1)/3`.
+
+    References
+    ----------
+    .. [1] Fung, Y. C. and Kaplan, A., Buckling of low arches or curved
+       beams of small curvature, NACA Technical Note 2840, National Advisory
+       Committee for Aeronautics, Washington, 1952.
+       https://ntrs.nasa.gov/citations/19930083579
 
     """
     lam1, lam2 = 2.5, 1e-3
@@ -242,8 +298,7 @@ def test_fung_kaplan_asymmetric_path(method, convergence):
     s = B1**2 + 4*B2**2 - lam1**2 - 4*lam2**2
     np.testing.assert_allclose(B1*(s + 1), lam1 - R, rtol=0, atol=EQ_ATOL)
     np.testing.assert_allclose(B2*(s + 4), 4*lam2, rtol=0, atol=EQ_ATOL)
-    # the second harmonic reaches its maximum on the asymmetric path,
-    # sqrt(lam1**2 - 4)/2 at B1 = 0, Eq. (27)
+    # maximum of the second harmonic, sqrt(lam1**2 - 4)/2 at B1 = 0
     assert abs(B2.max() - 0.75) < 0.01
     kmin = np.argmin(R)
     kmax = np.argmax(R[:kmin])
