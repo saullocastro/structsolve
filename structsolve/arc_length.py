@@ -78,7 +78,11 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
     Of the negative eigenvalues found, the ``num_new`` closest to zero are
     taken as those that became negative in the last step, and the most
     negative of them is the critical one, the first that became negative.
-    Without negative eigenvalue, the one closest to zero is taken.
+    Without negative eigenvalue, the one closest to zero is taken. With
+    ``num_new < 0``, ``-num_new`` eigenvalues became positive in the last
+    step, the subspace has ``-num_new`` more vectors, and the critical one
+    is the largest of the ``-num_new`` smallest positive eigenvalues, the
+    first that became positive.
 
     Returns
     -------
@@ -88,7 +92,7 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
         Its eigenvalue.
 
     """
-    p = min(max(num_neg, 1) + EIGVEC_NUM_GUARD, size)
+    p = min(max(num_neg, 1) + max(-num_new, 0) + EIGVEC_NUM_GUARD, size)
     rng = np.random.default_rng(1)
     Y = np.column_stack([solve_kT(x) for x in rng.standard_normal((p, size))])
     theta_old = None
@@ -106,7 +110,12 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
     mus = 1./theta[keep]
     vecs = (Q @ V)[:, keep]
     neg = np.flatnonzero(mus < 0)
-    if neg.size == 0:
+    pos = np.flatnonzero(mus > 0)
+    if num_new < 0 and pos.size > 0:
+        # the positive eigenvalues sorted from the closest to zero
+        new = pos[np.argsort(mus[pos])][:-num_new]
+        i = int(new[np.argmax(mus[new])])
+    elif neg.size == 0:
         i = int(np.argmin(np.abs(mus)))
     else:
         # the negative eigenvalues sorted from the closest to zero
@@ -475,36 +484,56 @@ def _solver_arc_length(an, method, silent=False):
     the inner product decides.
 
     With ``an.branch_switching`` `= n > 0`, which requires ``an.inertia``,
-    for ``method='riks'`` and ``'crisfield'``, the path is switched to the
-    bifurcated branch at the first `n` bifurcation points crossed. A
-    critical point is crossed when the number of negative eigenvalues
-    increases between two converged states, or, when it is not known
+    the path is switched to the bifurcated branch at the first `n`
+    bifurcation points crossed, with every method. A critical point is
+    crossed when the number of negative eigenvalues changes between two
+    converged states, increases or decreases, or, when it is not known
     (``an.linear_solver = 'splu'``), when the sign of the determinant
     changes. It is a bifurcation point when the load factor varies in the
     same direction along the tangent predictors of the inner-product rule
     at the two converged states, before and after the critical point, a
     limit point when the direction is reversed. At a bifurcation, the
-    eigenvector `\boldsymbol{\phi}` of the eigenvalue that became negative
-    is computed with :func:`._critical_eigenvector`, with the sign for which
+    eigenvector `\boldsymbol{\phi}` of the eigenvalue that became negative,
+    or positive when the count decreased, is computed with
+    :func:`._critical_eigenvector`, with the sign for which
     `\boldsymbol{\phi}^\top \boldsymbol{c} \ge 0`, i.e. the direction
     of the deformation already present, e.g. of an imperfection, and the
     next step starts from the predictor `(\Delta s \hat{\phi}, 0)` along it,
     `\hat{\phi}` normalized in the inner product above, with `\Delta s`
     the larger of the current arc length and that of the last step, which
-    crossed the critical point. The step is corrected with the spherical
-    constraint of ``method='crisfield'``, whose root closest to the current
+    crossed the critical point. With ``method='displacement_control'`` and
+    ``'generalized_displacement_control'``, whose step lengths are not arc
+    lengths, `\Delta s` is the length of the last increment in the inner
+    product above, multiplied by the growth of the step length since then
+    when it grew, as for the arc length. The step is corrected with the
+    spherical constraint of ``method='crisfield'`` of radius `\Delta s`,
+    whose root closest to the current
     increment is on the bifurcated branch, which passes through the critical
     point, at a distance smaller than `\Delta s`, and is tangent to
     `\boldsymbol{\phi}` at it, whereas the linearized constraint of
     ``method='riks'`` is singular there for a symmetric bifurcation. The
     step is accepted when the cosine between its increment and the
     predictor is at least ``BRANCH_SWITCH_MIN_COS``, otherwise it is
-    repeated with a shorter arc length, at most ``BRANCH_SWITCH_MAX_TRIES``
+    repeated with a shorter `\Delta s`, at most ``BRANCH_SWITCH_MAX_TRIES``
     times, after which the switch is abandoned and the path continues on
     the branch already traced. The index in ``an.increments`` of the state
     from which the path was switched is appended to ``an.branch_points``.
+    The step after the switch starts along the tangent in the direction of
+    the switching increment: with the inner-product rule for
+    ``method='riks'`` and ``'crisfield'``, also with
+    ``an.arc_length_sign_rule = 'determinant'``; with
+    ``'displacement_control'``, the sign of `\Delta s` for which the
+    predictor makes a positive inner product with the switching increment;
+    with ``'generalized_displacement_control'``, the same sign of the load
+    increment, `GSP_k = \langle \delta c_q^{(1)}, \delta c_q^{(1)}
+    \rangle_W / \langle \delta c_q^{(k)}, \delta c_q^{(k)} \rangle_W`, i.e.
+    `\delta c_q^{(k-1)}` replaced by `\delta c_q^{(k)}`, and the
+    corrections orthogonal to `\delta c_q^{(k)}`, as at the first step,
+    since the tangent before the switch is that of the other branch.
     The detection by the count of negative pivots and the switch along the
-    critical eigenvector follow Wagner and Wriggers [7]_, whose
+    critical eigenvector follow Wagner and Wriggers [7]_, whose algorithm
+    (p. 106, step (c)) detects a stability point when the number of
+    negative diagonal elements of the factorization changes, and whose
     classification by the current stiffness parameter, zero at the limit
     points and not at the bifurcations, their Eq. (22), is replaced here by
     the direction of the load along the tangents. In [7]_ the critical
@@ -625,14 +654,9 @@ def _solver_arc_length(an, method, silent=False):
                          "requires Analysis.inertia = True")
     max_jump = _check_max_inertia_jump(an)
     switches_left = int(an.branch_switching)
-    if switches_left > 0:
-        if not an.inertia:
-            raise ValueError('Analysis.branch_switching requires '
-                             'Analysis.inertia = True')
-        if method not in ('riks', 'crisfield'):
-            raise ValueError('Analysis.branch_switching requires '
-                             "NL_method='arc_length_riks' or "
-                             "'arc_length_crisfield'")
+    if switches_left > 0 and not an.inertia:
+        raise ValueError('Analysis.branch_switching requires '
+                         'Analysis.inertia = True')
     modified_NR = an.modified_NR
 
     fext = an.calc_fext(inc=1., silent=True)
@@ -752,6 +776,7 @@ def _solver_arc_length(an, method, silent=False):
         gdc_sign = state['gdc_sign']
         ctrl_sign = state['ctrl_sign']
         switches_left = min(switches_left, state['switches_left'])
+        after_switch = state.get('after_switch', False)
         step_num = state['step_num']
         msg('Restarting at load factor %1.5f' % lbd, level=1, silent=silent)
 
@@ -809,8 +834,19 @@ def _solver_arc_length(an, method, silent=False):
                     phi = -phi
                 msg('Bifurcation point crossed, critical eigenvalue %1.5e, '
                     'switching branch' % mu, level=1, silent=silent)
-                switch = [phi, mu, arc_length, 0]
-                arc_length = max(arc_length, arc_length_last)
+                if control or gdc:
+                    # the step lengths are not arc lengths: the radius of
+                    # the switching step is the length of the last step,
+                    # with the growth of the step length since then, as the
+                    # arc length of the Riks and Crisfield methods
+                    radius = (np.sqrt(inner(dc_last, dlbd_last, dc_last,
+                                            dlbd_last))
+                              *max(arc_length/arc_length_last, 1.))
+                else:
+                    radius = None
+                switch = [phi, mu, arc_length, 0, radius]
+                if radius is None:
+                    arc_length = max(arc_length, arc_length_last)
             else:
                 msg('Limit point crossed', level=2, silent=silent)
         if arc_length is None:
@@ -827,10 +863,14 @@ def _solver_arc_length(an, method, silent=False):
             arc_length = an.initialInc*norm_q
             max_arc_length_inc = max(an.maxInc, arc_length)
 
+        # radius of the spherical constraint of the corrections
+        radius = arc_length
         if switch is not None:
             # branch switching: the critical eigenvector, at a constant load
             phi = switch[0]
-            dc = (arc_length/np.sqrt(inner(phi, 0., phi, 0.)))*phi
+            if switch[4] is not None:
+                radius = switch[4]
+            dc = (radius/np.sqrt(inner(phi, 0., phi, 0.)))*phi
             dlbd = 0.
         elif gdc:
             dq_step = dc_q_conv
@@ -839,6 +879,15 @@ def _solver_arc_length(an, method, silent=False):
             if dq_prev is None:
                 gsp = 1.
                 dq_ref = dq_step
+            elif after_switch:
+                # first step on the bifurcated branch: the stiffness
+                # parameter of the current tangent, the corrections
+                # orthogonal to it, and the load in the direction of the
+                # switching step
+                gsp = wdot(dq_first, dq_first)/wdot(dq_step, dq_step)
+                dq_ref = dq_step
+                gdc_sign = np.sign(inner(dq_step, 1., dc_last,
+                                         dlbd_last)) or 1.
             else:
                 den = wdot(dq_prev, dq_step)
                 if den == 0:
@@ -853,6 +902,16 @@ def _solver_arc_length(an, method, silent=False):
             msg('Generalized stiffness parameter %1.5f' % gsp, level=2,
                 silent=silent)
         elif control:
+            if after_switch:
+                # first step on the bifurcated branch: the controlled
+                # quantity varies as along the predictor in the direction
+                # of the switching step
+                if use_secant:
+                    s = np.sign(ctrl(dc_last))
+                else:
+                    s = np.sign(inner(dc_q_conv, 1., dc_last, dlbd_last)
+                                *ctrl(dc_q_conv))
+                ctrl_sign = s or ctrl_sign
             # psi^T dc = ds
             ds = ctrl_sign*arc_length
             if use_secant:
@@ -951,12 +1010,12 @@ def _solver_arc_length(an, method, silent=False):
             dc_R = solve_kT(-R)
 
             varlbd = None
-            if control:
+            if control and switch is None:
                 # psi^T (dc + dc_R + varlbd dc_q) = ds
                 den = ctrl(dc_q)
                 if den != 0:
                     varlbd = (ds - ctrl(dc + dc_R))/den
-            elif gdc:
+            elif gdc and switch is None:
                 # correction orthogonal to the tangent of the previous step
                 den = wdot(dq_ref, dc_q)
                 if den != 0:
@@ -964,14 +1023,14 @@ def _solver_arc_length(an, method, silent=False):
             else:
                 # linearized constraint
                 den = inner(dc, dlbd, dc_q, 1.)
-                g = 0.5*(inner(dc, dlbd, dc, dlbd) - arc_length**2)
+                g = 0.5*(inner(dc, dlbd, dc, dlbd) - radius**2)
                 if den != 0:
                     varlbd = -(g + inner(dc, dlbd, dc_R, 0.))/den
             if method == 'crisfield' or switch is not None:
                 u = dc + dc_R
                 a = inner(dc_q, 1., dc_q, 1.)
                 b = 2*inner(u, dlbd, dc_q, 1.)
-                cc = inner(u, dlbd, u, dlbd) - arc_length**2
+                cc = inner(u, dlbd, u, dlbd) - radius**2
                 disc = b**2 - 4*a*cc
                 if disc >= 0:
                     sq = np.sqrt(disc)
@@ -1064,7 +1123,8 @@ def _solver_arc_length(an, method, silent=False):
         if converged:
             c = c + dc
             lbd = lbd + dlbd
-            total_arc_length += arc_length
+            if switch is None or switch[4] is None:
+                total_arc_length += arc_length
             msg('Converged at load factor %1.5f, total arc length %1.5f' % (lbd, total_arc_length),
                 level=2, silent=silent)
             an.cs.append(c.copy()) #NOTE copy required
@@ -1085,16 +1145,17 @@ def _solver_arc_length(an, method, silent=False):
                     det_conv = solve_kT_conv.det_sign
                     if (switches_left > 0 and not after_switch
                             and solve_last is not None):
-                        # number of eigenvalues that became negative
+                        # number of eigenvalues that became negative, or
+                        # positive when negative
                         n0 = solve_last.num_negative_eigvals
                         n1 = solve_kT_conv.num_negative_eigvals
                         if n0 is not None and n1 is not None:
-                            check_switch = max(n1 - n0, 0)
+                            check_switch = n1 - n0
                         else:
                             check_switch = int(det_conv
                                                != solve_last.det_sign)
                 solve_last = solve_kT_conv
-            if gdc:
+            if gdc and not after_switch:
                 dq_prev = dq_step
                 gdc_sign = sign
             s_tan_prev = s_tan
@@ -1119,7 +1180,7 @@ def _solver_arc_length(an, method, silent=False):
                     s_tan_prev=s_tan_prev,
                     dq_first=dq_first, dq_prev=dq_prev, gdc_sign=gdc_sign,
                     ctrl_sign=ctrl_sign, switches_left=switches_left,
-                    step_num=step_num)
+                    after_switch=after_switch, step_num=step_num)
             if lbd == target:
                 break
             if _stop(an, silent):
@@ -1135,6 +1196,13 @@ def _solver_arc_length(an, method, silent=False):
             arc_length = switch[2]
             switch = None
             switches_left -= 1
+
+        elif switch is not None and switch[4] is not None:
+            # the radius of the switching step is cut, not the step length
+            switch[3] += 1
+            switch[4] *= INC_CUT_FACTOR
+            msg('Reseting the branch-switching step with the radius %1.5f'
+                % switch[4], level=1, silent=silent)
 
         else:
             if switch is not None:

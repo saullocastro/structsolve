@@ -96,10 +96,12 @@ class Analysis(object):
                                   changes, which requires ``inertia``, see
                                   :func:`.arc_length._solver_arc_length`
     ``branch_switching``          ``int``, number of bifurcation points at
-                                  which the arc-length methods switch to the
-                                  bifurcated branch, along the critical
-                                  eigenvector, which requires ``inertia``,
-                                  see
+                                  which the arc-length and the displacement
+                                  control methods switch to the bifurcated
+                                  branch, along the critical eigenvector,
+                                  where the number of negative eigenvalues
+                                  increases or decreases, which requires
+                                  ``inertia``, see
                                   :func:`.arc_length._solver_arc_length`.
                                   Default is ``0``
     ``arc_length_weights``        ``array``, non-negative weights of the
