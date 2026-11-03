@@ -12,7 +12,7 @@ import numpy as np
 import pytest
 
 from analytic_problems import (hardening_springs, von_mises_truss,
-                               linear_problem)
+                               linear_problem, Problem)
 from test_arc_length import check_equilibrium
 
 FRAC = 1.5
@@ -143,3 +143,17 @@ def test_errors():
                control_vector=np.array([u[1], -u[0]]) + 1e-14*u)
     with pytest.raises(ValueError, match='control_scale'):
         p.an.static(NLgeom=True, silent=True)
+
+
+def test_control_without_motion(capsys):
+    """A controlled quantity that the load does not change, given with
+    ``control_scale``, cannot drive the analysis, which is stopped"""
+    K = np.diag([2., 3.])
+    p = Problem(np.array([1., 0.]), lambda c: K @ c, K,
+                lambda c: np.zeros_like(K))
+    p.analysis(NL_method='displacement_control',
+               control_vector=np.array([0., 1.]), control_scale=1.)
+    p.an.static(NLgeom=True, silent=False)
+    assert 'The controlled quantity does not change' \
+        in capsys.readouterr().out
+    assert p.an.increments == []

@@ -371,3 +371,104 @@ def test_bifurcation_pinning_default_path(method):
         p.analysis(bifurcation_pinning=1, **kw)
         p.an.static(NLgeom=True, silent=True)
         assert p.an.increments == ref
+
+
+@pytest.mark.parametrize('beta', [0.5, -0.5])
+def test_branch_switching_controls_secant(beta):
+    """With the secant predictor, the first step of the displacement
+    control after the switch starts along the tangent, as with the tangent
+    predictor: the switching increment, from a state of the fundamental
+    branch beyond the bifurcation, reduces the shortening of the column,
+    the controlled quantity, and the secant along it returned to the
+    fundamental branch"""
+    p = pitchforks(betas=[beta])
+    p.analysis(NL_method='displacement_control', initialInc=0.13,
+               inertia=True, branch_switching=1, final_load_factor=None,
+               arc_length_predictor='secant',
+               stop_criterion=lambda an: len(an.increments) >= 15,
+               **control_kwargs('displacement_control'))
+    p.an.static(NLgeom=True, silent=True)
+    check_equilibrium(p)
+    an = p.an
+    assert len(an.branch_points) == 1
+    res, v = bifurcated_residual(p, 0)
+    np.testing.assert_allclose(res, 0, atol=1e-6)
+    v = np.abs(v)
+    assert np.all(np.diff(v) > 0)
+    lbds = np.asarray(an.increments[an.branch_points[0] + 1:])
+    assert np.all(lbds > 0.5) if beta > 0 else np.all(lbds < 0.5)
+
+
+@pytest.mark.parametrize('method', ['arc_length_riks', 'displacement_control'])
+def test_branch_switching_abandoned(method, monkeypatch, capsys):
+    """A switching step that converges at too large an angle to the
+    eigenvector is repeated, with a shorter arc length or radius, and
+    after ``BRANCH_SWITCH_MAX_TRIES`` attempts the path continues on the
+    fundamental branch"""
+    from structsolve import arc_length
+    monkeypatch.setattr(arc_length, 'BRANCH_SWITCH_MIN_COS', 1.1)
+    p = pitchforks()
+    p.analysis(NL_method=method, initialInc=0.1, inertia=True,
+               branch_switching=1, final_load_factor=None,
+               stop_criterion=lambda an: len(an.increments) >= 12,
+               **control_kwargs(method))
+    p.an.static(NLgeom=True, silent=False)
+    out = capsys.readouterr().out
+    assert out.count('Branch switching: the step converged at an angle') \
+        == arc_length.BRANCH_SWITCH_MAX_TRIES
+    assert 'Branch switching abandoned' in out
+    check_equilibrium(p)
+    an = p.an
+    assert an.branch_points == []
+    assert all(c[1] == 0 for c in an.cs)
+    assert an.increments[-1] > 0.6
+    assert np.all(np.diff(an.increments) > 0)
+
+
+def test_pin_bifurcation_mode_factorization_fails(monkeypatch):
+    """Nothing is pinned when the factorization with the pinning
+    constraint fails"""
+    from structsolve import arc_length
+    from structsolve.newton_raphson import _constraint_matrix
+    factorize = arc_length._factorize
+
+    def failing(kT, constraints=None, **kwargs):
+        if constraints is not None:
+            raise RuntimeError('singular')
+        return factorize(kT, constraints=constraints, **kwargs)
+    monkeypatch.setattr(arc_length, '_factorize', failing)
+    p = pitchforks()
+    an = p.analysis(NL_method='arc_length_riks')
+    c = np.array([-0.4999*p.P0/10., 0.])
+    assert arc_length._pin_bifurcation_mode(an, c, 0.4999, p.calc_fext(),
+                                            _constraint_matrix(an), None,
+                                            silent=True) is None
+
+
+@pytest.mark.parametrize('method', METHODS)
+def test_bifurcation_pinning_after_failed_steps(method, capsys):
+    """After ``bifurcation_pinning`` failed attempts of a step, here two
+    attempts made to fail by a residual that is not finite, the next
+    attempt holds the amplitude of the bifurcation mode, the transverse
+    displacement, and converges; the pin is released at the next step"""
+    p = pitchforks()
+    fint = p.fint
+    fails = []
+
+    def failing_fint(c):
+        if len(p.an.increments) == 2 and len(fails) < 2:
+            fails.append(c.copy())
+            return np.full_like(c, np.nan)
+        return fint(c)
+    p.fint = failing_fint
+    p.analysis(NL_method=method, initialInc=0.1, bifurcation_pinning=2)
+    p.an.static(NLgeom=True, silent=False)
+    out = capsys.readouterr().out
+    assert len(fails) == 2
+    assert out.count('Bifurcation pinning: the amplitude') == 1
+    p.fint = fint
+    check_equilibrium(p)
+    an = p.an
+    assert an.increments[-1] == 1.
+    assert np.all(np.diff(an.increments) > 0)
+    assert all(abs(c[1]) < 1e-15 for c in an.cs)

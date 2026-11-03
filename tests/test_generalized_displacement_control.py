@@ -7,7 +7,8 @@
 import numpy as np
 import pytest
 
-from analytic_problems import von_mises_truss, hardening_springs
+from analytic_problems import (von_mises_truss, hardening_springs,
+                               linear_problem, Problem)
 from test_arc_length import check_equilibrium
 
 METHOD = 'generalized_displacement_control'
@@ -69,3 +70,28 @@ def test_secant_not_valid():
     p.analysis(NL_method=METHOD, arc_length_predictor='secant')
     with pytest.raises(ValueError, match='secant'):
         p.an.static(NLgeom=True, silent=True)
+
+
+def test_exact_final_load_factor():
+    """A linear problem, whose stiffness parameter is 1, reaches the final
+    load factor exactly with steps of ``initialInc``"""
+    p = linear_problem()
+    p.analysis(NL_method=METHOD, initialInc=0.25)
+    p.an.static(NLgeom=True, silent=True)
+    check_equilibrium(p, rtol=1e-10)
+    assert p.an.increments == [0.25, 0.5, 0.75, 1.]
+
+
+def test_weighted_dofs_without_motion(capsys):
+    """With ``arc_length_weights`` only on a degree of freedom that the load
+    does not move, the stiffness parameter is not defined after the first
+    step and the analysis is stopped"""
+    K = np.diag([2., 3.])
+    p = Problem(np.array([1., 0.]), lambda c: K @ c, K,
+                lambda c: np.zeros_like(K))
+    p.analysis(NL_method=METHOD, initialInc=0.2,
+               arc_length_weights=np.array([0., 1.]))
+    p.an.static(NLgeom=True, silent=False)
+    assert 'Null generalized stiffness parameter' in capsys.readouterr().out
+    check_equilibrium(p, rtol=1e-10)
+    assert p.an.increments == [0.2]

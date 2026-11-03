@@ -253,7 +253,60 @@ def test_default_and_validation():
                       (dict(inertia=True, inertia_num_eigvals=1.5),
                        'positive'),
                       (dict(inertia=True, max_inertia_jump=1),
-                       'inertia_num_eigvals')]:
+                       'inertia_num_eigvals'),
+                      (dict(inertia=True, inertia_num_eigvals=4,
+                            max_inertia_jump=0), 'positive'),
+                      (dict(inertia=True, inertia_num_eigvals=4,
+                            max_inertia_jump=1.5), 'positive')]:
         an = p.analysis(NL_method='arc_length_riks', **kw)
         with pytest.raises(ValueError, match=match):
             an.static(NLgeom=True, silent=True)
+
+
+def test_arpack_not_converged(monkeypatch, capsys):
+    """When ARPACK does not converge the number of negative eigenvalues is
+    not known, which is reported, and ``max_inertia_jump`` does not cut the
+    increments, as for the counts that are not known"""
+    import importlib
+    from scipy.sparse.linalg import ArpackNoConvergence
+    static_module = importlib.import_module('structsolve.static')
+
+    def eigs(*args, **kwargs):
+        raise ArpackNoConvergence('no convergence', np.zeros(0),
+                                  np.zeros((0, 0)))
+    monkeypatch.setattr(static_module, 'eigs', eigs)
+    p = LinearUnsymmetric([0.25, 0.27], seed=2)
+    an = p.analysis(NL_method='arc_length_riks', inertia=True,
+                    inertia_num_eigvals=4, max_inertia_jump=1,
+                    initialInc=0.1)
+    an.static(NLgeom=True, silent=False)
+    assert 'ARPACK did not converge' in capsys.readouterr().out
+    assert an.increments[-1] == 1.
+    assert an.num_negative_eigvals == [None]*len(an.increments)
+    # the sign of the determinant is still known
+    assert an.det_signs[0] == 1 and an.det_signs[-1] == 1
+    ref = p.analysis(NL_method='arc_length_riks', inertia=True,
+                     inertia_num_eigvals=4, initialInc=0.1)
+    ref.static(NLgeom=True, silent=True)
+    assert an.increments == ref.increments
+
+
+def test_eigvals_inertia_without_arpack():
+    """The count of a factorization that already has one, e.g. the exact
+    one of PARDISO, is kept, a factorization without
+    ``smallest_eigvals`` has none, and that of an empty reduced matrix, all
+    its rows and columns null, is 0; a count that is not known is not a
+    jump of the inertia"""
+    from types import SimpleNamespace
+    from structsolve.newton_raphson import _eigvals_inertia, _inertia_jump
+    known = SimpleNamespace(num_negative_eigvals=3)
+    assert _eigvals_inertia(known, 4) == 3
+    unknown = SimpleNamespace(num_negative_eigvals=None)
+    assert _eigvals_inertia(unknown, 4) is None
+    assert not hasattr(unknown, 'inertia_num_eigvals')
+    assert not _inertia_jump(unknown, known, 1)
+    f = _factorize(csr_matrix((3, 3)))
+    np.testing.assert_array_equal(f(np.ones(3)), np.zeros(3))
+    assert f.smallest_eigvals(2).shape == (0,)
+    assert _eigvals_inertia(f, 2) == 0
+    assert f.inertia_complete

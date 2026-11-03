@@ -201,6 +201,21 @@ def test_not_cached():
     assert not D.has_canonical_format
     same(_factorize(D, cache=cache), _factorize(D), np.ones(2))
     assert cache.entry is None
+    # constraints with duplicated terms, summed: the bordered matrix of the
+    # cache would merge their positions
+    K = csr_matrix(np.array([[2., 1., 0.], [1., 3., 0.], [0., 0., 4.]]))
+    C = csr_matrix((np.array([0.5, 0.5]), np.array([0, 0]),
+                    np.array([0, 2, 2, 2])), shape=(3, 1))
+    assert not C.has_canonical_format
+    for linear_solver in solvers():
+        cache = _FactorizationCache()
+        f = _factorize(K, linear_solver=linear_solver, constraints=C,
+                       cache=cache)
+        same(f, _factorize(K, linear_solver=linear_solver,
+                           constraints=C.toarray()), np.ones(3))
+        assert cache.entry is None
+        assert f(np.ones(3))[0] == 0.
+        cache.close()
 
 
 def chain(n=30, P=20.):

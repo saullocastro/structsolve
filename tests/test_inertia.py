@@ -102,6 +102,56 @@ def test_pardiso_gmres_refinement(monkeypatch):
     np.testing.assert_allclose(A @ x, b, rtol=0, atol=1e-8*np.abs(b).max())
 
 
+
+@needs_pardiso
+def test_pardiso_gmres_warning(monkeypatch):
+    """A solution whose residual remains above ``PARDISO_WARN_TOL`` after
+    GMRES is returned with a RuntimeWarning"""
+    monkeypatch.setattr(static_module, 'PARDISO_REFINE_TOL', 0.)
+    monkeypatch.setattr(static_module, 'PARDISO_WARN_TOL', 0.)
+    A, _, _ = symmetric_indefinite(20, 0, 1)
+    f = _factorize(csr_matrix(A), linear_solver='pardiso')
+    b = np.random.default_rng(0).standard_normal(A.shape[0])
+    with pytest.warns(RuntimeWarning, match='after GMRES'):
+        x = f(b)
+    np.testing.assert_allclose(A @ x, b, rtol=0, atol=1e-8*np.abs(b).max())
+
+
+@needs_pardiso
+@pytest.mark.parametrize('with_cache', [False, True])
+def test_pardiso_null_matrix(with_cache):
+    """A matrix without any non-zero term: 'splu' solves the empty reduced
+    system, the solutions are null, whereas PARDISO fails, which is
+    reported as a singular matrix, a RuntimeError"""
+    from structsolve.static import _FactorizationCache
+    Z = csr_matrix((3, 3))
+    cache = _FactorizationCache() if with_cache else None
+    np.testing.assert_array_equal(_factorize(Z, cache=cache)(np.ones(3)),
+                                  np.zeros(3))
+    with pytest.raises(RuntimeError, match='PARDISO factorization failed'):
+        _factorize(Z, linear_solver='pardiso', cache=cache)
+    if with_cache:
+        cache.close()
+
+
+def test_singular_converged_state(capsys):
+    """A converged state whose tangent stiffness matrix is singular has no
+    factorization: its inertia is recorded as not known, with the sign 0
+    of the determinant"""
+    from structsolve.newton_raphson import _converged_state
+    K = np.array([[1., 1.], [1., 1.]])
+    p = Problem(np.array([1., 1.]), lambda c: K @ c, K,
+                lambda c: np.zeros_like(K))
+    an = p.analysis(inertia=True)
+    # as at the start of Analysis.static
+    an.num_negative_eigvals, an.det_signs, an.num_perturbed_pivots = [], [], []
+    assert _converged_state(an, np.zeros(2), 0.5) is None
+    assert 'Singular tangent stiffness matrix at the converged state'         in capsys.readouterr().out
+    assert an.num_negative_eigvals == [None]
+    assert an.det_signs == [0]
+    assert an.num_perturbed_pivots == [None]
+
+
 def dense_indefinite(n, nneg, seed=0):
     """Dense symmetric matrix with ``nneg`` negative eigenvalues, the others
     from 1e-4 to 1, in a random orthonormal basis"""

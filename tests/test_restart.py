@@ -73,3 +73,23 @@ def test_restart_method_mismatch():
     p.analysis(NL_method='arc_length_crisfield', restart_state=state)
     with pytest.raises(ValueError, match='restart_state'):
         p.an.static(NLgeom=True, silent=True)
+
+
+@pytest.mark.parametrize('method', ['arc_length_riks', 'arc_length_crisfield'])
+def test_restart_null_last_increment(method):
+    """A restart state whose last increment is null gives no direction to
+    the sign rule of the tangent predictor: the load increases"""
+    p = hardening_springs()
+    p.analysis(NL_method=method, initialInc=0.1,
+               stop_criterion=lambda an: len(an.increments) == 2)
+    p.an.static(NLgeom=True, silent=True)
+    first = list(p.an.increments)
+    state = dict(p.an.path_state)
+    state['dc_last'] = np.zeros_like(state['dc_last'])
+    state['dlbd_last'] = 0.
+    p.analysis(NL_method=method, initialInc=0.1, restart_state=state)
+    p.an.static(NLgeom=True, silent=True)
+    check_equilibrium(p)
+    inc = np.asarray(first + p.an.increments)
+    assert inc[-1] == 1.
+    assert np.all(np.diff(inc) > 0)
