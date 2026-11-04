@@ -233,9 +233,7 @@ class Analysis(object):
                             and internal force vectors. Not used if
                             ``None``. Default is ``1.e-9``, the tight
                             tolerance of Crisfield's criterion with a
-                            consistent tangent; until version 0.8.0 the
-                            relative criterion was the only one, with the
-                            default ``1.e-6``
+                            consistent tangent
     ``absTOL``              the convergence is also achieved when the
                             maximum absolute residual force is smaller
                             than this value, which depends on the units of

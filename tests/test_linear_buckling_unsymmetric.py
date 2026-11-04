@@ -285,11 +285,10 @@ def lowest_positive_real(eigvals):
 
 @pytest.mark.parametrize('name, sign, approx', FOLLOWER)
 def test_lb_follower_shift_search(name, sign, approx):
-    """Regression test: the sparse fallback of version 0.5.3, eigs() on
-    K^-1 KG, silently returned only negative or complex load multipliers for
-    the reversed problems. The shift search returns the lowest positive real
-    load multiplier of the full dense eig(), first, without the dense
-    fallback"""
+    """Regression test: eigs() on K^-1 KG alone returns only negative or
+    complex load multipliers for the reversed problems. The shift search
+    returns the lowest positive real load multiplier of the full dense
+    eig(), first, without the dense fallback"""
     import warnings
     from structsolve.linear_buckling import DenseFallbackWarning
 

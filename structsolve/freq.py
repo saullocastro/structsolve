@@ -240,8 +240,7 @@ def freq(K, M, tol=0, sparse_solver=True,
     returns the ``num_eigvalues`` lowest eigenvalues with ``symmetric=True``,
     otherwise the ``num_eigvalues`` eigenvalues closest to the shift, as the
     sparse solver, and its eigenpairs are verified as well. Otherwise a
-    ``RuntimeError`` is raised. Until version 0.5.3, the sparse solver
-    only issued a warning when the residual check failed.
+    ``RuntimeError`` is raised.
 
     With Intel MKL 2024.2.0 to 2025.0.0, ``ncv`` of
     :func:`scipy.sparse.linalg.eigsh` is capped, see :func:`.lb` and
@@ -285,9 +284,7 @@ def freq(K, M, tol=0, sparse_solver=True,
         the order of the solver, such that a multiple eigenvalue returned
         with round-off differences, in an order that may depend on the
         LAPACK build, is sorted by increasing exact value. With ``False``
-        the eigenpairs are returned in the order of the solver. Until
-        version 0.8.0, only the eigenvectors were sorted and filtered, and
-        the eigenpairs with equal rounded keys kept the order of the solver.
+        the eigenpairs are returned in the order of the solver.
     num_eigvalues : int, optional
         Number of calculated eigenvalues with the sparse solver, limited to
         the size of ``M`` minus 2.

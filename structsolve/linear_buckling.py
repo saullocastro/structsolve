@@ -1635,8 +1635,7 @@ def lb(K, KG, tol=0, sparse_solver=True, silent=False,
         the sparse solvers failed, i.e. the number of non-null rows of
         ``KG``, or of non-null rows or columns for unsymmetric matrices, see
         above. Larger problems raise a ``RuntimeError`` instead, and
-        ``0`` disables the dense fallback. Until version 0.5.3, it was the
-        size below which the dense solver was tried first.
+        ``0`` disables the dense fallback.
     check_rtol : float, optional
         Maximum relative residual
         ``||K u + lambda KG u|| / (||K u|| + |lambda| ||KG u||)`` of the
