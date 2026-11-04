@@ -122,14 +122,28 @@ def test_parse_mkl_version():
 
 
 def faulty_environment():
-    """MKL 2024.2.0 to 2025.0.0 identified at runtime"""
+    """The LAPACK of SciPy is Intel MKL 2024.2.0 to 2025.0.0, identified at
+    runtime
+
+    An Intel MKL may be loaded in the process, e.g. by ``mkl-service`` or for
+    PARDISO, while SciPy is linked to another LAPACK such as OpenBLAS: its
+    version then says nothing about the ``dsteqr`` of SciPy.
+    """
+    if not arpackutils.lapack_is_mkl():
+        return False
     version = arpackutils.mkl_version()
     first, last = arpackutils.MKL_FAULTY_VERSIONS
     return version is not None and first <= version <= last
 
 
 def test_dsteqr_probe_agrees_with_mkl_version():
-    """The functional probe of dsteqr detects the faulty MKL versions"""
+    """The functional probe of dsteqr detects the faulty MKL versions
+
+    When the LAPACK of SciPy is Intel MKL 2024.2.0 to 2025.0.0, the probe
+    reports a faulty ``dsteqr`` and ``ncv`` is capped at 32; with any other
+    LAPACK, including an OpenBLAS SciPy next to a loaded MKL 2025.0.0, the
+    probe reports a correct ``dsteqr`` (or cannot run).
+    """
     if faulty_environment():
         assert arpackutils.dsteqr_is_faulty() is True
         assert arpackutils.arpack_max_ncv() == 32
@@ -141,7 +155,8 @@ def test_dsteqr_probe_agrees_with_mkl_version():
 def test_eigsh_ncv_boundary(name):
     """Root cause: eigsh in Cayley mode is correct with ncv=32 and, with a
     faulty dsteqr, wrong or raising with ncv=33, i.e. as soon as ARPACK
-    computes the eigenvectors of a tridiagonal matrix larger than 32 x 32"""
+    computes the eigenvectors of a tridiagonal matrix larger than 32 x 32;
+    with a dsteqr that passes the probe, also correct with ncv=33"""
     K, KG = load_saved_matrices(name)
     mu_ref, _ = _eigh_condensed(K, KG, 10)
     sigma = _estimate_sigma(K, KG)
@@ -160,6 +175,8 @@ def test_eigsh_ncv_boundary(name):
             assert not solve(33)
         except ArpackError as e:
             assert 'dsteqr' in str(e)
+    else:
+        assert solve(33)
 
 
 @pytest.mark.parametrize('k', [16, 25, 40])

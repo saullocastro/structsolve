@@ -1,7 +1,7 @@
 r"""Utilities for ARPACK, against the Intel MKL bug of ``dsteqr``
 
-With Intel MKL 2024.2.0 to 2025.0.0, :func:`scipy.sparse.linalg.eigsh`
-returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
+When the LAPACK of SciPy is Intel MKL 2024.2.0 to 2025.0.0,
+:func:`scipy.sparse.linalg.eigsh` returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
 whenever its number of Lanczos vectors is ``ncv > 32``, e.g. with SciPy's
 default ``ncv = 2 k + 1`` for ``k >= 16`` eigenpairs. MKL 2025.0.1 or newer
 is not affected, neither is :func:`scipy.sparse.linalg.eigs`.
@@ -136,6 +136,9 @@ def mkl_version():
     The build configuration of SciPy only gives the major version, e.g.
     ``'2025'``, therefore the version is read at runtime from the optional
     packages ``mkl-service`` (``mkl.get_version()``) or ``threadpoolctl``.
+    The MKL loaded in the process is not necessarily the LAPACK of SciPy,
+    e.g. ``mkl-service`` next to a SciPy linked to OpenBLAS, see
+    :func:`lapack_is_mkl`.
 
     Returns
     -------
