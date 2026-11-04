@@ -6,26 +6,92 @@ from scipy.sparse import csc_matrix
 from structsolve import freq
 
 
+def rod_clamped_free(num_elements, E=1., rho=1., A=1., L=1.):
+    """Stiffness and inertia matrices of a clamped-free rod of linear
+    elements, Petyt (2010), Example 3.3, without the clamped dof"""
+    from scipy.sparse import lil_matrix
+    n = num_elements + 1
+    K = lil_matrix((n, n))
+    M = lil_matrix((n, n))
+    le = L/num_elements
+    ke = E*A/le*np.array([[1., -1.], [-1., 1.]])
+    me = rho*A*le/6*np.array([[2., 1.], [1., 2.]])
+    for e in range(num_elements):
+        for i in range(2):
+            for j in range(2):
+                K[e + i, e + j] += ke[i, j]
+                M[e + i, e + j] += me[i, j]
+    return csc_matrix(K[1:, 1:]), csc_matrix(M[1:, 1:])
+
+
 def test_freq_simple():
-    """Test frequency analysis with known natural frequencies
+    r"""Natural frequencies of the clamped-free rod of Petyt (2010),
+    Example 3.3
 
-    The sparse solver of :func:`freq` on the diagonal ``K = diag(k1, k2,
-    ...)`` and ``M = I``, whose natural frequencies are ``omega_i =
-    sqrt(k_i/m_i)``, returns eigenvectors of the size of the model.
+    The rod of linear finite elements with consistent inertia matrices.
+    With two elements, the dense solver of :func:`freq` gives the two
+    frequencies of Petyt's Example 3.3 (Table 3.3, three digits; the roots
+    of his frequency equation to ``1e-10``). With 300 elements, the sparse
+    solver gives the five lowest frequencies of the exact solution, Petyt's
+    Eq. (3.26), within ``2e-4``, the first mode shape proportional to
+    ``sin(pi x/(2 L))``, and eigenvectors of the size of the model.
+
+    Notes
+    -----
+    The rod, `E = \rho = A = L = 1`, clamped at `x = 0` and free at
+    `x = L`, is divided into `n` elements of length `l = L/n` with the
+    element matrices of [1]_ (Example 3.3, p. 62)
+
+    .. math::
+        \boldsymbol{k}_e = \frac{E A}{l} \begin{bmatrix} 1 & -1 \\ -1 & 1
+        \end{bmatrix}, \qquad
+        \boldsymbol{m}_e = \frac{\rho A l}{6} \begin{bmatrix} 2 & 1 \\ 1 & 2
+        \end{bmatrix}
+
+    With two elements and `\Lambda = \omega^2 \rho L^2/(24 E)`, the
+    frequency equation is `7 \Lambda^2 - 10 \Lambda + 1 = 0`, whose roots
+    give `\omega = (24 \Lambda)^{1/2} (E/(\rho L^2))^{1/2} = 1.610` and
+    `5.628` ([1]_, p. 63, Table 3.3). The exact frequencies and mode shapes
+    are ([1]_, Eq. (3.26), p. 49)
+
+    .. math::
+        \omega_r = \frac{(2 r - 1) \pi}{2} \left(\frac{E}{\rho L^2}
+        \right)^{1/2}, \qquad \psi_r(x) = \sin \frac{(2 r - 1) \pi x}{2 L},
+        \qquad r = 1, 2, \ldots
+
+    The finite element frequencies are higher and converge to them as `n`
+    increases. :func:`freq` returns `\lambda^2 = -\omega^2`.
+
+    References
+    ----------
+    .. [1] Petyt, M., Introduction to Finite Element Vibration Analysis,
+       2nd ed., Cambridge University Press, 2010.
+       https://doi.org/10.1017/CBO9780511761195
+
     """
-    n = 10
-    k_vals = np.arange(1, n + 1, dtype=float) * 100
-    m_vals = np.ones(n)
-    K = csc_matrix(np.diag(k_vals))
-    M = csc_matrix(np.diag(m_vals))
+    # two elements, Petyt (2010), Example 3.3
+    K, M = rod_clamped_free(2)
+    lambda2, eigvecs = freq(K, M, silent=True, sparse_solver=False)
+    omega = np.sqrt(-lambda2.real)
+    Lambda = np.sort(np.roots([7., -10., 1.]))
+    np.testing.assert_allclose(omega, np.sqrt(24*Lambda), rtol=1e-10)
+    np.testing.assert_allclose(omega, [1.610, 5.628], rtol=1e-3)
 
-    eigvals, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
+    # 300 elements, exact solution, Petyt (2010), Eq. (3.26)
+    n = 300
+    K, M = rod_clamped_free(n)
+    lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
                             sparse_solver=True)
-
-    # freq returns lambda2 where [K] + lambda2 [M] = 0
-    # so lambda2 = -omega^2 = -k/m
-    # The sorted natural frequencies should match sqrt(k_vals)
-    assert eigvecs.shape[0] == n
+    omega = np.sqrt(-lambda2.real)
+    r = np.arange(1, 6)
+    np.testing.assert_allclose(omega, (2*r - 1)*np.pi/2, rtol=2e-4)
+    assert np.all(omega > (2*r - 1)*np.pi/2)
+    assert eigvecs.shape == (n, 5)
+    x = np.linspace(1./n, 1., n)
+    psi1 = np.sin(np.pi*x/2)
+    u1 = eigvecs[:, 0].real
+    cos_angle = abs(u1 @ psi1)/(np.linalg.norm(u1)*np.linalg.norm(psi1))
+    assert cos_angle > 1 - 1e-6
 
 
 def test_freq_dense_solver():

@@ -11,23 +11,51 @@ from ritz import isotropic_plate, vecf, vecf_xi
 
 
 def test_lb_simple_eigenvalue():
-    """Test linear buckling with a well-conditioned system
+    r"""Load multipliers of the column of two rigid bars of Bathe (2014),
+    Example 3.14
 
-    The sparse solver of :func:`lb` returns at least the 5 load multipliers
-    requested and eigenvectors of the size of the model, for ``K =
-    diag(2, 4, 6, ...)`` and ``KG = I``, whose load multipliers of ``(K +
-    lambda KG) u = 0`` are ``lambda_i = -K_ii``.
+    Five uncoupled copies of the column, with the spring stiffnesses ``k =
+    1, 4, 16, 64, 256``, ``L = 1`` and the reference load ``P = -1``
+    (compression). The sparse solver of :func:`lb` returns the five lowest
+    load multipliers, ``2 k`` and ``3 k`` of the copies, i.e. the critical
+    load ``P_cr = -2 k L`` of Bathe's Example 3.14 and the other root of the
+    same eigenproblem, and eigenvectors of the size of the model.
+
+    Notes
+    -----
+    The static equilibrium equations of the column of [1]_ (Example 3.14,
+    p. 101) are
+
+    .. math::
+        k \begin{bmatrix} 5 & -2 \\ -2 & 2 \end{bmatrix}
+        \begin{Bmatrix} U_1 \\ U_2 \end{Bmatrix} = \frac{P}{L}
+        \begin{bmatrix} -2 & 1 \\ 1 & -1 \end{bmatrix}
+        \begin{Bmatrix} U_1 \\ U_2 \end{Bmatrix}
+
+    with the critical load `P_{cr} = -2 k L` (compression negative). With
+    `P = \lambda P_0`, `P_0 = -1` and `L = 1`, they are
+    `(\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = 0` with
+    `\boldsymbol{K}` the matrix on the left and `\boldsymbol{K}_G` the
+    matrix on the right; `\det(\boldsymbol{K} + \lambda \boldsymbol{K}_G) =
+    (2 k - \lambda)(3 k - \lambda)` gives `\lambda = 2 k` and `3 k`.
+
+    References
+    ----------
+    .. [1] Bathe, K.J., Finite Element Procedures, 2nd ed., K.J. Bathe,
+       Watertown, MA, 2014.
+
     """
-    n = 10
-    k_diag = np.arange(2, 2 * n + 2, 2, dtype=float)
-    K = csc_matrix(np.diag(k_diag))
-    KG = csc_matrix(np.eye(n))
+    from scipy.sparse import block_diag
 
-    eigvals, eigvecs = lb(K, KG, silent=True, num_eigvalues=5,
-                          sparse_solver=True)
-    # lb returns eigenvalues (load multipliers), verify we get results
-    assert len(eigvals) >= 5
-    assert eigvecs.shape[0] == n
+    k = 4.**np.arange(5)
+    K = block_diag([ki*np.array([[5., -2.], [-2., 2.]]) for ki in k])
+    KG = block_diag([np.array([[-2., 1.], [1., -1.]])]*5)
+
+    eigvals, eigvecs = lb(csc_matrix(K), csc_matrix(KG), silent=True,
+                          num_eigvalues=5, sparse_solver=True)
+    np.testing.assert_allclose(eigvals[:5], [2., 3., 8., 12., 32.],
+                               rtol=1e-8)
+    assert eigvecs.shape == (10, 5)
 
 
 def test_lb_dense_solver():
@@ -334,21 +362,39 @@ def test_lb_sparse_singular_K():
 
 
 def test_lb_plate_buckling_fsdt():
-    r"""Test plate buckling (FSDT) based on semi-analytical Ritz method.
+    r"""Critical load of a simply supported plate under uniaxial
+    compression, Ritz method with first-order shear deformation theory
 
-    Uses Legendre polynomials as basis functions with Gauss-Legendre quadrature.
-    Compares the critical load with the classical solution ``4*pi**2*D/b**2``,
-    with a relative tolerance of 2 %.
+    Legendre polynomials as basis functions with Gauss-Legendre quadrature.
+    The critical load ``N_cr`` of :func:`lb` is lower than, and within 2 %
+    of, the classical value ``4 pi^2 D/b^2`` of Timoshenko and
+    Woinowsky-Krieger (1959), Eq. (227), for the plate of ``a/b = 3``.
 
     Notes
     -----
     The plate, `a = 0.3`, `b = 0.1` and `h = 0.003` m, of steel, `E = 200`
     GPa and `\nu = 0.3`, has the deflection `w` null and the rotations free
     at the four edges, simply supported, under the uniform compression
-    `N_{xx}`. The first-order shear deformation theory (FSDT) of the model
-    gives a slightly lower critical load than the classical plate theory of
-    the reference value, `N_{cr} = 4 \pi^2 D/b^2`, `D = E h^3/(12 (1 -
-    \nu^2))`, because of the transverse shear deformation.
+    `N_{xx}`. The basis functions are those of [1]_. The classical plate
+    theory gives the critical load ([2]_, Section 93, Eq. (227), p. 389)
+
+    .. math::
+        (N_x)_{cr} = \frac{\pi^2 D}{b^2} \left(\frac{m b}{a} +
+        \frac{a}{m b}\right)^2, \qquad D = \frac{E h^3}{12 (1 - \nu^2)}
+
+    minimized over the number of half-waves `m`: for `a/b = 3`, `m = 3`
+    and `(N_x)_{cr} = 4 \pi^2 D/b^2`. The first-order shear deformation
+    theory of the model gives a slightly lower critical load because of the
+    transverse shear deformation.
+
+    References
+    ----------
+    .. [1] Castro, S.G.P. and Donadon, M.V., Assembly of semi-analytical
+       models to address linear buckling and vibration of stiffened
+       composite panels with debonding defect, Composite Structures, 160,
+       232-247, 2017. https://doi.org/10.1016/j.compstruct.2016.10.026
+    .. [2] Timoshenko, S. and Woinowsky-Krieger, S., Theory of Plates and
+       Shells, 2nd ed., McGraw-Hill, New York, 1959.
     """
     from scipy.special import roots_legendre
 
@@ -453,6 +499,7 @@ def test_lb_plate_buckling_fsdt():
     Ncr_computed = eigvals[0] * abs(Nxxhat)
 
     np.testing.assert_allclose(Ncr_computed, Ncr_analytical, rtol=0.02)
+    assert Ncr_computed < Ncr_analytical
 
 
 @pytest.mark.parametrize('ratio', [1., 0.1, 0.01, 0.001])
