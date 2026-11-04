@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Arc-length methods: a step ending below `an.final_load_factor` by a
+  round-off of the sum of the increments, e.g. ten steps of 0.1 summing to
+  0.9999999999999999, was accepted as a point of the path and followed by
+  one more step corrected to the final load factor, a duplicated end
+  point. A step ending below it by less than the new
+  `arc_length.FINAL_LOAD_FACTOR_RTOL = 1e-12` times it is now corrected to
+  it, such that the last increment is the final load factor, once. New
+  test `test_final_load_factor_once` in `tests/test_arc_length.py`.
+
 ## 0.10.0 (2026-11-03)
 
 ### Robustness of the arc-length corrections

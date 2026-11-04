@@ -33,6 +33,10 @@ MAX_GROWTH_FACTOR = 1.5
 MIN_GROWTH_FACTOR = 0.5
 #: Maximum number of converged steps of an arc-length analysis
 MAX_NUM_STEPS = 1000
+#: Relative tolerance of the final load factor: a step that ends below
+#: ``an.final_load_factor`` by less than this fraction of it, a round-off of
+#: the sum of the increments, is corrected to it as a step that exceeds it
+FINAL_LOAD_FACTOR_RTOL = 1e-12
 #: Factors tried in turn by the line search of the corrections, with
 #: ``Analysis.arc_length_line_search = True``
 LINE_SEARCH_ETAS = (1., 0.5, 0.25)
@@ -247,8 +251,9 @@ def _solver_arc_length(an, method, silent=False):
     The analysis stops when:
 
     - the load factor reaches ``an.final_load_factor``, 1.0 by default, the
-      last solution being computed at exactly this load factor; never with
-      ``an.final_load_factor = None``
+      last solution being computed at exactly this load factor, once: a step
+      ending below it by less than ``FINAL_LOAD_FACTOR_RTOL`` times it is
+      corrected to it; never with ``an.final_load_factor = None``
     - ``an.stop_criterion(an)`` returns ``True`` after a converged step, see
       :mod:`.stopping`
     - the cumulative arc length reaches ``an.maxArcLength``
@@ -780,9 +785,16 @@ def _solver_arc_length(an, method, silent=False):
     target = an.final_load_factor
 
     def target_reached(lbd0, dlbd0):
-        # the step from lbd0 to lbd0 + dlbd0 exceeds the final load factor
-        return (target is not None and lbd0 + dlbd0 > target
-                and lbd0 < target)
+        # the step from lbd0 to lbd0 + dlbd0 exceeds the final load factor,
+        # or ends short of it by a round-off only, e.g. ten steps of 0.1
+        # summing to 0.9999999999999999; a step ending exactly at it is
+        # accepted as it is
+        if target is None or not lbd0 < target:
+            return False
+        lbd1 = lbd0 + dlbd0
+        return (lbd1 > target
+                or (lbd1 != target
+                    and target - lbd1 <= FINAL_LOAD_FACTOR_RTOL*abs(target)))
 
     c = np.zeros_like(u_ref)
     lbd = 0.

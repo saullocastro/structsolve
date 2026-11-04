@@ -53,6 +53,25 @@ def test_arc_length_linear_problem(method):
     assert max(p.calls_per_step()) <= 2, p.calls_per_step()
 
 
+@pytest.mark.parametrize('method', METHODS + ['displacement_control',
+                                    'generalized_displacement_control'])
+def test_final_load_factor_once(method):
+    """Ten steps of 0.1 sum to 0.9999999999999999: the tenth step is
+    corrected to the final load factor 1.0, which is the last increment and
+    appears once, with no point a round-off below it"""
+    p = linear_problem()
+    kwargs = {}
+    if method == 'displacement_control':
+        kwargs['control_vector'] = np.ones(3)
+    p.analysis(NL_method=method, initialInc=0.1, maxInc=0.1, **kwargs)
+    p.an.static(NLgeom=True, silent=True)
+    check_equilibrium(p, rtol=1e-10)
+    inc = np.asarray(p.an.increments)
+    assert inc[-1] == 1.0
+    assert len(inc) == 10, inc
+    np.testing.assert_allclose(inc, np.linspace(0.1, 1., 10), rtol=1e-12)
+
+
 @pytest.mark.parametrize('method', METHODS)
 def test_arc_length_hardening(method):
     p = hardening_springs()
