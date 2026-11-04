@@ -25,6 +25,23 @@ Currently these solvers are pretty much compatible with my other repository
 [panels](https://github.com/saullocastro/panels).
 
 
+Running in the browser
+======================
+
+`structsolve` is pure Python and runs in the browser with
+[Pyodide](https://pyodide.org), which distributes NumPy and SciPy:
+
+```python
+import micropip
+await micropip.install("structsolve")
+```
+
+There SciPy uses OpenBLAS: the cap of the `ncv` of ARPACK against the faulty
+Intel MKL is not applied, `linear_solver='pardiso'` is not available (it calls
+Intel oneMKL), and the reference cycles of SciPy's ARPACK wrappers are
+collected after each call, so that the WebAssembly heap is not exhausted.
+
+
 Citing this library
 ===================
 
@@ -40,6 +57,8 @@ The documentation is available on: https://saullocastro.github.io/structsolve.
 
 History
 =======
+
+See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
 * version 0.10.0 (2026-11-03)
     - Arc-length corrections: line search and early divergence check; indirect displacement control and generalized displacement control; weights of the degrees of freedom in the arc-length norm
