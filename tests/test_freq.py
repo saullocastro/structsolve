@@ -71,7 +71,7 @@ def test_freq_simple():
        https://doi.org/10.1017/CBO9780511761195
 
     """
-    # two elements, Petyt (2010), Example 3.3
+    # two elements
     K, M = rod_clamped_free(2)
     lambda2, eigvecs = freq(K, M, silent=True, sparse_solver=False)
     omega = np.sqrt(-lambda2.real)
@@ -79,7 +79,7 @@ def test_freq_simple():
     np.testing.assert_allclose(omega, np.sqrt(24*Lambda), rtol=1e-10)
     np.testing.assert_allclose(omega, [1.610, 5.628], rtol=1e-3)
 
-    # 300 elements, exact solution, Petyt (2010), Eq. (3.26)
+    # 300 elements, against the exact solution
     n = 300
     K, M = rod_clamped_free(n)
     lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
