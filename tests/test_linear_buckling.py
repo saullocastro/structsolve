@@ -27,6 +27,7 @@ def test_lb_simple_eigenvalue():
     p. 101) are
 
     .. math::
+
         k \begin{bmatrix} 5 & -2 \\ -2 & 2 \end{bmatrix}
         \begin{Bmatrix} U_1 \\ U_2 \end{Bmatrix} = \frac{P}{L}
         \begin{bmatrix} -2 & 1 \\ 1 & -1 \end{bmatrix}
@@ -379,6 +380,7 @@ def test_lb_plate_buckling_fsdt():
     theory gives the critical load ([2]_, Section 93, Eq. (227), p. 389)
 
     .. math::
+
         (N_x)_{cr} = \frac{\pi^2 D}{b^2} \left(\frac{m b}{a} +
         \frac{a}{m b}\right)^2, \qquad D = \frac{E h^3}{12 (1 - \nu^2)}
 

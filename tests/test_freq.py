@@ -43,6 +43,7 @@ def test_freq_simple():
     element matrices of [1]_ (Example 3.3, p. 62)
 
     .. math::
+
         \boldsymbol{k}_e = \frac{E A}{l} \begin{bmatrix} 1 & -1 \\ -1 & 1
         \end{bmatrix}, \qquad
         \boldsymbol{m}_e = \frac{\rho A l}{6} \begin{bmatrix} 2 & 1 \\ 1 & 2
@@ -55,6 +56,7 @@ def test_freq_simple():
     are ([1]_, Eq. (3.26), p. 49)
 
     .. math::
+
         \omega_r = \frac{(2 r - 1) \pi}{2} \left(\frac{E}{\rho L^2}
         \right)^{1/2}, \qquad \psi_r(x) = \sin \frac{(2 r - 1) \pi x}{2 L},
         \qquad r = 1, 2, \ldots
