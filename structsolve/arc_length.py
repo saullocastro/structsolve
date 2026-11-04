@@ -62,23 +62,67 @@ EIGVEC_MAX_SIZE = 64
 
 def _eigs_near_zero(solve_kT, size, p, start=None):
     r"""The ``p`` eigenvalues of `\boldsymbol{K}_T` closest to zero and their
-    eigenvectors, by the subspace iteration of :func:`._critical_eigenvector`,
-    with at most ``EIGVEC_MAX_ITER`` iterations, from the vectors ``start``,
-    columns, completed by random vectors. With
-    ``'pardiso'`` the solutions of the factorization are used without the
-    check of their residual and GMRES, see :func:`.static._factorize`: the
-    tangent stiffness matrix near a critical point is almost singular, the
-    GMRES of its solutions took about one second each for the DOE09
-    cylinder (57000 degrees of freedom), against 0.03 s for those of the
-    factorization alone, and the subspace iteration converges to the
-    eigenvectors closest to zero without them.
+    eigenvectors
+
+    Computed by a subspace iteration of ``p`` vectors with the solutions of
+    ``solve_kT``, at most ``EIGVEC_MAX_ITER`` iterations, until the
+    eigenvalues change by less than ``EIGVEC_TOL`` relative to the largest
+    `1/|\mu|`.
+
+    Parameters
+    ----------
+    solve_kT : callable
+        ``solve_kT(b)`` returns the solution ``x`` of `\boldsymbol{K}_T
+        \boldsymbol{x} = \boldsymbol{b}`, see :func:`.static._factorize`; its
+        attribute ``unrefined``, when present (``'pardiso'``), the solution
+        of the factorization without the check of its residual and GMRES, is
+        used instead.
+    size : int
+        Number of rows of `\boldsymbol{K}_T`.
+    p : int
+        Number of eigenpairs, the number of vectors of the subspace.
+    start : array-like or None, optional
+        Starting vectors, the columns, shape ``(size, q)``; the first
+        ``min(q, p)`` are used, completed by random vectors from a fixed
+        seed. ``None`` (default): only random vectors.
 
     Returns
     -------
     mus : array-like
-        The eigenvalues, not sorted.
+        The eigenvalues, not sorted, shape ``(p',)``, ``p' <= p`` (a null
+        Ritz value of the inverse is dropped).
     vecs : array-like
-        The eigenvectors, the columns, orthonormal.
+        The eigenvectors, the columns, orthonormal, shape ``(size, p')``.
+
+    Notes
+    -----
+    A variant of the subspace iteration of [1]_ (Section 11.6, p. 954), with
+    an identity mass matrix and the Rayleigh-Ritz projection applied to the
+    inverse: in each iteration the subspace `\boldsymbol{Y}` is
+    orthonormalized, `\boldsymbol{Y} = \boldsymbol{Q} \boldsymbol{R}`, then
+    multiplied by the inverse, `\boldsymbol{Y} \leftarrow
+    \boldsymbol{K}_T^{-1} \boldsymbol{Q}`, and the projected problem
+    `\boldsymbol{H} \boldsymbol{V} = \boldsymbol{V} \boldsymbol{\Theta}`,
+    `\boldsymbol{H} = \boldsymbol{Q}^\top \boldsymbol{K}_T^{-1}
+    \boldsymbol{Q}` (symmetrized), is solved. The Ritz values `\theta`
+    approximate the eigenvalues of largest modulus of
+    `\boldsymbol{K}_T^{-1}`, hence `\mu = 1/\theta` those of
+    `\boldsymbol{K}_T` closest to zero, with the eigenvectors
+    `\boldsymbol{Q} \boldsymbol{V}` in the Euclidean inner product. The
+    iteration stops when `|\theta - \theta_{old}| \le \epsilon \max
+    |\theta|` for every Ritz value, `\epsilon` = ``EIGVEC_TOL``.
+
+    The unrefined solutions of PARDISO are used because the tangent
+    stiffness matrix near a critical point is almost singular: the GMRES of
+    its solutions took about one second each for the DOE09 cylinder (57000
+    degrees of freedom), against 0.03 s for those of the factorization
+    alone, and the subspace iteration converges to the eigenvectors closest
+    to zero without them.
+
+    References
+    ----------
+    .. [1] Bathe, K.J., Finite Element Procedures, 2nd ed., K.J. Bathe,
+       Watertown, MA, 2014.
 
     """
     solve = getattr(solve_kT, 'unrefined', solve_kT)
@@ -107,32 +151,33 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
     r"""Eigenvector of the tangent stiffness matrix whose eigenvalue just
     became negative
 
-    Subspace iteration with the inverse of the factorization ``solve_kT``,
-    see :func:`.static._factorize`, and the Rayleigh-Ritz projection of the
-    inverse on the orthonormalized subspace, which gives the eigenvalues of
-    `\boldsymbol{K}_T` closest to zero and their eigenvectors in the
-    Euclidean inner product, see :func:`._eigs_near_zero`. The subspace has
-    ``num_neg + EIGVEC_NUM_GUARD`` vectors, ``num_neg`` being the number of
-    negative eigenvalues of `\boldsymbol{K}_T`, and is iterated until the
-    Ritz values change by less than ``EIGVEC_TOL``, at most
-    ``EIGVEC_MAX_ITER`` times. When fewer than ``num_neg`` of the Ritz
-    values are negative, i.e. positive eigenvalues are closer to zero than
-    some negative ones, e.g. of weakly stiff terms of a Ritz model, the
-    size of the subspace is doubled and the iteration repeated, up to
-    ``EIGVEC_MAX_SIZE`` vectors. Without a count of negative eigenvalues
-    (``'splu'``), ``num_neg`` is 1 when the determinant is negative and 0
-    otherwise. With ``an.constraints`` the factorization
-    is the bordered one, whose solutions satisfy the constraints, and the
-    eigenpairs are those of `\boldsymbol{K}_T` restricted to them.
+    The eigenpairs of `\boldsymbol{K}_T` closest to zero are computed with
+    :func:`._eigs_near_zero`, enough of them to hold the ``num_neg``
+    negative eigenvalues, up to ``EIGVEC_MAX_SIZE``. Of the negative
+    eigenvalues found, the ``num_new`` closest to zero are taken as those
+    that became negative in the last step, and the most negative of them is
+    the critical one, the first that became negative. Without negative
+    eigenvalue, the one closest to zero is taken. With ``num_new < 0``,
+    ``-num_new`` eigenvalues became positive in the last step, and the
+    critical one is the largest of the ``-num_new`` smallest positive
+    eigenvalues, the first that became positive.
 
-    Of the negative eigenvalues found, the ``num_new`` closest to zero are
-    taken as those that became negative in the last step, and the most
-    negative of them is the critical one, the first that became negative.
-    Without negative eigenvalue, the one closest to zero is taken. With
-    ``num_new < 0``, ``-num_new`` eigenvalues became positive in the last
-    step, the subspace has ``-num_new`` more vectors, and the critical one
-    is the largest of the ``-num_new`` smallest positive eigenvalues, the
-    first that became positive.
+    Parameters
+    ----------
+    solve_kT : callable
+        Factorization of `\boldsymbol{K}_T` from :func:`.static._factorize`,
+        see :func:`._eigs_near_zero`. With ``an.constraints`` it is the
+        bordered one, whose solutions satisfy the constraints, and the
+        eigenpairs are those of `\boldsymbol{K}_T` restricted to them.
+    size : int
+        Number of rows of `\boldsymbol{K}_T`.
+    num_neg : int
+        Number of negative eigenvalues of `\boldsymbol{K}_T`; without a
+        count of negative eigenvalues (``'splu'``), 1 when the determinant
+        is negative and 0 otherwise.
+    num_new : int
+        Change of the number of negative eigenvalues in the last step,
+        negative when eigenvalues became positive.
 
     Returns
     -------
@@ -140,6 +185,17 @@ def _critical_eigenvector(solve_kT, size, num_neg, num_new):
         The eigenvector, of unit Euclidean norm.
     mu : float
         Its eigenvalue.
+
+    Notes
+    -----
+    The subspace iteration of :func:`._eigs_near_zero` starts with
+    ``num_neg + EIGVEC_NUM_GUARD`` vectors (at least ``1 +
+    EIGVEC_NUM_GUARD``), and ``-num_new`` more when ``num_new < 0``. When
+    fewer than ``num_neg`` of the Ritz values are negative, i.e. positive
+    eigenvalues are closer to zero than some negative ones, e.g. of weakly
+    stiff terms of a Ritz model, the size of the subspace is doubled and the
+    iteration repeated from the previous vectors, up to ``EIGVEC_MAX_SIZE``
+    vectors.
 
     """
     p = min(max(num_neg, 1) + max(-num_new, 0) + EIGVEC_NUM_GUARD, size)

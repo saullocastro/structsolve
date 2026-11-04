@@ -1030,31 +1030,54 @@ def _eigs_shifted(K, KG, s, k, tol, lu):
     r"""The ``k`` load multipliers nearest the shift ``s``, for real
     unsymmetric matrices
 
-    With `\lambda = s + \delta`, `(\boldsymbol{K} + s \boldsymbol{K}_G + \delta \boldsymbol{K}_G) \boldsymbol{u} = 0`
-    gives the standard problem
-    `(\boldsymbol{K} + s \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G \boldsymbol{u} = \nu \boldsymbol{u}`, `\nu = -1/(\lambda - s)`,
-    whose ``k`` eigenvalues of largest `|\nu|` are found with
-    :func:`scipy.sparse.linalg.eigs`, using the SuperLU factorization ``lu``
-    of `\boldsymbol{K} + s \boldsymbol{K}_G`. The eigenvalues `|\nu| \le \epsilon_0 \max(\max
-    |\nu|, \|\boldsymbol{O}\|)`, with `\epsilon_0` = :data:`NULL_MU_RTOL` and
-    `\|\boldsymbol{O}\|` the estimate of the norm of the operator `\boldsymbol{O} = (\boldsymbol{K} + s
-    \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G` of :func:`_norm_estimate` from the starting vector of
-    ARPACK, are taken as null, i.e. infinite load multipliers, e.g. of the
-    null rows of `\boldsymbol{K}_G`, and are not returned.
+    Computed with :func:`scipy.sparse.linalg.eigs` in a shift-invert form
+    that uses the SuperLU factorization ``lu`` of `\boldsymbol{K} + s
+    \boldsymbol{K}_G`. Infinite load multipliers, e.g. of the null rows of
+    `\boldsymbol{K}_G`, whose eigenvalues of the shift-invert operator are
+    null relative to :data:`NULL_MU_RTOL`, are not returned.
+
+    Parameters
+    ----------
+    K, KG : sparse matrix
+        Matrices of `(\boldsymbol{K} + \lambda \boldsymbol{K}_G)
+        \boldsymbol{u} = \boldsymbol{0}`, real, shape ``(n, n)``.
+    s : float
+        The shift, a load multiplier.
+    k : int
+        Number of eigenpairs requested from ARPACK.
+    tol : float
+        Relative accuracy of the eigenvalues, passed to
+        :func:`scipy.sparse.linalg.eigs`.
+    lu : SuperLU
+        Factorization of `\boldsymbol{K} + s \boldsymbol{K}_G`.
 
     Returns
     -------
     mu, eigvecs : ndarray
-        The eigenpairs, with `\mu = -1/\lambda = \nu/(1 - s \nu)`, sorted by
-        :func:`_general_eigenpairs`, empty when all the `\nu` are null.
+        The eigenpairs, with `\mu = -1/\lambda`, sorted by
+        :func:`_general_eigenpairs`, empty when all the eigenvalues of the
+        operator are null.
     radius : float
         `\max |\lambda - s|` of the returned load multipliers. All the load
         multipliers in the disc `|\lambda - s| < radius` are returned.
-        ``inf`` when a null `\nu` was found, i.e. all the finite load
-        multipliers were found, none when all the `\nu` are null.
+        ``inf`` when a null eigenvalue of the operator was found, i.e. all
+        the finite load multipliers were found, none when all are null.
 
     Notes
     -----
+    With `\lambda = s + \delta`, `(\boldsymbol{K} + s \boldsymbol{K}_G +
+    \delta \boldsymbol{K}_G) \boldsymbol{u} = 0` gives the standard problem
+    `(\boldsymbol{K} + s \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G
+    \boldsymbol{u} = \nu \boldsymbol{u}`, `\nu = -1/(\lambda - s)`, whose
+    ``k`` eigenvalues of largest `|\nu|` are found by ARPACK; then `\mu =
+    -1/\lambda = \nu/(1 - s \nu)`. The eigenvalues `|\nu| \le \epsilon_0
+    \max(\max |\nu|, \|\boldsymbol{O}\|)`, with `\epsilon_0` =
+    :data:`NULL_MU_RTOL` and `\|\boldsymbol{O}\|` the estimate of the norm
+    of the operator `\boldsymbol{O} = (\boldsymbol{K} + s
+    \boldsymbol{K}_G)^{-1} \boldsymbol{K}_G` of :func:`_norm_estimate` from
+    the starting vector of ARPACK, are taken as null, i.e. infinite load
+    multipliers.
+
     The null `\nu` are found as round-off: each product with `\boldsymbol{O}` is
     computed with an error of the order of the machine precision times
     `\|\boldsymbol{O}\|`, and a null `\nu` comes out with a modulus up to this order,
