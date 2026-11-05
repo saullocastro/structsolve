@@ -445,11 +445,9 @@ def check_convergence(an, R, fint, fext_total, fext_ref=None, q_ref=None,
 
     Notes
     -----
-    The relative criterion is the only one of structsolve up to version
-    0.8.0, with the default ``relTOL=1e-6``;
-    its reference ``fext_ref`` is useful when the load factor is close to
-    zero, where ``fext_total`` and ``fint`` are small. When all its
-    references are null, the relative residual is ``norm(R)`` itself.
+    The reference ``fext_ref`` of the relative criterion is useful when the
+    load factor is close to zero, where ``fext_total`` and ``fint`` are
+    small. When all its references are null, the relative residual is ``norm(R)`` itself.
 
     The round-off floor, see the module documentation, does not change
     ``zeta``: an iteration that it accepts may have `\zeta >` ``an.relTOL``.

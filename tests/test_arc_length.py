@@ -139,9 +139,8 @@ def test_arc_length_snap_back(method, convergence, relTOL):
     """A soft spring in series with the truss causes snap-back
 
     The displacement of the loaded point decreases along part of the path.
-    The relative criterion with its former default tolerance,
-    ``relTOL=1e-6``, and Crisfield's criterion with its default, ``1e-9``,
-    both at the default ``maxInc=1``.
+    The relative criterion with ``relTOL=1e-6`` and Crisfield's criterion
+    with its default, ``1e-9``, both at the default ``maxInc=1``.
 
     """
     p = von_mises_truss(frac=1.5, ks=0.5)

@@ -3,8 +3,8 @@ r"""Calls to the callables of :class:`.Analysis` used by the non-linear solvers
 The callables may depend on the load factor and on the configuration
 through their optional keyword arguments, which are passed only when the
 callable declares them explicitly in its signature (a ``**kwargs`` does not
-count), such that the callables written for the previous versions are called
-exactly as before:
+count), such that a callable that does not declare them is called without
+them:
 
 - ``inc``: the current load factor, passed to ``calc_fint``, ``calc_kC`` and
   ``calc_kG``. It allows configuration-dependent loads, e.g. follower
