@@ -449,10 +449,9 @@ def freq(K, M, tol=0, sparse_solver=True,
         criterion of stability: :func:`scipy.linalg.eig`, or, with
         ``symmetric=True``, :func:`scipy.linalg.eigh` for the shifted
         inverse problem, accurate for the lowest natural frequencies and
-        less accurate for the highest ones, see the Notes. With
-        ``symmetric=True``, a ``UserWarning`` is issued when one of the
-        ``num_eigvalues`` lowest eigenpairs fails the residual check, see
-        ``check_rtol``.
+        less accurate for the highest ones, see the Notes. A
+        ``UserWarning`` is issued when one of the ``num_eigvalues`` lowest
+        eigenpairs fails the residual check, see ``check_rtol``.
 
     silent : bool, optional
         A boolean to tell whether the log messages should be printed.
@@ -472,8 +471,9 @@ def freq(K, M, tol=0, sparse_solver=True,
         the eigenpairs are returned in the order of the solver.
     num_eigvalues : int, optional
         Number of calculated eigenvalues with the sparse solver, and of the
-        lowest eigenpairs checked with ``sparse_solver=False`` and
-        ``symmetric=True``, limited to the size of ``M`` minus 2.
+        lowest eigenpairs checked with ``sparse_solver=False``, the lowest
+        ``omega_n**2`` with ``symmetric=True``, otherwise the lowest
+        ``|omega_n**2|``, limited to the size of ``M`` minus 2.
     num_eigvalues_print : int, optional
         Number of eigenvalues to print.
     skip_null_cols : bool, optional
@@ -508,10 +508,9 @@ def freq(K, M, tol=0, sparse_solver=True,
         ``K - s*M`` confirms an eigenvalue within the relative distance
         ``check_rtol`` of its ``omega_n**2``, see the Notes. Any other
         larger residual of the sparse solver is a failed verification, see
-        above. For ``sparse_solver=False``, a log message is printed, and,
-        with ``symmetric=True``, a ``UserWarning`` is issued for the
-        ``num_eigvalues`` lowest eigenpairs, see ``sparse_solver``. ``None``
-        skips the check.
+        above. For ``sparse_solver=False``, a log message is printed, and a
+        ``UserWarning`` is issued for the ``num_eigvalues`` lowest
+        eigenpairs, see ``num_eigvalues``. ``None`` skips the check.
     max_dense_size : int, optional
         Maximum size of the dense problem solved as a last resort when the
         sparse solver failed, see above. Larger problems raise a
@@ -548,8 +547,8 @@ def freq(K, M, tol=0, sparse_solver=True,
     .linear_buckling.DenseFallbackWarning
         When the sparse solver failed and the dense solver was used.
     UserWarning
-        With ``sparse_solver=False`` and ``symmetric=True``, when one of the
-        ``num_eigvalues`` lowest eigenpairs fails the residual check.
+        With ``sparse_solver=False``, when one of the ``num_eigvalues``
+        lowest eigenpairs fails the residual check, see ``check_rtol``.
 
     Notes
     -----
@@ -771,21 +770,30 @@ def freq(K, M, tol=0, sparse_solver=True,
                      'larger than check_rtol={1:.1e}'.format(
                          res[failed].max(), check_rtol), level=2,
                      silent=silent)
-            if symmetric and np.any(failed[:k]):
-                # the k lowest finite eigenpairs, with the inertia
-                finite = np.flatnonzero(np.isfinite(lambda2))[:k]
+            # the k lowest finite eigenpairs: increasing omega**2 of eigh(),
+            # increasing |omega**2| of eig()
+            finite = np.flatnonzero(np.isfinite(lambda2))
+            order = (np.arange(finite.size) if symmetric else
+                     np.argsort(np.abs(lambda2[finite]), kind='stable'))[:k]
+            finite = finite[order]
+            if np.any(failed[order]):
+                # with the inertia for symmetric K and M with a positive
+                # definite M
                 lowest, res, _ = _failed_residuals(Keff, Meff,
                         lambda2[finite], peigvecs[:, finite], check_rtol,
-                        definite=True, linear_solver=linear_solver)
+                        definite=True if symmetric else None,
+                        linear_solver=linear_solver)
                 if np.any(lowest):
                     warnings.warn('freq: {0} of the {1} lowest eigenpairs of '
-                        'eigh() fail the residual check, relative residual '
-                        'up to {2:.1e} > check_rtol={3:.1e}, and are not '
-                        'confirmed by the inertia, the lowest with '
-                        'omega**2={4:.6g}; check them with the sparse '
+                        '{2} fail the residual check, relative residual '
+                        'up to {3:.1e} > check_rtol={4:.1e}{5}, the lowest '
+                        'with omega**2={6:.6g}; check them with the sparse '
                         'solver'.format(int(np.count_nonzero(lowest)),
-                            finite.size, res[lowest].max(), check_rtol,
-                            -lambda2[finite][lowest].max()),
+                            finite.size, 'eigh()' if symmetric else 'eig()',
+                            res[lowest].max(), check_rtol,
+                            ', and are not confirmed by the inertia'
+                            if symmetric else '',
+                            -lambda2[finite][lowest][0]),
                         UserWarning, stacklevel=2)
 
     if used_cols is not None:

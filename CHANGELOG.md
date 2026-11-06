@@ -15,10 +15,14 @@
   allowed), accurate for the lowest natural frequencies and less accurate
   for the highest ones, with `eigh(K, M)` as fallback when the Cholesky
   factorization of `K - sigma M` fails; eigenvalues beyond its resolution,
-  a non-positive `1/(omega**2 - sigma)`, are returned as infinite. A
-  `UserWarning` is issued when one of the `num_eigvalues` lowest eigenpairs
-  fails the residual check and its eigenvalue is not confirmed by the
-  inertia count.
+  a non-positive `1/(omega**2 - sigma)`, are returned as infinite. With
+  `sparse_solver=False`, `symmetric=True` or `False`, a `UserWarning` is
+  issued, besides the log message, when one of the `num_eigvalues` lowest
+  eigenpairs (the lowest `|omega**2|` of `scipy.linalg.eig` with
+  `symmetric=False`) fails the residual check and its eigenvalue is not
+  confirmed by the inertia count, which applies to symmetric `K` and `M`
+  with a positive definite `M`. New test
+  `test_freq_dense_unsymmetric_warning` in `tests/test_freq.py`.
 - `freq`: correct eigenpairs of the sparse solvers were rejected, with a
   `DenseFallbackWarning` or a `RuntimeError`, because their relative
   residual, of the order of the round-off of `K u` relative to
