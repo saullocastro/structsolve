@@ -4,6 +4,41 @@
 
 ### Fixed
 
+- `freq` with `sparse_solver=False, symmetric=True` solved
+  `eigh(K, M)`, whose lowest eigenvalues are wrong for stiff models: 230
+  instead of 326.0 rad/s for a free-free beam of 400 elements whose halves
+  are joined by a penalty spring, a failed residual check reported only
+  through the logger. It now solves the shifted inverse problem
+  `eigh(M, K - sigma M)` (new `freq._dense_eigh`, also used by the dense
+  fallback of the sparse solvers, with the shift `sigma < 0` of the sparse
+  solver, such that a singular `K`, e.g. with rigid-body modes, is
+  allowed), accurate for the lowest natural frequencies and less accurate
+  for the highest ones, with `eigh(K, M)` as fallback when the Cholesky
+  factorization of `K - sigma M` fails; eigenvalues beyond its resolution,
+  a non-positive `1/(omega**2 - sigma)`, are returned as infinite. A
+  `UserWarning` is issued when one of the `num_eigvalues` lowest eigenpairs
+  fails the residual check and its eigenvalue is not confirmed by the
+  inertia count.
+- `freq`: correct eigenpairs of the sparse solvers were rejected, with a
+  `DenseFallbackWarning` or a `RuntimeError`, because their relative
+  residual, of the order of the round-off of `K u` relative to
+  `omega**2 M u`, exceeded `check_rtol` and their normwise backward error,
+  0.4 to 32 times the machine precision for a free-free beam of 400
+  elements, exceeded `linear_buckling.BACKWARD_ERROR_RTOL`. For symmetric
+  `K` and `M` with a positive definite `M` (`symmetric=True`, or matrices
+  found symmetric by `is_symmetric`), such an eigenpair is now accepted
+  when the inertia of `K - s M` at `s = omega**2 (1 -+ check_rtol)`
+  confirms an eigenvalue within the relative distance `check_rtol` (new
+  `freq._inertia_confirmed`, new arguments `definite`, `linear_solver` and
+  `max_inertia` of `freq._failed_residuals`). `BACKWARD_ERROR_RTOL` is
+  unchanged: a larger tolerance, e.g. 100 times the machine precision,
+  accepts the eigenvalues 0.1 % too low of the blade-stiffened plate with
+  penalty connections of `tests/data` (16 to 53 times the machine
+  precision). New tests `test_freq_dense_symmetric_penalty_beam`,
+  `test_freq_dense_symmetric_warning`, `test_freq_stiff_beam_inertia` and
+  `test_freq_check_inertia_rejects` in `tests/test_freq.py`, anchored in
+  the natural frequencies of the free-free beam of Rao (2018).
+
 - Arc-length methods: a step ending below `an.final_load_factor` by a
   round-off of the sum of the increments, e.g. ten steps of 0.1 summing to
   0.9999999999999999, was accepted as a point of the path and followed by
