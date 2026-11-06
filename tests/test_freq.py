@@ -602,6 +602,46 @@ def test_freq_dense_symmetric_warning(monkeypatch):
     assert omega[omega > 10.][0] < 0.75*omega_ref[0]
 
 
+def test_freq_dense_unsymmetric_warning(monkeypatch):
+    """sparse_solver=False with symmetric=False: the free-free beam of 400
+    elements of test_freq_dense_symmetric_penalty_beam, without penalty
+    springs, gives the two lowest elastic natural frequencies of the
+    continuous beam, Rao (2018), Eq. (8.93) and Fig. 8.15, within 1e-6,
+    without a warning; eigenvalues ``omega**2`` of ``eig()`` made 0.1 % too
+    high are reported by a UserWarning"""
+    import importlib
+    import warnings
+
+    freq_module = importlib.import_module('structsolve.freq')
+
+    K, M, omega_ref = beam_free_free()
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        lambda2, _ = freq(K, M, silent=True, symmetric=False,
+                          sparse_solver=False)
+    omega = np.sqrt(np.abs(lambda2))
+    np.testing.assert_allclose(omega[omega > 10.][:2], omega_ref, rtol=1e-6)
+
+    eig_complex = freq_module._eig_complex
+
+    def eig_wrong(*args, **kwargs):
+        # eig() solves M u = (1/omega**2) K u; the infinite eigenvalues of
+        # the rigid-body modes are kept
+        eigvals, eigvecs = eig_complex(*args, **kwargs)
+        finite = np.isfinite(eigvals)
+        eigvals[finite] = eigvals[finite]/(1 + 1e-3)
+        return eigvals, eigvecs
+
+    monkeypatch.setattr(freq_module, '_eig_complex', eig_wrong)
+    with pytest.warns(UserWarning, match=r'lowest eigenpairs of eig\(\) fail '
+                      'the residual check'):
+        lambda2, _ = freq(K, M, silent=True, symmetric=False,
+                          sparse_solver=False)
+    omega = np.sqrt(np.abs(lambda2))
+    np.testing.assert_allclose(omega[omega > 10.][:2],
+                               omega_ref*np.sqrt(1 + 1e-3), rtol=1e-6)
+
+
 @pytest.mark.parametrize('symmetric', [True, False])
 @pytest.mark.parametrize('ground', [0., 1e-3])
 def test_freq_stiff_beam_inertia(symmetric, ground):
