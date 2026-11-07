@@ -4,10 +4,12 @@ The Legendre-based approximation functions of Castro and Donadon (2017) and
 a NumPy version of ``composites.isotropic_plate``, such that the tests only
 depend on NumPy and SciPy.
 
-Reference: Saullo G. P. Castro, Maurício V. Donadon. "Assembly of
-Semi-Analytical models to Address Linear Buckling and Vibration of Stiffened
-Composite Panels with Debonding Defect". Composite Structures, 2017.
-https://doi.org/10.1016/j.compstruct.2016.10.026
+References
+----------
+.. [1] Castro, S.G.P. and Donadon, M.V., Assembly of semi-analytical models
+   to address linear buckling and vibration of stiffened composite panels
+   with debonding defect, Composite Structures, 160, 232-247, 2017.
+   https://doi.org/10.1016/j.compstruct.2016.10.026
 
 """
 from functools import lru_cache
@@ -43,11 +45,24 @@ def _coefficients(n, d1t, d1r, d2t, d2r, der):
 def vecf(n, xi, d1t, d1r, d2t, d2r):
     r"""Hierarchical functions of Bardell at the natural coordinate ``xi``
 
-    The first four are cubic Hermite functions, whose displacement and
-    rotation at `\xi=-1` and `\xi=+1` are controlled by the flags ``d1t``,
-    ``d1r``, ``d2t`` and ``d2r``. The following ones are the Legendre
-    polynomials `P_{i-2}` integrated twice from `-1`, which vanish with
-    their first derivative at both extremities.
+    Returns the values of the ``n`` functions at ``xi``, in `[-1, 1]`. The
+    flags ``d1t``, ``d1r``, ``d2t`` and ``d2r``, 1 or 0, keep or remove the
+    displacement and the rotation at `\xi=-1` and at `\xi=+1`.
+
+    Notes
+    -----
+    The first four functions are cubic Hermite functions, each one with a
+    displacement or a rotation at one extremity only, multiplied by the
+    flags ``d1t``, ``d1r``, ``d2t`` and ``d2r``. The following ones are the
+    Legendre polynomials `P_{i-2}` integrated twice from `-1`, which vanish
+    with their first derivative at both extremities, as in [1]_.
+
+    References
+    ----------
+    .. [1] Castro, S.G.P. and Donadon, M.V., Assembly of semi-analytical
+       models to address linear buckling and vibration of stiffened
+       composite panels with debonding defect, Composite Structures, 160,
+       232-247, 2017. https://doi.org/10.1016/j.compstruct.2016.10.026
 
     """
     return legendre.legval(xi, _coefficients(n, d1t, d1r, d2t, d2r, 0))
@@ -64,11 +79,17 @@ def vecf_xixi(n, xi, d1t, d1r, d2t, d2r):
 
 
 def isotropic_plate(thickness, E, nu):
-    """Bending and transverse shear stiffnesses of an isotropic plate
+    r"""Bending and transverse shear stiffnesses of an isotropic plate
 
     The transverse shear stiffnesses use the shear correction factor 5/6.
     Same as the ``D`` and the transverse shear terms of the ``Laminate``
     returned by ``composites.isotropic_plate``.
+
+    Notes
+    -----
+    With the thickness `h`, `D_{11} = D_{22} = D = E h^3/(12 (1 - \nu^2))`,
+    `D_{12} = \nu D`, `D_{66} = (1 - \nu) D/2`, and `A_{44} = A_{55} = k G
+    h`, with `G = E/(2 (1 + \nu))` and `k = 5/6`.
 
     """
     D = E*thickness**3/(12*(1 - nu**2))

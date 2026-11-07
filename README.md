@@ -24,8 +24,22 @@ Structural analysis solvers tailored for semi-analytical models
 Currently these solvers are pretty much compatible with my other repository
 [panels](https://github.com/saullocastro/panels).
 
-The folder `notebooks/` holds validation notebooks against results of the
-literature, run with models of `panels`, see `notebooks/README.md`.
+
+Running in the browser
+======================
+
+`structsolve` is pure Python and runs in the browser with
+[Pyodide](https://pyodide.org), which distributes NumPy and SciPy:
+
+```python
+import micropip
+await micropip.install("structsolve")
+```
+
+There SciPy uses OpenBLAS: the cap of the `ncv` of ARPACK against the faulty
+Intel MKL is not applied, `linear_solver='pardiso'` is not available (it calls
+Intel oneMKL), and the reference cycles of SciPy's ARPACK wrappers are
+collected after each call, so that the WebAssembly heap is not exhausted.
 
 
 Citing this library

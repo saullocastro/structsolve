@@ -37,8 +37,7 @@ The criterion is selected with ``Analysis.convergence``, see
   of freedom, e.g. a support reaction, does not enter it.
 - ``'relative'``: the Euclidean norm of `\boldsymbol{R}` is not larger than
   ``relTOL`` times the largest Euclidean norm of the same references, over
-  all the degrees of freedom, the only criterion up to version 0.8.0, with
-  the default ``relTOL=1e-6`` then. It does not depend on the units of the
+  all the degrees of freedom. It does not depend on the units of the
   model as a whole, but it adds the squares of forces and of moments.
 
 With either criterion, ``absTOL``, default ``None``, also accepts an
@@ -121,8 +120,8 @@ and the analysis may stop. Two checks:
 Examples
 --------
 
-The analytic problems of ``tests/analytic_problems.py``, see
-:doc:`ex_newton_raphson`. A finite-difference check of the tangent
+The analytic problems of ``tests/analytic_problems.py``. A
+finite-difference check of the tangent
 stiffness matrix:
 
 .. literalinclude:: ../../tests/test_newton_raphson.py

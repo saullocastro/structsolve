@@ -23,8 +23,9 @@ def remove_null_cols(*args, **kwargs):
     Parameters
     ----------
     args : list of sparse matrices
-        The first matrix in this list will be used to extract the rows and
-        columns to be removed from all the other matrices. Use
+        Positional, no default value: one or more square matrices of the
+        same size. The first matrix in this list will be used to extract the
+        rows and columns to be removed from all the other matrices. Use
         :class:`csr_matrix` to obtain a better performance.
     silent : bool, optional
         Keyword argument telling whether the log messages should be printed.

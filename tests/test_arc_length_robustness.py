@@ -76,8 +76,8 @@ def test_no_doubling_back(method, options):
 
 @pytest.mark.parametrize('method', METHODS)
 def test_defaults_unchanged(method):
-    """The defaults are the former behaviour: no line search, the
-    divergence checks of ``NUM_ITER_BEFORE_DIVERGENCE_CHECK``"""
+    """The defaults: no line search, the divergence checks of
+    ``NUM_ITER_BEFORE_DIVERGENCE_CHECK``"""
     an = Analysis()
     assert an.arc_length_line_search is False
     assert an.early_divergence is False

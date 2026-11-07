@@ -52,7 +52,7 @@ the sparse solvers do not return.
 
 Complex load multipliers only exist for unsymmetric matrices, e.g. with the
 load stiffness of follower loads, for which :func:`.lb` returns the lowest
-positive real load multiplier, see :doc:`ex_follower_loads`.
+positive real load multiplier, see :doc:`eigensolvers`.
 
 
 Example
@@ -72,7 +72,3 @@ the sparse and the dense solvers:
 
 .. literalinclude:: ../../tests/test_linear_buckling.py
     :pyobject: test_lb_negative_multipliers_closest_to_zero
-
-A complete Ritz model of a plate, in which the geometric stiffness matrix
-is integrated from the stress resultants of the reference load, is in
-:doc:`ex_linear_buckling`.
