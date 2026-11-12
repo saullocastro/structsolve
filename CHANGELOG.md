@@ -52,6 +52,21 @@
   it, such that the last increment is the final load factor, once. New
   test `test_final_load_factor_once` in `tests/test_arc_length.py`.
 
+### Tests
+
+- Every test runs in less than 30 s. `tests/test_simo1990_cylinder.py`
+  checks the Riks path of the imperfect cylinder through its limit load and
+  the branch switching of the perfect one, with `linear_solver='splu'` and
+  `'pardiso'`, on 5 x 5 Ritz terms, against the eigenvalues of the dense
+  tangent stiffness matrix and values of the code
+  (`test_riks_imperfect_cylinder_limit_load`,
+  `test_riks_perfect_cylinder_branch_switching`); the comparison with
+  Fig. 6.3.4 of Simo, Fox and Rifai (1990), on 8 x 8 terms, is in
+  `notebooks/simo1990_cylinder_postbuckling.ipynb`, with the post-buckling
+  load of the 50 % imperfection at the axial deflection 0.02.
+  `test_freq_dense_unsymmetric_warning` uses the free-free beam of 100
+  elements.
+
 ## 0.10.0 (2026-11-03)
 
 ### Robustness of the arc-length corrections
