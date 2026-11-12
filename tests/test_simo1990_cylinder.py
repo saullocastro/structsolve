@@ -102,10 +102,10 @@ def test_riks_imperfect_cylinder_limit_load():
 
     Notes
     -----
-    The comparison with Fig. 6.3.4 (a) of Simo, Fox and Rifai (1990), with
-    8 x 8 terms, is in the notebook of this benchmark. The limit load with
-    5 x 5 terms, 0.419 at the axial deflection 0.0113, converges towards
-    that of 8 x 8 terms, 0.393 at 0.0107 (0.401 with 6 x 6 terms).
+    The limit load with 5 x 5 terms, 0.419 at the maximum axial deflection
+    0.0113 of the loaded edge, converges towards that of 8 x 8 terms, 0.393
+    at 0.0107 (0.401 with 6 x 6 terms), against 0.411 at 0.0108 read from
+    Fig. 6.3.4 (a) of Simo, Fox and Rifai (1990).
 
     """
     from structsolve import callbacks
@@ -139,10 +139,10 @@ def test_riks_perfect_cylinder_branch_switching(linear_solver):
 
     Notes
     -----
-    The comparison with Fig. 6.3.4 (d) of Simo, Fox and Rifai (1990), with
-    8 x 8 terms, is in the notebook of this benchmark. The bifurcation load
-    with 5 x 5 terms, 0.908 at the axial deflection 0.0200, converges
-    towards that of 8 x 8 terms, 0.827 at 0.0182 (0.840 with 6 x 6 terms).
+    The bifurcation load with 5 x 5 terms, 0.908 at the maximum axial
+    deflection 0.0200 of the loaded edge, converges towards that of 8 x 8
+    terms, 0.827 at 0.0182 (0.840 with 6 x 6 terms), against 0.833 at
+    0.0183 read from Fig. 6.3.4 (d) of Simo, Fox and Rifai (1990).
 
     """
     from structsolve import callbacks
