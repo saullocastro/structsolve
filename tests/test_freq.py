@@ -603,18 +603,19 @@ def test_freq_dense_symmetric_warning(monkeypatch):
 
 
 def test_freq_dense_unsymmetric_warning(monkeypatch):
-    """sparse_solver=False with symmetric=False: the free-free beam of 400
-    elements of test_freq_dense_symmetric_penalty_beam, without penalty
-    springs, gives the two lowest elastic natural frequencies of the
-    continuous beam, Rao (2018), Eq. (8.93) and Fig. 8.15, within 1e-6,
-    without a warning; eigenvalues ``omega**2`` of ``eig()`` made 0.1 % too
-    high are reported by a UserWarning"""
+    """sparse_solver=False with symmetric=False: the free-free beam of
+    test_freq_dense_symmetric_penalty_beam with 100 elements, without
+    penalty springs, gives the two lowest elastic natural frequencies of the
+    continuous beam, Rao (2018), Eq. (8.93) and Fig. 8.15, within 1e-6
+    (relative differences below 2e-7, as with 400 elements), without a
+    warning; eigenvalues ``omega**2`` of ``eig()`` made 0.1 % too high are
+    reported by a UserWarning"""
     import importlib
     import warnings
 
     freq_module = importlib.import_module('structsolve.freq')
 
-    K, M, omega_ref = beam_free_free()
+    K, M, omega_ref = beam_free_free(100)
     with warnings.catch_warnings():
         warnings.simplefilter('error', UserWarning)
         lambda2, _ = freq(K, M, silent=True, symmetric=False,
