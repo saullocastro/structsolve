@@ -64,9 +64,8 @@ def freq_matrices(symmetric, n=120):
     ('s1B1_m14n8', False), ('s3B2_m14n8', False)])
 def test_lb_sparse_solver_runs_first(monkeypatch, name, symmetric,
                                      max_dense_size):
-    """The sparse solver is called first, also for the small problems that
-    the version 0.5.3 solved with a dense solver, for any max_dense_size,
-    and no dense solver is called when it succeeds"""
+    """The sparse solver is called first, also for small problems, for any
+    max_dense_size, and no dense solver is called when it succeeds"""
     K, KG = load_saved_matrices(name)
     calls = spy(monkeypatch, linear_buckling, LB_SPARSE + LB_DENSE)
     with warnings.catch_warnings():

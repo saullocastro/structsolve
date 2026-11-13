@@ -1,17 +1,31 @@
 r"""Load vector depending on the load factor: prescribed displacements
 
+Verifies the Newton-Raphson and the arc-length methods of
+:class:`structsolve.Analysis` with a load vector `-\partial
+\boldsymbol{R}/\partial \lambda` that depends on the configuration and on
+the load factor, passed with ``calc_fext(inc=1., c=c_r, lbd=lbd)``, see
+:mod:`structsolve.callbacks`: the converged increments against the exact
+solution and a dense Newton-Raphson reference, and the convergence orders.
+
 Three hardening springs in series, `f_i(e) = k_i e + a_i e^3`, between a
 wall and the nodes 1, 2 and 3, with the displacement of node 3 prescribed,
 `x_3 = d_0 + \lambda d_1`, and an optional load `\lambda F` on node 1. The
-constraint is imposed exactly, as in the null-space method of `panels`:
+constraint is imposed exactly, as in the null-space method of `panels`,
+such that the reduced problem has two degrees of freedom. Under the
+prescribed displacement alone, `F = 0`, the reference vector
+``calc_fext(inc=1.)`` is null.
+
+Notes
+-----
+With the null-space method the configuration is
 
 .. math::
 
     \boldsymbol{c} = \boldsymbol{Z} \boldsymbol{c}_r + \boldsymbol{c}_{p0} + \lambda \boldsymbol{c}_{p1}, \qquad
-    \boldsymbol{Z} = \begin{bmatrix} 1 & 0 \\ 0 & 1 \\ 0 & 0 \end{bmatrix}, \qquad
+    \boldsymbol{Z} = \begin{bmatrix} 1 & 0 \ 0 & 1 \ 0 & 0 \end{bmatrix}, \qquad
     \boldsymbol{c}_{p0} = \{0, 0, d_0\}, \qquad \boldsymbol{c}_{p1} = \{0, 0, d_1\}
 
-such that the reduced problem has two degrees of freedom and the residual
+and the residual of the reduced problem
 
 .. math::
 
@@ -21,10 +35,7 @@ such that the reduced problem has two degrees of freedom and the residual
     \boldsymbol{K}_T(\boldsymbol{c}) \boldsymbol{c}_{p1}\right)
 
 whose derivative with respect to the load factor depends on the
-configuration and on the load factor, passed to :class:`structsolve.Analysis`
-with ``calc_fext(inc=1., c=c_r, lbd=lbd)``, see :mod:`structsolve.callbacks`.
-Under the prescribed displacement alone, `F = 0`, the reference vector
-``calc_fext(inc=1.)`` is null.
+configuration and on the load factor.
 
 """
 import numpy as np

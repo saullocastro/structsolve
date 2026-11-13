@@ -1,9 +1,7 @@
 r"""Post-buckling of an axially compressed cylinder, Simo, Fox and Rifai (1990)
 
-Utilities of the notebook ``simo1990_cylinder_postbuckling.ipynb`` and of
-the test ``tests/test_simo1990_cylinder.py``, and the command line used for
-the long convergence runs of the documentation page
-``doc/source/ex_cylinder_postbuckling.rst``.
+Model and analyses of the test ``tests/test_simo1990_cylinder.py``, and the
+command line used for the long convergence runs of this benchmark.
 
 Benchmark of the Riks method of structsolve deep into the post-buckled
 regime: Section 6.3.4 of Simo, Fox and Rifai (1990), "Post-buckling analysis
@@ -15,23 +13,25 @@ interior edges and a simple support on the loaded edge, such that the
 diamond mode of 5 axial half-waves and 12 circumferential waves is the
 lowest one. The section is a single :class:`panels.shell.Shell` of the
 model ``'cylshell_clpt_donnell'`` (panels 0.15.0) with Bardell's functions.
+The values read from Fig. 6.3.4 (``FIG_*``) are the solid lines of Simo, Fox
+and Rifai (1990) and the markers of the 9-ANS elements of Stanley (1985).
 
 Neither panels nor structsolve takes a geometric imperfection, which is
 added here exactly for the Donnell kinematics with the Ritz vector ``c0`` of
-the imperfection, see :class:`ImperfectShell` and the documentation page.
+the imperfection, see :class:`ImperfectShell`.
 
 panels (which requires structsolve>=0.10.0) is not a dependency of
 structsolve. Run the command line with structsolve and panels 0.15.0
 importable, and oneMKL for 'pardiso', from the root of the repository::
 
-    PYTHONPATH=".;<panels>" python notebooks/simo1990_utils.py verify
-    PYTHONPATH=... python notebooks/simo1990_utils.py lb 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.1 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py riks 0.5 12 12
-    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 8 8
-    PYTHONPATH=... python notebooks/simo1990_utils.py perfect 12 12 10 pardiso
-    PYTHONPATH=... python notebooks/simo1990_utils.py summary
-    PYTHONPATH=... python notebooks/simo1990_utils.py plot
+    PYTHONPATH=".;<panels>" python tests/simo1990_utils.py verify
+    PYTHONPATH=... python tests/simo1990_utils.py lb 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py riks 0.1 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py riks 0.5 12 12
+    PYTHONPATH=... python tests/simo1990_utils.py perfect 8 8
+    PYTHONPATH=... python tests/simo1990_utils.py perfect 12 12 10 pardiso
+    PYTHONPATH=... python tests/simo1990_utils.py summary
+    PYTHONPATH=... python tests/simo1990_utils.py plot
 
 (``;`` separates the paths on Windows, ``:`` elsewhere.) The commands
 ``riks`` and ``perfect`` save ``simo1990_<case>_m<m>n<n>.npz`` in the
@@ -65,36 +65,36 @@ N_CL = E*t**2/(R*np.sqrt(3*(1 - nu**2)))
 
 OUT = os.environ.get('SIMO1990_OUT', '.')
 
-# Values read from Fig. 6.3.4 of Simo, Fox and Rifai (1990), p. 56, on the
+# Values read from Fig. 6.3.4, p. 56, of the reference, on the
 # page rendered at 300 dpi with a grid of 0.001 x 0.05 drawn over the axes;
 # reading precision about +-0.0003 in the axial deflection and +-0.01 in the
 # load normalized by the linear buckling load. (axial deflection, load)
-#: Fig. (a), triangles, 9-ANS of Stanley (1985), 10 % imperfection
+#: Fig. (a), triangles, 9-ANS elements, 10 % imperfection
 FIG_A_ANS_10 = [
     (0.0071, 0.331), (0.0095, 0.445), (0.0125, 0.570), (0.0148, 0.666),
     (0.0159, 0.717), (0.0166, 0.713), (0.0163, 0.693), (0.0157, 0.653),
     (0.0152, 0.619), (0.0148, 0.580), (0.0144, 0.532), (0.0141, 0.487),
     (0.0140, 0.430), (0.0143, 0.382), (0.0157, 0.346), (0.0184, 0.319),
     (0.0218, 0.324), (0.0296, 0.349), (0.0353, 0.395)]
-#: Fig. (a), diamonds, Stanley (1985), 50 % imperfection
+#: Fig. (a), diamonds, 9-ANS elements, 50 % imperfection
 FIG_A_ANS_50 = [
     (0.0055, 0.229), (0.0066, 0.273), (0.0077, 0.310), (0.0084, 0.342),
     (0.0089, 0.366), (0.0094, 0.383), (0.0098, 0.397), (0.0106, 0.402),
     (0.0109, 0.385), (0.0112, 0.367), (0.0118, 0.354), (0.0122, 0.332),
     (0.0132, 0.312), (0.0151, 0.300), (0.0175, 0.297), (0.0204, 0.300),
     (0.0237, 0.318), (0.0265, 0.349), (0.0363, 0.420)]
-#: Fig. (a), solid line, Simo et al., 10 % imperfection
+#: Fig. (a), solid line, 10 % imperfection
 FIG_A_SIMO_10 = [
     (0.0125, 0.575), (0.0150, 0.675), (0.0168, 0.715), (0.0158, 0.642),
     (0.0151, 0.580), (0.0146, 0.512), (0.0142, 0.445), (0.0143, 0.399),
     (0.0148, 0.366), (0.0158, 0.343), (0.0184, 0.326), (0.0200, 0.330),
     (0.0250, 0.344), (0.0300, 0.372), (0.0350, 0.406), (0.0400, 0.459)]
-#: Fig. (a), solid line, Simo et al., 50 % imperfection
+#: Fig. (a), solid line, 50 % imperfection
 FIG_A_SIMO_50 = [
     (0.0108, 0.411), (0.0116, 0.366), (0.0126, 0.335), (0.0141, 0.319),
     (0.0150, 0.315), (0.0200, 0.315), (0.0250, 0.344), (0.0300, 0.370),
     (0.0350, 0.401), (0.0400, 0.449)]
-#: Fig. (d), solid line, Simo et al., perfect cylinder, branch switching
+#: Fig. (d), solid line, perfect cylinder, branch switching
 FIG_D_SIMO = [
     (0.0183, 0.833), (0.0182, 0.742), (0.0171, 0.695), (0.0160, 0.599),
     (0.0151, 0.530), (0.0149, 0.457), (0.0160, 0.360), (0.0190, 0.335),
@@ -194,7 +194,7 @@ class ImperfectShell(object):
     ``kT_imp(c) = kT(c + c0) - kG(N0)``
 
     with ``N0`` the membrane resultants, linear and non-linear parts, of the
-    state ``c0``, see the documentation page.
+    state ``c0``.
 
     """
     def __init__(self, s, c0):

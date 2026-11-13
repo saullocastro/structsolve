@@ -7,9 +7,15 @@ state, scaled by the diagonal of the linear stiffness matrix, see
 :func:`.newton_raphson._eigvals_inertia`, checked against
 :func:`numpy.linalg.eigvals` of the dense matrix.
 
-The problem is linear in the configuration, with a tangent stiffness matrix
-that depends on the load factor, as with a follower load whose load
-stiffness is scaled by the load factor:
+The problem is linear in the configuration, with an unsymmetric tangent
+stiffness matrix that depends on the load factor, whose real eigenvalues,
+and the real parts of whose complex pairs, cross zero at given load
+factors.
+
+Notes
+-----
+The tangent stiffness matrix depends on the load factor as with a follower
+load whose load stiffness is scaled by the load factor:
 
 .. math::
 
@@ -49,9 +55,9 @@ def has_pardiso():
 
 
 class LinearUnsymmetric(object):
-    """See the module docstring: ``crossings`` are the load factors at which
-    the real eigenvalues cross zero, ``complex_crossings`` those at which
-    the real part of the complex pairs does, ``num_positive`` real
+    """See the Notes of the module: ``crossings`` are the load factors at
+    which the real eigenvalues cross zero, ``complex_crossings`` those at
+    which the real part of the complex pairs does, ``num_positive`` real
     eigenvalues stay positive"""
     def __init__(self, crossings, complex_crossings=(), num_positive=20,
                  seed=0, k0=10.):

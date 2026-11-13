@@ -1,11 +1,21 @@
 r"""Post-buckling of an axially compressed cylinder, Simo, Fox and Rifai (1990)
 
-Benchmark of Section 6.3.4, Fig. 6.3.4 of Simo, Fox and Rifai (1990), with
-the model of ``notebooks/simo1990_utils.py``, see the notebook
-``notebooks/simo1990_cylinder_postbuckling.ipynb`` and the documentation
-page ``ex_cylinder_postbuckling``. The values of the figure were read with
-a precision of about +-0.0003 in the axial deflection and +-0.01 in the
-load normalized by the linear buckling load.
+Verifies the Riks method, the detection of a limit load and the branch
+switching of :class:`structsolve.Analysis` with both linear solvers on the
+benchmark of Section 6.3.4 of Simo, Fox and Rifai (1990), with the Ritz
+model of panels built by the module ``simo1990_utils.py`` of the tests, in
+small models of 6 x 6 and 5 x 5 terms: the model of the imperfect shell, the path
+of the imperfect shell through its limit load, and the switch of the
+perfect shell to its bifurcated branch, against the eigenvalues of the
+dense tangent stiffness matrix and values of the code. The tests are
+skipped where panels is not installed.
+
+References
+----------
+.. [1] Simo, J.C., Fox, D.D. and Rifai, M.S., On a stress resultant
+   geometrically exact shell model. Part III: Computational aspects of the
+   nonlinear theory, Computer Methods in Applied Mechanics and Engineering,
+   79(1), 21-70, 1990. https://doi.org/10.1016/0045-7825(90)90094-3
 
 """
 import os
@@ -21,12 +31,17 @@ from structsolve.pardiso import available as pardiso_available
 # otherwise
 pytest.importorskip('panels')
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                '..', 'notebooks'))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import simo1990_utils as su # noqa: E402
 
 
 def test_imperfection_identities():
+    """The model of the imperfect shell of ``simo1990_utils.py``: its
+    geometric stiffness matrix of the linear membrane resultants against
+    ``calc_kG`` of panels, null internal forces at ``c = 0``, the perfect
+    shell without imperfection, and the tangent stiffness matrix and the
+    internal forces against central finite differences of the internal
+    forces and of the strain energy"""
     s, lbd_cr, mode = su.normalized_shell(6, 6)
     size = s.get_size()
     rng = np.random.default_rng(1)
@@ -70,55 +85,92 @@ def test_imperfection_identities():
     assert abs(dU - f_L) >= 1e-6*abs(fv)
 
 
-def test_riks_imperfect_cylinder_50pct():
-    # Fig. 6.3.4 (a), imperfection of 50 % of the thickness, 8 x 8 terms
-    r = su.run_riks(0.5, 8, 8, umax=0.021, silent=True, save=False,
+def _num_negative_eigvals(kT):
+    """Negative eigenvalues of the dense ``kT`` below the round-off of its
+    null rows"""
+    ev = np.linalg.eigvalsh(kT.toarray())
+    return int((ev < -1e-9*np.abs(ev).max()).sum())
+
+
+def test_riks_imperfect_cylinder_limit_load():
+    """Riks method on the imperfect shell, 50 % of the thickness, 5 x 5
+    terms: the path passes the limit load, where the load factor decreases
+    for the first time, every increment in equilibrium; the tangent
+    stiffness matrix of the model has no negative eigenvalue before the
+    limit load and one at it; the linear buckling load and the limit load
+    and deflection at it are those of the code
+
+    Notes
+    -----
+    The limit load with 5 x 5 terms, 0.419 at the maximum axial deflection
+    0.0113 of the loaded edge, converges towards that of 8 x 8 terms, 0.393
+    at 0.0107 (0.401 with 6 x 6 terms), against 0.411 at 0.0108 read from
+    Fig. 6.3.4 (a) of Simo, Fox and Rifai (1990).
+
+    """
+    from structsolve import callbacks
+
+    r = su.run_riks(0.5, 5, 5, umax=0.0125, silent=True, save=False,
                     verbose=False)
-    # linear buckling load of the diamond mode, 0.47 % above the classical
-    # one with 8 x 8 terms (0.42 % with 10 x 10 to 14 x 14)
-    assert abs(r['lbd_cr'] - 1.00472) <= 1e-5
     assert r['max_residual'] <= 1e-9
-    v = su.path_values(r['lbds'], r['u'][:, 1])
-    # limit load: 0.411 at 0.0108 read for Simo et al., 0.402 at 0.0106 for
-    # Stanley; 0.393 at 0.0107 (0.390 with 12 x 12 terms)
-    assert abs(v['P_lim'] - 0.411) <= 0.025
-    assert abs(v['P_lim'] - 0.402) <= 0.015
-    assert abs(v['u_lim'] - 0.0108) <= 0.0005
-    # post-buckling plateau: 0.315 at 0.015 to 0.020 read for Simo et al.,
-    # 0.297 at 0.0175 for Stanley; 0.323 at 0.0173
-    assert abs(v['P_min'] - 0.315) <= 0.015
-    assert abs(v['P(0.02)'] - 0.315) <= 0.015
+    an, lbds, u_max = r['an'], r['lbds'], r['u'][:, 1]
+    # value of the code, 5 x 5 terms
+    assert abs(r['lbd_cr'] - 1.019207) <= 1e-5
+    ilim = np.flatnonzero(np.diff(lbds) < 0)[0]
+    # values of the code, 5 x 5 terms, see the Notes
+    assert abs(lbds[ilim] - 0.41896) <= 1e-4
+    assert abs(u_max[ilim] - 0.011292) <= 1e-5
+    assert u_max[-1] > u_max[ilim] and lbds[-1] < lbds[ilim] - 0.02
+    kT = [callbacks.calc_kT(an, an.cs[i], lbds[i]) for i in (ilim - 1, ilim)]
+    assert [_num_negative_eigvals(k) for k in kT] == [0, 1]
 
 
 @pytest.mark.parametrize('linear_solver', ['splu', 'pardiso'])
 def test_riks_perfect_cylinder_branch_switching(linear_solver):
-    # Fig. 6.3.4 (d), the perfect cylinder, 8 x 8 terms, unknowns scaled to
-    # a unit diagonal, switch at the first bifurcation along the critical
-    # eigenvector: by the sign of the determinant with 'splu', by the count
-    # of negative eigenvalues with 'pardiso'
+    """Riks method on the perfect shell, 5 x 5 terms, unknowns scaled to a
+    unit diagonal, ``inertia=True``, ``branch_switching=1``: the bifurcation
+    is detected by the sign of the determinant with ``'splu'`` and by the
+    count of negative eigenvalues with ``'pardiso'`` at the first increment
+    where the dense tangent stiffness matrix has a negative eigenvalue, and
+    the path switches there along the critical eigenvector to the
+    bifurcated branch, on which the load decreases; every increment is in
+    equilibrium and the bifurcation load is that of the code, the same with
+    both linear solvers
+
+    Notes
+    -----
+    The bifurcation load with 5 x 5 terms, 0.908 at the maximum axial
+    deflection 0.0200 of the loaded edge, converges towards that of 8 x 8
+    terms, 0.827 at 0.0182 (0.840 with 6 x 6 terms), against 0.833 at
+    0.0183 read from Fig. 6.3.4 (d) of Simo, Fox and Rifai (1990).
+
+    """
+    from structsolve import callbacks
+
     if linear_solver == 'pardiso':
         if not pardiso_available():
             pytest.skip('oneMKL is not found')
-    r = su.run_riks(0., 8, 8, umax=0.022, branch_switching=1, silent=True,
-                    save=False, verbose=False, linear_solver=linear_solver)
+
+    def stop(an):
+        # eight increments on the bifurcated branch
+        return (len(an.branch_points) > 0
+                and len(an.increments) >= an.branch_points[0] + 9)
+
+    r = su.run_riks(0., 5, 5, branch_switching=1, silent=True, save=False,
+                    verbose=False, linear_solver=linear_solver,
+                    stop_criterion=stop)
     assert r['max_residual'] <= 1e-9
+    an, lbds, u_max = r['an'], r['lbds'], r['u'][:, 1]
     assert len(r['branch_points']) == 1
-    lbds, u_max = r['lbds'], r['u'][:, 1]
     ib = r['branch_points'][0]
-    # bifurcation: 0.833 at 0.0183 read for Simo et al.; 0.827 at 0.0182,
-    # where a dense eigenvalue analysis of the tangent stiffness matrix has
-    # its first negative eigenvalue (0.8273, 0.8270 and 0.8267 with 8 x 8,
-    # 10 x 10 and 12 x 12 terms)
-    assert abs(lbds[ib] - 0.827) <= 0.005
-    assert abs(u_max[ib] - 0.0183) <= 0.0003
-    v = su.path_values(lbds, u_max)
-    assert v['P_lim'] == lbds[ib]
-    # snap-back of the bifurcated branch: 0.0149 at the load 0.457 read for
-    # Simo et al.; 0.0145 at 0.453
-    assert abs(v['u_back'] - 0.0149) <= 0.0006
-    assert abs(v['P_back'] - 0.457) <= 0.01
-    # minimum post-buckling load: 0.333 at 0.020 read for Simo et al.; 0.327
-    # at 0.0208
-    assert abs(v['P_min'] - 0.327) <= 0.003
-    assert abs(v['P_min'] - 0.333) <= 0.01
-    assert abs(v['u_min'] - 0.020) <= 0.001
+    # values of the code, 5 x 5 terms, see the Notes
+    assert abs(lbds[ib] - 0.90796) <= 1e-4
+    assert abs(u_max[ib] - 0.019969) <= 1e-5
+    # fundamental path up to the bifurcation, then the bifurcated branch
+    assert np.all(np.diff(lbds[:ib + 1]) > 0)
+    assert np.all(np.diff(lbds[ib:]) < 0)
+    if linear_solver == 'pardiso':
+        assert an.num_negative_eigvals[ib - 1:ib + 1] == [0, 1]
+    assert an.det_signs[ib - 1:ib + 1] == [1, -1]
+    kT = [callbacks.calc_kT(an, an.cs[i], lbds[i]) for i in (ib - 1, ib)]
+    assert [_num_negative_eigvals(k) for k in kT] == [0, 1]

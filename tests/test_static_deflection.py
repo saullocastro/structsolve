@@ -9,10 +9,23 @@ from ritz import isotropic_plate, vecf, vecf_xi, vecf_xixi
 
 
 def test_static_deflection_plate_clpt():
-    """Test static deflection of a simply supported plate under point load (CLPT).
+    r"""Test static deflection of a simply supported plate under point load (CLPT).
 
     Uses Legendre polynomials as shape functions with Gauss-Legendre quadrature.
-    Compares the center deflection with the Navier analytical solution.
+    Compares the center deflection with the Navier analytical solution, with
+    a relative tolerance of 2 %.
+
+    Notes
+    -----
+    The Navier solution of the simply supported plate of the classical plate
+    theory under the load `P` at its center gives the deflection
+
+    .. math::
+
+        w(a/2, b/2) = \frac{4 P}{\pi^4 D a b} \sum_m \sum_n
+        \frac{\sin^2(m \pi/2) \sin^2(n \pi/2)}{(m^2/a^2 + n^2/b^2)^2}
+
+    to which only the odd `m` and `n` contribute, summed here up to 79.
     """
     from scipy.special import roots_legendre
 
@@ -82,8 +95,7 @@ def test_static_deflection_plate_clpt():
     # Reconstruct deflection at center
     w_center = Sw @ u
 
-    # Navier analytical solution for SS plate under central point load:
-    # w(a/2,b/2) = (4*P)/(pi^4*D*a*b) * sum_m sum_n sin^2(m*pi/2)*sin^2(n*pi/2) / (m^2/a^2 + n^2/b^2)^2
+    # Navier series, see the Notes
     D = E * h**3 / (12 * (1 - nu**2))
     w_navier = 0.0
     for m in range(1, 80, 2):  # only odd m, n contribute

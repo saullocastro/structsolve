@@ -1,7 +1,7 @@
 r"""Utilities for ARPACK, against the Intel MKL bug of ``dsteqr``
 
-With Intel MKL 2024.2.0 to 2025.0.0, :func:`scipy.sparse.linalg.eigsh`
-returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
+When the LAPACK of SciPy is Intel MKL 2024.2.0 to 2025.0.0,
+:func:`scipy.sparse.linalg.eigsh` returns wrong eigenpairs, without any error, or raises ``ArpackError -8``,
 whenever its number of Lanczos vectors is ``ncv > 32``, e.g. with SciPy's
 default ``ncv = 2 k + 1`` for ``k >= 16`` eigenpairs. MKL 2025.0.1 or newer
 is not affected, neither is :func:`scipy.sparse.linalg.eigs`.
@@ -136,6 +136,9 @@ def mkl_version():
     The build configuration of SciPy only gives the major version, e.g.
     ``'2025'``, therefore the version is read at runtime from the optional
     packages ``mkl-service`` (``mkl.get_version()``) or ``threadpoolctl``.
+    The MKL loaded in the process is not necessarily the LAPACK of SciPy,
+    e.g. ``mkl-service`` next to a SciPy linked to OpenBLAS, see
+    :func:`lapack_is_mkl`.
 
     Returns
     -------
@@ -463,6 +466,12 @@ def pardiso_factorization(A):
     PARDISO of the matrix scaled to a unit diagonal, with the fallback on
     perturbed pivots, see its Notes.
 
+    Parameters
+    ----------
+    A : array or sparse matrix
+        Square symmetric matrix of size ``n x n``, converted to a CSR
+        ``float64`` matrix.
+
     Returns
     -------
     factorization : callable or None
@@ -508,6 +517,15 @@ def pardiso_solve(A, refine=True):
     its factorization is inaccurate, i.e. the relative residual of
     :func:`pardiso_factorization` is larger than ``PARDISO_ACCURACY_RTOL``,
     ``A`` is factorized by SuperLU instead, with a :class:`RuntimeWarning`.
+
+    Parameters
+    ----------
+    A : array or sparse matrix
+        Square symmetric matrix of size ``n x n``.
+    refine : bool, optional
+        Whether the solutions of PARDISO are improved by GMRES when their
+        relative residual is larger than ``static.PARDISO_REFINE_TOL``.
+        Default ``True``.
 
     Returns
     -------
@@ -624,6 +642,11 @@ def capped_eigsh(A, k, M, sigma, which, mode='normal', tol=0,
         The eigenvalues and the `\boldsymbol{M}`-orthonormal eigenvectors, by
         increasing `w` when computed in passes. ``w`` is a 1-D array of size
         ``k`` and ``x`` an array of shape ``(n, k)``.
+
+    Raises
+    ------
+    ValueError
+        When ``linear_solver`` is neither ``'splu'`` nor ``'pardiso'``.
 
     See Also
     --------

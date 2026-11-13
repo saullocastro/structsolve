@@ -1,5 +1,20 @@
 r"""Configuration-dependent (follower) loads and unsymmetric eigenproblems
 
+Verifies the Newton-Raphson and the arc-length methods of
+:class:`structsolve.Analysis` on hardening springs under a load that
+depends on the configuration, with an unsymmetric load stiffness matrix:
+equilibrium at every converged point, the quadratic convergence of
+Newton-Raphson and, only when ``calc_fext`` accepts ``c``, of Riks; the
+callables with and without the keyword argument ``inc``; and :func:`lb`
+with unsymmetric matrices against :func:`scipy.linalg.eig`.
+
+The callables follow :mod:`structsolve.callbacks`: ``calc_fint(c, inc)``
+contains the term ``-inc Q c`` of the load, ``calc_kC(c, NLgeom, inc)`` the
+load stiffness ``-inc Q``, and ``calc_fext(inc, c)`` is the load at the
+configuration ``c``.
+
+Notes
+-----
 The analytic problem has the internal force of hardening springs and a load
 that depends on the configuration, with the unsymmetric load stiffness
 matrix `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \lambda \boldsymbol{K}_{F_{ref}}`:
@@ -9,11 +24,10 @@ matrix `\boldsymbol{K}_F = -\partial \boldsymbol{F}/\partial \boldsymbol{c} = \l
     \boldsymbol{F}_{int}(\boldsymbol{c}) = \boldsymbol{K} \boldsymbol{c} + \{a c^3\}, \qquad
     \boldsymbol{F}(\boldsymbol{c}, \lambda) = \lambda (\boldsymbol{q}_0 - \boldsymbol{K}_{F_{ref}} \boldsymbol{c})
 
-with `\boldsymbol{K}_{F_{ref}}` given as ``-Q`` in the code, passed to
-:class:`structsolve.Analysis` as described in :mod:`structsolve.callbacks`:
-``calc_fint(c, inc)`` contains `\boldsymbol{K}_F \boldsymbol{c}`, i.e.
-``-inc Q c``, ``calc_kC(c, NLgeom, inc)`` contains `\boldsymbol{K}_F`, i.e.
-``-inc Q``, and ``calc_fext(inc, c)`` is the load of the configuration ``c``.
+with `\boldsymbol{K}_{F_{ref}}` given as ``-Q`` in the code: ``calc_fint``
+contains `\boldsymbol{K}_F \boldsymbol{c}` and ``calc_kC`` contains
+`\boldsymbol{K}_F`.
+
 """
 import numpy as np
 import pytest

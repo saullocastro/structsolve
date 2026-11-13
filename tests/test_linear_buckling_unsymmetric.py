@@ -257,15 +257,18 @@ def test_eig_complex_mkl_crash_regression():
 
 DATA = os.path.join(os.path.dirname(__file__), 'data')
 
-# Schweizerhof and Ramm (1984) cantilevers under a follower pressure, from
-# panels, with K = k0 and KG = kG(c0) + kCfollower, ~8 to 17% unsymmetric.
-# Reversed: -KG, many negative and complex load multipliers have a smaller
-# modulus than the critical one
+# the problems of load_follower: name, sign of KG and lowest positive real
+# load multiplier
 FOLLOWER = [('s1B1_m14n8', 1., 1.86216), ('s1B1_m14n8', -1., 15113.4),
             ('s3B2_m14n8', 1., 0.0544612), ('s3B2_m14n8', -1., 1161.44)]
 
 
 def load_follower(name, sign):
+    """``K`` and ``sign*KG`` of a cantilever of Schweizerhof and Ramm (1984)
+    under a follower pressure, a model of panels saved in tests/data, with
+    ``K = k0`` and ``KG = kG(c0) + kCfollower``, about 8 to 17 %
+    unsymmetric. Reversed, ``sign = -1``, many negative and complex load
+    multipliers have a smaller modulus than the critical one"""
     from scipy.sparse import load_npz
     K = load_npz(os.path.join(DATA, '%s_K.npz' % name)).tocsr()
     KG = sign*load_npz(os.path.join(DATA, '%s_KG.npz' % name)).tocsr()
@@ -282,11 +285,10 @@ def lowest_positive_real(eigvals):
 
 @pytest.mark.parametrize('name, sign, approx', FOLLOWER)
 def test_lb_follower_shift_search(name, sign, approx):
-    """Regression test: the sparse fallback of version 0.5.3, eigs() on
-    K^-1 KG, silently returned only negative or complex load multipliers for
-    the reversed problems. The shift search returns the lowest positive real
-    load multiplier of the full dense eig(), first, without the dense
-    fallback"""
+    """Regression test: eigs() on K^-1 KG alone returns only negative or
+    complex load multipliers for the reversed problems. The shift search
+    returns the lowest positive real load multiplier of the full dense
+    eig(), first, without the dense fallback"""
     import warnings
     from structsolve.linear_buckling import DenseFallbackWarning
 

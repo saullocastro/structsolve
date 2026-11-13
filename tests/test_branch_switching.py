@@ -33,9 +33,13 @@ def pitchforks(betas=(0.5,), ks=(1.,), EA=10., P0=2.):
     DOF 0 is the axial displacement `u`, DOFs ``1:`` the transverse
     displacements `v_i`, with the axial strain `\\epsilon = u + \\sum v_i^2/2`
     and the energy `EA \\epsilon^2/2 + \\sum (k_i v_i^2/2 + \\beta_i v_i^4/4)`
-    under the compressive load `\\lambda P_0` on `u`. The fundamental path
-    `v = 0` bifurcates at `\\lambda_i = k_i/P_0` into the branch `\\lambda P_0
-    = k_i + \\beta_i v_i^2`, stable (supercritical) for `\\beta_i > 0`.
+    under the compressive load `\\lambda P_0` on `u`.
+
+    Notes
+    -----
+    The fundamental path `v = 0` bifurcates at `\\lambda_i = k_i/P_0` into
+    the branch `\\lambda P_0 = k_i + \\beta_i v_i^2`, stable (supercritical)
+    for `\\beta_i > 0`.
 
     """
     betas = np.asarray(betas, dtype=float)

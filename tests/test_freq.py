@@ -6,26 +6,94 @@ from scipy.sparse import csc_matrix
 from structsolve import freq
 
 
+def rod_clamped_free(num_elements, E=1., rho=1., A=1., L=1.):
+    """Stiffness and inertia matrices of a clamped-free rod of linear
+    elements, Petyt (2010), Example 3.3, without the clamped dof"""
+    from scipy.sparse import lil_matrix
+    n = num_elements + 1
+    K = lil_matrix((n, n))
+    M = lil_matrix((n, n))
+    le = L/num_elements
+    ke = E*A/le*np.array([[1., -1.], [-1., 1.]])
+    me = rho*A*le/6*np.array([[2., 1.], [1., 2.]])
+    for e in range(num_elements):
+        for i in range(2):
+            for j in range(2):
+                K[e + i, e + j] += ke[i, j]
+                M[e + i, e + j] += me[i, j]
+    return csc_matrix(K[1:, 1:]), csc_matrix(M[1:, 1:])
+
+
 def test_freq_simple():
-    """Test frequency analysis with known natural frequencies
+    r"""Natural frequencies of the clamped-free rod of Petyt (2010),
+    Example 3.3
 
-    For a diagonal system: [K]{u} + omega^2 [M]{u} = 0
-    K = diag(k1, k2, ...), M = diag(m1, m2, ...)
-    omega_i = sqrt(ki/mi)
+    The rod of linear finite elements with consistent inertia matrices.
+    With two elements, the dense solver of :func:`freq` gives the two
+    frequencies of Petyt's Example 3.3 (Table 3.3, three digits; the roots
+    of his frequency equation to ``1e-10``). With 300 elements, the sparse
+    solver gives the five lowest frequencies of the exact solution, Petyt's
+    Eq. (3.26), within ``2e-4``, the first mode shape proportional to
+    ``sin(pi x/(2 L))``, and eigenvectors of the size of the model.
+
+    Notes
+    -----
+    The rod, `E = \rho = A = L = 1`, clamped at `x = 0` and free at
+    `x = L`, is divided into `n` elements of length `l = L/n` with the
+    element matrices of [1]_ (Example 3.3, p. 62)
+
+    .. math::
+
+        \boldsymbol{k}_e = \frac{E A}{l} \begin{bmatrix} 1 & -1 \\ -1 & 1
+        \end{bmatrix}, \qquad
+        \boldsymbol{m}_e = \frac{\rho A l}{6} \begin{bmatrix} 2 & 1 \\ 1 & 2
+        \end{bmatrix}
+
+    With two elements and `\Lambda = \omega^2 \rho L^2/(24 E)`, the
+    frequency equation is `7 \Lambda^2 - 10 \Lambda + 1 = 0`, whose roots
+    give `\omega = (24 \Lambda)^{1/2} (E/(\rho L^2))^{1/2} = 1.610` and
+    `5.628` ([1]_, p. 63, Table 3.3). The exact frequencies and mode shapes
+    are ([1]_, Eq. (3.26), p. 49)
+
+    .. math::
+
+        \omega_r = \frac{(2 r - 1) \pi}{2} \left(\frac{E}{\rho L^2}
+        \right)^{1/2}, \qquad \psi_r(x) = \sin \frac{(2 r - 1) \pi x}{2 L},
+        \qquad r = 1, 2, \ldots
+
+    The finite element frequencies are higher and converge to them as `n`
+    increases. :func:`freq` returns `\lambda^2 = -\omega^2`.
+
+    References
+    ----------
+    .. [1] Petyt, M., Introduction to Finite Element Vibration Analysis,
+       2nd ed., Cambridge University Press, 2010.
+       https://doi.org/10.1017/CBO9780511761195
+
     """
-    n = 10
-    k_vals = np.arange(1, n + 1, dtype=float) * 100
-    m_vals = np.ones(n)
-    K = csc_matrix(np.diag(k_vals))
-    M = csc_matrix(np.diag(m_vals))
+    # two elements
+    K, M = rod_clamped_free(2)
+    lambda2, eigvecs = freq(K, M, silent=True, sparse_solver=False)
+    omega = np.sqrt(-lambda2.real)
+    Lambda = np.sort(np.roots([7., -10., 1.]))
+    np.testing.assert_allclose(omega, np.sqrt(24*Lambda), rtol=1e-10)
+    np.testing.assert_allclose(omega, [1.610, 5.628], rtol=1e-3)
 
-    eigvals, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
+    # 300 elements, against the exact solution
+    n = 300
+    K, M = rod_clamped_free(n)
+    lambda2, eigvecs = freq(K, M, silent=True, num_eigvalues=5,
                             sparse_solver=True)
-
-    # freq returns lambda2 where [K] + lambda2 [M] = 0
-    # so lambda2 = -omega^2 = -k/m
-    # The sorted natural frequencies should match sqrt(k_vals)
-    assert eigvecs.shape[0] == n
+    omega = np.sqrt(-lambda2.real)
+    r = np.arange(1, 6)
+    np.testing.assert_allclose(omega, (2*r - 1)*np.pi/2, rtol=2e-4)
+    assert np.all(omega > (2*r - 1)*np.pi/2)
+    assert eigvecs.shape == (n, 5)
+    x = np.linspace(1./n, 1., n)
+    psi1 = np.sin(np.pi*x/2)
+    u1 = eigvecs[:, 0].real
+    cos_angle = abs(u1 @ psi1)/(np.linalg.norm(u1)*np.linalg.norm(psi1))
+    assert cos_angle > 1 - 1e-6
 
 
 def test_freq_dense_solver():
@@ -396,3 +464,239 @@ def test_freq_check_backward_error():
     assert np.all(res > 1e-4) and np.all(be >= 10*BACKWARD_ERROR_RTOL)
     error = _check_freq(K, KG, lam, u, 1e-6, False)
     assert 'relative residual' in error and 'backward error' in error
+
+
+#: beta_n L of the free-free beam, Rao (2018), Fig. 8.15, p. 772
+BETA_L_FREE_FREE = np.array([4.730041, 7.853205])
+
+
+def beam_free_free(num_elements=400, penalty=False, ground=0.):
+    r"""Free-free Euler-Bernoulli beam of steel, length 1 m, cross-section
+    0.05 x 0.01 m, of Hermite elements with the matrices of Rao (2018),
+    Eqs. (12.40) and (12.41)
+
+    With ``penalty=True`` the beam is cut at its middle node into two
+    halves joined by penalty springs, ``1e6 EI/l**3`` on the deflection and
+    ``1e6 EI/l`` on the rotation, ``l`` the element length; ``ground`` is a
+    spring on the deflection of the first node, N/m. Returns ``K``, ``M``
+    and the two lowest elastic natural frequencies of the continuous beam,
+    rad/s.
+
+    Notes
+    -----
+    Element matrices of [1]_ (Eqs. (12.40) and (12.41), p. 1052), with the
+    dofs `w_1, \theta_1, w_2, \theta_2`:
+
+    .. math::
+
+        \boldsymbol{k}_e = \frac{E I}{l^3} \begin{bmatrix} 12 & 6 l & -12 &
+        6 l \\ 6 l & 4 l^2 & -6 l & 2 l^2 \\ -12 & -6 l & 12 & -6 l \\ 6 l &
+        2 l^2 & -6 l & 4 l^2 \end{bmatrix}, \qquad
+        \boldsymbol{m}_e = \frac{\rho A l}{420} \begin{bmatrix} 156 & 22 l &
+        54 & -13 l \\ 22 l & 4 l^2 & 13 l & -3 l^2 \\ 54 & 13 l & 156 &
+        -22 l \\ -13 l & -3 l^2 & -22 l & 4 l^2 \end{bmatrix}
+
+    The natural frequencies of the continuous free-free beam are
+    `\omega_n = (\beta_n L)^2 (E I/(\rho A L^4))^{1/2}` ([1]_, Eq. (8.93),
+    p. 770), with `\beta_1 L = 4.730041` and `\beta_2 L = 7.853205`, the
+    roots of `\cos \beta L \cosh \beta L = 1` ([1]_, Fig. 8.15, p. 772):
+    326.00 and 898.64 rad/s.
+
+    References
+    ----------
+    .. [1] Rao, S.S., Mechanical Vibrations, 6th ed. in SI units, Pearson,
+       Harlow, 2018.
+
+    """
+    from scipy.sparse import lil_matrix
+    E, rho, b, h, L = 2e11, 7850., 0.05, 0.01, 1.
+    EI = E*b*h**3/12
+    rhoA = rho*b*h
+    le = L/num_elements
+    ke = EI/le**3*np.array([[12, 6*le, -12, 6*le],
+                            [6*le, 4*le**2, -6*le, 2*le**2],
+                            [-12, -6*le, 12, -6*le],
+                            [6*le, 2*le**2, -6*le, 4*le**2]])
+    me = rhoA*le/420*np.array([[156, 22*le, 54, -13*le],
+                               [22*le, 4*le**2, 13*le, -3*le**2],
+                               [54, 13*le, 156, -22*le],
+                               [-13*le, -3*le**2, -22*le, 4*le**2]])
+    cut = num_elements//2 if penalty else None
+    num_nodes = num_elements + 1 + (1 if penalty else 0)
+    K = lil_matrix((2*num_nodes, 2*num_nodes))
+    M = lil_matrix((2*num_nodes, 2*num_nodes))
+    for e in range(num_elements):
+        n1 = e + (1 if penalty and e >= cut else 0)
+        dofs = [2*n1, 2*n1 + 1, 2*n1 + 2, 2*n1 + 3]
+        for i in range(4):
+            for j in range(4):
+                K[dofs[i], dofs[j]] += ke[i, j]
+                M[dofs[i], dofs[j]] += me[i, j]
+    if penalty:
+        for dof, kp in ((0, 1e6*EI/le**3), (1, 1e6*EI/le)):
+            a, c = 2*cut + dof, 2*(cut + 1) + dof
+            K[a, a] += kp
+            K[c, c] += kp
+            K[a, c] -= kp
+            K[c, a] -= kp
+    K[0, 0] += ground
+    omega = BETA_L_FREE_FREE**2*np.sqrt(EI/(rhoA*L**4))
+    return csc_matrix(K), csc_matrix(M), omega
+
+
+def test_freq_dense_symmetric_penalty_beam():
+    """sparse_solver=False with symmetric=True: the free-free beam of 400
+    elements whose halves are joined by penalty springs gives the two lowest
+    elastic natural frequencies of the continuous beam, Rao (2018), Eq.
+    (8.93) and Fig. 8.15, within 1e-4, 326.0 rad/s, as the inertia count,
+    without a warning; the direct problem ``eigh(K, M)`` gives 230 rad/s"""
+    import warnings
+    from scipy.linalg import eigh
+    from structsolve.linear_buckling import _negative_pivots
+
+    K, M, omega_ref = beam_free_free(penalty=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        lambda2, eigvecs = freq(K, M, silent=True, symmetric=True,
+                                sparse_solver=False)
+    omega = np.sqrt(np.abs(lambda2))
+    elastic = omega[omega > 10.]
+    np.testing.assert_allclose(elastic[:2], omega_ref, rtol=1e-4)
+    # inertia count: two rigid-body modes below 320 rad/s, one elastic
+    # natural frequency between 320 and 330 rad/s
+    assert _negative_pivots(K - 320.**2*M) == 2
+    assert _negative_pivots(K - 330.**2*M) == 3
+    w2 = eigh(K.toarray(), M.toarray(), eigvals_only=True)
+    omega_direct = np.sqrt(np.abs(w2))
+    assert omega_direct[omega_direct > 10.][0] < 0.75*omega_ref[0]
+
+
+def test_freq_dense_symmetric_warning(monkeypatch):
+    """sparse_solver=False with symmetric=True: when the shifted inverse
+    problem fails and ``eigh(K, M)`` is used, the wrong lowest natural
+    frequency of the penalty beam of
+    test_freq_dense_symmetric_penalty_beam, 230 instead of 326.0 rad/s
+    (Rao 2018, Eq. (8.93)), is reported by a UserWarning: its residual is
+    large and the inertia count does not confirm it"""
+    import importlib
+    from scipy.linalg import LinAlgError
+
+    freq_module = importlib.import_module('structsolve.freq')
+
+    K, M, omega_ref = beam_free_free(penalty=True)
+    eigh = freq_module.eigh
+    calls = []
+
+    def eigh_first_fails(*args, **kwargs):
+        calls.append(1)
+        if len(calls) == 1:
+            raise LinAlgError('not positive definite')
+        return eigh(*args, **kwargs)
+
+    monkeypatch.setattr(freq_module, 'eigh', eigh_first_fails)
+    with pytest.warns(UserWarning, match='not confirmed by the inertia'):
+        lambda2, _ = freq(K, M, silent=True, symmetric=True,
+                          sparse_solver=False)
+    assert len(calls) == 2
+    omega = np.sqrt(np.abs(lambda2))
+    assert omega[omega > 10.][0] < 0.75*omega_ref[0]
+
+
+def test_freq_dense_unsymmetric_warning(monkeypatch):
+    """sparse_solver=False with symmetric=False: the free-free beam of
+    test_freq_dense_symmetric_penalty_beam with 100 elements, without
+    penalty springs, gives the two lowest elastic natural frequencies of the
+    continuous beam, Rao (2018), Eq. (8.93) and Fig. 8.15, within 1e-6
+    (relative differences below 2e-7, as with 400 elements), without a
+    warning; eigenvalues ``omega**2`` of ``eig()`` made 0.1 % too high are
+    reported by a UserWarning"""
+    import importlib
+    import warnings
+
+    freq_module = importlib.import_module('structsolve.freq')
+
+    K, M, omega_ref = beam_free_free(100)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', UserWarning)
+        lambda2, _ = freq(K, M, silent=True, symmetric=False,
+                          sparse_solver=False)
+    omega = np.sqrt(np.abs(lambda2))
+    np.testing.assert_allclose(omega[omega > 10.][:2], omega_ref, rtol=1e-6)
+
+    eig_complex = freq_module._eig_complex
+
+    def eig_wrong(*args, **kwargs):
+        # eig() solves M u = (1/omega**2) K u; the infinite eigenvalues of
+        # the rigid-body modes are kept
+        eigvals, eigvecs = eig_complex(*args, **kwargs)
+        finite = np.isfinite(eigvals)
+        eigvals[finite] = eigvals[finite]/(1 + 1e-3)
+        return eigvals, eigvecs
+
+    monkeypatch.setattr(freq_module, '_eig_complex', eig_wrong)
+    with pytest.warns(UserWarning, match=r'lowest eigenpairs of eig\(\) fail '
+                      'the residual check'):
+        lambda2, _ = freq(K, M, silent=True, symmetric=False,
+                          sparse_solver=False)
+    omega = np.sqrt(np.abs(lambda2))
+    np.testing.assert_allclose(omega[omega > 10.][:2],
+                               omega_ref*np.sqrt(1 + 1e-3), rtol=1e-6)
+
+
+@pytest.mark.parametrize('symmetric', [True, False])
+@pytest.mark.parametrize('ground', [0., 1e-3])
+def test_freq_stiff_beam_inertia(symmetric, ground):
+    """The sparse solver, without dense fallback: the free-free beam of 400
+    elements, also on a weak ground spring of 1e-3 N/m, gives the two lowest
+    elastic natural frequencies of the continuous beam, Rao (2018), Eq.
+    (8.93) and Fig. 8.15, within 1e-6. The lowest elastic eigenpair has a
+    relative residual larger than check_rtol=1e-6 and a backward error
+    larger than the machine precision, and is accepted because the inertia
+    confirms its eigenvalue, also with symmetric=False, the matrices being
+    symmetric"""
+    import warnings
+    from structsolve import DenseFallbackWarning
+    from structsolve.freq import _residuals
+    from structsolve.linear_buckling import _backward_errors
+
+    K, M, omega_ref = beam_free_free(ground=ground)
+    with warnings.catch_warnings():
+        warnings.simplefilter('error', DenseFallbackWarning)
+        lambda2, eigvecs = freq(K, M, silent=True, symmetric=symmetric,
+                                num_eigvalues=6, max_dense_size=0)
+    omega = np.sqrt(-lambda2.real)
+    elastic = np.flatnonzero(omega > 10.)
+    np.testing.assert_allclose(omega[elastic[:2]], omega_ref, rtol=1e-6)
+    i = elastic[:1]
+    res = _residuals(K, M, lambda2[i], eigvecs[:, i])
+    be = _backward_errors(K, M, lambda2[i], eigvecs[:, i])
+    assert res[0] > 1e-6 and be[0] > np.finfo(float).eps
+
+
+def test_freq_check_inertia_rejects():
+    """The inertia confirms an eigenvalue only within check_rtol: the
+    eigenpairs of the free-free beam of test_freq_stiff_beam_inertia,
+    whose two lowest elastic natural frequencies agree with Rao (2018),
+    Eq. (8.93), within 1e-6, pass; with omega**2 1e-5 too large, with
+    relative residuals and backward errors, below 100 eps, of the order of
+    those of the accurate eigenpairs, they are rejected, and so is the
+    lowest elastic eigenpair returned twice in place of the second one"""
+    from structsolve.freq import _check_freq, _eigsh_freq
+    from structsolve.linear_buckling import _backward_errors
+
+    K, M, omega_ref = beam_free_free()
+    lambda2, u = _eigsh_freq(K, M, 6, 0, -1.)
+    order = np.argsort(-lambda2)
+    lambda2, u = lambda2[order], u[:, order]
+    # two rigid-body modes, then the elastic ones
+    np.testing.assert_allclose(np.sqrt(-lambda2[2:4]), omega_ref, rtol=1e-6)
+    assert _check_freq(K, M, lambda2, u, 1e-6, True) is None
+    wrong = lambda2.copy()
+    wrong[2:] *= 1 + 1e-5
+    be = _backward_errors(K, M, wrong[2:], u[:, 2:])
+    assert np.all(be < 100*np.finfo(float).eps)
+    error = _check_freq(K, M, wrong, u, 1e-6, True)
+    assert 'not confirmed by the inertia' in error
+    twice = [0, 1, 2, 2, 4, 5]
+    error = _check_freq(K, M, lambda2[twice], u[:, twice], 1e-6, True)
+    assert 'not confirmed by the inertia' in error

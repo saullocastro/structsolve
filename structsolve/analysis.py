@@ -233,9 +233,7 @@ class Analysis(object):
                             and internal force vectors. Not used if
                             ``None``. Default is ``1.e-9``, the tight
                             tolerance of Crisfield's criterion with a
-                            consistent tangent; until version 0.8.0 the
-                            relative criterion was the only one, with the
-                            default ``1.e-6``
+                            consistent tangent
     ``absTOL``              the convergence is also achieved when the
                             maximum absolute residual force is smaller
                             than this value, which depends on the units of
@@ -379,6 +377,21 @@ class Analysis(object):
 
     The tangent stiffness matrix may then be unsymmetric, which the solvers
     support, since they use LU factorizations.
+
+    Examples
+    --------
+    Linear static analysis of two uncoupled springs:
+
+    >>> import numpy as np
+    >>> from scipy.sparse import diags
+    >>> from structsolve import Analysis
+    >>> an = Analysis(
+    ...     calc_fext=lambda inc=1., silent=False: np.array([2., 2.]),
+    ...     calc_kC=lambda c=None, NLgeom=False, silent=False:
+    ...         diags([2., 4.]).tocsr())
+    >>> increments, cs = an.static(silent=True)
+    >>> increments, cs[0]
+    ([1.0], array([1. , 0.5]))
 
     """
     __slots__ = ['NL_method', 'line_search', 'max_iter_line_search',
@@ -526,6 +539,26 @@ class Analysis(object):
         iteration, whose spectral radius is `1/\min|\lambda|` over the load
         multipliers `\lambda` of `(\boldsymbol{K}_C + \lambda \boldsymbol{K}_f) \boldsymbol{u} = \boldsymbol{0}`,
         including the negative and complex ones.
+
+        Examples
+        --------
+        Non-linear analysis of two hardening springs,
+        ``fint = k*c + c**3``, with the Newton-Raphson solver:
+
+        >>> import numpy as np
+        >>> from scipy.sparse import diags
+        >>> from structsolve import Analysis
+        >>> k = np.array([1., 2.])
+        >>> an = Analysis(
+        ...     calc_fext=lambda inc=1., silent=False: np.array([2., 3.]),
+        ...     calc_fint=lambda c, silent=False: k*c + c**3,
+        ...     calc_kC=lambda c=None, NLgeom=False, silent=False:
+        ...         diags(k + 3*c**2 if NLgeom else k).tocsr(),
+        ...     calc_kG=lambda c=None, NLgeom=False, silent=False:
+        ...         diags([0., 0.]).tocsr())
+        >>> increments, cs = an.static(NLgeom=True, silent=True)
+        >>> increments[-1], cs[-1].round(6)
+        (1.0, array([1., 1.]))
 
         """
         self.increments = []
