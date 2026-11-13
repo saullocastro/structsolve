@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.10.0 documentation</title>
+    <title>Linear buckling analysis (structsolve.linear_buckling) &#8212; structsolve 0.11.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=82662543"></script>
+    <script src="_static/documentation_options.js?v=f3b36f1a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.10.0" />
+  <meta name="docsearch:version" content="0.11.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.10.0 documentation</p>
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
   
 </a></div>
     
@@ -191,64 +191,78 @@
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+  <a class="nav-link dropdown-item nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -256,6 +270,13 @@
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -399,64 +420,78 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
+  <a class="nav-link nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -464,6 +499,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -694,8 +736,7 @@ Use only when K is known to be non-singular.</p>
 the sparse solvers failed, i.e. the number of non-null rows of
 <code class="docutils literal notranslate"><span class="pre">KG</span></code>, or of non-null rows or columns for unsymmetric matrices, see
 above. Larger problems raise a <code class="docutils literal notranslate"><span class="pre">RuntimeError</span></code> instead, and
-<code class="docutils literal notranslate"><span class="pre">0</span></code> disables the dense fallback. Until version 0.5.3, it was the
-size below which the dense solver was tried first.</p>
+<code class="docutils literal notranslate"><span class="pre">0</span></code> disables the dense fallback.</p>
 </dd>
 <dt><strong>check_rtol</strong><span class="classifier">float, optional</span></dt><dd><p>Maximum relative residual
 <code class="docutils literal notranslate"><span class="pre">||K</span> <span class="pre">u</span> <span class="pre">+</span> <span class="pre">lambda</span> <span class="pre">KG</span> <span class="pre">u||</span> <span class="pre">/</span> <span class="pre">(||K</span> <span class="pre">u||</span> <span class="pre">+</span> <span class="pre">|lambda|</span> <span class="pre">||KG</span> <span class="pre">u||)</span></code> of the
@@ -858,6 +899,19 @@ when computing the eigenvectors, with any number of threads. The dense
 solvers of unsymmetric matrices therefore call <code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.eig()</span></code>
 with complex matrices, i.e. <code class="docutils literal notranslate"><span class="pre">zgeev</span></code> and <code class="docutils literal notranslate"><span class="pre">zggev</span></code>, which are not
 affected.</p>
+<p class="rubric">Examples</p>
+<p>The two lowest load multipliers:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">diags</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">structsolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">lb</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">K</span> <span class="o">=</span> <span class="n">diags</span><span class="p">([</span><span class="mf">4.</span><span class="p">,</span> <span class="mf">9.</span><span class="p">,</span> <span class="mf">16.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">])</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">KG</span> <span class="o">=</span> <span class="n">diags</span><span class="p">([</span><span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">])</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">lb</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">KG</span><span class="p">,</span> <span class="n">num_eigvalues</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eigvals</span>
+<span class="go">array([4., 9.])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">eigvecs</span><span class="o">.</span><span class="n">shape</span>
+<span class="go">(4, 2)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">

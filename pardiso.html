@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>PARDISO of Intel oneMKL (structsolve.pardiso) &#8212; structsolve 0.10.0 documentation</title>
+    <title>PARDISO of Intel oneMKL (structsolve.pardiso) &#8212; structsolve 0.11.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=82662543"></script>
+    <script src="_static/documentation_options.js?v=f3b36f1a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -50,7 +50,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.10.0" />
+  <meta name="docsearch:version" content="0.11.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -118,7 +118,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.10.0 documentation</p>
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
   
 </a></div>
     
@@ -189,64 +189,78 @@
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+  <a class="nav-link dropdown-item nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -254,6 +268,13 @@
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -397,64 +418,78 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
+  <a class="nav-link nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -462,6 +497,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -609,6 +651,19 @@ pattern.</p>
 <dt class="sig sig-object py" id="structsolve.pardiso.PardisoError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">structsolve.pardiso.</span></span><span class="sig-name descname"><span class="pre">PardisoError</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">phase</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.pardiso.PardisoError" title="Link to this definition">#</a></dt>
 <dd><p>Error code of PARDISO, <code class="docutils literal notranslate"><span class="pre">error</span></code> not 0</p>
+<p>Raised by the calls of <a class="reference internal" href="#structsolve.pardiso.PardisoSolver" title="structsolve.pardiso.PardisoSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">PardisoSolver</span></code></a> when PARDISO returns a
+non-zero error code; the message gives the phase and the code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>phase</strong><span class="classifier">int</span></dt><dd><p>Phase of PARDISO that failed, e.g. <code class="docutils literal notranslate"><span class="pre">12</span></code>, <code class="docutils literal notranslate"><span class="pre">22</span></code> or <code class="docutils literal notranslate"><span class="pre">33</span></code>.</p>
+</dd>
+<dt><strong>error</strong><span class="classifier">int</span></dt><dd><p>Error code returned by PARDISO, see the manual of oneMKL, e.g.
+<code class="docutils literal notranslate"><span class="pre">-4</span></code> for a zero pivot.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -625,10 +680,27 @@ number of perturbed pivots and <code class="docutils literal notranslate"><span 
 numbers of positive and negative eigenvalues (<code class="docutils literal notranslate"><span class="pre">mtype</span> <span class="pre">=</span> <span class="pre">-2</span></code>).</p>
 <p>The matrix of the last factorization is kept, not copied, for the
 iterative refinement of <a class="reference internal" href="#structsolve.pardiso.PardisoSolver.solve" title="structsolve.pardiso.PardisoSolver.solve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">solve()</span></code></a>, and must not be changed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mtype</strong><span class="classifier">int, optional</span></dt><dd><p>Matrix type of PARDISO, see the manual of oneMKL. Default <code class="docutils literal notranslate"><span class="pre">-2</span></code>,
+real symmetric indefinite.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>ImportError</dt><dd><p>When oneMKL is not found, see <a class="reference internal" href="#structsolve.pardiso.load_mkl" title="structsolve.pardiso.load_mkl"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_mkl()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="structsolve.pardiso.PardisoSolver.analyzed">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">analyzed</span></span><a class="headerlink" href="#structsolve.pardiso.PardisoSolver.analyzed" title="Link to this definition">#</a></dt>
 <dd><p>Whether the solver holds an analysis, for the phase 22</p>
+<p><code class="docutils literal notranslate"><span class="pre">True</span></code> after a factorization of phase 12, until
+<code class="docutils literal notranslate"><span class="pre">free(everything=True)</span></code>.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -638,6 +710,31 @@ iterative refinement of <a class="reference internal" href="#structsolve.pardiso
 phase 12 (analysis and numerical factorization) or
 22 (numerical factorization with the analysis of the last phase 12,
 <code class="docutils literal notranslate"><span class="pre">A</span></code> having its pattern)</p>
+<p>The indices of <code class="docutils literal notranslate"><span class="pre">A</span></code> are sorted first when needed. The values of
+<code class="docutils literal notranslate"><span class="pre">A</span></code> are kept, not copied, until the next factorization or
+<a class="reference internal" href="#structsolve.pardiso.PardisoSolver.free" title="structsolve.pardiso.PardisoSolver.free"><code class="xref py py-meth docutils literal notranslate"><span class="pre">free()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>A</strong><span class="classifier">scipy.sparse.csr_matrix</span></dt><dd><p>Square <code class="docutils literal notranslate"><span class="pre">float64</span></code> matrix of size <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">x</span> <span class="pre">n</span></code>, its upper triangle
+with every diagonal term stored for a symmetric <code class="docutils literal notranslate"><span class="pre">mtype</span></code>.</p>
+</dd>
+<dt><strong>phase</strong><span class="classifier">int, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">12</span></code> (default) or <code class="docutils literal notranslate"><span class="pre">22</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>ValueError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">A</span></code> is not square, not <code class="docutils literal notranslate"><span class="pre">float64</span></code>, has an empty row,
+when <code class="docutils literal notranslate"><span class="pre">phase</span></code> is neither <code class="docutils literal notranslate"><span class="pre">12</span></code> nor <code class="docutils literal notranslate"><span class="pre">22</span></code>, or for the phase
+22 without the analysis of a matrix of the same size and number
+of stored terms.</p>
+</dd>
+<dt>PardisoError</dt><dd><p>When PARDISO fails.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -646,6 +743,17 @@ phase 12 (analysis and numerical factorization) or
 <dd><p>Frees the memory of the factorization (phase 0), keeping the
 analysis for the phase 22, or all the memory of PARDISO (phase
 -1)</p>
+<p>Nothing is passed to PARDISO when the solver holds neither an
+analysis nor a factorization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>everything</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether the analysis is freed as well (phase -1). Default
+<code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -653,6 +761,33 @@ analysis for the phase 22, or all the memory of PARDISO (phase
 <span class="sig-name descname"><span class="pre">solve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.pardiso.PardisoSolver.solve" title="Link to this definition">#</a></dt>
 <dd><p>Solution of the last factorization (phase 33), <code class="docutils literal notranslate"><span class="pre">b</span></code> of shape
 <code class="docutils literal notranslate"><span class="pre">(n,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">nrhs)</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">b</span></code> is converted to a Fortran-ordered <code class="docutils literal notranslate"><span class="pre">float64</span></code> array for
+PARDISO, which applies its iterative refinement with the values of
+the last factorization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>b</strong><span class="classifier">array-like</span></dt><dd><p>Right-hand side(s), converted to <code class="docutils literal notranslate"><span class="pre">float64</span></code>, of shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>
+or <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">nrhs)</span></code>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">ndarray</span></dt><dd><p>Solution of the shape of <code class="docutils literal notranslate"><span class="pre">b</span></code>, C-contiguous.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>When there is no factorization or <code class="docutils literal notranslate"><span class="pre">b</span></code> does not have <code class="docutils literal notranslate"><span class="pre">n</span></code>
+rows.</p>
+</dd>
+<dt>PardisoError</dt><dd><p>When PARDISO fails.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
@@ -661,13 +796,42 @@ analysis for the phase 22, or all the memory of PARDISO (phase
 <dt class="sig sig-object py" id="structsolve.pardiso.available">
 <span class="sig-prename descclassname"><span class="pre">structsolve.pardiso.</span></span><span class="sig-name descname"><span class="pre">available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.pardiso.available" title="Link to this definition">#</a></dt>
 <dd><p>Whether PARDISO can be used, i.e. <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> is found</p>
+<p>Calls <a class="reference internal" href="#structsolve.pardiso.load_mkl" title="structsolve.pardiso.load_mkl"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_mkl()</span></code></a> and catches its <code class="xref py py-class docutils literal notranslate"><span class="pre">ImportError</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>available</strong><span class="classifier">bool</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when <a class="reference internal" href="#structsolve.pardiso.load_mkl" title="structsolve.pardiso.load_mkl"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_mkl()</span></code></a> found the library.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.pardiso.load_mkl">
 <span class="sig-prename descclassname"><span class="pre">structsolve.pardiso.</span></span><span class="sig-name descname"><span class="pre">load_mkl</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.pardiso.load_mkl" title="Link to this definition">#</a></dt>
 <dd><p>The function <code class="docutils literal notranslate"><span class="pre">pardiso</span></code> of the shared library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code>, loaded
-once; raises <code class="xref py py-class docutils literal notranslate"><span class="pre">ImportError</span></code> when it is not found</p>
+once</p>
+<p>The library is looked for at the path of the environment variable
+<code class="docutils literal notranslate"><span class="pre">STRUCTSOLVE_MKL_RT</span></code>, otherwise by <code class="xref py py-func docutils literal notranslate"><span class="pre">ctypes.util.find_library()</span></code>,
+otherwise under the <code class="docutils literal notranslate"><span class="pre">lib</span></code> or <code class="docutils literal notranslate"><span class="pre">Library/bin</span></code> folder of <code class="docutils literal notranslate"><span class="pre">sys.prefix</span></code>
+and then in any of its subfolders or of the user site, shorter paths
+first. The first library that loads and has <code class="docutils literal notranslate"><span class="pre">pardiso</span></code> is kept for the
+process.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pardiso</strong><span class="classifier">ctypes function</span></dt><dd><p>The function <code class="docutils literal notranslate"><span class="pre">pardiso</span></code> of oneMKL, with its argument types set.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>ImportError</dt><dd><p>When no library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> with the function <code class="docutils literal notranslate"><span class="pre">pardiso</span></code> is found.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

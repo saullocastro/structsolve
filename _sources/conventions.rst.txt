@@ -50,9 +50,8 @@ For :func:`.lb`, `\boldsymbol{K}_G` is the geometric stiffness matrix of the
 reference load, the critical load being `\lambda_1` times the reference
 load, and a negative load multiplier corresponds to the reversed reference
 load, see :doc:`lb_prestress`. For :func:`.freq`, `\omega_n` is in rad/s, see
-:doc:`ex_frequency`; complex ``lambda2`` appear beyond a flutter load, and
-a positive real ``lambda2`` indicates divergence, see
-:doc:`ex_follower_loads`. The eigenvectors are the columns of ``eigvecs``,
+:func:`.freq`; complex ``lambda2`` appear beyond a flutter load, and
+a positive real ``lambda2`` indicates divergence. The eigenvectors are the columns of ``eigvecs``,
 with the size of the model, see :doc:`boundary_conditions`.
 
 

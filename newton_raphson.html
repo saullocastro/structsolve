@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.10.0 documentation</title>
+    <title>Newton-Raphson solver (structsolve.newton_raphson) &#8212; structsolve 0.11.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=82662543"></script>
+    <script src="_static/documentation_options.js?v=f3b36f1a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.10.0" />
+  <meta name="docsearch:version" content="0.11.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.10.0 documentation</p>
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
   
 </a></div>
     
@@ -191,64 +191,78 @@
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+  <a class="nav-link dropdown-item nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -256,6 +270,13 @@
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -399,64 +420,78 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
+  <a class="nav-link nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -464,6 +499,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -1096,18 +1138,8 @@ null and on the space of the constraints, scaled by <code class="docutils litera
 degrees of freedom, when given: those of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T
 \boldsymbol{v} = \mu \boldsymbol{S}^{-2} \boldsymbol{v}\)</span>,
 <span class="math notranslate nohighlight">\(\boldsymbol{S} = \mathrm{diag}(s)\)</span>. The analyses pass the scaling of
-<code class="xref py py-func docutils literal notranslate"><span class="pre">_inertia_scaling()</span></code>, <span class="math notranslate nohighlight">\(\boldsymbol{S}^{-2} =
-|\mathrm{diag}(\boldsymbol{K}_0)|\)</span>, the diagonal of the linear stiffness
-matrix, fixed along the path: a kinetic criterion with a lumped
-stiffness-proportional mass, whose eigenvalues vary continuously along
-the path and cross zero where <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is singular, whatever
-the units of the unknowns. In the unknowns themselves, the eigenvalues
-of smallest magnitude are those of the unknowns of smallest stiffness,
-e.g. the high-order terms of a Ritz model, not those that cross zero:
-the cantilever cylinder of Schweizerhof and Ramm (1984) in panels
-(Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
-follower pressure, had its negative eigenvalue 130th by magnitude
-without the scaling. The attributes set on <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> are:</p>
+<code class="xref py py-func docutils literal notranslate"><span class="pre">_inertia_scaling()</span></code>, from the diagonal of the linear stiffness
+matrix. The attributes set on <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code> are:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code>: the number of real eigenvalues that are
 negative, <code class="docutils literal notranslate"><span class="pre">None</span></code> when ARPACK did not converge;</p></li>
@@ -1127,6 +1159,33 @@ warning.</p></li>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>With <span class="math notranslate nohighlight">\(\boldsymbol{S}^{-2} = |\mathrm{diag}(\boldsymbol{K}_0)|\)</span>, the
+diagonal of the linear stiffness matrix, fixed along the path, the
+eigenvalue problem is a kinetic criterion with a lumped
+stiffness-proportional mass, whose eigenvalues vary continuously along
+the path and cross zero where <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> is singular, whatever
+the units of the unknowns. In the unknowns themselves, the eigenvalues
+of smallest magnitude are those of the unknowns of smallest stiffness,
+e.g. the high-order terms of a Ritz model, not those that cross zero:
+the cantilever cylinder of Schweizerhof and Ramm <a class="reference internal" href="#rf83a7a4ae0e5-1" id="id11">[1]</a> in panels
+(Sanders, 14 x 8 terms, 260 unknowns), beyond its bifurcation under
+follower pressure, had its negative eigenvalue 130th by magnitude
+without the scaling.</p>
+<p>Complex eigenvalues come in conjugate pairs of positive product, hence
+the sign of <span class="math notranslate nohighlight">\(\det \boldsymbol{K}_T\)</span> is <span class="math notranslate nohighlight">\((-1)^{n}\)</span>, <span class="math notranslate nohighlight">\(n\)</span> the number of
+negative real eigenvalues, and a parity of the count that differs from
+the sign of the determinant tells that an odd number of negative real
+eigenvalues lies beyond the <code class="docutils literal notranslate"><span class="pre">k</span></code> computed.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="rf83a7a4ae0e5-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id11">1</a><span class="fn-bracket">]</span></span>
+<p>Schweizerhof, K., Ramm, E., Displacement dependent pressure loads
+in nonlinear finite element analyses, Computers &amp; Structures, 18(6),
+1099-1114, 1984. <a class="reference external" href="https://doi.org/10.1016/0045-7949(84)90154-8">https://doi.org/10.1016/0045-7949(84)90154-8</a></p>
+</div>
+</div>
 </dd></dl>
 
 </section>

@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Non-linear static analysis with the arc-length methods &#8212; structsolve 0.11.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=f3b36f1a"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/ex_arc_length';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Post-buckling of an axially compressed cylinder" href="ex_cylinder_postbuckling.html" />
+    <link rel="prev" title="Non-linear static analysis with the Newton-Raphson method" href="ex_newton_raphson.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.11.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Non-linear static analysis with the arc-length methods</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Non-linear-static-analysis-with-the-arc-length-methods">
+<h1>Non-linear static analysis with the arc-length methods<a class="headerlink" href="#Non-linear-static-analysis-with-the-arc-length-methods" title="Link to this heading">#</a></h1>
+<p>The arc-length methods, described in <a class="reference internal" href="../arc_length.html"><span class="doc">arc_length._solver_arc_length</span></a>, trace equilibrium paths that include limit points, where the Newton-Raphson method with load control fails. The equilibrium path <span class="math notranslate nohighlight">\(\boldsymbol{F}_{int}(\boldsymbol{c}) = \lambda \boldsymbol{F}_{ext}\)</span> is traced in steps whose load factor <span class="math notranslate nohighlight">\(\lambda\)</span> is an unknown, besides the solution vector <span class="math notranslate nohighlight">\(\boldsymbol{c}\)</span>, with the constraint</p>
+<div class="math notranslate nohighlight">
+\[\frac{\Delta \boldsymbol{c}^\top \Delta \boldsymbol{c}}{\boldsymbol{u}_{ref}^\top \boldsymbol{u}_{ref}}
++ \psi^2 \Delta\lambda^2 = \Delta s^2\]</div>
+<p>on the increments <span class="math notranslate nohighlight">\((\Delta \boldsymbol{c}, \Delta\lambda)\)</span> of the step, where <span class="math notranslate nohighlight">\(\boldsymbol{u}_{ref}\)</span> is the linear solution for <span class="math notranslate nohighlight">\(\lambda = 1\)</span> and <span class="math notranslate nohighlight">\(\Delta s\)</span> the arc length. Each iteration solves the bordered system <span class="math notranslate nohighlight">\(\boldsymbol{K}_T \delta \boldsymbol{c} - \delta\lambda \, \boldsymbol{F}_{ext} = -\boldsymbol{R}\)</span> and takes the correction of the load factor <span class="math notranslate nohighlight">\(\delta\lambda\)</span> from the constraint:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">NL_method='arc_length_riks'</span></code>: the constraint linearized at the current increment (updated normal plane), Newton’s method on the equilibrium equations augmented with the constraint, Riks (1979);</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">NL_method='arc_length_crisfield'</span></code>: the spherical constraint solved exactly, the root of the quadratic equation with the smallest angle to the current increment, Crisfield (1981).</p></li>
+</ul>
+<p>Each step starts from the tangent predictor, in the direction of the previous increment, which lets the path pass the limit points.</p>
+<p>References: Riks, E., An incremental approach to the solution of snapping and buckling problems, International Journal of Solids and Structures, 15(7), 529-551, 1979, <a class="reference external" href="https://doi.org/10.1016/0020-7683(79)90081-7">https://doi.org/10.1016/0020-7683(79)90081-7</a>; Crisfield, M.A., A fast incremental/iterative solution procedure that handles “snap-through”, Computers &amp; Structures, 13(1-3), 55-62, 1981, <a class="reference external" href="https://doi.org/10.1016/0045-7949(81)90108-5">https://doi.org/10.1016/0045-7949(81)90108-5</a>; Crisfield, M.A., Non-linear Finite Element Analysis of Solids and Structures, Volume 1: Essentials,
+Wiley, 1991, Section 9.3.2.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="c1"># the helper functions of the tests are imported from the folder tests/</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'..'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">))</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">analytic_problems</span><span class="w"> </span><span class="kn">import</span> <span class="n">von_mises_truss</span>
+
+<span class="n">METHODS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'arc_length_riks'</span><span class="p">,</span> <span class="s1">'arc_length_crisfield'</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<section id="The-model:-a-shallow-von-Mises-truss-loaded-through-a-spring">
+<h2>The model: a shallow von Mises truss loaded through a spring<a class="headerlink" href="#The-model:-a-shallow-von-Mises-truss-loaded-through-a-spring" title="Link to this heading">#</a></h2>
+<p>The shallow von Mises truss of <code class="docutils literal notranslate"><span class="pre">tests/analytic_problems.py</span></code> (height 1) has the apex deflection <span class="math notranslate nohighlight">\(w\)</span> (DOF 0) and the internal force</p>
+<div class="math notranslate nohighlight">
+\[f(w) = w^3 - 3 w^2 + 2 w = w (w - 1) (w - 2)\]</div>
+<p>It is loaded through a linear spring of stiffness <span class="math notranslate nohighlight">\(k_s\)</span> between the apex and the loaded point, of displacement <span class="math notranslate nohighlight">\(u\)</span> (DOF 1), under the force <span class="math notranslate nohighlight">\(\lambda \alpha F_{lim}\)</span>, a multiple <span class="math notranslate nohighlight">\(\alpha\)</span> of the limit load. The equilibrium equations <span class="math notranslate nohighlight">\(f(w) + k_s (w - u) = 0\)</span> and <span class="math notranslate nohighlight">\(k_s (u - w) = \lambda \alpha F_{lim}\)</span> give the equilibrium path in closed form, parametrized by <span class="math notranslate nohighlight">\(w\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\lambda(w) = \frac{f(w)}{\alpha F_{lim}}, \qquad
+u(w) = w + \frac{f(w)}{k_s}\]</div>
+<p>The truss softens until the limit point <span class="math notranslate nohighlight">\(f'(w) = 3 w^2 - 6 w + 2 = 0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[w_{lim} = 1 - \frac{1}{\sqrt{3}}, \qquad
+F_{lim} = f(w_{lim}) = \frac{2}{3 \sqrt{3}}\]</div>
+<p>snaps through to the second limit point, <span class="math notranslate nohighlight">\(w = 1 + 1/\sqrt{3}\)</span>, <span class="math notranslate nohighlight">\(f = -F_{lim}\)</span>, and stiffens again on the inverted configuration, <span class="math notranslate nohighlight">\(w &gt; 2\)</span>. At <span class="math notranslate nohighlight">\(\lambda = 1\)</span> the inverted configuration is the largest real root of <span class="math notranslate nohighlight">\(w^3 - 3 w^2 + 2 w - \alpha F_{lim} = 0\)</span>, the only real root for <span class="math notranslate nohighlight">\(\alpha &gt; 1\)</span>. These closed-form values are the references below; <code class="docutils literal notranslate"><span class="pre">numpy.roots</span></code> gives the root of the cubic.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">print_table</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="p">(</span><span class="s1">'quantity'</span><span class="p">,</span> <span class="s1">'computed'</span><span class="p">,</span> <span class="s1">'reference'</span><span class="p">,</span> <span class="s1">'rel. diff.'</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">"""Rows of (label, computed, reference); the relative difference is</span>
+<span class="sd">    |computed - reference|/|reference|"""</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">header</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">&lt;</span><span class="si">{</span><span class="n">w</span><span class="si">}}</span><span class="s1">  </span><span class="si">{</span><span class="n">header</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">&gt;16</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">header</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">:</span><span class="s1">&gt;16</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">header</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">:</span><span class="s1">&gt;10</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">comp</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="n">rel</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">comp</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)</span><span class="o">/</span><span class="nb">abs</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">label</span><span class="si">:</span><span class="s1">&lt;</span><span class="si">{</span><span class="n">w</span><span class="si">}}</span><span class="s1">  </span><span class="si">{</span><span class="n">comp</span><span class="si">:</span><span class="s1">16.10g</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">ref</span><span class="si">:</span><span class="s1">16.10g</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">rel</span><span class="si">:</span><span class="s1">10.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+
+<span class="n">F_LIM</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">W_LIM</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lambda_path</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">frac</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Load factor of the closed-form equilibrium path"""</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">w</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">w</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">w</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">frac</span><span class="o">*</span><span class="n">F_LIM</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">w_final</span><span class="p">(</span><span class="n">frac</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Apex deflection at lambda = 1, the largest real root of the cubic"""</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roots</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="o">-</span><span class="n">frac</span><span class="o">*</span><span class="n">F_LIM</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">initialInc</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">von_mises_truss</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="n">ks</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">NL_method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="n">initialInc</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">inc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span>
+    <span class="n">cs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">method</span><span class="si">:</span><span class="s1">22s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inc</span><span class="p">)</span><span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1"> increments, '</span>
+          <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">fint_calls</span><span class="p">)</span><span class="si">:</span><span class="s1">4d</span><span class="si">}</span><span class="s1"> calls to calc_fint, last load factor '</span>
+          <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">inc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inc</span><span class="p">,</span> <span class="n">cs</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">path_rows</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Final state against the closed form, and the largest deviation of</span>
+<span class="sd">    the converged points from the closed-form path, relative to the</span>
+<span class="sd">    largest |lambda| of the path"""</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">w_final</span><span class="p">(</span><span class="n">frac</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">method</span><span class="p">,</span> <span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">cs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">lam</span> <span class="o">=</span> <span class="n">lambda_path</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">frac</span><span class="p">)</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">inc</span> <span class="o">-</span> <span class="n">lam</span><span class="p">))</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'arc_length_'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">+=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: w at lambda = 1'</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">wf</span><span class="p">),</span>
+                 <span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: u at lambda = 1'</span><span class="p">,</span> <span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                  <span class="n">wf</span> <span class="o">+</span> <span class="n">frac</span><span class="o">*</span><span class="n">F_LIM</span><span class="o">/</span><span class="n">ks</span><span class="p">)]</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: max |lambda - lambda(w)|/max |lambda(w)| over the '</span>
+              <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">inc</span><span class="p">)</span><span class="si">}</span><span class="s1"> increments = '</span>
+              <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">inc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">lam</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">rows</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_paths</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">title</span><span class="p">):</span>
+    <span class="n">wc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cs</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="mi">400</span><span class="p">)</span>
+    <span class="n">lc</span> <span class="o">=</span> <span class="n">lambda_path</span><span class="p">(</span><span class="n">wc</span><span class="p">,</span> <span class="n">frac</span><span class="p">)</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wc</span><span class="p">,</span> <span class="n">lc</span><span class="p">,</span> <span class="s1">'k-'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'closed form'</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wc</span> <span class="o">+</span> <span class="n">lc</span><span class="o">*</span><span class="n">frac</span><span class="o">*</span><span class="n">F_LIM</span><span class="o">/</span><span class="n">ks</span><span class="p">,</span> <span class="n">lc</span><span class="p">,</span> <span class="s1">'k-'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'closed form'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="n">cs</span><span class="p">)),</span> <span class="n">mk</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="p">[</span><span class="s1">'o'</span><span class="p">,</span> <span class="s1">'x'</span><span class="p">]):</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'arc_length_'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">inc</span><span class="p">,</span> <span class="n">mk</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">cs</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">inc</span><span class="p">,</span> <span class="n">mk</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'apex deflection $w$'</span><span class="p">)</span>
+    <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'displacement of the loaded point $u$'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'load factor $\lambda$'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Snap-through">
+<h2>Snap-through<a class="headerlink" href="#Snap-through" title="Link to this heading">#</a></h2>
+<p>With a load of 1.5 times the limit load, <span class="math notranslate nohighlight">\(\alpha = 1.5\)</span>, and a stiff spring, <span class="math notranslate nohighlight">\(k_s = 10\)</span>, both methods trace the path through the limit point at <span class="math notranslate nohighlight">\(\lambda = 1/\alpha\)</span>, where the load factor decreases and becomes negative, down to <span class="math notranslate nohighlight">\(-1/\alpha\)</span> at the second limit point, and increases again until it reaches exactly 1.0 on the inverted configuration. The initial arc length corresponds to a load factor increment <code class="docutils literal notranslate"><span class="pre">initialInc</span></code> along the initial tangent:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frac</span><span class="p">,</span> <span class="n">ks</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">10.</span>
+<span class="n">snap</span> <span class="o">=</span> <span class="p">{</span><span class="n">method</span><span class="p">:</span> <span class="n">run</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">}</span>
+<span class="n">plot_paths</span><span class="p">(</span><span class="n">snap</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'snap-through, $\alpha = 1.5$, $k_s = 10$'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+arc_length_riks       :  18 increments,   76 calls to calc_fint, last load factor 1.0
+arc_length_crisfield  :  14 increments,   50 calls to calc_fint, last load factor 1.0
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_ex_arc_length_5_1.png" src="../_images/notebooks_ex_arc_length_5_1.png" />
+</div>
+</div>
+<p>The converged points lie on the closed-form path. The limit point is estimated from the parabola <span class="math notranslate nohighlight">\(\lambda(w)\)</span> through the three converged points around the largest load factor before <span class="math notranslate nohighlight">\(\lambda = 1\)</span>; the difference from the closed form is that of the interpolation between points about one arc length apart, not an error of the converged points:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">rows</span> <span class="o">=</span> <span class="n">path_rows</span><span class="p">(</span><span class="n">snap</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">method</span><span class="p">,</span> <span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">snap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">cs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">inc</span> <span class="o">&lt;</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">inc</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">))</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="n">inc</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">],</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">w_est</span> <span class="o">=</span> <span class="o">-</span><span class="n">b</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'arc_length_'</span><span class="p">,</span> <span class="s1">''</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">+=</span> <span class="p">[(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: limit point w_lim (parabola)'</span><span class="p">,</span> <span class="n">w_est</span><span class="p">,</span> <span class="n">W_LIM</span><span class="p">),</span>
+             <span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">: limit load factor (parabola)'</span><span class="p">,</span>
+              <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">([</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">],</span> <span class="n">w_est</span><span class="p">),</span> <span class="mi">1</span><span class="o">/</span><span class="n">frac</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_table</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+riks: max |lambda - lambda(w)|/max |lambda(w)| over the 18 increments = 4.95e-11
+crisfield: max |lambda - lambda(w)|/max |lambda(w)| over the 14 increments = 3.42e-10
+
+quantity                                         computed         reference  rel. diff.
+riks: w at lambda = 1                         2.214631461       2.214631461    4.01e-16
+riks: u at lambda = 1                         2.272366488       2.272366488    3.91e-16
+crisfield: w at lambda = 1                    2.214631461       2.214631461    1.29e-12
+crisfield: u at lambda = 1                    2.272366488       2.272366488    1.26e-12
+riks: limit point w_lim (parabola)           0.4236739178      0.4226497308    2.42e-03
+riks: limit load factor (parabola)           0.6673566037      0.6666666667    1.03e-03
+crisfield: limit point w_lim (parabola)      0.4305504122      0.4226497308    1.87e-02
+crisfield: limit load factor (parabola)      0.6656359602      0.6666666667    1.55e-03
+</pre></div></div>
+</div>
+</section>
+<section id="Snap-back">
+<h2>Snap-back<a class="headerlink" href="#Snap-back" title="Link to this heading">#</a></h2>
+<p>A soft spring, <span class="math notranslate nohighlight">\(k_s = 0.5\)</span>, makes the displacement of the loaded point decrease along part of the path, <span class="math notranslate nohighlight">\(du/dw = 1 + f'(w)/k_s &lt; 0\)</span> around <span class="math notranslate nohighlight">\(w = 1\)</span>, where <span class="math notranslate nohighlight">\(f'(1) = -1\)</span>: the path has limit points in <span class="math notranslate nohighlight">\(\lambda\)</span> and in <span class="math notranslate nohighlight">\(u\)</span>, a snap-back that neither load control nor the control of <span class="math notranslate nohighlight">\(u\)</span> can trace. The arc length, measured on both degrees of freedom and on the load factor, passes it:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frac</span><span class="p">,</span> <span class="n">ks</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.5</span>
+<span class="n">back</span> <span class="o">=</span> <span class="p">{</span><span class="n">method</span><span class="p">:</span> <span class="n">run</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span> <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">}</span>
+<span class="n">plot_paths</span><span class="p">(</span><span class="n">back</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'snap-back, $\alpha = 1.5$, $k_s = 0.5$'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">method</span><span class="p">,</span> <span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">back</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s1">: increments with a decreasing u: '</span>
+          <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">cs</span><span class="p">[:,</span><span class="w"> </span><span class="mi">1</span><span class="p">])</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_table</span><span class="p">(</span><span class="n">path_rows</span><span class="p">(</span><span class="n">back</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+arc_length_riks       :  22 increments,  103 calls to calc_fint, last load factor 1.0
+arc_length_crisfield  :  18 increments,   87 calls to calc_fint, last load factor 1.0
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_ex_arc_length_9_1.png" src="../_images/notebooks_ex_arc_length_9_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+arc_length_riks: increments with a decreasing u: 5
+arc_length_crisfield: increments with a decreasing u: 3
+
+riks: max |lambda - lambda(w)|/max |lambda(w)| over the 22 increments = 9.49e-11
+crisfield: max |lambda - lambda(w)|/max |lambda(w)| over the 18 increments = 6.29e-11
+quantity                            computed         reference  rel. diff.
+riks: w at lambda = 1            2.214631461       2.214631461    4.77e-13
+riks: u at lambda = 1            3.369331999       3.369331999    3.13e-13
+crisfield: w at lambda = 1       2.214631461       2.214631461    8.31e-13
+crisfield: u at lambda = 1       3.369331999       3.369331999    5.46e-13
+</pre></div></div>
+</div>
+</section>
+<section id="Long-steps-through-the-limit-point">
+<h2>Long steps through the limit point<a class="headerlink" href="#Long-steps-through-the-limit-point" title="Link to this heading">#</a></h2>
+<p>At 10 times the limit load, <span class="math notranslate nohighlight">\(\alpha = 10\)</span>, <span class="math notranslate nohighlight">\(k_s = 1\)</span>, with <code class="docutils literal notranslate"><span class="pre">initialInc=0.2</span></code>, the steps are long compared with the region of the limit point. The previous converged point is at the distance of the arc length from the last one, and the iterations of a step may converge to it, which would trace the path backwards, the load factor decreasing below zero without ever reaching 1.0. Such a step, whose increment points against the tangent predictor, is repeated with a shorter arc length:
+the apex deflection increases at every converged increment and the path reaches <span class="math notranslate nohighlight">\(\lambda = 1\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frac</span><span class="p">,</span> <span class="n">ks</span> <span class="o">=</span> <span class="mf">10.</span><span class="p">,</span> <span class="mf">1.</span>
+<span class="n">long_steps</span> <span class="o">=</span> <span class="p">{</span><span class="n">method</span><span class="p">:</span> <span class="n">run</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+              <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">METHODS</span><span class="p">}</span>
+<span class="n">plot_paths</span><span class="p">(</span><span class="n">long_steps</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'long steps, $\alpha = 10$, $k_s = 1$'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">method</span><span class="p">,</span> <span class="p">(</span><span class="n">inc</span><span class="p">,</span> <span class="n">cs</span><span class="p">)</span> <span class="ow">in</span> <span class="n">long_steps</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s1">: apex deflection increasing at every increment: '</span>
+          <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mf">0.</span><span class="p">,</span><span class="w"> </span><span class="n">cs</span><span class="p">[:,</span><span class="w"> </span><span class="mi">0</span><span class="p">]])</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">print_table</span><span class="p">(</span><span class="n">path_rows</span><span class="p">(</span><span class="n">long_steps</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+arc_length_riks       :  16 increments,   92 calls to calc_fint, last load factor 1.0
+arc_length_crisfield  :  11 increments,   60 calls to calc_fint, last load factor 1.0
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_ex_arc_length_11_1.png" src="../_images/notebooks_ex_arc_length_11_1.png" />
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+arc_length_riks: apex deflection increasing at every increment: True
+arc_length_crisfield: apex deflection increasing at every increment: True
+
+riks: max |lambda - lambda(w)|/max |lambda(w)| over the 16 increments = 9.33e-10
+crisfield: max |lambda - lambda(w)|/max |lambda(w)| over the 11 increments = 1.40e-09
+quantity                            computed         reference  rel. diff.
+riks: w at lambda = 1            2.778735039       2.778735039    2.07e-12
+riks: u at lambda = 1            6.627736833       6.627736833    8.70e-13
+crisfield: w at lambda = 1       2.778735039       2.778735039    8.99e-13
+crisfield: u at lambda = 1       6.627736833       6.627736833    3.77e-13
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ex_newton_raphson.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Non-linear static analysis with the Newton-Raphson method</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ex_cylinder_postbuckling.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Post-buckling of an axially compressed cylinder</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-model:-a-shallow-von-Mises-truss-loaded-through-a-spring">The model: a shallow von Mises truss loaded through a spring</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Snap-through">Snap-through</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Snap-back">Snap-back</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Long-steps-through-the-limit-point">Long steps through the limit point</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/notebooks/ex_arc_length.nblink.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2012-2026, Saullo G. P. Castro.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

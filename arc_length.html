@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.10.0 documentation</title>
+    <title>Arc-length solvers (structsolve.arc_length) &#8212; structsolve 0.11.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=82662543"></script>
+    <script src="_static/documentation_options.js?v=f3b36f1a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.10.0" />
+  <meta name="docsearch:version" content="0.11.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.10.0 documentation</p>
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
   
 </a></div>
     
@@ -191,64 +191,78 @@
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+  <a class="nav-link dropdown-item nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class=" ">
-  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -256,6 +270,13 @@
 <li class=" current active">
   <a class="nav-link dropdown-item nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -399,64 +420,78 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_static.html">
+  <a class="nav-link nav-internal" href="pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_static.html">
     Linear static analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_buckling.html">
     Linear buckling analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_frequency.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_frequency.html">
     Frequency analysis
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_newton_raphson.html">
     Non-linear static analysis with the Newton-Raphson method
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_arc_length.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_cylinder_postbuckling.html">
     Post-buckling of an axially compressed cylinder
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_follower_loads.html">
     Follower loads and unsymmetric matrices
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+  <a class="nav-link nav-internal" href="notebooks/ex_prescribed_displacements.html">
     Prescribed displacements imposed exactly
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+  <a class="nav-link nav-internal" href="notebooks/tutorial_von_mises_truss.html">
     Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
   </a>
 </li>
 
@@ -464,6 +499,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="api.html">
     API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="documentation_levels.html">
+    How the documentation is organised
   </a>
 </li>
 
@@ -622,8 +664,9 @@ fails is repeated with the arc length multiplied by <code class="docutils litera
 The analysis stops when:</p>
 <ul class="simple">
 <li><p>the load factor reaches <code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span></code>, 1.0 by default, the
-last solution being computed at exactly this load factor; never with
-<code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span> <span class="pre">=</span> <span class="pre">None</span></code></p></li>
+last solution being computed at exactly this load factor, once: a step
+ending below it by less than <code class="docutils literal notranslate"><span class="pre">FINAL_LOAD_FACTOR_RTOL</span></code> times it is
+corrected to it; never with <code class="docutils literal notranslate"><span class="pre">an.final_load_factor</span> <span class="pre">=</span> <span class="pre">None</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">an.stop_criterion(an)</span></code> returns <code class="docutils literal notranslate"><span class="pre">True</span></code> after a converged step, see
 <code class="xref py py-mod docutils literal notranslate"><span class="pre">stopping</span></code></p></li>
 <li><p>the cumulative arc length reaches <code class="docutils literal notranslate"><span class="pre">an.maxArcLength</span></code></p></li>
@@ -1070,6 +1113,9 @@ postcritical branches, Engineering Computations, 5(2), 103-109, 1988.
 
 <section id="riks-and-crisfield-methods">
 <h2>Riks and Crisfield methods<a class="headerlink" href="#riks-and-crisfield-methods" title="Link to this heading">#</a></h2>
+<p>The modules <code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length_riks</span></code> and
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.arc_length_crisfield</span></code> run the shared solver with the
+constraint of each method.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.arc_length_riks._solver_arc_length_riks">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length_riks.</span></span><span class="sig-name descname"><span class="pre">_solver_arc_length_riks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length_riks._solver_arc_length_riks" title="Link to this definition">#</a></dt>
@@ -1092,6 +1138,40 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
 </dd></dl>
 
 </section>
+<section id="displacement-control">
+<h2>Displacement control<a class="headerlink" href="#displacement-control" title="Link to this heading">#</a></h2>
+<p>The indirect displacement control of <code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.displacement_control</span></code>
+and the generalized displacement control of
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">structsolve.generalized_displacement_control</span></code> run the same shared
+solver, <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">structsolve.arc_length._solver_arc_length()</span></code></a>, with their own
+constraint.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.displacement_control._solver_displacement_control">
+<span class="sig-prename descclassname"><span class="pre">structsolve.displacement_control.</span></span><span class="sig-name descname"><span class="pre">_solver_displacement_control</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.displacement_control._solver_displacement_control" title="Link to this definition">#</a></dt>
+<dd><p>Indirect displacement control solver</p>
+<p>Runs <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a> with
+<code class="docutils literal notranslate"><span class="pre">method='displacement_control'</span></code>.</p>
+<p class="rubric">Notes</p>
+<p>The arc-length constraint is replaced by the linear constraint
+<span class="math notranslate nohighlight">\(\boldsymbol{\psi}^\top \Delta \boldsymbol{c} = \Delta s\)</span>, with
+<span class="math notranslate nohighlight">\(\boldsymbol{\psi}\)</span> = <code class="docutils literal notranslate"><span class="pre">an.control_vector</span></code>, see
+<a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="structsolve.generalized_displacement_control._solver_generalized_displacement_control">
+<span class="sig-prename descclassname"><span class="pre">structsolve.generalized_displacement_control.</span></span><span class="sig-name descname"><span class="pre">_solver_generalized_displacement_control</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.generalized_displacement_control._solver_generalized_displacement_control" title="Link to this definition">#</a></dt>
+<dd><p>Generalized displacement control solver</p>
+<p>Runs <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a> with
+<code class="docutils literal notranslate"><span class="pre">method='generalized_displacement_control'</span></code>.</p>
+<p class="rubric">Notes</p>
+<p>The load factor increment of each step is scaled by the square root of
+the generalized stiffness parameter, whose sign reverses the load at
+the limit points, and the corrections are orthogonal to the tangent of
+the previous step, see <a class="reference internal" href="#structsolve.arc_length._solver_arc_length" title="structsolve.arc_length._solver_arc_length"><code class="xref py py-func docutils literal notranslate"><span class="pre">arc_length._solver_arc_length()</span></code></a>.</p>
+</dd></dl>
+
+</section>
 <section id="critical-points">
 <h2>Critical points<a class="headerlink" href="#critical-points" title="Link to this heading">#</a></h2>
 <dl class="py function">
@@ -1099,34 +1179,37 @@ every iteration, see <a class="reference internal" href="#structsolve.arc_length
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">_critical_eigenvector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_neg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_new</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length._critical_eigenvector" title="Link to this definition">#</a></dt>
 <dd><p>Eigenvector of the tangent stiffness matrix whose eigenvalue just
 became negative</p>
-<p>Subspace iteration with the inverse of the factorization <code class="docutils literal notranslate"><span class="pre">solve_kT</span></code>,
-see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>, and the Rayleigh-Ritz projection of the
-inverse on the orthonormalized subspace, which gives the eigenvalues of
-<span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero and their eigenvectors in the
-Euclidean inner product, see <a class="reference internal" href="#structsolve.arc_length._eigs_near_zero" title="structsolve.arc_length._eigs_near_zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a>. The subspace has
-<code class="docutils literal notranslate"><span class="pre">num_neg</span> <span class="pre">+</span> <span class="pre">EIGVEC_NUM_GUARD</span></code> vectors, <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> being the number of
-negative eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>, and is iterated until the
-Ritz values change by less than <code class="docutils literal notranslate"><span class="pre">EIGVEC_TOL</span></code>, at most
-<code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code> times. When fewer than <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> of the Ritz
-values are negative, i.e. positive eigenvalues are closer to zero than
-some negative ones, e.g. of weakly stiff terms of a Ritz model, the
-size of the subspace is doubled and the iteration repeated, up to
-<code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_SIZE</span></code> vectors. Without a count of negative eigenvalues
-(<code class="docutils literal notranslate"><span class="pre">'splu'</span></code>), <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> is 1 when the determinant is negative and 0
-otherwise. With <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code> the factorization
-is the bordered one, whose solutions satisfy the constraints, and the
-eigenpairs are those of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> restricted to them.</p>
-<p>Of the negative eigenvalues found, the <code class="docutils literal notranslate"><span class="pre">num_new</span></code> closest to zero are
-taken as those that became negative in the last step, and the most
-negative of them is the critical one, the first that became negative.
-Without negative eigenvalue, the one closest to zero is taken. With
-<code class="docutils literal notranslate"><span class="pre">num_new</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> eigenvalues became positive in the last
-step, the subspace has <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> more vectors, and the critical one
-is the largest of the <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> smallest positive eigenvalues, the
-first that became positive.</p>
+<p>The eigenpairs of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero are computed with
+<a class="reference internal" href="#structsolve.arc_length._eigs_near_zero" title="structsolve.arc_length._eigs_near_zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a>, enough of them to hold the <code class="docutils literal notranslate"><span class="pre">num_neg</span></code>
+negative eigenvalues, up to <code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_SIZE</span></code>. Of the negative
+eigenvalues found, the <code class="docutils literal notranslate"><span class="pre">num_new</span></code> closest to zero are taken as those
+that became negative in the last step, and the most negative of them is
+the critical one, the first that became negative. Without negative
+eigenvalue, the one closest to zero is taken. With <code class="docutils literal notranslate"><span class="pre">num_new</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>,
+<code class="docutils literal notranslate"><span class="pre">-num_new</span></code> eigenvalues became positive in the last step, and the
+critical one is the largest of the <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> smallest positive
+eigenvalues, the first that became positive.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
+<dt><strong>solve_kT</strong><span class="classifier">callable</span></dt><dd><p>Factorization of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> from <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>,
+see <a class="reference internal" href="#structsolve.arc_length._eigs_near_zero" title="structsolve.arc_length._eigs_near_zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a>. With <code class="docutils literal notranslate"><span class="pre">an.constraints</span></code> it is the
+bordered one, whose solutions satisfy the constraints, and the
+eigenpairs are those of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> restricted to them.</p>
+</dd>
+<dt><strong>size</strong><span class="classifier">int</span></dt><dd><p>Number of rows of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>.</p>
+</dd>
+<dt><strong>num_neg</strong><span class="classifier">int</span></dt><dd><p>Number of negative eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>; without a
+count of negative eigenvalues (<code class="docutils literal notranslate"><span class="pre">'splu'</span></code>), 1 when the determinant
+is negative and 0 otherwise.</p>
+</dd>
+<dt><strong>num_new</strong><span class="classifier">int</span></dt><dd><p>Change of the number of negative eigenvalues in the last step,
+negative when eigenvalues became positive.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
 <dt><strong>phi</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvector, of unit Euclidean norm.</p>
 </dd>
 <dt><strong>mu</strong><span class="classifier">float</span></dt><dd><p>Its eigenvalue.</p>
@@ -1134,32 +1217,85 @@ first that became positive.</p>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>The subspace iteration of <a class="reference internal" href="#structsolve.arc_length._eigs_near_zero" title="structsolve.arc_length._eigs_near_zero"><code class="xref py py-func docutils literal notranslate"><span class="pre">_eigs_near_zero()</span></code></a> starts with
+<code class="docutils literal notranslate"><span class="pre">num_neg</span> <span class="pre">+</span> <span class="pre">EIGVEC_NUM_GUARD</span></code> vectors (at least <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span>
+<span class="pre">EIGVEC_NUM_GUARD</span></code>), and <code class="docutils literal notranslate"><span class="pre">-num_new</span></code> more when <code class="docutils literal notranslate"><span class="pre">num_new</span> <span class="pre">&lt;</span> <span class="pre">0</span></code>. When
+fewer than <code class="docutils literal notranslate"><span class="pre">num_neg</span></code> of the Ritz values are negative, i.e. positive
+eigenvalues are closer to zero than some negative ones, e.g. of weakly
+stiff terms of a Ritz model, the size of the subspace is doubled and the
+iteration repeated from the previous vectors, up to <code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_SIZE</span></code>
+vectors.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.arc_length._eigs_near_zero">
 <span class="sig-prename descclassname"><span class="pre">structsolve.arc_length.</span></span><span class="sig-name descname"><span class="pre">_eigs_near_zero</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">solve_kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.arc_length._eigs_near_zero" title="Link to this definition">#</a></dt>
 <dd><p>The <code class="docutils literal notranslate"><span class="pre">p</span></code> eigenvalues of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero and their
-eigenvectors, by the subspace iteration of <a class="reference internal" href="#structsolve.arc_length._critical_eigenvector" title="structsolve.arc_length._critical_eigenvector"><code class="xref py py-func docutils literal notranslate"><span class="pre">_critical_eigenvector()</span></code></a>,
-with at most <code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code> iterations, from the vectors <code class="docutils literal notranslate"><span class="pre">start</span></code>,
-columns, completed by random vectors. With
-<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> the solutions of the factorization are used without the
-check of their residual and GMRES, see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>: the
-tangent stiffness matrix near a critical point is almost singular, the
-GMRES of its solutions took about one second each for the DOE09
-cylinder (57000 degrees of freedom), against 0.03 s for those of the
-factorization alone, and the subspace iteration converges to the
-eigenvectors closest to zero without them.</p>
+eigenvectors</p>
+<p>Computed by a subspace iteration of <code class="docutils literal notranslate"><span class="pre">p</span></code> vectors with the solutions of
+<code class="docutils literal notranslate"><span class="pre">solve_kT</span></code>, at most <code class="docutils literal notranslate"><span class="pre">EIGVEC_MAX_ITER</span></code> iterations, until the
+eigenvalues change by less than <code class="docutils literal notranslate"><span class="pre">EIGVEC_TOL</span></code> relative to the largest
+<span class="math notranslate nohighlight">\(1/|\mu|\)</span>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>mus</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvalues, not sorted.</p>
+<dt><strong>solve_kT</strong><span class="classifier">callable</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">solve_kT(b)</span></code> returns the solution <code class="docutils literal notranslate"><span class="pre">x</span></code> of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T
+\boldsymbol{x} = \boldsymbol{b}\)</span>, see <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a>; its
+attribute <code class="docutils literal notranslate"><span class="pre">unrefined</span></code>, when present (<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>), the solution
+of the factorization without the check of its residual and GMRES, is
+used instead.</p>
 </dd>
-<dt><strong>vecs</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvectors, the columns, orthonormal.</p>
+<dt><strong>size</strong><span class="classifier">int</span></dt><dd><p>Number of rows of <span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span>.</p>
+</dd>
+<dt><strong>p</strong><span class="classifier">int</span></dt><dd><p>Number of eigenpairs, the number of vectors of the subspace.</p>
+</dd>
+<dt><strong>start</strong><span class="classifier">array-like or None, optional</span></dt><dd><p>Starting vectors, the columns, shape <code class="docutils literal notranslate"><span class="pre">(size,</span> <span class="pre">q)</span></code>; the first
+<code class="docutils literal notranslate"><span class="pre">min(q,</span> <span class="pre">p)</span></code> are used, completed by random vectors from a fixed
+seed. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default): only random vectors.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>mus</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvalues, not sorted, shape <code class="docutils literal notranslate"><span class="pre">(p',)</span></code>, <code class="docutils literal notranslate"><span class="pre">p'</span> <span class="pre">&lt;=</span> <span class="pre">p</span></code> (a null
+Ritz value of the inverse is dropped).</p>
+</dd>
+<dt><strong>vecs</strong><span class="classifier">array-like</span></dt><dd><p>The eigenvectors, the columns, orthonormal, shape <code class="docutils literal notranslate"><span class="pre">(size,</span> <span class="pre">p')</span></code>.</p>
 </dd>
 </dl>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>A variant of the subspace iteration of <a class="reference internal" href="#rb85cfa3ff47b-1" id="id25">[1]</a> (Section 11.6, p. 954), with
+an identity mass matrix and the Rayleigh-Ritz projection applied to the
+inverse: in each iteration the subspace <span class="math notranslate nohighlight">\(\boldsymbol{Y}\)</span> is
+orthonormalized, <span class="math notranslate nohighlight">\(\boldsymbol{Y} = \boldsymbol{Q} \boldsymbol{R}\)</span>, then
+multiplied by the inverse, <span class="math notranslate nohighlight">\(\boldsymbol{Y} \leftarrow
+\boldsymbol{K}_T^{-1} \boldsymbol{Q}\)</span>, and the projected problem
+<span class="math notranslate nohighlight">\(\boldsymbol{H} \boldsymbol{V} = \boldsymbol{V} \boldsymbol{\Theta}\)</span>,
+<span class="math notranslate nohighlight">\(\boldsymbol{H} = \boldsymbol{Q}^\top \boldsymbol{K}_T^{-1}
+\boldsymbol{Q}\)</span> (symmetrized), is solved. The Ritz values <span class="math notranslate nohighlight">\(\theta\)</span>
+approximate the eigenvalues of largest modulus of
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_T^{-1}\)</span>, hence <span class="math notranslate nohighlight">\(\mu = 1/\theta\)</span> those of
+<span class="math notranslate nohighlight">\(\boldsymbol{K}_T\)</span> closest to zero, with the eigenvectors
+<span class="math notranslate nohighlight">\(\boldsymbol{Q} \boldsymbol{V}\)</span> in the Euclidean inner product. The
+iteration stops when <span class="math notranslate nohighlight">\(|\theta - \theta_{old}| \le \epsilon \max
+|\theta|\)</span> for every Ritz value, <span class="math notranslate nohighlight">\(\epsilon\)</span> = <code class="docutils literal notranslate"><span class="pre">EIGVEC_TOL</span></code>.</p>
+<p>The unrefined solutions of PARDISO are used because the tangent
+stiffness matrix near a critical point is almost singular: the GMRES of
+its solutions took about one second each for the DOE09 cylinder (57000
+degrees of freedom), against 0.03 s for those of the factorization
+alone, and the subspace iteration converges to the eigenvectors closest
+to zero without them.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="rb85cfa3ff47b-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id25">1</a><span class="fn-bracket">]</span></span>
+<p>Bathe, K.J., Finite Element Procedures, 2nd ed., K.J. Bathe,
+Watertown, MA, 2014.</p>
+</div>
+</div>
 </dd></dl>
 
 </section>
@@ -1289,6 +1425,11 @@ doubled until it holds the negative eigenvalues</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#riks-and-crisfield-methods">Riks and Crisfield methods</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length_riks._solver_arc_length_riks"><code class="docutils literal notranslate"><span class="pre">_solver_arc_length_riks()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.arc_length_crisfield._solver_arc_length_crisfield"><code class="docutils literal notranslate"><span class="pre">_solver_arc_length_crisfield()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#displacement-control">Displacement control</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.displacement_control._solver_displacement_control"><code class="docutils literal notranslate"><span class="pre">_solver_displacement_control()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.generalized_displacement_control._solver_generalized_displacement_control"><code class="docutils literal notranslate"><span class="pre">_solver_generalized_displacement_control()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#critical-points">Critical points</a><ul class="nav section-nav flex-column">

@@ -1,0 +1,1603 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990) &#8212; structsolve 0.11.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=f3b36f1a"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/simo1990_cylinder_postbuckling';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API reference" href="../api.html" />
+    <link rel="prev" title="Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss" href="tutorial_von_mises_truss.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.11.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Post-buckling-of-an-axially-compressed-cylinder:-Simo,-Fox-and-Rifai-(1990)">
+<h1>Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)<a class="headerlink" href="#Post-buckling-of-an-axially-compressed-cylinder:-Simo,-Fox-and-Rifai-(1990)" title="Link to this heading">#</a></h1>
+<ol class="upperalpha simple" start="10">
+<li><ol class="upperalpha simple" start="3">
+<li><p>Simo, D. D. Fox and M. S. Rifai, <em>On a stress resultant geometrically exact shell model. Part III: Computational aspects of the nonlinear theory</em>, Computer Methods in Applied Mechanics and Engineering 79 (1990) 21-70, Section 6.3.4, “Post-buckling analysis of a simply-supported cylinder; effect of initial imperfections”, pp. 54-57, Fig. 6.3.4 on p. 56, with the results of G. M. Stanley, <em>Continuum-based shell elements</em>, PhD dissertation, Stanford University, 1985 (9-ANS elements).</p></li>
+</ol>
+</li>
+</ol>
+<p>A cylinder of radius <span class="math notranslate nohighlight">\(R = 36\)</span>, length <span class="math notranslate nohighlight">\(L = 100\)</span>, thickness <span class="math notranslate nohighlight">\(t = 0.125\)</span>, <span class="math notranslate nohighlight">\(E = 10^7\)</span>, <span class="math notranslate nohighlight">\(\nu = 0.3\)</span> (consistent units) under axial compression, traced deep into the post-buckled regime by the Riks method of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>:</p>
+<ul class="simple">
+<li><p>Fig. 6.3.4 (a): imperfections of 10 % and 50 % of <span class="math notranslate nohighlight">\(t\)</span> in the shape of the lowest linear buckling mode, load against the maximum axial deflection of the loaded edge, with Stanley’s points;</p></li>
+<li><p>Fig. 6.3.4 (c): the same with the average axial deflection;</p></li>
+<li><p>Fig. 6.3.4 (d): the perfect cylinder, traced by branch switching (<code class="docutils literal notranslate"><span class="pre">Analysis.branch_switching</span></code> with <code class="docutils literal notranslate"><span class="pre">inertia</span> <span class="pre">=</span> <span class="pre">True</span></code>), with <code class="docutils literal notranslate"><span class="pre">linear_solver</span> <span class="pre">=</span> <span class="pre">'pardiso'</span></code> and <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>.</p></li>
+</ul>
+<p>The loads are normalized by the linear buckling load. The values of the figure were read on the page rendered at 300 dpi with a grid drawn over the axes, with a precision of about <span class="math notranslate nohighlight">\(\pm 0.0003\)</span> in the deflection and <span class="math notranslate nohighlight">\(\pm 0.01\)</span> in the load; they are in <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>, with the model. The model is a shell of <code class="docutils literal notranslate"><span class="pre">`panels</span></code> &lt;<a class="github reference external" href="https://github.com/saullocastro/panels">saullocastro/panels</a>&gt;`__ 0.15.0, which is not a dependency of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>: run the notebook from this folder with <code class="docutils literal notranslate"><span class="pre">panels</span></code> and
+oneMKL (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">mkl</span></code>, for <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code>) installed. The analyses run again at each execution, in about 4 min on one thread (<code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS=1</span></code>). The convergence in the Ritz terms (<span class="math notranslate nohighlight">\(8 \times 8\)</span> to <span class="math notranslate nohighlight">\(14 \times 14\)</span>) is in <a class="reference internal" href="ex_cylinder_postbuckling.html"><span class="doc">Post-buckling of an axially compressed cylinder</span></a>, computed with the command line of <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/test_simo1990_cylinder.py</span></code> checks the model of the imperfection and, with
+<span class="math notranslate nohighlight">\(5 \times 5\)</span> terms, the path of the 50 % imperfection through its limit load and the branch switching of the perfect cylinder with both linear solvers; the comparison with Fig. 6.3.4 is made here.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Markdown</span><span class="p">,</span> <span class="n">display</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">panels</span>
+
+<span class="c1"># the model of the cylinder is shared with the tests</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'..'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">))</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">simo1990_utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">su</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'panels'</span><span class="p">,</span> <span class="n">panels</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">markdown_table</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">):</span>
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'| '</span> <span class="o">+</span> <span class="s1">' | '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="s1">' |'</span><span class="p">,</span> <span class="s1">'|'</span> <span class="o">+</span> <span class="s1">'---|'</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)]</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">'| '</span> <span class="o">+</span> <span class="s1">' | '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">+</span> <span class="s1">' |'</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">Markdown</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+panels 0.15.0
+</pre></div></div>
+</div>
+<section id="The-model">
+<h2>The model<a class="headerlink" href="#The-model" title="Link to this heading">#</a></h2>
+<p>As in Simo et al. and Stanley, an <span class="math notranslate nohighlight">\(L/10 \times 15°\)</span> section is modelled, with symmetry conditions on the interior edges and a simple support on the loaded edge: the lowest buckling mode is then the diamond mode of 5 axial half-waves and 12 circumferential waves, of which the section spans a quarter of an axial wave and half a circumferential one. It is one <code class="docutils literal notranslate"><span class="pre">panels.shell.Shell</span></code> of the model <code class="docutils literal notranslate"><span class="pre">cylshell_clpt_donnell</span></code> (Donnell kinematics, classical laminated plate theory), <span class="math notranslate nohighlight">\(a = L/10\)</span>
+along the axis <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(b = R \pi/12\)</span> along the arc <span class="math notranslate nohighlight">\(y\)</span>, with <span class="math notranslate nohighlight">\(8 \times 8\)</span> Bardell terms (the limit loads change by less than 0.003 from <span class="math notranslate nohighlight">\(8 \times 8\)</span> to <span class="math notranslate nohighlight">\(14 \times 14\)</span> terms), and the flags of Bardell’s functions (<code class="docutils literal notranslate"><span class="pre">0</span></code> removes the value, <code class="docutils literal notranslate"><span class="pre">r</span></code> its normal derivative):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Edge</p></th>
+<th class="head"><p>Condition</p></th>
+<th class="head"><p>Flags</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(x = 0\)</span>, loaded</p></td>
+<td><p>simple support, <span class="math notranslate nohighlight">\(v = w = 0\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">x1v</span> <span class="pre">=</span> <span class="pre">x1w</span> <span class="pre">=</span> <span class="pre">0</span></code>, the others <code class="docutils literal notranslate"><span class="pre">1</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(x = a\)</span></p></td>
+<td><p>symmetry, <span class="math notranslate nohighlight">\(u = v_{,x} = w_{,x} = 0\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">x2u</span> <span class="pre">=</span> <span class="pre">x2vr</span> <span class="pre">=</span> <span class="pre">x2wr</span> <span class="pre">=</span> <span class="pre">0</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(y = 0\)</span>, <span class="math notranslate nohighlight">\(y = b\)</span></p></td>
+<td><p>symmetry, <span class="math notranslate nohighlight">\(u_{,y} = v = w_{,y} = 0\)</span></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">y1ur</span> <span class="pre">=</span> <span class="pre">y1v</span> <span class="pre">=</span> <span class="pre">y1wr</span> <span class="pre">=</span> <span class="pre">0</span></code>, same for <code class="docutils literal notranslate"><span class="pre">y2</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The axial load <span class="math notranslate nohighlight">\(N_{cl} = E t^2/(R\sqrt{3(1-\nu^2)})\)</span> per unit length is applied at <span class="math notranslate nohighlight">\(x = 0\)</span> with <code class="docutils literal notranslate"><span class="pre">add_distr_load_fixed_x</span></code>, scaled by the lowest load multiplier of the linear buckling analysis <code class="docutils literal notranslate"><span class="pre">structsolve.lb</span></code>, such that the load factor of the non-linear analyses is the load normalized by the linear buckling load. The callables <code class="docutils literal notranslate"><span class="pre">calc_fext</span></code>, <code class="docutils literal notranslate"><span class="pre">calc_fint</span></code>, <code class="docutils literal notranslate"><span class="pre">calc_kC</span></code> and <code class="docutils literal notranslate"><span class="pre">calc_kG</span></code> of the shell are those passed to <code class="docutils literal notranslate"><span class="pre">structsolve.Analysis</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">s</span><span class="p">,</span> <span class="n">lbd_cr</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="n">su</span><span class="o">.</span><span class="n">normalized_shell</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="si">%d</span><span class="s1"> x </span><span class="si">%d</span><span class="s1"> terms, </span><span class="si">%d</span><span class="s1"> degrees of freedom'</span> <span class="o">%</span> <span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">get_size</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'linear buckling load: </span><span class="si">%.5f</span><span class="s1"> N_cl, N_cl = </span><span class="si">%.1f</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">lbd_cr</span><span class="p">,</span> <span class="n">su</span><span class="o">.</span><span class="n">N_CL</span><span class="p">))</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mf">4.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">s</span><span class="o">.</span><span class="n">uvw</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">gridx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">gridy</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">cf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">plot_mesh</span><span class="p">[</span><span class="s1">'Xs'</span><span class="p">],</span> <span class="n">s</span><span class="o">.</span><span class="n">plot_mesh</span><span class="p">[</span><span class="s1">'Ys'</span><span class="p">],</span> <span class="n">s</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'w'</span><span class="p">],</span> <span class="n">levels</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'RdBu_r'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">'equal'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'$x$ (loaded edge at $x = 0$)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'$y$'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'lowest linear buckling mode, $w$'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+8 x 8 terms, 192 degrees of freedom
+linear buckling load: 1.00472 N_cl, N_cl = 2626.9
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_simo1990_cylinder_postbuckling_3_1.png" src="../_images/notebooks_simo1990_cylinder_postbuckling_3_1.png" />
+</div>
+</div>
+</section>
+<section id="The-initial-imperfection">
+<h2>The initial imperfection<a class="headerlink" href="#The-initial-imperfection" title="Link to this heading">#</a></h2>
+<p>Neither <code class="docutils literal notranslate"><span class="pre">panels</span></code> nor <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> takes a geometric imperfection. For the Donnell kinematics it is added exactly: with the Ritz vector <span class="math notranslate nohighlight">\(\boldsymbol{c}_0\)</span> of the imperfection <span class="math notranslate nohighlight">\(w_0\)</span> (the <span class="math notranslate nohighlight">\(w\)</span> part of the mode, <span class="math notranslate nohighlight">\(u = v = 0\)</span>, scaled to <span class="math notranslate nohighlight">\(\max|w_0| = \xi t\)</span>), the membrane strains of the imperfect shell, e.g. <span class="math notranslate nohighlight">\(\varepsilon_{xx} = u_{,x} + \frac{1}{2} w_{,x}^2 + w_{0,x} w_{,x}\)</span>, and its curvatures are the differences
+<span class="math notranslate nohighlight">\(\boldsymbol{\varepsilon}(\boldsymbol{c} + \boldsymbol{c}_0) - \boldsymbol{\varepsilon}(\boldsymbol{c}_0)\)</span> of the strains of the perfect shell, the non-linear terms being quadratic in <span class="math notranslate nohighlight">\(w\)</span>. With <span class="math notranslate nohighlight">\(\boldsymbol{B}(\boldsymbol{c}) = \partial\boldsymbol{\varepsilon}/\partial\boldsymbol{c}\)</span>, affine in <span class="math notranslate nohighlight">\(\boldsymbol{c}\)</span>, and the resultants <span class="math notranslate nohighlight">\(\boldsymbol{N}_0\)</span> of the state <span class="math notranslate nohighlight">\(\boldsymbol{c}_0\)</span>, linear and non-linear parts,</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{int,imp}(\boldsymbol{c}) = \int \boldsymbol{B}(\boldsymbol{c} + \boldsymbol{c}_0)^\top (\boldsymbol{N}(\boldsymbol{c} + \boldsymbol{c}_0) - \boldsymbol{N}_0)\, dA = \boldsymbol{F}_{int}(\boldsymbol{c} + \boldsymbol{c}_0) - \boldsymbol{F}_{int}(\boldsymbol{c}_0) - \boldsymbol{K}_G(\boldsymbol{N}_0) \boldsymbol{c}\]</div>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{K}_{T,imp}(\boldsymbol{c}) = \boldsymbol{K}_T(\boldsymbol{c} + \boldsymbol{c}_0) - \boldsymbol{K}_G(\boldsymbol{N}_0)\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{F}_{int,imp}(\boldsymbol{0}) = \boldsymbol{0}\)</span>: the imperfect shell is unstressed at <span class="math notranslate nohighlight">\(\boldsymbol{c} = \boldsymbol{0}\)</span>. <code class="docutils literal notranslate"><span class="pre">Shell.calc_kG(c=c0)</span></code> cannot give <span class="math notranslate nohighlight">\(\boldsymbol{K}_G(\boldsymbol{N}_0)\)</span>: it has the resultants of the linear part of the strains only, and <code class="docutils literal notranslate"><span class="pre">su.calc_kG_N</span></code> integrates <span class="math notranslate nohighlight">\(\boldsymbol{K}_G(\boldsymbol{N}_0)\)</span> at the Gauss points of the shell. <code class="docutils literal notranslate"><span class="pre">su.ImperfectShell</span></code> gives the callables of <code class="docutils literal notranslate"><span class="pre">structsolve.Analysis</span></code>.</p>
+<p>The checks of <code class="docutils literal notranslate"><span class="pre">su.verify</span></code>, for <span class="math notranslate nohighlight">\(8 \times 8\)</span> terms and <span class="math notranslate nohighlight">\(\xi = 0.5\)</span>, at a random state with <span class="math notranslate nohighlight">\(\max|w| = 0.3 t\)</span>: the geometric stiffness matrix with the linear resultants is <code class="docutils literal notranslate"><span class="pre">calc_kG(c)</span></code> of <code class="docutils literal notranslate"><span class="pre">panels</span></code>, which has no non-linear resultants; the internal forces vanish at <span class="math notranslate nohighlight">\(\boldsymbol{c} = \boldsymbol{0}\)</span>; the tangent stiffness matrix is the derivative of the internal forces (central differences); independently of the formula above, the internal forces are the gradient of the
+strain energy <span class="math notranslate nohighlight">\(\frac{1}{2}\int \boldsymbol{\varepsilon}_{imp}^\top \boldsymbol{ABD}\, \boldsymbol{\varepsilon}_{imp}\, dA\)</span> integrated from <code class="docutils literal notranslate"><span class="pre">Shell.strain</span></code> of <span class="math notranslate nohighlight">\(\boldsymbol{c} + \boldsymbol{c}_0\)</span> and <span class="math notranslate nohighlight">\(\boldsymbol{c}_0\)</span>, with an error of second order in <span class="math notranslate nohighlight">\(h\)</span>, which fails with <code class="docutils literal notranslate"><span class="pre">calc_kG(c0)</span></code> in place of <span class="math notranslate nohighlight">\(\boldsymbol{K}_G(\boldsymbol{N}_0)\)</span>; and without imperfection the model is the perfect one.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">su</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+kG(N_L(c)), this script vs. panels calc_kG(c): rel. diff 8.24e-16
+kG(N(c)) vs. calc_kG(c): rel. diff 1.82e-03 (non-linear stresses missing in calc_kG)
+|fint_imp(0)| / |fint(c0)| = 0.00e+00
+h=1e-04 |(f(c+hv)-f(c-hv))/2h - kT_imp v|/|kT_imp v| = 5.26e-12
+h=1e-05 |(f(c+hv)-f(c-hv))/2h - kT_imp v|/|kT_imp v| = 5.01e-14
+h=1e-06 |(f(c+hv)-f(c-hv))/2h - kT_imp v|/|kT_imp v| = 4.20e-13
+h=1e-04 (U(c+hv)-U(c-hv))/2h vs fint_imp(c).v: rel. diff 1.72e-08
+h=1e-05 (U(c+hv)-U(c-hv))/2h vs fint_imp(c).v: rel. diff 1.71e-10
+same with calc_kG(c0) in place of kG(N0): rel. diff 7.48e-05
+xi=0: |fint_imp(c) - fint(c)|/|fint(c)| = 0.00e+00
+</pre></div></div>
+</div>
+</section>
+<section id="Riks-analyses">
+<h2>Riks analyses<a class="headerlink" href="#Riks-analyses" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">su.run_riks</span></code> creates the <code class="docutils literal notranslate"><span class="pre">structsolve.Analysis</span></code> with <code class="docutils literal notranslate"><span class="pre">NL_method</span> <span class="pre">=</span> <span class="pre">'arc_length_riks'</span></code>, <code class="docutils literal notranslate"><span class="pre">final_load_factor</span> <span class="pre">=</span> <span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">initialInc</span> <span class="pre">=</span> <span class="pre">maxInc</span> <span class="pre">=</span> <span class="pre">0.1</span></code>, <code class="docutils literal notranslate"><span class="pre">minInc</span> <span class="pre">=</span> <span class="pre">1e-5</span></code> and the stop criterion <code class="docutils literal notranslate"><span class="pre">structsolve.stopping.value_reached</span></code> of the maximum axial deflection of the loaded edge, here 0.04, about twice the deflection at the linear buckling load; the other attributes are at their defaults, e.g. Crisfield’s convergence criterion with <code class="docutils literal notranslate"><span class="pre">relTOL</span> <span class="pre">=</span> <span class="pre">1e-9</span></code>. The residual of every converged
+increment is checked afterwards.</p>
+<p>The perfect cylinder runs with <code class="docutils literal notranslate"><span class="pre">inertia</span> <span class="pre">=</span> <span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">branch_switching</span> <span class="pre">=</span> <span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">initialInc</span> <span class="pre">=</span> <span class="pre">maxInc</span> <span class="pre">=</span> <span class="pre">0.03</span></code> and the unknowns scaled to a unit diagonal of the linear stiffness matrix (<code class="docutils literal notranslate"><span class="pre">su.ScaledModel</span></code>, which changes only the coordinates of the Ritz vector, such that the eigenvalues of the tangent closest to zero are those of the physical instabilities rather than of weakly stiff Ritz terms). A bifurcation is detected by the count of negative eigenvalues of the factorization with
+<code class="docutils literal notranslate"><span class="pre">linear_solver</span> <span class="pre">=</span> <span class="pre">'pardiso'</span></code> and by the sign of the determinant with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>; the next step starts along the critical eigenvector, computed by a subspace iteration with the available factorization, and is corrected with the spherical constraint.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">runs</span> <span class="o">=</span> <span class="p">((</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="p">{}),</span>
+        <span class="p">(</span><span class="s1">'perfect, pardiso'</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">branch_switching</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linear_solver</span><span class="o">=</span><span class="s1">'pardiso'</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s1">'perfect, splu'</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">branch_switching</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">linear_solver</span><span class="o">=</span><span class="s1">'splu'</span><span class="p">)))</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">kwargs</span> <span class="ow">in</span> <span class="n">runs</span><span class="p">:</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">su</span><span class="o">.</span><span class="n">run_riks</span><span class="p">(</span><span class="n">xi</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">umax</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'u_avg'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mf">0.</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'u'</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">]))</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'u_max'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mf">0.</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'u'</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">]))</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'lbds0'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mf">0.</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'lbds'</span><span class="p">]))</span>
+    <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="si">%-17s</span><span class="s1"> </span><span class="si">%4d</span><span class="s1"> increments, </span><span class="si">%5.1f</span><span class="s1"> s, max. relative residual </span><span class="si">%.1e</span><span class="s1">, max|w|/t at the end </span><span class="si">%.1f</span><span class="s1">'</span>
+          <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'lbds'</span><span class="p">]),</span> <span class="n">r</span><span class="p">[</span><span class="s1">'elapsed'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'max_residual'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'wmax'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">su</span><span class="o">.</span><span class="n">t</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'perfect, pardiso'</span><span class="p">,</span> <span class="s1">'perfect, splu'</span><span class="p">):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="si">%s</span><span class="s1">: switched to the bifurcated branch at the load factor </span><span class="si">%s</span><span class="s1">'</span>
+          <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'lbds'</span><span class="p">][</span><span class="n">r</span><span class="p">[</span><span class="s1">'branch_points'</span><span class="p">]],</span> <span class="mi">4</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+10 %               260 increments,  85.6 s, max. relative residual 1.6e-10, max|w|/t at the end 6.2
+50 %                85 increments,  31.4 s, max. relative residual 5.6e-11, max|w|/t at the end 5.9
+perfect, pardiso   174 increments,  59.2 s, max. relative residual 6.0e-10, max|w|/t at the end 6.2
+perfect, splu      174 increments,  58.1 s, max. relative residual 6.0e-10, max|w|/t at the end 6.2
+perfect, pardiso: switched to the bifurcated branch at the load factor [0.8273]
+perfect, splu: switched to the bifurcated branch at the load factor [0.8273]
+</pre></div></div>
+</div>
+</section>
+<section id="Comparison-with-Fig.-6.3.4">
+<h2>Comparison with Fig. 6.3.4<a class="headerlink" href="#Comparison-with-Fig.-6.3.4" title="Link to this heading">#</a></h2>
+<p>Values read from Fig. 6.3.4 of Simo et al. and Stanley’s points in it, against <code class="docutils literal notranslate"><span class="pre">structsolve</span></code> with <span class="math notranslate nohighlight">\(8 \times 8\)</span> terms; <span class="math notranslate nohighlight">\(u_{max}\)</span> is the maximum axial deflection of the loaded edge, the first limit load is the first maximum of the load, the smallest <span class="math notranslate nohighlight">\(u_{max}\)</span> is that of the snap-back after it, the minimum load is the minimum after it, and <span class="math notranslate nohighlight">\(P(u)\)</span> the load at <span class="math notranslate nohighlight">\(u_{max} = u\)</span> on the post-buckled branch, after the snap-back. The relative difference is
+<span class="math notranslate nohighlight">\((\text{structsolve} - \text{read})/\text{read}\)</span>; the reading precision, <span class="math notranslate nohighlight">\(\pm 0.0003\)</span> in the deflection and <span class="math notranslate nohighlight">\(\pm 0.01\)</span> in the load, is 1 % to 3 % of the values read. Where only a range could be read, no relative difference is given. At <span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.04 the two curves of Fig. 6.3.4 (a) are 0.01 apart, after crossing each other, such that which one is the 10 % imperfection is not certain.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">load_at</span><span class="p">(</span><span class="n">lbds</span><span class="p">,</span> <span class="n">u_max</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="c1"># load at u_max = u on the post-buckled branch, after the snap-back, as in su.path_values</span>
+    <span class="n">ilim</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">lbds</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">imin</span> <span class="o">=</span> <span class="n">ilim</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">lbds</span><span class="p">[</span><span class="n">ilim</span><span class="p">:])</span>
+    <span class="n">iback</span> <span class="o">=</span> <span class="n">ilim</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">u_max</span><span class="p">[</span><span class="n">ilim</span><span class="p">:</span><span class="n">imin</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">u_max</span><span class="p">[</span><span class="n">iback</span><span class="p">:],</span> <span class="n">lbds</span><span class="p">[</span><span class="n">iback</span><span class="p">:])</span>
+
+
+<span class="n">vals</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">su</span><span class="o">.</span><span class="n">path_values</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">'lbds'</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">'u'</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">res</span><span class="p">}</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'50 %'</span><span class="p">):</span>
+    <span class="n">vals</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">'P(Stanley)'</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_at</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">'lbds'</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s1">'u'</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">{</span><span class="s1">'10 %'</span><span class="p">:</span> <span class="mf">0.0353</span><span class="p">,</span> <span class="s1">'50 %'</span><span class="p">:</span> <span class="mf">0.0363</span><span class="p">}[</span><span class="n">k</span><span class="p">])</span>
+
+<span class="c1"># (case, quantity, key of path_values, Simo et al. read, Stanley read; None: no value, a string: a range)</span>
+<span class="n">refs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'first limit load'</span><span class="p">,</span> <span class="s1">'P_lim'</span><span class="p">,</span> <span class="mf">0.715</span><span class="p">,</span> <span class="mf">0.717</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_lim'</span><span class="p">,</span> <span class="mf">0.0168</span><span class="p">,</span> <span class="s1">'0.0159 to 0.0166'</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'smallest $u_</span><span class="si">{max}</span><span class="s1">$ of the snap-back'</span><span class="p">,</span> <span class="s1">'u_back'</span><span class="p">,</span> <span class="mf">0.0142</span><span class="p">,</span> <span class="mf">0.0140</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'minimum load'</span><span class="p">,</span> <span class="s1">'P_min'</span><span class="p">,</span> <span class="mf">0.326</span><span class="p">,</span> <span class="mf">0.319</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_min'</span><span class="p">,</span> <span class="mf">0.018</span><span class="p">,</span> <span class="mf">0.018</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$P$(0.025)'</span><span class="p">,</span> <span class="s1">'P(0.025)'</span><span class="p">,</span> <span class="mf">0.344</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$P$(0.03)'</span><span class="p">,</span> <span class="s1">'P(0.03)'</span><span class="p">,</span> <span class="mf">0.372</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$P$(0.035)'</span><span class="p">,</span> <span class="s1">'P(0.035)'</span><span class="p">,</span> <span class="mf">0.406</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$P$(0.0353)'</span><span class="p">,</span> <span class="s1">'P(Stanley)'</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.395</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'$P$(0.04)'</span><span class="p">,</span> <span class="s1">'P(0.04)'</span><span class="p">,</span> <span class="mf">0.459</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'first limit load'</span><span class="p">,</span> <span class="s1">'P_lim'</span><span class="p">,</span> <span class="mf">0.411</span><span class="p">,</span> <span class="mf">0.402</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_lim'</span><span class="p">,</span> <span class="mf">0.0108</span><span class="p">,</span> <span class="mf">0.0106</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'minimum load'</span><span class="p">,</span> <span class="s1">'P_min'</span><span class="p">,</span> <span class="mf">0.315</span><span class="p">,</span> <span class="mf">0.297</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_min'</span><span class="p">,</span> <span class="s1">'0.015 to 0.020'</span><span class="p">,</span> <span class="mf">0.0175</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.02)'</span><span class="p">,</span> <span class="s1">'P(0.02)'</span><span class="p">,</span> <span class="mf">0.315</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.025)'</span><span class="p">,</span> <span class="s1">'P(0.025)'</span><span class="p">,</span> <span class="mf">0.344</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.03)'</span><span class="p">,</span> <span class="s1">'P(0.03)'</span><span class="p">,</span> <span class="mf">0.370</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.035)'</span><span class="p">,</span> <span class="s1">'P(0.035)'</span><span class="p">,</span> <span class="mf">0.401</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.0363)'</span><span class="p">,</span> <span class="s1">'P(Stanley)'</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mf">0.420</span><span class="p">),</span>
+    <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'$P$(0.04)'</span><span class="p">,</span> <span class="s1">'P(0.04)'</span><span class="p">,</span> <span class="mf">0.449</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'perfect, pardiso'</span><span class="p">,</span> <span class="s1">'perfect, splu'</span><span class="p">):</span>
+    <span class="n">refs</span> <span class="o">+=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'first bifurcation load'</span><span class="p">,</span> <span class="s1">'P_lim'</span><span class="p">,</span> <span class="mf">0.833</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_lim'</span><span class="p">,</span> <span class="mf">0.0183</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'smallest $u_</span><span class="si">{max}</span><span class="s1">$ after it'</span><span class="p">,</span> <span class="s1">'u_back'</span><span class="p">,</span> <span class="mf">0.0149</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'load at it'</span><span class="p">,</span> <span class="s1">'P_back'</span><span class="p">,</span> <span class="mf">0.457</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'minimum load'</span><span class="p">,</span> <span class="s1">'P_min'</span><span class="p">,</span> <span class="mf">0.333</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'$u_</span><span class="si">{max}</span><span class="s1">$ at it'</span><span class="p">,</span> <span class="s1">'u_min'</span><span class="p">,</span> <span class="mf">0.020</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'$P$(0.03)'</span><span class="p">,</span> <span class="s1">'P(0.03)'</span><span class="p">,</span> <span class="mf">0.397</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">'$P$(0.04)'</span><span class="p">,</span> <span class="s1">'P(0.04)'</span><span class="p">,</span> <span class="mf">0.480</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">ref_cells</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">ref</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">'-'</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ref</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="s1">'</span><span class="si">%g</span><span class="s1">'</span> <span class="o">%</span> <span class="n">ref</span><span class="p">,</span> <span class="s1">'</span><span class="si">%+.1f</span><span class="s1"> </span><span class="si">%%</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="mi">100</span><span class="o">*</span><span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)</span><span class="o">/</span><span class="n">ref</span><span class="p">)]</span>
+
+
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">rel</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'Simo et al.'</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">'Stanley'</span><span class="p">:</span> <span class="p">[]}</span>
+<span class="k">for</span> <span class="n">case</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">simo</span><span class="p">,</span> <span class="n">stanley</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">case</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">case</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="s1">'</span><span class="si">%.4f</span><span class="s1">'</span> <span class="o">%</span> <span class="n">value</span><span class="p">]</span> <span class="o">+</span> <span class="n">ref_cells</span><span class="p">(</span><span class="n">simo</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="n">ref_cells</span><span class="p">(</span><span class="n">stanley</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'Simo et al.'</span><span class="p">,</span> <span class="n">simo</span><span class="p">),</span> <span class="p">(</span><span class="s1">'Stanley'</span><span class="p">,</span> <span class="n">stanley</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">rel</span><span class="p">[</span><span class="n">src</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">ref</span><span class="p">)</span><span class="o">/</span><span class="n">ref</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">markdown_table</span><span class="p">([</span><span class="s1">'Case'</span><span class="p">,</span> <span class="s1">'Quantity'</span><span class="p">,</span> <span class="s1">'structsolve'</span><span class="p">,</span> <span class="s1">'Simo et al., read'</span><span class="p">,</span> <span class="s1">'rel. diff.'</span><span class="p">,</span>
+                        <span class="s1">'Stanley, read'</span><span class="p">,</span> <span class="s1">'rel. diff.'</span><span class="p">],</span> <span class="n">rows</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'largest relative difference from </span><span class="si">%s</span><span class="s1">: </span><span class="si">%.1f</span><span class="s1"> </span><span class="si">%%</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="mi">100</span><span class="o">*</span><span class="nb">max</span><span class="p">(</span><span class="n">r</span><span class="p">)))</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Case</p></th>
+<th class="head"><p>Quantity</p></th>
+<th class="head"><p>structsolve</p></th>
+<th class="head"><p>Simo et al., read</p></th>
+<th class="head"><p>rel. diff.</p></th>
+<th class="head"><p>Stanley, read</p></th>
+<th class="head"><p>rel. diff.</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>10 %</p></td>
+<td><p>first limit load</p></td>
+<td><p>0.7276</p></td>
+<td><p>0.715</p></td>
+<td><p>+1.8 %</p></td>
+<td><p>0.717</p></td>
+<td><p>+1.5 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0163</p></td>
+<td><p>0.0168</p></td>
+<td><p>-3.0 %</p></td>
+<td><p>0.0159 to 0.0166</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>10 %</p></td>
+<td><p>smallest <span class="math notranslate nohighlight">\(u_{max}\)</span> of the snap-back</p></td>
+<td><p>0.0139</p></td>
+<td><p>0.0142</p></td>
+<td><p>-1.9 %</p></td>
+<td><p>0.014</p></td>
+<td><p>-0.4 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>10 %</p></td>
+<td><p>minimum load</p></td>
+<td><p>0.3268</p></td>
+<td><p>0.326</p></td>
+<td><p>+0.2 %</p></td>
+<td><p>0.319</p></td>
+<td><p>+2.4 %</p></td>
+</tr>
+<tr class="row-even"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0201</p></td>
+<td><p>0.018</p></td>
+<td><p>+11.8 %</p></td>
+<td><p>0.018</p></td>
+<td><p>+11.8 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.025)</p></td>
+<td><p>0.3397</p></td>
+<td><p>0.344</p></td>
+<td><p>-1.2 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.03)</p></td>
+<td><p>0.3672</p></td>
+<td><p>0.372</p></td>
+<td><p>-1.3 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.035)</p></td>
+<td><p>0.4023</p></td>
+<td><p>0.406</p></td>
+<td><p>-0.9 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.0353)</p></td>
+<td><p>0.4045</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>0.395</p></td>
+<td><p>+2.4 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>10 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.04)</p></td>
+<td><p>0.4420</p></td>
+<td><p>0.459</p></td>
+<td><p>-3.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>50 %</p></td>
+<td><p>first limit load</p></td>
+<td><p>0.3928</p></td>
+<td><p>0.411</p></td>
+<td><p>-4.4 %</p></td>
+<td><p>0.402</p></td>
+<td><p>-2.3 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0107</p></td>
+<td><p>0.0108</p></td>
+<td><p>-0.7 %</p></td>
+<td><p>0.0106</p></td>
+<td><p>+1.2 %</p></td>
+</tr>
+<tr class="row-even"><td><p>50 %</p></td>
+<td><p>minimum load</p></td>
+<td><p>0.3228</p></td>
+<td><p>0.315</p></td>
+<td><p>+2.5 %</p></td>
+<td><p>0.297</p></td>
+<td><p>+8.7 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0173</p></td>
+<td><p>0.015 to 0.020</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>0.0175</p></td>
+<td><p>-0.9 %</p></td>
+</tr>
+<tr class="row-even"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.02)</p></td>
+<td><p>0.3267</p></td>
+<td><p>0.315</p></td>
+<td><p>+3.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.025)</p></td>
+<td><p>0.3486</p></td>
+<td><p>0.344</p></td>
+<td><p>+1.3 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.03)</p></td>
+<td><p>0.3799</p></td>
+<td><p>0.37</p></td>
+<td><p>+2.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.035)</p></td>
+<td><p>0.4165</p></td>
+<td><p>0.401</p></td>
+<td><p>+3.9 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.0363)</p></td>
+<td><p>0.4265</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><p>0.42</p></td>
+<td><p>+1.6 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>50 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.04)</p></td>
+<td><p>0.4552</p></td>
+<td><p>0.449</p></td>
+<td><p>+1.4 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, pardiso</p></td>
+<td><p>first bifurcation load</p></td>
+<td><p>0.8273</p></td>
+<td><p>0.833</p></td>
+<td><p>-0.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, pardiso</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0182</p></td>
+<td><p>0.0183</p></td>
+<td><p>-0.5 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, pardiso</p></td>
+<td><p>smallest <span class="math notranslate nohighlight">\(u_{max}\)</span> after it</p></td>
+<td><p>0.0145</p></td>
+<td><p>0.0149</p></td>
+<td><p>-2.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, pardiso</p></td>
+<td><p>load at it</p></td>
+<td><p>0.4531</p></td>
+<td><p>0.457</p></td>
+<td><p>-0.9 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, pardiso</p></td>
+<td><p>minimum load</p></td>
+<td><p>0.3273</p></td>
+<td><p>0.333</p></td>
+<td><p>-1.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, pardiso</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0208</p></td>
+<td><p>0.02</p></td>
+<td><p>+3.8 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, pardiso</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.03)</p></td>
+<td><p>0.3642</p></td>
+<td><p>0.397</p></td>
+<td><p>-8.3 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, pardiso</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.04)</p></td>
+<td><p>0.4383</p></td>
+<td><p>0.48</p></td>
+<td><p>-8.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, splu</p></td>
+<td><p>first bifurcation load</p></td>
+<td><p>0.8273</p></td>
+<td><p>0.833</p></td>
+<td><p>-0.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, splu</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0182</p></td>
+<td><p>0.0183</p></td>
+<td><p>-0.5 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, splu</p></td>
+<td><p>smallest <span class="math notranslate nohighlight">\(u_{max}\)</span> after it</p></td>
+<td><p>0.0145</p></td>
+<td><p>0.0149</p></td>
+<td><p>-2.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, splu</p></td>
+<td><p>load at it</p></td>
+<td><p>0.4531</p></td>
+<td><p>0.457</p></td>
+<td><p>-0.9 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, splu</p></td>
+<td><p>minimum load</p></td>
+<td><p>0.3273</p></td>
+<td><p>0.333</p></td>
+<td><p>-1.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, splu</p></td>
+<td><p><span class="math notranslate nohighlight">\(u_{max}\)</span> at it</p></td>
+<td><p>0.0208</p></td>
+<td><p>0.02</p></td>
+<td><p>+3.8 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>perfect, splu</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.03)</p></td>
+<td><p>0.3642</p></td>
+<td><p>0.397</p></td>
+<td><p>-8.3 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><p>perfect, splu</p></td>
+<td><p><span class="math notranslate nohighlight">\(P\)</span>(0.04)</p></td>
+<td><p>0.4383</p></td>
+<td><p>0.48</p></td>
+<td><p>-8.7 %</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+largest relative difference from Simo et al.: 11.8 %
+largest relative difference from Stanley: 11.8 %
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mf">4.6</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ulin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.04</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ulin</span><span class="p">,</span> <span class="n">ulin</span><span class="o">/</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_LINEAR_U1</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'0.6'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'linear, Fig. 6.3.4'</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'C0'</span><span class="p">),</span> <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'C3'</span><span class="p">)):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'u_max'</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'lbds0'</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'structsolve, </span><span class="si">%s</span><span class="s1">'</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">data</span><span class="p">,</span> <span class="n">mk</span><span class="p">,</span> <span class="n">lab</span> <span class="ow">in</span> <span class="p">((</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_A_SIMO_10</span><span class="p">,</span> <span class="s1">'o'</span><span class="p">,</span> <span class="s1">'Simo et al., 10 %'</span><span class="p">),</span> <span class="p">(</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_A_SIMO_50</span><span class="p">,</span> <span class="s1">'s'</span><span class="p">,</span> <span class="s1">'Simo et al., 50 %'</span><span class="p">),</span>
+                      <span class="p">(</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_A_ANS_10</span><span class="p">,</span> <span class="s1">'^'</span><span class="p">,</span> <span class="s1">'Stanley, 10 %'</span><span class="p">),</span> <span class="p">(</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_A_ANS_50</span><span class="p">,</span> <span class="s1">'D'</span><span class="p">,</span> <span class="s1">'Stanley, 50 %'</span><span class="p">)):</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">mk</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'k'</span><span class="p">,</span> <span class="n">mew</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">lab</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'(a) maximum axial deflection'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'axial load / linear buckling load'</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'C0'</span><span class="p">),</span> <span class="p">(</span><span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'C3'</span><span class="p">)):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'u_avg'</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'lbds0'</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'</span><span class="si">%s</span><span class="s1">, average'</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'u_max'</span><span class="p">],</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'lbds0'</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">':'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'</span><span class="si">%s</span><span class="s1">, maximum'</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'(c) average and maximum axial deflection'</span><span class="p">)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">ls</span> <span class="ow">in</span> <span class="p">((</span><span class="s1">'perfect, pardiso'</span><span class="p">,</span> <span class="s1">'C2'</span><span class="p">,</span> <span class="s1">'-'</span><span class="p">),</span> <span class="p">(</span><span class="s1">'perfect, splu'</span><span class="p">,</span> <span class="s1">'C1'</span><span class="p">,</span> <span class="s1">'--'</span><span class="p">)):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'u_max'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'lbds0'</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="n">ls</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"structsolve, '</span><span class="si">%s</span><span class="s2">'"</span> <span class="o">%</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">', '</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">bp</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">'branch_points'</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'u_max'</span><span class="p">][</span><span class="n">bp</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'lbds0'</span><span class="p">][</span><span class="n">bp</span><span class="p">],</span> <span class="s1">'x'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'switch'</span><span class="p">)</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">su</span><span class="o">.</span><span class="n">FIG_D_SIMO</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="s1">'o'</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s1">'none'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'k'</span><span class="p">,</span> <span class="n">mew</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Simo et al.'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'(d) perfect cylinder, branch switching'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.042</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'axial deflection of the loaded edge'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">lw</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="s1">'upper right'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_simo1990_cylinder_postbuckling_10_0.png" src="../_images/notebooks_simo1990_cylinder_postbuckling_10_0.png" />
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mf">3.6</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="p">(</span><span class="s1">'10 %'</span><span class="p">,</span> <span class="s1">'50 %'</span><span class="p">,</span> <span class="s1">'perfect, pardiso'</span><span class="p">)):</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'s'</span><span class="p">]</span><span class="o">.</span><span class="n">uvw</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'cs'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">gridx</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">gridy</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+    <span class="n">cf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'s'</span><span class="p">]</span><span class="o">.</span><span class="n">plot_mesh</span><span class="p">[</span><span class="s1">'Xs'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'s'</span><span class="p">]</span><span class="o">.</span><span class="n">plot_mesh</span><span class="p">[</span><span class="s1">'Ys'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'s'</span><span class="p">]</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="s1">'w'</span><span class="p">]</span><span class="o">/</span><span class="n">su</span><span class="o">.</span><span class="n">t</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'RdBu_r'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">'equal'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'</span><span class="si">%s</span><span class="s1">: $w/t$ at $u_</span><span class="si">{max}</span><span class="s1">$ = </span><span class="si">%.3f</span><span class="s1">, load </span><span class="si">%.3f</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="s1">'u'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'lbds'</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">cf</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_simo1990_cylinder_postbuckling_11_0.png" src="../_images/notebooks_simo1990_cylinder_postbuckling_11_0.png" />
+</div>
+</div>
+</section>
+<section id="Discussion">
+<h2>Discussion<a class="headerlink" href="#Discussion" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Imperfect cylinders.</strong> The Riks method passes the limit points and the snap-back of the 10 % imperfection, where both the load and the deflection decrease, and follows the post-buckling plateau to an axial deflection twice that of the linear buckling load, with <span class="math notranslate nohighlight">\(\max|w|\)</span> about 6 <span class="math notranslate nohighlight">\(t\)</span>, every increment in equilibrium to <span class="math notranslate nohighlight">\(10^{-9}\)</span> of the load. The limit loads are within 0.013 (10 %) and 0.018 (50 %) of those read for Simo et al. and within 0.011 and 0.009 of Stanley’s, the
+deflections at them within 0.0005; the snap-back, back to <span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.0139 (0.0142 read), and the plateau at 0.32 to 0.33 are those of the figure, and from <span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.025 to 0.04 the loads are within 0.02 of Simo et al. Fig. (c): the average deflection of the post-buckled edge is much smaller than the maximum one, as in the figure.</p></li>
+<li><p><strong>Perfect cylinder.</strong> With both linear solvers the switch is made at the load 0.827, where a dense eigenvalue analysis of the tangent stiffness matrix has its first negative eigenvalue, 18 % below the linear buckling load because of the non-linear axisymmetric prebuckling of the radially restrained loaded edge, and within 0.006 of the bifurcation of Simo et al. (0.833), as is the deflection at it. The paths of <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> and <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> are the same: the bifurcated branch snaps back to
+<span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.0145 at the load 0.453 (0.0149 at 0.457 in the figure) and reaches the plateau at 0.327 (0.333). Beyond <span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.025 the loads are 0.02 to 0.04 below those of Simo et al., whose curve is, as they say, the envelope of several paths followed after switches between branches, while a single switch is made here: their curve ends above those of the imperfect cylinders, the computed one just below them.</p></li>
+<li><p><strong>Linear prebuckling line.</strong> The straight line of the figures reaches the load 1 at an axial deflection of 0.0205 (read), the linear solution here at 0.0210: the abscissae of the figure are the shortening of the <span class="math notranslate nohighlight">\(L/10\)</span> section, the 2 % difference coming from the normalizing buckling load or the prebuckling stiffness of the finite elements of Simo et al.</p></li>
+<li><p><strong>Ritz terms.</strong> With <span class="math notranslate nohighlight">\(10 \times 10\)</span> to <span class="math notranslate nohighlight">\(14 \times 14\)</span> terms the limit loads, the minimum loads and the loads at <span class="math notranslate nohighlight">\(u_{max}\)</span> = 0.04 change by less than 0.003 and do not change in the third digit from <span class="math notranslate nohighlight">\(10 \times 10\)</span> on, for the perfect cylinder as well (switch at 0.8270 and 0.8267 with <span class="math notranslate nohighlight">\(10 \times 10\)</span> and <span class="math notranslate nohighlight">\(12 \times 12\)</span> terms, with both linear solvers); see <a class="reference internal" href="ex_cylinder_postbuckling.html"><span class="doc">Post-buckling of an axially compressed cylinder</span></a>.</p></li>
+</ul>
+<section id="Branch-switching-and-the-linear-solvers-in-this-benchmark">
+<h3>Branch switching and the linear solvers in this benchmark<a class="headerlink" href="#Branch-switching-and-the-linear-solvers-in-this-benchmark" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>The critical eigenvector.</strong> At a bifurcation <code class="docutils literal notranslate"><span class="pre">arc_length._critical_eigenvector</span></code> computes, by a subspace iteration with the available factorization, the eigenvalues of the tangent stiffness matrix closest to zero, enough of them to hold the negative eigenvalues counted by the factorization: the subspace starts with at least <code class="docutils literal notranslate"><span class="pre">num_neg</span> <span class="pre">+</span> <span class="pre">2</span></code> vectors and doubles, up to 64 vectors, while fewer Ritz values than counted are negative. This matters here: weakly stiff in-plane Ritz terms have
+positive eigenvalues closer to zero than the negative ones, about <span class="math notranslate nohighlight">\(1.5 \times 10^{-4}\)</span> along the whole path in the scaled unknowns with <span class="math notranslate nohighlight">\(8 \times 8\)</span> terms, and <span class="math notranslate nohighlight">\(1.8 \times 10^{-5}\)</span> and <span class="math notranslate nohighlight">\(3.3 \times 10^{-6}\)</span> with <span class="math notranslate nohighlight">\(10 \times 10\)</span> and <span class="math notranslate nohighlight">\(12 \times 12\)</span> terms; a subspace holding only them gives an eigenvector that is not the critical one, and the switch converges back on the fundamental path. With <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, which has no count of negative eigenvalues, one negative
+eigenvalue is looked for when the determinant is negative.</p></li>
+<li><p><strong>PARDISO with perturbed pivots.</strong> With its default parameters PARDISO perturbs 18 to 20 pivots of these dense tangent stiffness matrices, which makes the count of negative eigenvalues uncertain (one short from the load 0.827 to 0.893, such that the first critical point would be found at 0.90 instead of 0.83). <a class="reference internal" href="../static.html"><span class="doc">static._factorize</span></a> factorizes such a matrix again with <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code>, the two-level factorization, which perturbs no pivot here: the counts are then those of the
+dense eigenvalue analysis at every increment. This second factorization is why the run with <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> takes longer than that with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> for this small, dense model.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="tutorial_von_mises_truss.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../api.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">API reference</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-model">The model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-initial-imperfection">The initial imperfection</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Riks-analyses">Riks analyses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Comparison-with-Fig.-6.3.4">Comparison with Fig. 6.3.4</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Discussion">Discussion</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#Branch-switching-and-the-linear-solvers-in-this-benchmark">Branch switching and the linear solvers in this benchmark</a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/notebooks/simo1990_cylinder_postbuckling.nblink.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2012-2026, Saullo G. P. Castro.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

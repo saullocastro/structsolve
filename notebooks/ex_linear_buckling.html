@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Linear buckling analysis &#8212; structsolve 0.11.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=f3b36f1a"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/ex_linear_buckling';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Frequency analysis" href="ex_frequency.html" />
+    <link rel="prev" title="Linear static analysis" href="ex_linear_static.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.11.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">structsolve 0.11.0 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Linear buckling analysis</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Linear-buckling-analysis">
+<h1>Linear buckling analysis<a class="headerlink" href="#Linear-buckling-analysis" title="Link to this heading">#</a></h1>
+<p>The function <a class="reference internal" href="../linear_buckling.html"><span class="doc">lb</span></a> solves the linear buckling eigenvalue problem</p>
+<div class="math notranslate nohighlight">
+\[(\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}\]</div>
+<p>for the load multipliers <span class="math notranslate nohighlight">\(\lambda\)</span> and the buckling modes <span class="math notranslate nohighlight">\(\boldsymbol{u}\)</span>, where <span class="math notranslate nohighlight">\(\boldsymbol{K}\)</span> is the linear stiffness matrix and <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> the geometric stiffness matrix of a reference load: the critical load is <span class="math notranslate nohighlight">\(\lambda_1\)</span> times the reference load. This example verifies it on the column of rigid bars of Bathe (2014), Example 3.14, and calculates the critical load of a simply supported plate under uniaxial compression with a Ritz model, compared with
+the classical solution of Timoshenko and Woinowsky-Krieger (1959).</p>
+<p><strong>References.</strong></p>
+<ul class="simple">
+<li><p>Bathe, K.J., Finite Element Procedures, 2nd ed., K.J. Bathe, Watertown, MA, 2014.</p></li>
+<li><p>Castro, S.G.P. and Donadon, M.V., Assembly of semi-analytical models to address linear buckling and vibration of stiffened composite panels with debonding defect, Composite Structures, 160, 232-247, 2017. <a class="reference external" href="https://doi.org/10.1016/j.compstruct.2016.10.026">https://doi.org/10.1016/j.compstruct.2016.10.026</a></p></li>
+<li><p>Timoshenko, S. and Woinowsky-Krieger, S., Theory of Plates and Shells, 2nd ed., McGraw-Hill, New York, 1959.</p></li>
+</ul>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="c1"># the helper functions of the tests are imported from the folder tests/</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'..'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">))</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="kn">import</span> <span class="n">block_diag</span><span class="p">,</span> <span class="n">csc_matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">roots_legendre</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">structsolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">lb</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ritz</span><span class="w"> </span><span class="kn">import</span> <span class="n">isotropic_plate</span><span class="p">,</span> <span class="n">vecf</span><span class="p">,</span> <span class="n">vecf_xi</span>
+</pre></div>
+</div>
+</div>
+<section id="Column-of-two-rigid-bars">
+<h2>Column of two rigid bars<a class="headerlink" href="#Column-of-two-rigid-bars" title="Link to this heading">#</a></h2>
+<p>The column of Bathe’s Example 3.14 is an assemblage of two rigid weightless bars of length <span class="math notranslate nohighlight">\(L\)</span>, connected by frictionless pins, and springs whose stiffnesses are proportional to <span class="math notranslate nohighlight">\(k\)</span>, under the axial load <span class="math notranslate nohighlight">\(P\)</span> at its free end. Its static equilibrium equations are (Bathe 2014, Example 3.14, p. 101)</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}k \begin{bmatrix} 5 &amp; -2 \\ -2 &amp; 2 \end{bmatrix}
+\begin{Bmatrix} U_1 \\ U_2 \end{Bmatrix} = \frac{P}{L}
+\begin{bmatrix} -2 &amp; 1 \\ 1 &amp; -1 \end{bmatrix}
+\begin{Bmatrix} U_1 \\ U_2 \end{Bmatrix}\end{split}\]</div>
+<p>with the critical load <span class="math notranslate nohighlight">\(P_{cr} = -2 k L\)</span> (compression negative). With <span class="math notranslate nohighlight">\(P = \lambda P_0\)</span>, the reference load <span class="math notranslate nohighlight">\(P_0 = -1\)</span> and <span class="math notranslate nohighlight">\(L = 1\)</span>, they are <span class="math notranslate nohighlight">\((\boldsymbol{K} + \lambda \boldsymbol{K}_G) \boldsymbol{u} = \boldsymbol{0}\)</span> with <span class="math notranslate nohighlight">\(\boldsymbol{K}\)</span> the matrix on the left and <span class="math notranslate nohighlight">\(\boldsymbol{K}_G\)</span> the matrix on the right, and <span class="math notranslate nohighlight">\(\det(\boldsymbol{K} + \lambda \boldsymbol{K}_G) = (2 k - \lambda)(3 k - \lambda)\)</span> gives the load multipliers <span class="math notranslate nohighlight">\(\lambda = 2 k\)</span>,
+i.e. <span class="math notranslate nohighlight">\(P_{cr}\)</span>, and <span class="math notranslate nohighlight">\(3 k\)</span>.</p>
+<p>The model below has five uncoupled copies of the column, with <span class="math notranslate nohighlight">\(k = 1, 4, 16, 64, 256\)</span>, such that the sparse solver of <a class="reference internal" href="../linear_buckling.html"><span class="doc">lb</span></a> computes the five lowest load multipliers of a model of ten degrees of freedom:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">k</span> <span class="o">=</span> <span class="mf">4.</span><span class="o">**</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">K</span> <span class="o">=</span> <span class="n">block_diag</span><span class="p">([</span><span class="n">ki</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">5.</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">]])</span> <span class="k">for</span> <span class="n">ki</span> <span class="ow">in</span> <span class="n">k</span><span class="p">])</span>
+<span class="n">KG</span> <span class="o">=</span> <span class="n">block_diag</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">]])]</span><span class="o">*</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">lb</span><span class="p">(</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="n">csc_matrix</span><span class="p">(</span><span class="n">KG</span><span class="p">),</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                      <span class="n">num_eigvalues</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sparse_solver</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">k</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">k</span><span class="p">)))[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"mode"</span><span class="si">:</span><span class="s1">&gt;4s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"lambda (lb)"</span><span class="si">:</span><span class="s1">&gt;14s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"closed form"</span><span class="si">:</span><span class="s1">&gt;12s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"rel. diff."</span><span class="si">:</span><span class="s1">&gt;10s</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">:</span><span class="s1">4d</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">eigvals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">14.10f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">ref</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">12.1f</span><span class="si">}</span><span class="s1">'</span>
+          <span class="sa">f</span><span class="s1">' </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">eigvals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">ref</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">/</span><span class="n">ref</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">10.1e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'critical load of the column k = 1: P_cr = lambda_1*P0 ='</span><span class="p">,</span>
+      <span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="mf">1.</span><span class="p">),</span> <span class="s1">', Bathe: -2 k L ='</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+mode    lambda (lb)  closed form rel. diff.
+   1   2.0000000000          2.0    1.3e-15
+   2   3.0000000000          3.0    8.9e-16
+   3   8.0000000000          8.0    3.3e-15
+   4  12.0000000000         12.0    1.5e-14
+   5  32.0000000000         32.0    3.6e-15
+
+critical load of the column k = 1: P_cr = lambda_1*P0 = -2.0000000000000027 , Bathe: -2 k L = -2.0
+</pre></div></div>
+</div>
+</section>
+<section id="Simply-supported-plate:-Ritz-model">
+<h2>Simply supported plate: Ritz model<a class="headerlink" href="#Simply-supported-plate:-Ritz-model" title="Link to this heading">#</a></h2>
+<p>The plate of length <span class="math notranslate nohighlight">\(a\)</span> (along <span class="math notranslate nohighlight">\(x\)</span>), width <span class="math notranslate nohighlight">\(b\)</span> and thickness <span class="math notranslate nohighlight">\(h\)</span>, of an isotropic material, is under the uniform compression <span class="math notranslate nohighlight">\(N_{xx}\)</span> (force per unit length, negative in compression). The first-order shear deformation theory (FSDT) describes it with the deflection <span class="math notranslate nohighlight">\(w\)</span> and the rotations <span class="math notranslate nohighlight">\(\phi_x\)</span>, <span class="math notranslate nohighlight">\(\phi_y\)</span>, with the curvatures and the transverse shear strains</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\boldsymbol{\kappa} = \begin{Bmatrix} \phi_{x,x} \\ \phi_{y,y} \\
+\phi_{x,y} + \phi_{y,x} \end{Bmatrix}, \qquad
+\boldsymbol{\gamma} = \begin{Bmatrix} \gamma_{yz} \\ \gamma_{xz}
+\end{Bmatrix} = \begin{Bmatrix} \phi_y + w_{,y} \\ \phi_x + w_{,x}
+\end{Bmatrix}\end{split}\]</div>
+<p>The linear stiffness matrix comes from the strain energy <span class="math notranslate nohighlight">\(\frac{1}{2} \int_A (\boldsymbol{\kappa}^\top \boldsymbol{D}
+\boldsymbol{\kappa} + \boldsymbol{\gamma}^\top \boldsymbol{A}_s
+\boldsymbol{\gamma}) \,\mathrm{d}A\)</span>, with the bending stiffnesses <span class="math notranslate nohighlight">\(D_{ij}\)</span> and the transverse shear stiffnesses <span class="math notranslate nohighlight">\(A_{44}\)</span>, <span class="math notranslate nohighlight">\(A_{45}\)</span>, <span class="math notranslate nohighlight">\(A_{55}\)</span>, here with the shear correction factor 5/6 (<code class="docutils literal notranslate"><span class="pre">isotropic_plate</span></code> of <code class="docutils literal notranslate"><span class="pre">tests/ritz.py</span></code>). The geometric stiffness matrix comes from the work of the membrane force on the deflection, <span class="math notranslate nohighlight">\(\frac{1}{2} \int_A N_{xx} w_{,x}^2 \,\mathrm{d}A\)</span>, for the reference load <span class="math notranslate nohighlight">\(\hat{N}_{xx} = -100\)</span> N/m.</p>
+<p>Each field is a sum of products of functions of the natural coordinates <span class="math notranslate nohighlight">\(\xi = 2x/a - 1\)</span> and <span class="math notranslate nohighlight">\(\eta = 2y/b - 1\)</span>, e.g. <span class="math notranslate nohighlight">\(w = \sum_{i,j} c_{ij} f_i(\xi) g_j(\eta)\)</span>, with <code class="docutils literal notranslate"><span class="pre">m1</span></code> terms in <span class="math notranslate nohighlight">\(\xi\)</span> and <code class="docutils literal notranslate"><span class="pre">m2</span></code> terms in <span class="math notranslate nohighlight">\(\eta\)</span>, <code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">=</span> <span class="pre">3</span> <span class="pre">m1</span> <span class="pre">m2</span></code> degrees of freedom. The functions are the hierarchical Legendre-based functions of Bardell, as in Castro and Donadon (2017), implemented with NumPy in <code class="docutils literal notranslate"><span class="pre">vecf</span></code> and <code class="docutils literal notranslate"><span class="pre">vecf_xi</span></code> of <code class="docutils literal notranslate"><span class="pre">tests/ritz.py</span></code>: the first four are cubic Hermite
+functions, whose displacement and rotation at <span class="math notranslate nohighlight">\(\xi = \pm 1\)</span> are switched on or off by four flags, the following ones vanish with their first derivative at both ends. The deflection is null at the four edges and the rotations are free: the simply supported plate. The matrices are integrated with Gauss-Legendre quadrature. The function below is the model of the test <code class="docutils literal notranslate"><span class="pre">test_lb_plate_buckling_fsdt</span></code> of <code class="docutils literal notranslate"><span class="pre">tests/test_linear_buckling.py</span></code>, for any <span class="math notranslate nohighlight">\(a\)</span>, <span class="math notranslate nohighlight">\(b\)</span>, <span class="math notranslate nohighlight">\(h\)</span>:</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">plate_matrices</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">Nxxhat</span><span class="o">=-</span><span class="mf">100.</span><span class="p">):</span>
+    <span class="c1"># K and KG of the simply supported FSDT plate, dofs [w, phix, phiy]</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="mi">3</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span>
+    <span class="n">pts1</span><span class="p">,</span> <span class="n">weights1</span> <span class="o">=</span> <span class="n">roots_legendre</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">pts2</span><span class="p">,</span> <span class="n">weights2</span> <span class="o">=</span> <span class="n">roots_legendre</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">m2</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># BCs: w simply supported (displacement flags 0), phi free</span>
+    <span class="n">wxit1</span><span class="p">,</span> <span class="n">wxir1</span><span class="p">,</span> <span class="n">wxit2</span><span class="p">,</span> <span class="n">wxir2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="n">wetat1</span><span class="p">,</span> <span class="n">wetar1</span><span class="p">,</span> <span class="n">wetat2</span><span class="p">,</span> <span class="n">wetar2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="n">xit1</span><span class="p">,</span> <span class="n">xir1</span><span class="p">,</span> <span class="n">xit2</span><span class="p">,</span> <span class="n">xir2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="n">etat1</span><span class="p">,</span> <span class="n">etar1</span><span class="p">,</span> <span class="n">etat2</span><span class="p">,</span> <span class="n">etar2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+
+    <span class="n">prop</span> <span class="o">=</span> <span class="n">isotropic_plate</span><span class="p">(</span><span class="n">thickness</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">E</span><span class="o">=</span><span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="o">=</span><span class="n">nu</span><span class="p">)</span>
+
+    <span class="n">Sw_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sw_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphiy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphix_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphix_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphiy_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+    <span class="n">Sphiy_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+
+    <span class="n">buff</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="n">KG</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">addouter</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">vec1</span><span class="p">,</span> <span class="n">vec2</span><span class="p">):</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">vec1</span><span class="p">,</span> <span class="n">vec2</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="n">buff</span><span class="p">)</span>
+        <span class="n">matrix</span> <span class="o">+=</span> <span class="n">buff</span>
+
+    <span class="n">detJ</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">b</span><span class="o">/</span><span class="mi">4</span>
+    <span class="k">for</span> <span class="n">xi</span><span class="p">,</span> <span class="n">wxi</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pts1</span><span class="p">,</span> <span class="n">weights1</span><span class="p">):</span>
+        <span class="n">wPxi</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">wxit1</span><span class="p">,</span> <span class="n">wxir1</span><span class="p">,</span> <span class="n">wxit2</span><span class="p">,</span> <span class="n">wxir2</span><span class="p">)</span>
+        <span class="n">wPxi_xi</span> <span class="o">=</span> <span class="n">vecf_xi</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">wxit1</span><span class="p">,</span> <span class="n">wxir1</span><span class="p">,</span> <span class="n">wxit2</span><span class="p">,</span> <span class="n">wxir2</span><span class="p">)</span>
+        <span class="n">Pxi</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">xit1</span><span class="p">,</span> <span class="n">xir1</span><span class="p">,</span> <span class="n">xit2</span><span class="p">,</span> <span class="n">xir2</span><span class="p">)</span>
+        <span class="n">Pxi_xi</span> <span class="o">=</span> <span class="n">vecf_xi</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="n">xit1</span><span class="p">,</span> <span class="n">xir1</span><span class="p">,</span> <span class="n">xit2</span><span class="p">,</span> <span class="n">xir2</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">eta</span><span class="p">,</span> <span class="n">weta</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pts2</span><span class="p">,</span> <span class="n">weights2</span><span class="p">):</span>
+            <span class="n">wPeta</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">wetat1</span><span class="p">,</span> <span class="n">wetar1</span><span class="p">,</span> <span class="n">wetat2</span><span class="p">,</span> <span class="n">wetar2</span><span class="p">)</span>
+            <span class="n">wPeta_eta</span> <span class="o">=</span> <span class="n">vecf_xi</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">wetat1</span><span class="p">,</span> <span class="n">wetar1</span><span class="p">,</span> <span class="n">wetat2</span><span class="p">,</span> <span class="n">wetar2</span><span class="p">)</span>
+            <span class="n">Peta</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">etat1</span><span class="p">,</span> <span class="n">etar1</span><span class="p">,</span> <span class="n">etat2</span><span class="p">,</span> <span class="n">etar2</span><span class="p">)</span>
+            <span class="n">Peta_eta</span> <span class="o">=</span> <span class="n">vecf_xi</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="n">etat1</span><span class="p">,</span> <span class="n">etar1</span><span class="p">,</span> <span class="n">etat2</span><span class="p">,</span> <span class="n">etar2</span><span class="p">)</span>
+
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">wxi</span><span class="o">*</span><span class="n">weta</span>
+
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">Pxi</span><span class="p">,</span> <span class="n">Peta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
+            <span class="n">Sphix</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">*</span><span class="n">Pj</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">Sphiy</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">*</span><span class="n">Pj</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="n">Pi_xi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wPxi_xi</span><span class="p">,</span> <span class="n">wPeta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
+            <span class="n">Sw_x</span><span class="p">[:</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi_xi</span><span class="o">*</span><span class="n">Pj</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="n">Pi_xi</span><span class="p">,</span> <span class="n">Pj</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">Pxi_xi</span><span class="p">,</span> <span class="n">Peta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
+            <span class="n">Sphix_x</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi_xi</span><span class="o">*</span><span class="n">Pj</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">Sphiy_x</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi_xi</span><span class="o">*</span><span class="n">Pj</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">a</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pj_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">wPxi</span><span class="p">,</span> <span class="n">wPeta_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
+            <span class="n">Sw_y</span><span class="p">[:</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">*</span><span class="n">Pj_eta</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="n">Pi</span><span class="p">,</span> <span class="n">Pj_eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">Pxi</span><span class="p">,</span> <span class="n">Peta_eta</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">'ij'</span><span class="p">)</span>
+            <span class="n">Sphix_y</span><span class="p">[</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">*</span><span class="n">Pj_eta</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">Sphiy_y</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">:]</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pi</span><span class="o">*</span><span class="n">Pj_eta</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">/</span><span class="n">b</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="n">e1xx</span> <span class="o">=</span> <span class="n">Sphix_x</span>
+            <span class="n">e1yy</span> <span class="o">=</span> <span class="n">Sphiy_y</span>
+            <span class="n">e1xy</span> <span class="o">=</span> <span class="n">Sphix_y</span> <span class="o">+</span> <span class="n">Sphiy_x</span>
+
+            <span class="n">g0yz</span> <span class="o">=</span> <span class="n">Sphiy</span> <span class="o">+</span> <span class="n">Sw_y</span>
+            <span class="n">g0xz</span> <span class="o">=</span> <span class="n">Sphix</span> <span class="o">+</span> <span class="n">Sw_x</span>
+
+            <span class="n">Mxx</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">D11</span><span class="o">*</span><span class="n">e1xx</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D12</span><span class="o">*</span><span class="n">e1yy</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D16</span><span class="o">*</span><span class="n">e1xy</span>
+            <span class="n">Myy</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">D12</span><span class="o">*</span><span class="n">e1xx</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D22</span><span class="o">*</span><span class="n">e1yy</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D26</span><span class="o">*</span><span class="n">e1xy</span>
+            <span class="n">Mxy</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">D16</span><span class="o">*</span><span class="n">e1xx</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D26</span><span class="o">*</span><span class="n">e1yy</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">D66</span><span class="o">*</span><span class="n">e1xy</span>
+
+            <span class="n">Qy</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">A44</span><span class="o">*</span><span class="n">g0yz</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">A45</span><span class="o">*</span><span class="n">g0xz</span>
+            <span class="n">Qx</span> <span class="o">=</span> <span class="n">prop</span><span class="o">.</span><span class="n">A45</span><span class="o">*</span><span class="n">g0yz</span> <span class="o">+</span> <span class="n">prop</span><span class="o">.</span><span class="n">A55</span><span class="o">*</span><span class="n">g0xz</span>
+
+            <span class="n">addouter</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Mxx</span><span class="p">,</span> <span class="n">e1xx</span><span class="p">)</span>
+            <span class="n">addouter</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Myy</span><span class="p">,</span> <span class="n">e1yy</span><span class="p">)</span>
+            <span class="n">addouter</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Mxy</span><span class="p">,</span> <span class="n">e1xy</span><span class="p">)</span>
+            <span class="n">addouter</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Qy</span><span class="p">,</span> <span class="n">g0yz</span><span class="p">)</span>
+            <span class="n">addouter</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Qx</span><span class="p">,</span> <span class="n">g0xz</span><span class="p">)</span>
+
+            <span class="n">addouter</span><span class="p">(</span><span class="n">KG</span><span class="p">,</span> <span class="n">detJ</span><span class="o">*</span><span class="n">weight</span><span class="o">*</span><span class="n">Nxxhat</span><span class="o">*</span><span class="n">Sw_x</span><span class="p">,</span> <span class="n">Sw_x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">csc_matrix</span><span class="p">(</span><span class="n">K</span><span class="p">),</span> <span class="n">csc_matrix</span><span class="p">(</span><span class="n">KG</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">deflection</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">81</span><span class="p">):</span>
+    <span class="c1"># w(x, y) of the eigenvector c on a grid</span>
+    <span class="n">xi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="n">eta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">xi</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>    <span class="c1"># shape (m1, num)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">vecf</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">eta</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># shape (m2, num)</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">c</span><span class="p">[:</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">C</span> <span class="o">@</span> <span class="n">g</span>                 <span class="c1"># w[i, j] at xi[i], eta[j]</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">xi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">a</span><span class="o">/</span><span class="mi">2</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">eta</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">b</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Classical-solution">
+<h2>Classical solution<a class="headerlink" href="#Classical-solution" title="Link to this heading">#</a></h2>
+<p>For the simply supported plate under the uniform compression <span class="math notranslate nohighlight">\(N_x\)</span>, the classical plate theory gives the critical load (Timoshenko and Woinowsky-Krieger 1959, Section 93, Eq. (227), p. 389)</p>
+<div class="math notranslate nohighlight">
+\[(N_x)_{cr} = \frac{\pi^2 D}{b^2} \left(\frac{m b}{a} +
+\frac{a}{m b}\right)^2, \qquad D = \frac{E h^3}{12 (1 - \nu^2)}\]</div>
+<p>minimized over the number <span class="math notranslate nohighlight">\(m\)</span> of half-waves along <span class="math notranslate nohighlight">\(x\)</span>. For an integer <span class="math notranslate nohighlight">\(a/b\)</span>, <span class="math notranslate nohighlight">\(m = a/b\)</span> and <span class="math notranslate nohighlight">\((N_x)_{cr} = 4 \pi^2 D/b^2\)</span>. The FSDT of the Ritz model gives a slightly lower critical load, because of the transverse shear deformation, which the classical theory neglects.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Ncr_classical</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">):</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">E</span><span class="o">*</span><span class="n">h</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="p">(</span><span class="mi">12</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">nu</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="n">N</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">D</span><span class="o">/</span><span class="n">b</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">m</span><span class="o">*</span><span class="n">b</span><span class="o">/</span><span class="n">a</span> <span class="o">+</span> <span class="n">a</span><span class="o">/</span><span class="p">(</span><span class="n">m</span><span class="o">*</span><span class="n">b</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span>
+    <span class="k">return</span> <span class="n">N</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">m</span><span class="p">[</span><span class="n">N</span><span class="o">.</span><span class="n">argmin</span><span class="p">()]</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Critical-loads">
+<h2>Critical loads<a class="headerlink" href="#Critical-loads" title="Link to this heading">#</a></h2>
+<p>The steel plate of the test, <span class="math notranslate nohighlight">\(b = 0.1\)</span> m, <span class="math notranslate nohighlight">\(h = 0.003\)</span> m, <span class="math notranslate nohighlight">\(E = 200\)</span> GPa, <span class="math notranslate nohighlight">\(\nu = 0.3\)</span>, with <code class="docutils literal notranslate"><span class="pre">m1</span> <span class="pre">=</span> <span class="pre">20</span></code> and <code class="docutils literal notranslate"><span class="pre">m2</span> <span class="pre">=</span> <span class="pre">10</span></code> terms, for several aspect ratios <span class="math notranslate nohighlight">\(a/b\)</span>, including the plate of the test, <span class="math notranslate nohighlight">\(a = 0.3\)</span> m. The critical load is <span class="math notranslate nohighlight">\(N_{cr} = \lambda_1 |\hat{N}_{xx}|\)</span>; the number of half-waves of the buckling mode is counted from the sign changes of <span class="math notranslate nohighlight">\(w\)</span> along the line <span class="math notranslate nohighlight">\(y = b/2\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">E</span> <span class="o">=</span> <span class="mf">200.e9</span>
+<span class="n">nu</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="n">b</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.003</span>
+<span class="n">m1</span><span class="p">,</span> <span class="n">m2</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span>
+<span class="n">Nxxhat</span> <span class="o">=</span> <span class="o">-</span><span class="mf">100.</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">a_b</span> <span class="ow">in</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">]:</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">a_b</span><span class="o">*</span><span class="n">b</span>
+    <span class="n">K</span><span class="p">,</span> <span class="n">KG</span> <span class="o">=</span> <span class="n">plate_matrices</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">Nxxhat</span><span class="o">=</span><span class="n">Nxxhat</span><span class="p">)</span>
+    <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">lb</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">KG</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Ncr</span> <span class="o">=</span> <span class="n">eigvals</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">Nxxhat</span><span class="p">)</span>
+    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">deflection</span><span class="p">(</span><span class="n">eigvecs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
+    <span class="n">wc</span> <span class="o">=</span> <span class="n">w</span><span class="p">[:,</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">wc</span> <span class="o">=</span> <span class="n">wc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wc</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-8</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wc</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()]</span>
+    <span class="n">m_ritz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">wc</span><span class="p">)))</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">Nref</span><span class="p">,</span> <span class="n">m_ref</span> <span class="o">=</span> <span class="n">Ncr_classical</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">E</span><span class="p">,</span> <span class="n">nu</span><span class="p">)</span>
+    <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a_b</span><span class="p">,</span> <span class="n">Ncr</span><span class="p">,</span> <span class="n">m_ritz</span><span class="p">,</span> <span class="n">Nref</span><span class="p">,</span> <span class="n">m_ref</span><span class="p">,</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">eigvecs</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="s2">"a/b"</span><span class="si">:</span><span class="s1">&gt;4s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"N_cr Ritz FSDT"</span><span class="si">:</span><span class="s1">&gt;15s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"m"</span><span class="si">:</span><span class="s1">&gt;3s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"Eq. (227)"</span><span class="si">:</span><span class="s1">&gt;12s</span><span class="si">}</span><span class="s1">'</span>
+      <span class="sa">f</span><span class="s1">' </span><span class="si">{</span><span class="s2">"m"</span><span class="si">:</span><span class="s1">&gt;3s</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="s2">"rel. diff."</span><span class="si">:</span><span class="s1">&gt;10s</span><span class="si">}</span><span class="s1">   (N/m)'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">a_b</span><span class="p">,</span> <span class="n">Ncr</span><span class="p">,</span> <span class="n">m_ritz</span><span class="p">,</span> <span class="n">Nref</span><span class="p">,</span> <span class="n">m_ref</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">a_b</span><span class="si">:</span><span class="s1">4.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">Ncr</span><span class="si">:</span><span class="s1">15.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">m_ritz</span><span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">Nref</span><span class="si">:</span><span class="s1">12.1f</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">m_ref</span><span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1">'</span>
+          <span class="sa">f</span><span class="s1">' </span><span class="si">{</span><span class="p">(</span><span class="n">Ncr</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">Nref</span><span class="p">)</span><span class="o">/</span><span class="n">Nref</span><span class="si">:</span><span class="s1">10.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+ a/b  N_cr Ritz FSDT   m    Eq. (227)   m rel. diff.   (N/m)
+ 1.0       1899719.4   1    1952229.4   1  -2.69e-02
+ 1.5       2069319.6   2    2118304.5   2  -2.31e-02
+ 2.0       1912480.5   2    1952229.4   2  -2.04e-02
+ 3.0       1917554.2   3    1952229.4   3  -1.78e-02
+</pre></div></div>
+</div>
+<p>The Ritz model gives the number of half-waves of Eq. (227), and critical loads between 1.8 % and 2.7 % lower than the classical ones, as expected from the transverse shear deformation of the FSDT. These values are those of <code class="docutils literal notranslate"><span class="pre">m1</span> <span class="pre">=</span> <span class="pre">20</span></code> and <code class="docutils literal notranslate"><span class="pre">m2</span> <span class="pre">=</span> <span class="pre">10</span></code> terms, the model of the test. The buckling mode of the plate of the test, <span class="math notranslate nohighlight">\(a/b = 3\)</span>, has three half-waves along <span class="math notranslate nohighlight">\(x\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">a</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">deflection</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">w</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">))</span>
+<span class="n">cs</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">w</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">levels</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'coolwarm'</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'$w/|w|_</span><span class="si">{max}</span><span class="s1">$'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s1">'equal'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'$x$ (m)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'$y$ (m)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'First buckling mode, $a/b = 3$'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_ex_linear_buckling_11_0.png" src="../_images/notebooks_ex_linear_buckling_11_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ex_linear_static.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Linear static analysis</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ex_frequency.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Frequency analysis</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Column-of-two-rigid-bars">Column of two rigid bars</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Simply-supported-plate:-Ritz-model">Simply supported plate: Ritz model</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Classical-solution">Classical solution</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Critical-loads">Critical loads</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/notebooks/ex_linear_buckling.nblink.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2012-2026, Saullo G. P. Castro.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

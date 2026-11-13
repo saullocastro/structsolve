@@ -16,7 +16,8 @@ can run:
 
 * Sparse eigenvalue solvers first, with verified results and dense solvers
   only as a last resort, also in the browser (Pyodide) and with the faulty
-  Intel MKL versions that break ARPACK, see :doc:`eigensolvers`
+  Intel MKL versions that break ARPACK, see :doc:`eigensolvers` and
+  :doc:`pyodide`
 
 * Non-linear static analyses with :class:`.Analysis`, using:
     - the Newton-Raphson method, full or modified, with an optional
@@ -57,31 +58,29 @@ User guide
     eigen_accuracy.rst
     convergence.rst
     sparse_assembly.rst
+    pyodide.rst
 
-
-Usage examples
---------------
 
 .. toctree::
     :maxdepth: 1
+    :caption: Worked examples
 
-    ex_linear_static.rst
-    ex_linear_buckling.rst
-    ex_frequency.rst
-    ex_newton_raphson.rst
-    ex_arc_length.rst
-    ex_cylinder_postbuckling.rst
-    ex_follower_loads.rst
-    ex_prescribed_displacements.rst
+    notebooks/ex_linear_static.nblink
+    notebooks/ex_linear_buckling.nblink
+    notebooks/ex_frequency.nblink
+    notebooks/ex_newton_raphson.nblink
+    notebooks/ex_arc_length.nblink
+    notebooks/ex_cylinder_postbuckling.nblink
+    notebooks/ex_follower_loads.nblink
+    notebooks/ex_prescribed_displacements.nblink
 
-
-Tutorials
----------
 
 .. toctree::
     :maxdepth: 1
+    :caption: Tutorials
 
-    tutorial_von_mises_truss.ipynb
+    notebooks/tutorial_von_mises_truss.nblink
+    notebooks/simo1990_cylinder_postbuckling.nblink
 
 
 structsolve API
@@ -91,6 +90,13 @@ structsolve API
     :maxdepth: 2
 
     api.rst
+
+
+.. toctree::
+    :maxdepth: 1
+    :caption: About this documentation
+
+    documentation_levels.rst
 
 
 Installing structsolve
@@ -111,12 +117,12 @@ distributes NumPy and SciPy, the wheel published on PyPI is installed with
     import micropip
     await micropip.install("structsolve")
 
+See :doc:`pyodide`.
 
-Changelog
----------
 
 .. toctree::
     :maxdepth: 1
+    :caption: Changelog
 
     changelog.rst
 
@@ -131,7 +137,7 @@ License
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.10.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.11.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 In BibTeX:
 
@@ -142,7 +148,7 @@ In BibTeX:
       title     = {Structural analysis solvers tailored for semi-analytical
                    models},
       year      = {2026},
-      version   = {0.10.0},
+      version   = {0.11.0},
       publisher = {Zenodo},
       doi       = {10.5281/zenodo.2581212},
       url       = {https://doi.org/10.5281/zenodo.2581212}
