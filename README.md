@@ -45,7 +45,7 @@ collected after each call, so that the WebAssembly heap is not exhausted.
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.10.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.11.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -59,6 +59,12 @@ History
 =======
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
+
+* version 0.11.0 (2026-11-13)
+    - `freq` with the dense solvers (`sparse_solver=False`) solves the shifted inverse problem, accurate for the lowest natural frequencies of stiff models, e.g. with penalty springs, and warns when one of the lowest eigenpairs fails the residual check
+    - `freq` accepts the eigenpairs of the sparse solvers whose residual is at the round-off when the inertia of `K - s M` confirms the eigenvalue, instead of falling back to the dense solver or raising an error
+    - Arc-length methods: the final load factor is reached once, without a duplicated end point when the increments sum to it up to the round-off
+    - Every test runs in less than 30 s; the comparisons of the cylinder of Simo, Fox and Rifai (1990) with the literature are in the notebook `simo1990_cylinder_postbuckling`
 
 * version 0.10.0 (2026-11-03)
     - Arc-length corrections: line search and early divergence check; indirect displacement control and generalized displacement control; weights of the degrees of freedom in the arc-length norm
