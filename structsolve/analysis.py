@@ -182,6 +182,20 @@ class Analysis(object):
                                   increments beyond the first limit point or
                                   a displacement measure, see
                                   :mod:`.stopping`. Default is ``None``
+    ``on_converged``              ``callable``, ``on_converged(an)`` is
+                                  called once after every converged
+                                  increment of the non-linear analyses, when
+                                  ``an.cs[-1]`` and ``an.increments[-1]``
+                                  hold the new state, before
+                                  ``stop_criterion`` and before the next
+                                  increment starts, and never for an
+                                  increment that is rejected or cut, e.g. to
+                                  update the internal variables of a
+                                  path-dependent material, such as the
+                                  damage of a cohesive zone, which must only
+                                  change with converged states, see
+                                  :func:`.callbacks.converged`. Default is
+                                  ``None``
     ``final_load_factor``         ``float``, the load factor at which the
                                   non-linear analyses finish, exactly, or,
                                   for the arc-length and displacement control
@@ -399,7 +413,7 @@ class Analysis(object):
             'early_divergence', 'arc_length_weights', 'control_vector',
             'control_scale', 'linear_solver', 'inertia',
             'constraints', 'constraint_values', 'stop_criterion',
-            'final_load_factor',
+            'on_converged', 'final_load_factor',
             'branch_switching', 'max_inertia_jump', 'inertia_num_eigvals',
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
@@ -428,6 +442,7 @@ class Analysis(object):
         self.constraints = None
         self.constraint_values = None
         self.stop_criterion = None
+        self.on_converged = None
         self.final_load_factor = 1.
         self.branch_switching = 0
         self.max_inertia_jump = None

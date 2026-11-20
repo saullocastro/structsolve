@@ -1069,6 +1069,7 @@ def _solver_NR(an, silent=False, initialInc=None):
             total_last = total
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(total)
+            callbacks.converged(an)
             if an.inertia:
                 _record_inertia(an, solve_new, silent=silent)
                 solve_last = solve_new

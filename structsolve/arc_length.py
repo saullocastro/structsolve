@@ -1152,6 +1152,7 @@ def _solver_arc_length(an, method, silent=False):
                     silent=silent)
                 an.cs.append((c + dc1).copy())
                 an.increments.append(target)
+                callbacks.converged(an)
                 if an.inertia:
                     _converged_state(an, c + dc1, target, silent=silent)
                 finished = True
@@ -1168,6 +1169,7 @@ def _solver_arc_length(an, method, silent=False):
                 level=2, silent=silent)
             an.cs.append(c.copy()) #NOTE copy required
             an.increments.append(lbd)
+            callbacks.converged(an)
             solve_kT_conv = None
             after_switch = switch is not None
             if after_switch:
