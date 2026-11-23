@@ -81,6 +81,30 @@ solvers are scaled with the linear solution of `-\partial \boldsymbol{R}/\partia
 import inspect
 
 
+def converged(an):
+    r"""Calls ``an.on_converged(an)``, if given, after a converged increment
+
+    Called by the non-linear solvers right after the new state is appended to
+    ``an.cs`` and ``an.increments``, once per converged increment, before
+    ``an.stop_criterion`` and before the next increment, and never for an
+    increment that is rejected, e.g. by the checks of the inertia or of the
+    branch switching, or cut.
+
+    Notes
+    -----
+    The callables of :class:`.Analysis` must be functions of the
+    configuration and of the load factor alone during the iterations of an
+    increment. A path-dependent model, e.g. a cohesive zone whose damage may
+    not decrease, evaluates them with its internal variables at the last
+    converged state, and updates these variables only with the states that
+    converged: ``on_converged`` is where this update belongs, with the new
+    state ``an.cs[-1]`` at the load factor ``an.increments[-1]``.
+
+    """
+    if getattr(an, 'on_converged', None) is not None:
+        an.on_converged(an)
+
+
 def accepts_kwarg(func, name):
     """Tell whether ``func`` declares the keyword argument ``name``
 
