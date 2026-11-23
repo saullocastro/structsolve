@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.11.0 documentation</title>
+    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.12.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=f3b36f1a"></script>
+    <script src="_static/documentation_options.js?v=61ccb1f1"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.11.0" />
+  <meta name="docsearch:version" content="0.12.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.11.0 documentation</p>
+    <p class="title logo__title">structsolve 0.12.0 documentation</p>
   
 </a></div>
     
@@ -849,6 +849,25 @@ work-conjugate to <span class="math notranslate nohighlight">\(\lambda\)</span>,
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="structsolve.callbacks.converged">
+<span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">converged</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.converged" title="Link to this definition">#</a></dt>
+<dd><p>Calls <code class="docutils literal notranslate"><span class="pre">an.on_converged(an)</span></code>, if given, after a converged increment</p>
+<p>Called by the non-linear solvers right after the new state is appended to
+<code class="docutils literal notranslate"><span class="pre">an.cs</span></code> and <code class="docutils literal notranslate"><span class="pre">an.increments</span></code>, once per converged increment, before
+<code class="docutils literal notranslate"><span class="pre">an.stop_criterion</span></code> and before the next increment, and never for an
+increment that is rejected, e.g. by the checks of the inertia or of the
+branch switching, or cut.</p>
+<p class="rubric">Notes</p>
+<p>The callables of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> must be functions of the
+configuration and of the load factor alone during the iterations of an
+increment. A path-dependent model, e.g. a cohesive zone whose damage may
+not decrease, evaluates them with its internal variables at the last
+converged state, and updates these variables only with the states that
+converged: <code class="docutils literal notranslate"><span class="pre">on_converged</span></code> is where this update belongs, with the new
+state <code class="docutils literal notranslate"><span class="pre">an.cs[-1]</span></code> at the load factor <code class="docutils literal notranslate"><span class="pre">an.increments[-1]</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="structsolve.callbacks.is_load_configuration_dependent">
 <span class="sig-prename descclassname"><span class="pre">structsolve.callbacks.</span></span><span class="sig-name descname"><span class="pre">is_load_configuration_dependent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">an</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.callbacks.is_load_configuration_dependent" title="Link to this definition">#</a></dt>
 <dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">an.calc_fext</span></code> accepts the configuration <code class="docutils literal notranslate"><span class="pre">c</span></code></p>
@@ -950,6 +969,7 @@ see <a class="reference internal" href="#structsolve.callbacks.accepts_kwarg" ti
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_fint"><code class="docutils literal notranslate"><span class="pre">calc_fint()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_kT"><code class="docutils literal notranslate"><span class="pre">calc_kT()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.calc_load_vector"><code class="docutils literal notranslate"><span class="pre">calc_load_vector()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.converged"><code class="docutils literal notranslate"><span class="pre">converged()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.is_load_configuration_dependent"><code class="docutils literal notranslate"><span class="pre">is_load_configuration_dependent()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.callbacks.is_load_factor_dependent"><code class="docutils literal notranslate"><span class="pre">is_load_factor_dependent()</span></code></a></li>
 </ul>
