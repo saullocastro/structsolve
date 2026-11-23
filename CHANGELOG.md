@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.0 (2026-11-23)
+
+### Added
+
+- `Analysis.on_converged`: `on_converged(an)` is called once after every
+  converged increment of the non-linear analyses, when `an.cs[-1]` and
+  `an.increments[-1]` hold the new state, before `stop_criterion` and before
+  the next increment, and never for an increment that is rejected or cut
+  (new `callbacks.converged`). It is where a path-dependent model, e.g. a
+  cohesive zone whose damage may not decrease, updates its internal
+  variables. New tests in `tests/test_on_converged.py`.
+
 ## 0.11.0 (2026-11-13)
 
 ### Fixed

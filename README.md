@@ -45,7 +45,7 @@ collected after each call, so that the WebAssembly heap is not exhausted.
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.11.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.12.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -59,6 +59,9 @@ History
 =======
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
+
+* version 0.12.0 (2026-11-23)
+    - `Analysis.on_converged`: a callable called once after every converged increment of the non-linear analyses, never for a rejected or cut increment, to update the internal variables of path-dependent models, e.g. the damage of a cohesive zone
 
 * version 0.11.0 (2026-11-13)
     - `freq` with the dense solvers (`sparse_solver=False`) solves the shifted inverse problem, accurate for the lowest natural frequencies of stiff models, e.g. with penalty springs, and warns when one of the lowest eigenpairs fails the residual check
