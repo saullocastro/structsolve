@@ -427,7 +427,7 @@ def _factorize_state(an, c, lbd, silent=False):
         solve_kT = _factorize(callbacks.calc_kT(an, c, lbd),
                               linear_solver=an.linear_solver,
                               constraints=_constraint_matrix(an),
-                              cache=_cache(an))
+                              cache=_cache(an), silent=silent)
     except RuntimeError:
         warn('Singular tangent stiffness matrix at the converged state',
              level=2, silent=silent)
@@ -824,12 +824,14 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 iter_kT += 1
             elif modified_NR and iteration == 1 and kT0 is not None:
                 solve_kT = _factorize(kT0, linear_solver=an.linear_solver,
-                                      constraints=C, cache=_cache(an))
+                                      constraints=C, cache=_cache(an),
+                                      silent=silent)
                 iter_kT = 1
             else:
                 solve_kT = _factorize(callbacks.calc_kT(an, c + dc, total),
                                       linear_solver=an.linear_solver,
-                                      constraints=C, cache=_cache(an))
+                                      constraints=C, cache=_cache(an),
+                                      silent=silent)
                 iter_kT = 1
                 if lbd_dependent:
                     # -dR/dlbd at the iterate of the tangent stiffness matrix

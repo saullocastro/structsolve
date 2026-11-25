@@ -858,7 +858,8 @@ def _solver_arc_length(an, method, silent=False):
                 kT = callbacks.calc_kT(an, c, lbd)
             try:
                 solve_kT_conv = _factorize(kT, linear_solver=an.linear_solver,
-                                           constraints=C, cache=_cache(an))
+                                           constraints=C, cache=_cache(an),
+                                           silent=silent)
             except RuntimeError:
                 warn('Singular tangent stiffness matrix at the last converged state! Analysis stopped',
                      level=1, silent=silent)
@@ -1033,7 +1034,8 @@ def _solver_arc_length(an, method, silent=False):
                     solve_kT = _factorize(callbacks.calc_kT(an, c + dc,
                                                             lbd + dlbd),
                                           linear_solver=an.linear_solver,
-                                          constraints=C, cache=_cache(an))
+                                          constraints=C, cache=_cache(an),
+                                          silent=silent)
                 except RuntimeError:
                     warn('Singular tangent stiffness matrix', level=2, silent=silent)
                     break
