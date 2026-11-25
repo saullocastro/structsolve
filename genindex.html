@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; structsolve 0.12.0 documentation</title>
+    <title>Index &#8212; structsolve 0.13.0 documentation</title>
   
   
   
@@ -36,7 +36,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=61ccb1f1"></script>
+    <script src="_static/documentation_options.js?v=1019fba8"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -47,7 +47,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.12.0" />
+  <meta name="docsearch:version" content="0.13.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -115,7 +115,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.12.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.0 documentation</p>
   
 </a></div>
     
@@ -179,6 +179,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -223,6 +230,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -406,6 +420,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -450,6 +471,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -773,6 +801,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="newton_raphson.html#structsolve.newton_raphson.LINE_SEARCH_ALPHA">LINE_SEARCH_ALPHA (in module structsolve.newton_raphson)</a>
 </li>
+      <li><a href="static.html#structsolve.static.LINEAR_SOLVERS">LINEAR_SOLVERS (in module structsolve.static)</a>
+</li>
       <li><a href="pardiso.html#structsolve.pardiso.load_mkl">load_mkl() (in module structsolve.pardiso)</a>
 </li>
   </ul></td>
@@ -844,8 +874,12 @@
 </li>
       <li><a href="static.html#structsolve.static.PARDISO_FALLBACK_IPARM">PARDISO_FALLBACK_IPARM (in module structsolve.static)</a>
 </li>
+      <li><a href="static.html#structsolve.static.PARDISO_LU_FALLBACK_IPARM">PARDISO_LU_FALLBACK_IPARM (in module structsolve.static)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="static.html#structsolve.static.PARDISO_LU_RTOL">PARDISO_LU_RTOL (in module structsolve.static)</a>
+</li>
       <li><a href="arpackutils.html#structsolve.arpackutils.pardiso_solve">pardiso_solve() (in module structsolve.arpackutils)</a>
 </li>
       <li><a href="pardiso.html#structsolve.pardiso.PardisoError">PardisoError</a>

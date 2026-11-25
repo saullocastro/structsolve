@@ -57,6 +57,7 @@ User guide
     eigensolvers.rst
     eigen_accuracy.rst
     convergence.rst
+    linear_solvers.rst
     sparse_assembly.rst
     pyodide.rst
 
@@ -70,6 +71,7 @@ User guide
     notebooks/ex_frequency.nblink
     notebooks/ex_newton_raphson.nblink
     notebooks/ex_arc_length.nblink
+    notebooks/ex_linear_solvers.nblink
     notebooks/ex_cylinder_postbuckling.nblink
     notebooks/ex_follower_loads.nblink
     notebooks/ex_prescribed_displacements.nblink
@@ -137,7 +139,7 @@ License
 Citing this library
 -------------------
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.12.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.13.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 In BibTeX:
 
@@ -148,7 +150,7 @@ In BibTeX:
       title     = {Structural analysis solvers tailored for semi-analytical
                    models},
       year      = {2026},
-      version   = {0.12.0},
+      version   = {0.13.0},
       publisher = {Zenodo},
       doi       = {10.5281/zenodo.2581212},
       url       = {https://doi.org/10.5281/zenodo.2581212}

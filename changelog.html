@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; structsolve 0.12.0 documentation</title>
+    <title>Changelog &#8212; structsolve 0.13.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=61ccb1f1"></script>
+    <script src="_static/documentation_options.js?v=1019fba8"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -49,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.12.0" />
+  <meta name="docsearch:version" content="0.13.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.12.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.0 documentation</p>
   
 </a></div>
     
@@ -181,6 +181,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -225,6 +232,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -410,6 +424,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -454,6 +475,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -616,6 +644,52 @@
 <p>The changes of each version, from the file <code class="docutils literal notranslate"><span class="pre">CHANGELOG.md</span></code> of the
 <a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
+
+<span class="gu">## 0.13.0 (2026-11-25)</span>
+
+<span class="gu">### Added</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.linear_solver='pardiso_lu'`</span>: the unsymmetric LU factorization of
+  MKL PARDISO (<span class="sb">`mtype=11`</span>) of the reduced tangent stiffness matrix, for large
+  unsymmetric tangents, e.g. of cohesive-zone models, with the analysis
+  (ordering and symbolic factorization) of PARDISO kept per sparsity pattern
+  by the cache of the factorizations of <span class="sb">`Analysis.static`</span>, in a pool of
+  solvers such that the live factorizations, e.g. that of the converged
+  state of the arc-length methods, are never overwritten, and freed when
+  their <span class="sb">`solve_kT`</span> is deleted. Every solution is checked by its relative
+  residual against the new <span class="sb">`static.PARDISO_LU_RTOL = 1e-6`</span>, above which
+  SuperLU factorizes the matrix and its solution is used, with a
+  <span class="sb">`RuntimeWarning`</span> and a log message; a factorization with perturbed pivots
+  that fails the same check is made again with the new
+  <span class="sb">`static.PARDISO_LU_FALLBACK_IPARM = {24: 10}`</span>, the improved two-level
+  factorization of oneMKL, and with SuperLU when that fails as well. On the
+  tangent of a cohesive double cantilever beam (4239 degrees of freedom),
+  oneMKL 2025.0 perturbed 18 to 43 pivots and gave relative residuals of 1
+  to 18 with the default parameters, whatever the pivot perturbation,
+  scaling, matching, refinement steps or ordering, and <span class="sb">`4e-9`</span> to <span class="sb">`2e-8`</span>
+  with <span class="sb">`iparm(24) = 10`</span>. Constraints are supported (bordered matrix);
+  <span class="sb">`det_sign`</span> and <span class="sb">`num_negative_eigvals`</span> are <span class="sb">`None`</span>, and `Analysis.inertia =
+  True` raises a <span class="sb">`ValueError`</span> with <span class="sb">`'pardiso_lu'`</span>. Without oneMKL it raises
+  the <span class="sb">`ImportError`</span> of <span class="sb">`'pardiso'`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.linear_solver='dense_lu'`</span>: the dense LU factorization of LAPACK
+  <span class="sb">`getrf`</span> with partial pivoting of the reduced tangent stiffness matrix, for
+  small or dense matrices, with constraints, the sign of the determinant
+  from the pivots and the diagonal of <span class="sb">`U`</span>, hence <span class="sb">`inertia=True`</span>,
+  <span class="sb">`inertia_num_eigvals`</span>, <span class="sb">`max_inertia_jump`</span> and <span class="sb">`branch_switching`</span> as with
+  <span class="sb">`'splu'`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`_factorize(..., silent=True)`</span>: the log messages of the fallbacks of
+  <span class="sb">`'pardiso_lu'`</span>, printed by the non-linear analyses unless <span class="sb">`silent`</span>.
+<span class="k">-</span><span class="w"> </span>User-guide page <span class="sb">`linear_solvers.rst`</span>, notebook
+  <span class="sb">`notebooks/ex_linear_solvers.ipynb`</span>, tests in <span class="sb">`tests/test_lu_solvers.py`</span>.
+
+<span class="gu">### Changed</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`static.LINEAR_SOLVERS`</span> has the two new solvers; <span class="sb">`lb`</span> and <span class="sb">`freq`</span> accept
+  only <span class="sb">`'splu'`</span> and <span class="sb">`'pardiso'`</span>, now <span class="sb">`linear_buckling.LINEAR_SOLVERS`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`_FactorizationCache.pardiso_solver(key=-2, mtype=-2)`</span>: the solvers of
+  its pool are tagged by the matrix type and parameters of their analysis.
+  The default <span class="sb">`linear_solver='splu'`</span> gives the results of 0.12.0 bit for
+  bit.
 
 <span class="gu">## 0.12.0 (2026-11-23)</span>
 

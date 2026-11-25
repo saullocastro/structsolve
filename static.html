@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.12.0 documentation</title>
+    <title>Linear static analysis (structsolve.static) &#8212; structsolve 0.13.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=61ccb1f1"></script>
+    <script src="_static/documentation_options.js?v=1019fba8"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.12.0" />
+  <meta name="docsearch:version" content="0.13.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.12.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.0 documentation</p>
   
 </a></div>
     
@@ -184,6 +184,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -228,6 +235,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -413,6 +427,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -457,6 +478,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -740,7 +768,7 @@ since a null row and column make <code class="docutils literal notranslate"><spa
 <h2>Factorizations of the tangent stiffness matrix<a class="headerlink" href="#factorizations-of-the-tangent-stiffness-matrix" title="Link to this heading">#</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="structsolve.static._factorize">
-<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">_factorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'splu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.static._factorize" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">_factorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">linear_solver</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'splu'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">silent</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#structsolve.static._factorize" title="Link to this definition">#</a></dt>
 <dd><p>Factorization of the tangent stiffness matrix</p>
 <p>Null rows and columns are removed, the corresponding values of the
 solution are zero, as in <a class="reference internal" href="#structsolve.solve" title="structsolve.solve"><code class="xref py py-func docutils literal notranslate"><span class="pre">solve()</span></code></a>. The factorization is reused by
@@ -751,10 +779,12 @@ updated.</p>
 <dd class="field-odd"><dl>
 <dt><strong>kT</strong><span class="classifier">sparse matrix</span></dt><dd><p>Tangent stiffness matrix.</p>
 </dd>
-<dt><strong>linear_solver</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'splu'</span></code> (default) for the sparse LU factorization of SuperLU, or
+<dt><strong>linear_solver</strong><span class="classifier">str, optional</span></dt><dd><p><code class="docutils literal notranslate"><span class="pre">'splu'</span></code> (default) for the sparse LU factorization of SuperLU,
 <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> for the symmetric indefinite factorization of PARDISO,
-which requires the shared library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> of Intel oneMKL, see
-<a class="reference internal" href="pardiso.html#module-structsolve.pardiso" title="structsolve.pardiso"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pardiso</span></code></a> and <code class="docutils literal notranslate"><span class="pre">LINEAR_SOLVERS</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code> for the unsymmetric LU factorization of PARDISO,
+both requiring the shared library <code class="docutils literal notranslate"><span class="pre">mkl_rt</span></code> of Intel oneMKL, see
+<a class="reference internal" href="pardiso.html#module-structsolve.pardiso" title="structsolve.pardiso"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pardiso</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code> for the dense LU factorization
+of LAPACK; see <code class="docutils literal notranslate"><span class="pre">LINEAR_SOLVERS</span></code> and the Notes.</p>
 </dd>
 <dt><strong>constraints</strong><span class="classifier">array-like, sparse matrix or None, optional</span></dt><dd><p>The matrix <span class="math notranslate nohighlight">\(\boldsymbol{C}\)</span> of the linear constraints
 <span class="math notranslate nohighlight">\(\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}\)</span>, of shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">m)</span></code>
@@ -763,6 +793,10 @@ for <code class="docutils literal notranslate"><span class="pre">m</span></code>
 <dt><strong>cache</strong><span class="classifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">_FactorizationCache</span></code> or None, optional</span></dt><dd><p>Cache of the work that depends only on the sparsity pattern of
 <code class="docutils literal notranslate"><span class="pre">kT</span></code>, reused by the next factorizations of a matrix of the same
 pattern, see the Notes. <code class="docutils literal notranslate"><span class="pre">None</span></code> (default) for none.</p>
+</dd>
+<dt><strong>silent</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether the log messages of <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>, when its parameters
+or SuperLU replace its default factorization, are not printed, see
+<a class="reference internal" href="logger.html#module-structsolve.logger" title="structsolve.logger"><code class="xref py py-mod docutils literal notranslate"><span class="pre">logger</span></code></a>. Default <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -774,17 +808,23 @@ or of the system bordered by the constraints, whose values are
 has the attributes:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">linear_solver</span></code>: the linear solver used, <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> when
-<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> fell back to it for an unsymmetric matrix;</p></li>
+<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> fell back to it for an unsymmetric matrix, or
+<code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code> for an inaccurate factorization or solution;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">det_sign</span></code>: the sign of the determinant of the reduced matrix,
-<code class="docutils literal notranslate"><span class="pre">1</span></code> or <code class="docutils literal notranslate"><span class="pre">-1</span></code>, on the space of the constraints when given;</p></li>
+<code class="docutils literal notranslate"><span class="pre">1</span></code> or <code class="docutils literal notranslate"><span class="pre">-1</span></code>, on the space of the constraints when given,
+<code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code>: the number of negative eigenvalues of the
 reduced matrix with <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, on the space of the
-constraints when given, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>;</p></li>
+constraints when given, <code class="docutils literal notranslate"><span class="pre">None</span></code> with the LU factorizations;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_constraints</span></code>: the number <code class="docutils literal notranslate"><span class="pre">m</span></code> of constraints of the
 border;</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">num_perturbed_pivots</span></code>: the number of pivots perturbed by
-PARDISO, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>;</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">smallest_eigvals</span></code>, with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> only: <code class="docutils literal notranslate"><span class="pre">smallest_eigvals(k,</span>
+PARDISO, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> and <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pardiso_fallback</span></code>, with <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> and <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>:
+whether the parameters <code class="docutils literal notranslate"><span class="pre">PARDISO_FALLBACK_IPARM</span></code>, respectively
+<code class="docutils literal notranslate"><span class="pre">PARDISO_LU_FALLBACK_IPARM</span></code>, were used;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">smallest_eigvals</span></code>, with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> and <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code> only:
+<code class="docutils literal notranslate"><span class="pre">smallest_eigvals(k,</span>
 <span class="pre">s=None)</span></code> returns the <code class="docutils literal notranslate"><span class="pre">k</span></code> eigenvalues of smallest magnitude of
 the reduced matrix, scaled by <code class="docutils literal notranslate"><span class="pre">diag(s)</span></code> on both sides when
 given, on the space of the constraints, by shift-invert with
@@ -795,9 +835,12 @@ ARPACK and this factorization, see <a class="reference internal" href="#structso
 </dd>
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
-<dt>RuntimeError</dt><dd><p>When the matrix is singular, for <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, or when PARDISO fails.</p>
+<dt>RuntimeError</dt><dd><p>When the matrix is singular, for <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> and <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code>, and
+for <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code> through its fallback to SuperLU, or when
+PARDISO fails.</p>
 </dd>
-<dt>ImportError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code> and oneMKL is not found.</p>
+<dt>ImportError</dt><dd><p>When <code class="docutils literal notranslate"><span class="pre">linear_solver</span></code> is <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> or <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code> and
+oneMKL is not found.</p>
 </dd>
 <dt>ValueError</dt><dd><p>For an invalid <code class="docutils literal notranslate"><span class="pre">linear_solver</span></code>.</p>
 </dd>
@@ -872,8 +915,63 @@ tow-steered cylinder for the DCSE website (2026), where the
 unsymmetric LU of PARDISO was wrong and its Cholesky factorization
 failed beyond the limit point. The symmetric factorization would be
 wrong for an unsymmetric matrix, e.g. with the load stiffness of a
-follower load: <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> is then used, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>.
-With <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, the bordered system</p>
+follower load: <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> is then used, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>, the reduced matrix <span class="math notranslate nohighlight">\(\boldsymbol{A}\)</span>, whole, is
+factorized by PARDISO as a real unsymmetric matrix (<code class="docutils literal notranslate"><span class="pre">mtype=11</span></code>) <a class="reference internal" href="#r3ce217570295-1" id="id1">[1]</a>:
+in its analysis, a maximum weight matching permutes large terms to the
+diagonal and scales the matrix to a unit diagonal with off-diagonal
+terms not larger than 1 in magnitude (<code class="docutils literal notranslate"><span class="pre">iparm(11)</span> <span class="pre">=</span> <span class="pre">iparm(13)</span> <span class="pre">=</span> <span class="pre">1</span></code>,
+the defaults of <code class="docutils literal notranslate"><span class="pre">mtype=11</span></code>), a nested dissection orders the
+symmetrized pattern, and the numerical factorization
+<span class="math notranslate nohighlight">\(\boldsymbol{L} \boldsymbol{U}\)</span> pivots only within the supernodes,
+the static pivoting of <a class="reference internal" href="#r3ce217570295-1" id="id2">[1]</a>: a pivot smaller than <span class="math notranslate nohighlight">\(10^{-13}
+\|\boldsymbol{A}_2\|_\infty\)</span>, <code class="docutils literal notranslate"><span class="pre">iparm(10)</span> <span class="pre">=</span> <span class="pre">13</span></code>, of the scaled and
+permuted matrix <span class="math notranslate nohighlight">\(\boldsymbol{A}_2\)</span> is replaced by that value, with its
+sign, <code class="docutils literal notranslate"><span class="pre">iparm(14)</span></code> such pivots, and PARDISO applies up to two steps of
+iterative refinement when pivots were perturbed. A perturbed pivot
+makes the factorization that of a nearby matrix, possibly far from
+<span class="math notranslate nohighlight">\(\boldsymbol{A}\)</span> when it is ill-conditioned; hence every solution is
+checked by its relative residual <span class="math notranslate nohighlight">\(\|\boldsymbol{A} \boldsymbol{x} -
+\boldsymbol{b}\|/\|\boldsymbol{b}\|\)</span>, and above <code class="docutils literal notranslate"><span class="pre">PARDISO_LU_RTOL</span> <span class="pre">=</span>
+<span class="pre">1e-6</span></code> the matrix is factorized by SuperLU, whose solution is returned
+and used by the next calls, with a <code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code> and a log
+message. A factorization with perturbed pivots is also checked when it
+is made, by the residual of a fixed random right-hand side: above
+<code class="docutils literal notranslate"><span class="pre">PARDISO_LU_RTOL</span></code>, the matrix is factorized again with
+<code class="docutils literal notranslate"><span class="pre">PARDISO_LU_FALLBACK_IPARM</span></code>, <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">10</span></code>, the improved
+two-level factorization algorithm for unsymmetric matrices of oneMKL,
+kept when the same check passes, <code class="docutils literal notranslate"><span class="pre">solve_kT.pardiso_fallback</span> <span class="pre">=</span> <span class="pre">True</span></code>,
+otherwise the matrix is factorized by SuperLU, as <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, with a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>. With <code class="docutils literal notranslate"><span class="pre">cache</span></code>, the next factorizations of
+the same pattern use the fallback directly, with the same check, or
+SuperLU directly. On the reduced tangent stiffness matrix of a Ritz
+model of a double cantilever beam with a cohesive zone (panels,
+<code class="docutils literal notranslate"><span class="pre">clpt</span></code>, 4239 degrees of freedom, 2.1 million terms, the diagonal
+from <code class="docutils literal notranslate"><span class="pre">3e-2</span></code> to <code class="docutils literal notranslate"><span class="pre">7e6</span></code>), MKL 2025.0 perturbed 18 to 43 pivots, their
+number depending on the threads, with solutions of relative residuals
+1 to 18 for any of <code class="docutils literal notranslate"><span class="pre">iparm(10)</span> <span class="pre">=</span> <span class="pre">8</span></code> to <code class="docutils literal notranslate"><span class="pre">30</span></code>, without the scaling or
+the matching, with 20 refinement steps, <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">1</span></code>, or the
+minimum degree ordering, whereas <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">10</span></code> gave <code class="docutils literal notranslate"><span class="pre">4e-9</span></code>
+to <code class="docutils literal notranslate"><span class="pre">2e-8</span></code> (SuperLU <code class="docutils literal notranslate"><span class="pre">3e-9</span></code>) with as many perturbed pivots, its
+phase 22
+taking 0.07 s instead of 0.02 s, and SuperLU 0.3 s. MKL 2023.1 was
+accurate with the default parameters on the matrices of the same
+model. <code class="docutils literal notranslate"><span class="pre">det_sign</span></code> and <code class="docutils literal notranslate"><span class="pre">num_negative_eigvals</span></code> are <code class="docutils literal notranslate"><span class="pre">None</span></code>, PARDISO
+giving neither for <code class="docutils literal notranslate"><span class="pre">mtype=11</span></code>.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code>, the reduced matrix is converted to a dense array
+and factorized by the LAPACK routine <code class="docutils literal notranslate"><span class="pre">getrf</span></code> <a class="reference internal" href="#r3ce217570295-2" id="id3">[2]</a>, <span class="math notranslate nohighlight">\(\boldsymbol{P}
+\boldsymbol{A} = \boldsymbol{L} \boldsymbol{U}\)</span>, Gaussian elimination
+with partial pivoting (row interchanges), the routine of
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.lu_factor()</span></code>, blocked and multithreaded by the BLAS;
+each solution is by <code class="docutils literal notranslate"><span class="pre">getrs</span></code>. Its cost, <span class="math notranslate nohighlight">\(2n^3/3\)</span> operations and <span class="math notranslate nohighlight">\(n^2\)</span>
+terms of memory, is independent of the sparsity, which makes it
+faster than the sparse factorizations only for small or dense
+matrices. The sign of the determinant is the product of the signs of
+the diagonal of <span class="math notranslate nohighlight">\(\boldsymbol{U}\)</span> and of <span class="math notranslate nohighlight">\((-1)^s\)</span>, <span class="math notranslate nohighlight">\(s\)</span> the number of
+row interchanges, <code class="docutils literal notranslate"><span class="pre">piv[i]</span> <span class="pre">!=</span> <span class="pre">i</span></code>; <code class="docutils literal notranslate"><span class="pre">smallest_eigvals</span></code> is that of
+<code class="docutils literal notranslate"><span class="pre">'splu'</span></code> with this factorization. A null pivot raises a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">RuntimeError</span></code>, as SuperLU.</p>
+<p>With <code class="docutils literal notranslate"><span class="pre">constraints</span></code>, the bordered system</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\begin{bmatrix} \boldsymbol{0} &amp; \boldsymbol{C}^\top \\
 \boldsymbol{C} &amp; \boldsymbol{K}_T \end{bmatrix}
@@ -927,7 +1025,13 @@ at every call, such that the factorization is bitwise the one without
 the cache, verified by the tests, also the inertia and the perturbed
 pivots of PARDISO (with <code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS=1</span></code>; the analysis of PARDISO
 depends only on the pattern, with its default <code class="docutils literal notranslate"><span class="pre">iparm(11)</span> <span class="pre">=</span> <span class="pre">iparm(13)</span>
-<span class="pre">=</span> <span class="pre">0</span></code> for symmetric indefinite matrices). A matrix that is not
+<span class="pre">=</span> <span class="pre">0</span></code> for symmetric indefinite matrices). With <code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>, the
+analysis of a pattern is kept likewise, in solvers distinct from those
+of <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> and of its fallback parameters, but the scaling and
+the matching of <code class="docutils literal notranslate"><span class="pre">mtype=11</span></code> are computed in the analysis from the
+values of the first matrix of the pattern and reused by the phase 22,
+such that the factorizations with and without the cache differ by the
+round-off, both checked by their residuals. A matrix that is not
 <code class="docutils literal notranslate"><span class="pre">float64</span></code> or whose CSR form has duplicated or unsorted terms is
 factorized without the cache. On a symmetric matrix of 57000 degrees
 of freedom with 4.5 million terms, the factorization took 1.65 s
@@ -935,6 +1039,23 @@ without and 0.40 s with the cache with <code class="docutils literal notranslate
 one constraint, and 1.1 s with <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>, whose preprocessing went
 from 0.11 s to 0.05 s, SuperLU computing its ordering at every
 factorization.</p>
+<p class="rubric">References</p>
+<div role="list" class="citation-list">
+<div class="citation" id="r3ce217570295-1" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id1">1</a>,<a role="doc-backlink" href="#id2">2</a>)</span>
+<p>Schenk, O., Gärtner, K., Solving unsymmetric sparse systems of
+linear equations with PARDISO, Future Generation Computer Systems,
+20(3), 475-487, 2004. <a class="reference external" href="https://doi.org/10.1016/j.future.2003.07.011">https://doi.org/10.1016/j.future.2003.07.011</a></p>
+</div>
+<div class="citation" id="r3ce217570295-2" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">2</a><span class="fn-bracket">]</span></span>
+<p>Anderson, E., Bai, Z., Bischof, C., Blackford, L.S., Demmel, J.,
+Dongarra, J., Du Croz, J., Greenbaum, A., Hammarling, S., McKenney,
+A., Sorensen, D., LAPACK Users’ Guide, 3rd ed., SIAM, Philadelphia,
+1999. <a class="reference external" href="https://doi.org/10.1137/1.9780898719604">https://doi.org/10.1137/1.9780898719604</a></p>
+</div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -1008,6 +1129,31 @@ factorization algorithm instead of the classic one, see
 <a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a></p>
 </dd></dl>
 
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.static.LINEAR_SOLVERS">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">LINEAR_SOLVERS</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('splu',</span> <span class="pre">'pardiso',</span> <span class="pre">'pardiso_lu',</span> <span class="pre">'dense_lu')</span></span><a class="headerlink" href="#structsolve.static.LINEAR_SOLVERS" title="Link to this definition">#</a></dt>
+<dd><p>Linear solvers of the factorizations of the tangent stiffness matrix,
+<code class="docutils literal notranslate"><span class="pre">Analysis.linear_solver</span></code>, see <a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.static.PARDISO_LU_RTOL">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">PARDISO_LU_RTOL</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-06</span></span><a class="headerlink" href="#structsolve.static.PARDISO_LU_RTOL" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>: largest relative residual <span class="math notranslate nohighlight">\(\|\boldsymbol{A}
+\boldsymbol{x} - \boldsymbol{b}\|/\|\boldsymbol{b}\|\)</span> of a solution of the
+unsymmetric LU factorization of PARDISO; above it, the factorization with
+<code class="docutils literal notranslate"><span class="pre">PARDISO_LU_FALLBACK_IPARM</span></code> or SuperLU is used, see <a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="structsolve.static.PARDISO_LU_FALLBACK_IPARM">
+<span class="sig-prename descclassname"><span class="pre">structsolve.static.</span></span><span class="sig-name descname"><span class="pre">PARDISO_LU_FALLBACK_IPARM</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{24:</span> <span class="pre">10}</span></span><a class="headerlink" href="#structsolve.static.PARDISO_LU_FALLBACK_IPARM" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>: parameters, <code class="docutils literal notranslate"><span class="pre">{i:</span> <span class="pre">iparm(i)}</span></code>, of the second
+factorization of a matrix whose first factorization, with the default
+parameters, is inaccurate: <code class="docutils literal notranslate"><span class="pre">iparm(24)</span> <span class="pre">=</span> <span class="pre">10</span></code>, the improved two-level
+factorization algorithm for unsymmetric matrices, see <a class="reference internal" href="#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">_factorize()</span></code></a></p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -1065,6 +1211,9 @@ factorization algorithm instead of the classic one, see
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static._smallest_eigvals"><code class="docutils literal notranslate"><span class="pre">_smallest_eigvals()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static._pardiso_factorize_fallback"><code class="docutils literal notranslate"><span class="pre">_pardiso_factorize_fallback()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static.PARDISO_FALLBACK_IPARM"><code class="docutils literal notranslate"><span class="pre">PARDISO_FALLBACK_IPARM</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static.LINEAR_SOLVERS"><code class="docutils literal notranslate"><span class="pre">LINEAR_SOLVERS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static.PARDISO_LU_RTOL"><code class="docutils literal notranslate"><span class="pre">PARDISO_LU_RTOL</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#structsolve.static.PARDISO_LU_FALLBACK_IPARM"><code class="docutils literal notranslate"><span class="pre">PARDISO_LU_FALLBACK_IPARM</span></code></a></li>
 </ul>
 </li>
 </ul>

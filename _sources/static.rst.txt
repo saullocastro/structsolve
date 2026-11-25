@@ -15,3 +15,9 @@ Factorizations of the tangent stiffness matrix
 .. autofunction:: structsolve.static._pardiso_factorize_fallback
 
 .. autodata:: structsolve.static.PARDISO_FALLBACK_IPARM
+
+.. autodata:: structsolve.static.LINEAR_SOLVERS
+
+.. autodata:: structsolve.static.PARDISO_LU_RTOL
+
+.. autodata:: structsolve.static.PARDISO_LU_FALLBACK_IPARM

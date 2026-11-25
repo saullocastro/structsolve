@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.12.0 documentation</title>
+    <title>Static analyses (structsolve.analysis) &#8212; structsolve 0.13.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=61ccb1f1"></script>
+    <script src="_static/documentation_options.js?v=1019fba8"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.12.0" />
+  <meta name="docsearch:version" content="0.13.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.12.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.0 documentation</p>
   
 </a></div>
     
@@ -184,6 +184,13 @@
 
 
 <li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -228,6 +235,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -413,6 +427,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="sparse_assembly.html">
     Assembling matrices with sparseutils
   </a>
@@ -457,6 +478,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
   </a>
 </li>
 
@@ -755,11 +783,17 @@ matrix is used. Default is <code class="docutils literal notranslate"><span clas
 <td><p><code class="docutils literal notranslate"><span class="pre">str</span></code>, factorization of the tangent
 stiffness matrix of the non-linear solvers,
 <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> (default), the sparse LU of
-SuperLU, or <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, the symmetric
+SuperLU, <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>, the symmetric
 indefinite factorization of PARDISO, which
 requires oneMKL, see <a class="reference internal" href="pardiso.html#module-structsolve.pardiso" title="structsolve.pardiso"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pardiso</span></code></a>, and
 gives the number
-of negative eigenvalues, see
+of negative eigenvalues,
+<code class="docutils literal notranslate"><span class="pre">'pardiso_lu'</span></code>, the unsymmetric LU
+factorization of PARDISO, which requires
+oneMKL, checked by the residual of its
+solutions, with SuperLU as the fallback,
+or <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code>, the dense LU
+factorization of LAPACK, see
 <a class="reference internal" href="static.html#structsolve.static._factorize" title="structsolve.static._factorize"><code class="xref py py-func docutils literal notranslate"><span class="pre">static._factorize()</span></code></a></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inertia</span></code></p></td>
@@ -769,8 +803,10 @@ the non-linear analyses, and its number of
 negative eigenvalues (<code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code>) and the
 sign of its determinant are recorded, such
 that limit points, bifurcations crossed and
-unstable branches are visible. Default is
-<code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+unstable branches are visible; not
+supported by <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso_lu'</span></code>,
+which gives neither, a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">int</span></code> <span class="math notranslate nohighlight">\(k\)</span>, with <code class="docutils literal notranslate"><span class="pre">inertia</span></code>: when the
@@ -991,11 +1027,12 @@ the current load factor, see <a class="reference internal" href="callbacks.html#
 <dt><strong>num_negative_eigvals</strong><span class="classifier">list</span></dt><dd><p>With <code class="docutils literal notranslate"><span class="pre">inertia=True</span></code>, for each converged increment of a non-linear
 analysis, the number of negative eigenvalues of the tangent
 stiffness matrix on the degrees of freedom whose row or column is
-not null, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">linear_solver='splu'</span></code>, when PARDISO fell
-back to SuperLU for an unsymmetric matrix, or for a singular matrix,
-unless <code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code> is given: the number of negative real
-eigenvalues among the <code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code> of smallest magnitude
-is then recorded for the SuperLU factorizations. Empty otherwise.</p>
+not null, <code class="docutils literal notranslate"><span class="pre">None</span></code> with <code class="docutils literal notranslate"><span class="pre">linear_solver='splu'</span></code> or <code class="docutils literal notranslate"><span class="pre">'dense_lu'</span></code>,
+when PARDISO fell back to SuperLU for an unsymmetric matrix, or for
+a singular matrix, unless <code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code> is given: the
+number of negative real eigenvalues among the
+<code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code> of smallest magnitude is then recorded for
+the SuperLU and LAPACK factorizations. Empty otherwise.</p>
 </dd>
 <dt><strong>det_signs</strong><span class="classifier">list</span></dt><dd><p>With <code class="docutils literal notranslate"><span class="pre">inertia=True</span></code>, for each converged increment of a non-linear
 analysis, the sign of the determinant of the same matrix, <code class="docutils literal notranslate"><span class="pre">1</span></code> or
