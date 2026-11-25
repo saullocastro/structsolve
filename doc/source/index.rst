@@ -57,6 +57,7 @@ User guide
     eigensolvers.rst
     eigen_accuracy.rst
     convergence.rst
+    linear_solvers.rst
     sparse_assembly.rst
     pyodide.rst
 
@@ -70,6 +71,7 @@ User guide
     notebooks/ex_frequency.nblink
     notebooks/ex_newton_raphson.nblink
     notebooks/ex_arc_length.nblink
+    notebooks/ex_linear_solvers.nblink
     notebooks/ex_cylinder_postbuckling.nblink
     notebooks/ex_follower_loads.nblink
     notebooks/ex_prescribed_displacements.nblink

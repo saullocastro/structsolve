@@ -23,6 +23,7 @@ which is skipped where `panels` is not installed.
 | `ex_frequency.ipynb` | Frequency analysis with `freq`: the clamped-free rod of Petyt (2010), Example 3.3, options, sorting, prestressed column (Bathe 2014, Example 3.14) and plate |
 | `ex_newton_raphson.ipynb` | Non-linear static analysis with the Newton-Raphson method, hardening springs |
 | `ex_arc_length.ipynb` | Arc-length methods through the limit point of a von Mises truss |
+| `ex_linear_solvers.ipynb` | `linear_solver='pardiso_lu'` and `'dense_lu'` against `'splu'` on a grid of hardening springs with an unsymmetric tangent: same increments, iterations and solutions to round-off, and timing |
 | `ex_follower_loads.ipynb` | Follower loads and unsymmetric matrices: non-linear analyses, inertia, linear buckling, flutter |
 | `ex_prescribed_displacements.ipynb` | Prescribed displacements imposed exactly, with and without `constraint_values` |
 | `ex_cylinder_postbuckling.ipynb` | Simo, Fox and Rifai (1990): model, imperfection, convergence study in the Ritz terms and figure (`ex_cylinder_postbuckling.png`, written by the command `plot` of `tests/simo1990_utils.py`) |

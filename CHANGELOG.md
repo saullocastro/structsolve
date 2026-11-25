@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `Analysis.linear_solver='pardiso_lu'`: the unsymmetric LU factorization of
+  MKL PARDISO (`mtype=11`) of the reduced tangent stiffness matrix, for large
+  unsymmetric tangents, e.g. of cohesive-zone models, with the analysis
+  (ordering and symbolic factorization) of PARDISO kept per sparsity pattern
+  by the cache of the factorizations of `Analysis.static`, in a pool of
+  solvers such that the live factorizations, e.g. that of the converged
+  state of the arc-length methods, are never overwritten, and freed when
+  their `solve_kT` is deleted. Every solution is checked by its relative
+  residual against the new `static.PARDISO_LU_RTOL = 1e-6`, above which
+  SuperLU factorizes the matrix and its solution is used, with a
+  `RuntimeWarning` and a log message; a factorization with perturbed pivots
+  that fails the same check is made again with the new
+  `static.PARDISO_LU_FALLBACK_IPARM = {24: 10}`, the improved two-level
+  factorization of oneMKL, and with SuperLU when that fails as well. On the
+  tangent of a cohesive double cantilever beam (4239 degrees of freedom),
+  oneMKL 2025.0 perturbed 18 to 43 pivots and gave relative residuals of 1
+  to 18 with the default parameters, whatever the pivot perturbation,
+  scaling, matching, refinement steps or ordering, and `4e-9` to `2e-8`
+  with `iparm(24) = 10`. Constraints are supported (bordered matrix);
+  `det_sign` and `num_negative_eigvals` are `None`, and `Analysis.inertia =
+  True` raises a `ValueError` with `'pardiso_lu'`. Without oneMKL it raises
+  the `ImportError` of `'pardiso'`.
+- `Analysis.linear_solver='dense_lu'`: the dense LU factorization of LAPACK
+  `getrf` with partial pivoting of the reduced tangent stiffness matrix, for
+  small or dense matrices, with constraints, the sign of the determinant
+  from the pivots and the diagonal of `U`, hence `inertia=True`,
+  `inertia_num_eigvals`, `max_inertia_jump` and `branch_switching` as with
+  `'splu'`.
+- `_factorize(..., silent=True)`: the log messages of the fallbacks of
+  `'pardiso_lu'`, printed by the non-linear analyses unless `silent`.
+- User-guide page `linear_solvers.rst`, notebook
+  `notebooks/ex_linear_solvers.ipynb`, tests in `tests/test_lu_solvers.py`.
+
+### Changed
+
+- `static.LINEAR_SOLVERS` has the two new solvers; `lb` and `freq` accept
+  only `'splu'` and `'pardiso'`, now `linear_buckling.LINEAR_SOLVERS`.
+- `_FactorizationCache.pardiso_solver(key=-2, mtype=-2)`: the solvers of
+  its pool are tagged by the matrix type and parameters of their analysis.
+  The default `linear_solver='splu'` gives the results of 0.12.0 bit for
+  bit.
+
 ## 0.12.0 (2026-11-23)
 
 ### Added
