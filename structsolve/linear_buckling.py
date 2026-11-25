@@ -21,7 +21,11 @@ from .arpackutils import (capped_eigsh, pardiso_factorization, pardiso_solve,
 from .logger import msg, warn
 from .pardiso import load_mkl
 from .sparseutils import remove_null_cols
-from .static import LINEAR_SOLVERS
+
+#: Linear solvers of :func:`lb` and :func:`.freq`, ``linear_solver``; the
+#: LU factorizations ``'pardiso_lu'`` and ``'dense_lu'`` of
+#: ``static.LINEAR_SOLVERS`` are only for the static analyses
+LINEAR_SOLVERS = ('splu', 'pardiso')
 
 
 class DenseFallbackWarning(RuntimeWarning):

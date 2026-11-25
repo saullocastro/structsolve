@@ -121,11 +121,17 @@ class Analysis(object):
     ``linear_solver``             ``str``, factorization of the tangent
                                   stiffness matrix of the non-linear solvers,
                                   ``'splu'`` (default), the sparse LU of
-                                  SuperLU, or ``'pardiso'``, the symmetric
+                                  SuperLU, ``'pardiso'``, the symmetric
                                   indefinite factorization of PARDISO, which
                                   requires oneMKL, see :mod:`.pardiso`, and
                                   gives the number
-                                  of negative eigenvalues, see
+                                  of negative eigenvalues,
+                                  ``'pardiso_lu'``, the unsymmetric LU
+                                  factorization of PARDISO, which requires
+                                  oneMKL, checked by the residual of its
+                                  solutions, with SuperLU as the fallback,
+                                  or ``'dense_lu'``, the dense LU
+                                  factorization of LAPACK, see
                                   :func:`.static._factorize`
     ``inertia``                   ``bool``, the tangent stiffness matrix is
                                   factorized at every converged increment of
@@ -133,8 +139,10 @@ class Analysis(object):
                                   negative eigenvalues (``'pardiso'``) and the
                                   sign of its determinant are recorded, such
                                   that limit points, bifurcations crossed and
-                                  unstable branches are visible. Default is
-                                  ``False``
+                                  unstable branches are visible; not
+                                  supported by ``linear_solver='pardiso_lu'``,
+                                  which gives neither, a
+                                  :class:`ValueError`. Default is ``False``
     ``inertia_num_eigvals``       ``int`` `k`, with ``inertia``: when the
                                   count of PARDISO is not available, e.g.
                                   for an unsymmetric tangent stiffness
@@ -308,11 +316,12 @@ class Analysis(object):
         With ``inertia=True``, for each converged increment of a non-linear
         analysis, the number of negative eigenvalues of the tangent
         stiffness matrix on the degrees of freedom whose row or column is
-        not null, ``None`` with ``linear_solver='splu'``, when PARDISO fell
-        back to SuperLU for an unsymmetric matrix, or for a singular matrix,
-        unless ``inertia_num_eigvals`` is given: the number of negative real
-        eigenvalues among the ``inertia_num_eigvals`` of smallest magnitude
-        is then recorded for the SuperLU factorizations. Empty otherwise.
+        not null, ``None`` with ``linear_solver='splu'`` or ``'dense_lu'``,
+        when PARDISO fell back to SuperLU for an unsymmetric matrix, or for
+        a singular matrix, unless ``inertia_num_eigvals`` is given: the
+        number of negative real eigenvalues among the
+        ``inertia_num_eigvals`` of smallest magnitude is then recorded for
+        the SuperLU and LAPACK factorizations. Empty otherwise.
     det_signs : list
         With ``inertia=True``, for each converged increment of a non-linear
         analysis, the sign of the determinant of the same matrix, ``1`` or
@@ -596,6 +605,12 @@ class Analysis(object):
                     _solver_generalized_displacement_control}
             if self.NL_method not in solvers:
                 raise ValueError('{0} is an invalid NL_method'.format(self.NL_method))
+            if self.inertia and self.linear_solver == 'pardiso_lu':
+                # the unsymmetric LU of PARDISO gives neither the inertia
+                # nor the sign of the determinant
+                raise ValueError("Analysis.inertia = True is not supported "
+                                 "by Analysis.linear_solver = 'pardiso_lu'; "
+                                 "use 'splu', 'dense_lu' or 'pardiso'")
             # the work of the factorizations that depends only on the
             # pattern of the tangent stiffness matrix is reused
             self._factorization_cache = _FactorizationCache()

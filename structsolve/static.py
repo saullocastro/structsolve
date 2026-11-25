@@ -13,14 +13,24 @@ from scipy.sparse import bmat, csc_matrix, csr_matrix
 from scipy.sparse.linalg import (spsolve, splu, gmres, LinearOperator, eigs,
                                   ArpackError, ArpackNoConvergence)
 
-from .logger import msg
+from .logger import msg, warn as log_warn
 from .pardiso import PardisoSolver, PardisoError, load_mkl
 from .sparseutils import remove_null_cols, _used_cols
 
 
 #: Linear solvers of the factorizations of the tangent stiffness matrix,
-#: ``Analysis.linear_solver``
-LINEAR_SOLVERS = ('splu', 'pardiso')
+#: ``Analysis.linear_solver``, see :func:`._factorize`
+LINEAR_SOLVERS = ('splu', 'pardiso', 'pardiso_lu', 'dense_lu')
+#: ``'pardiso_lu'``: largest relative residual `\|\boldsymbol{A}
+#: \boldsymbol{x} - \boldsymbol{b}\|/\|\boldsymbol{b}\|` of a solution of the
+#: unsymmetric LU factorization of PARDISO; above it, the factorization with
+#: ``PARDISO_LU_FALLBACK_IPARM`` or SuperLU is used, see :func:`._factorize`
+PARDISO_LU_RTOL = 1.e-6
+#: ``'pardiso_lu'``: parameters, ``{i: iparm(i)}``, of the second
+#: factorization of a matrix whose first factorization, with the default
+#: parameters, is inaccurate: ``iparm(24) = 10``, the improved two-level
+#: factorization algorithm for unsymmetric matrices, see :func:`._factorize`
+PARDISO_LU_FALLBACK_IPARM = {24: 10}
 #: ``'pardiso'``: a matrix is symmetric when the largest absolute value of
 #: ``A - A.T`` is not larger than this factor times the largest absolute
 #: value of ``A``
@@ -134,12 +144,18 @@ class _FactorizationCache(object):
             pass
         return self.entry
 
-    def pardiso_solver(self):
-        """A PARDISO solver and the phase of its factorization: 22 for a
-        solver that keeps the analysis of the current pattern, 12 otherwise"""
-        if self.free_solvers:
-            return self.free_solvers.pop(), 22
-        return PardisoSolver(), 12
+    def pardiso_solver(self, key=-2, mtype=-2):
+        """A PARDISO solver of the matrix type ``mtype`` and the phase of its
+        factorization: 22 for a solver that keeps the analysis of the
+        current pattern made with the same ``key``, 12 for a new solver,
+        tagged with ``key``; the key tells the matrix type and the
+        parameters of the analysis, e.g. ``-2`` for ``'pardiso'``"""
+        for i in range(len(self.free_solvers) - 1, -1, -1):
+            if getattr(self.free_solvers[i], 'cache_key', -2) == key:
+                return self.free_solvers.pop(i), 22
+        solver = PardisoSolver(mtype=mtype)
+        solver.cache_key = key
+        return solver, 12
 
     def release(self, solver, gen):
         """Free the factorization of ``solver`` and keep its analysis when it
@@ -454,7 +470,8 @@ def _is_symmetric(a):
     return np.abs(d).max() <= SYMMETRY_RTOL*np.abs(a.data).max()
 
 
-def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
+def _factorize(kT, linear_solver='splu', constraints=None, cache=None,
+               silent=True):
     r"""Factorization of the tangent stiffness matrix
 
     Null rows and columns are removed, the corresponding values of the
@@ -467,10 +484,12 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     kT : sparse matrix
         Tangent stiffness matrix.
     linear_solver : str, optional
-        ``'splu'`` (default) for the sparse LU factorization of SuperLU, or
+        ``'splu'`` (default) for the sparse LU factorization of SuperLU,
         ``'pardiso'`` for the symmetric indefinite factorization of PARDISO,
-        which requires the shared library ``mkl_rt`` of Intel oneMKL, see
-        :mod:`.pardiso` and ``LINEAR_SOLVERS``.
+        ``'pardiso_lu'`` for the unsymmetric LU factorization of PARDISO,
+        both requiring the shared library ``mkl_rt`` of Intel oneMKL, see
+        :mod:`.pardiso`, or ``'dense_lu'`` for the dense LU factorization
+        of LAPACK; see ``LINEAR_SOLVERS`` and the Notes.
     constraints : array-like, sparse matrix or None, optional
         The matrix `\boldsymbol{C}` of the linear constraints
         `\boldsymbol{C}^\top \boldsymbol{x} = \boldsymbol{0}`, of shape ``(n, m)``
@@ -479,6 +498,10 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         Cache of the work that depends only on the sparsity pattern of
         ``kT``, reused by the next factorizations of a matrix of the same
         pattern, see the Notes. ``None`` (default) for none.
+    silent : bool, optional
+        Whether the log messages of ``'pardiso_lu'``, when its parameters
+        or SuperLU replace its default factorization, are not printed, see
+        :mod:`.logger`. Default ``True``.
 
     Returns
     -------
@@ -489,17 +512,23 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         has the attributes:
 
         - ``linear_solver``: the linear solver used, ``'splu'`` when
-          ``'pardiso'`` fell back to it for an unsymmetric matrix;
+          ``'pardiso'`` fell back to it for an unsymmetric matrix, or
+          ``'pardiso_lu'`` for an inaccurate factorization or solution;
         - ``det_sign``: the sign of the determinant of the reduced matrix,
-          ``1`` or ``-1``, on the space of the constraints when given;
+          ``1`` or ``-1``, on the space of the constraints when given,
+          ``None`` with ``'pardiso_lu'``;
         - ``num_negative_eigvals``: the number of negative eigenvalues of the
           reduced matrix with ``'pardiso'``, on the space of the
-          constraints when given, ``None`` with ``'splu'``;
+          constraints when given, ``None`` with the LU factorizations;
         - ``num_constraints``: the number ``m`` of constraints of the
           border;
         - ``num_perturbed_pivots``: the number of pivots perturbed by
-          PARDISO, ``None`` with ``'splu'``;
-        - ``smallest_eigvals``, with ``'splu'`` only: ``smallest_eigvals(k,
+          PARDISO, ``None`` with ``'splu'`` and ``'dense_lu'``;
+        - ``pardiso_fallback``, with ``'pardiso'`` and ``'pardiso_lu'``:
+          whether the parameters ``PARDISO_FALLBACK_IPARM``, respectively
+          ``PARDISO_LU_FALLBACK_IPARM``, were used;
+        - ``smallest_eigvals``, with ``'splu'`` and ``'dense_lu'`` only:
+          ``smallest_eigvals(k,
           s=None)`` returns the ``k`` eigenvalues of smallest magnitude of
           the reduced matrix, scaled by ``diag(s)`` on both sides when
           given, on the space of the constraints, by shift-invert with
@@ -508,9 +537,12 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     Raises
     ------
     RuntimeError
-        When the matrix is singular, for ``'splu'``, or when PARDISO fails.
+        When the matrix is singular, for ``'splu'`` and ``'dense_lu'``, and
+        for ``'pardiso_lu'`` through its fallback to SuperLU, or when
+        PARDISO fails.
     ImportError
-        When ``linear_solver='pardiso'`` and oneMKL is not found.
+        When ``linear_solver`` is ``'pardiso'`` or ``'pardiso_lu'`` and
+        oneMKL is not found.
     ValueError
         For an invalid ``linear_solver``.
 
@@ -585,6 +617,64 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     failed beyond the limit point. The symmetric factorization would be
     wrong for an unsymmetric matrix, e.g. with the load stiffness of a
     follower load: ``'splu'`` is then used, with a :class:`RuntimeWarning`.
+
+    With ``'pardiso_lu'``, the reduced matrix `\boldsymbol{A}`, whole, is
+    factorized by PARDISO as a real unsymmetric matrix (``mtype=11``) [1]_:
+    in its analysis, a maximum weight matching permutes large terms to the
+    diagonal and scales the matrix to a unit diagonal with off-diagonal
+    terms not larger than 1 in magnitude (``iparm(11) = iparm(13) = 1``,
+    the defaults of ``mtype=11``), a nested dissection orders the
+    symmetrized pattern, and the numerical factorization
+    `\boldsymbol{L} \boldsymbol{U}` pivots only within the supernodes,
+    the static pivoting of [1]_: a pivot smaller than `10^{-13}
+    \|\boldsymbol{A}_2\|_\infty`, ``iparm(10) = 13``, of the scaled and
+    permuted matrix `\boldsymbol{A}_2` is replaced by that value, with its
+    sign, ``iparm(14)`` such pivots, and PARDISO applies up to two steps of
+    iterative refinement when pivots were perturbed. A perturbed pivot
+    makes the factorization that of a nearby matrix, possibly far from
+    `\boldsymbol{A}` when it is ill-conditioned; hence every solution is
+    checked by its relative residual `\|\boldsymbol{A} \boldsymbol{x} -
+    \boldsymbol{b}\|/\|\boldsymbol{b}\|`, and above ``PARDISO_LU_RTOL =
+    1e-6`` the matrix is factorized by SuperLU, whose solution is returned
+    and used by the next calls, with a :class:`RuntimeWarning` and a log
+    message. A factorization with perturbed pivots is also checked when it
+    is made, by the residual of a fixed random right-hand side: above
+    ``PARDISO_LU_RTOL``, the matrix is factorized again with
+    ``PARDISO_LU_FALLBACK_IPARM``, ``iparm(24) = 10``, the improved
+    two-level factorization algorithm for unsymmetric matrices of oneMKL,
+    kept when the same check passes, ``solve_kT.pardiso_fallback = True``,
+    otherwise the matrix is factorized by SuperLU, as ``'splu'``, with a
+    :class:`RuntimeWarning`. With ``cache``, the next factorizations of
+    the same pattern use the fallback directly, with the same check, or
+    SuperLU directly. On the reduced tangent stiffness matrix of a Ritz
+    model of a double cantilever beam with a cohesive zone (panels,
+    ``clpt``, 4239 degrees of freedom, 2.1 million terms, the diagonal
+    from ``3e-2`` to ``7e6``), MKL 2025.0 perturbed 18 to 43 pivots, their
+    number depending on the threads, with solutions of relative residuals
+    1 to 18 for any of ``iparm(10) = 8`` to ``30``, without the scaling or
+    the matching, with 20 refinement steps, ``iparm(24) = 1``, or the
+    minimum degree ordering, whereas ``iparm(24) = 10`` gave ``4e-9``
+    to ``2e-8`` (SuperLU ``3e-9``) with as many perturbed pivots, its
+    phase 22
+    taking 0.07 s instead of 0.02 s, and SuperLU 0.3 s. MKL 2023.1 was
+    accurate with the default parameters on the matrices of the same
+    model. ``det_sign`` and ``num_negative_eigvals`` are ``None``, PARDISO
+    giving neither for ``mtype=11``.
+
+    With ``'dense_lu'``, the reduced matrix is converted to a dense array
+    and factorized by the LAPACK routine ``getrf`` [2]_, `\boldsymbol{P}
+    \boldsymbol{A} = \boldsymbol{L} \boldsymbol{U}`, Gaussian elimination
+    with partial pivoting (row interchanges), the routine of
+    :func:`scipy.linalg.lu_factor`, blocked and multithreaded by the BLAS;
+    each solution is by ``getrs``. Its cost, `2n^3/3` operations and `n^2`
+    terms of memory, is independent of the sparsity, which makes it
+    faster than the sparse factorizations only for small or dense
+    matrices. The sign of the determinant is the product of the signs of
+    the diagonal of `\boldsymbol{U}` and of `(-1)^s`, `s` the number of
+    row interchanges, ``piv[i] != i``; ``smallest_eigvals`` is that of
+    ``'splu'`` with this factorization. A null pivot raises a
+    :class:`RuntimeError`, as SuperLU.
+
     With ``constraints``, the bordered system
 
     .. math::
@@ -644,7 +734,13 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     the cache, verified by the tests, also the inertia and the perturbed
     pivots of PARDISO (with ``MKL_NUM_THREADS=1``; the analysis of PARDISO
     depends only on the pattern, with its default ``iparm(11) = iparm(13)
-    = 0`` for symmetric indefinite matrices). A matrix that is not
+    = 0`` for symmetric indefinite matrices). With ``'pardiso_lu'``, the
+    analysis of a pattern is kept likewise, in solvers distinct from those
+    of ``'pardiso'`` and of its fallback parameters, but the scaling and
+    the matching of ``mtype=11`` are computed in the analysis from the
+    values of the first matrix of the pattern and reused by the phase 22,
+    such that the factorizations with and without the cache differ by the
+    round-off, both checked by their residuals. A matrix that is not
     ``float64`` or whose CSR form has duplicated or unsorted terms is
     factorized without the cache. On a symmetric matrix of 57000 degrees
     of freedom with 4.5 million terms, the factorization took 1.65 s
@@ -652,6 +748,16 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
     one constraint, and 1.1 s with ``'splu'``, whose preprocessing went
     from 0.11 s to 0.05 s, SuperLU computing its ordering at every
     factorization.
+
+    References
+    ----------
+    .. [1] Schenk, O., Gärtner, K., Solving unsymmetric sparse systems of
+       linear equations with PARDISO, Future Generation Computer Systems,
+       20(3), 475-487, 2004. https://doi.org/10.1016/j.future.2003.07.011
+    .. [2] Anderson, E., Bai, Z., Bischof, C., Blackford, L.S., Demmel, J.,
+       Dongarra, J., Du Croz, J., Greenbaum, A., Hammarling, S., McKenney,
+       A., Sorensen, D., LAPACK Users' Guide, 3rd ed., SIAM, Philadelphia,
+       1999. https://doi.org/10.1137/1.9780898719604
 
     """
     if linear_solver not in LINEAR_SOLVERS:
@@ -670,6 +776,14 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         used_cols = entry.used_cols
         m = entry.m
         border = entry.border_rhs
+        if linear_solver == 'dense_lu':
+            return _factorize_dense_lu(entry.reduced_csr(K), used_cols,
+                                       border)
+        if linear_solver == 'pardiso_lu':
+            f = _factorize_pardiso_lu(entry.reduced_csr(K), used_cols, border,
+                                      cache=cache, silent=silent)
+            if f is not None:
+                return f
         if linear_solver == 'pardiso':
             A = entry.reduced_csr(K)
             if entry.is_symmetric(A):
@@ -689,6 +803,13 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None):
         border = _Border(0 if C is None else C.shape[1], kept)
         if m:
             kT_red = bmat([[None, Cr.T], [Cr, kT_red]], format='csr')
+        if linear_solver == 'dense_lu':
+            return _factorize_dense_lu(kT_red, used_cols, border)
+        if linear_solver == 'pardiso_lu':
+            f = _factorize_pardiso_lu(csr_matrix(kT_red, dtype=np.float64),
+                                      used_cols, border, silent=silent)
+            if f is not None:
+                return f
         if linear_solver == 'pardiso':
             A = csr_matrix(kT_red)
             if _is_symmetric(A):
@@ -942,6 +1063,191 @@ def _factorize_pardiso(A, used_cols, border, scaled=None, cache=None):
         weakref.finalize(solve_kT, cache.release, solver, gen)
     else:
         weakref.finalize(solve_kT, _pardiso_release, solver)
+
+    return solve_kT
+
+
+def _lu_residual(solve, A, m):
+    r"""Relative residual `\|\boldsymbol{A} \boldsymbol{x} -
+    \boldsymbol{b}\|/\|\boldsymbol{b}\|` of the solution ``solve(b)`` of
+    the reduced matrix ``A`` for a fixed random `\boldsymbol{b}` with a null
+    border of ``m`` constraints"""
+    b = np.random.RandomState(42).standard_normal(A.shape[0])
+    b[:m] = 0.
+    return np.linalg.norm(A @ solve(b) - b)/np.linalg.norm(b)
+
+
+def _pardiso_lu_factorize(A, cache, iparm):
+    """Unsymmetric LU factorization of PARDISO (``mtype=11``) of the CSR
+    matrix ``A``, with the default parameters when ``iparm`` is ``None``,
+    otherwise with ``iparm``, ``iparm(1) = 1``, and those of
+    ``PARDISO_LU_FALLBACK_IPARM``; with ``cache``, by a solver of
+    :meth:`_FactorizationCache.pardiso_solver` that keeps the analysis of
+    the pattern made with the same parameters, the phase 22
+
+    Returns the solver and the function that frees its memory, or returns it
+    to ``cache``; raises a :class:`RuntimeError` when PARDISO fails.
+
+    """
+    key = (11, 'default' if iparm is None else 'fallback')
+    if cache is not None:
+        solver, phase = cache.pardiso_solver(key, mtype=11)
+        gen = cache.gen
+    else:
+        solver, phase = PardisoSolver(mtype=11), 12
+    if phase == 12 and iparm is not None:
+        solver.iparm[:] = iparm
+        solver.iparm[0] = 1
+        for i, v in PARDISO_LU_FALLBACK_IPARM.items():
+            solver.iparm[i - 1] = v
+    try:
+        solver.factorize(A, phase)
+    except (PardisoError, ValueError) as e:
+        # ValueError: an empty row, i.e. a singular matrix
+        _pardiso_release(solver)
+        raise RuntimeError('PARDISO factorization failed: %s' % e)
+    if cache is not None:
+        return solver, (cache.release, solver, gen)
+    return solver, (_pardiso_release, solver)
+
+
+def _factorize_pardiso_lu(A, used_cols, border, cache=None, silent=True):
+    """Unsymmetric LU factorization of PARDISO of the reduced matrix ``A``,
+    CSR, bordered first by the constraints of the :class:`_Border`
+    ``border``, see :func:`._factorize`; ``None`` when SuperLU is to be used
+    instead"""
+    m = border.kept.shape[0]
+    load_mkl()
+    if not A.has_sorted_indices:
+        A = A.sorted_indices()
+    # the factorization of this pattern, with the cache: 'default',
+    # 'fallback' (PARDISO_LU_FALLBACK_IPARM) or 'splu'
+    mode = 'default'
+    if (cache is not None
+            and getattr(cache, 'pardiso_lu_mode_gen', None) == cache.gen):
+        mode = cache.pardiso_lu_mode
+    if mode == 'splu':
+        return None
+    if mode == 'fallback':
+        solver, release = _pardiso_lu_factorize(A, cache,
+                                                cache.pardiso_lu_iparm)
+        accurate = (_lu_residual(solver.solve, A, m) <= PARDISO_LU_RTOL)
+    else:
+        solver, release = _pardiso_lu_factorize(A, cache, None)
+        # without perturbed pivots the factorization is not checked here,
+        # every solution being checked
+        accurate = (int(solver.iparm[13]) == 0
+                    or _lu_residual(solver.solve, A, m) <= PARDISO_LU_RTOL)
+        if not accurate:
+            iparm = solver.iparm.copy()
+            # all its memory: the analysis of the default parameters is not
+            # used again for this pattern
+            _pardiso_release(solver)
+            solver, release = _pardiso_lu_factorize(A, cache, iparm)
+            accurate = (_lu_residual(solver.solve, A, m) <= PARDISO_LU_RTOL)
+            mode = 'fallback'
+            if cache is not None:
+                cache.pardiso_lu_mode_gen = cache.gen
+                cache.pardiso_lu_mode = 'fallback'
+                cache.pardiso_lu_iparm = iparm
+            if accurate:
+                msg("linear_solver='pardiso_lu': inaccurate factorization "
+                    "with the default parameters, PARDISO_LU_FALLBACK_IPARM "
+                    "used", level=3, silent=silent)
+    if not accurate:
+        _pardiso_release(solver)
+        if cache is not None:
+            cache.pardiso_lu_mode_gen = cache.gen
+            cache.pardiso_lu_mode = 'splu'
+        text = ("linear_solver='pardiso_lu': inaccurate factorization, also "
+                "with PARDISO_LU_FALLBACK_IPARM; 'splu' is used instead")
+        log_warn(text, level=3, silent=silent)
+        warnings.warn(text, RuntimeWarning, stacklevel=4)
+        return None
+    state = {'lu': None}
+
+    def solve_kT(b, d=None):
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
+        bu = np.concatenate((border(d, np.float64),
+                             np.asarray(b[used_cols], dtype=np.float64)))
+        if state['lu'] is None:
+            bnorm = np.linalg.norm(bu)
+            if bnorm == 0:
+                return x
+            xu = solver.solve(bu)
+            res = np.linalg.norm(A @ xu - bu)/bnorm
+            if not res <= PARDISO_LU_RTOL:
+                text = ("linear_solver='pardiso_lu': relative residual "
+                        "%1.1e of a solution, 'splu' is used instead" % res)
+                log_warn(text, level=3, silent=silent)
+                warnings.warn(text, RuntimeWarning, stacklevel=2)
+                state['lu'] = splu(csc_matrix(A))
+                # a weak reference: a reference cycle would delay the
+                # release of the PARDISO solver until a garbage collection
+                state['self']().linear_solver = 'splu'
+        if state['lu'] is not None:
+            xu = state['lu'].solve(bu)
+        x[used_cols] = xu[m:]
+        return x
+
+    state['self'] = weakref.ref(solve_kT)
+    solve_kT.linear_solver = 'pardiso_lu'
+    solve_kT.num_constraints = m
+    solve_kT.num_negative_eigvals = None
+    solve_kT.num_perturbed_pivots = int(solver.iparm[13])
+    solve_kT.det_sign = None
+    solve_kT.pardiso_fallback = mode == 'fallback'
+    weakref.finalize(solve_kT, *release)
+
+    return solve_kT
+
+
+class _DenseLU(object):
+    """LU factorization of LAPACK ``getrf`` of a dense matrix, with the
+    ``shape`` and ``solve`` of a SuperLU object, ``getrs``"""
+    def __init__(self, A):
+        from scipy.linalg import get_lapack_funcs
+        getrf, self._getrs = get_lapack_funcs(('getrf', 'getrs'), (A,))
+        self.lu, self.piv, info = getrf(A, overwrite_a=True)
+        if info < 0:
+            raise ValueError('getrf: illegal argument %d' % -info)
+        if info > 0:
+            raise RuntimeError('Factor is exactly singular')
+        self.shape = A.shape
+
+    def solve(self, b):
+        """Solution of ``b``, of shape ``(n,)`` or ``(n, k)``"""
+        x, info = self._getrs(self.lu, self.piv, b)
+        return x
+
+    def det_sign(self):
+        """Sign of the determinant: the parity of the row interchanges
+        times the signs of the diagonal of `\\boldsymbol{U}`"""
+        swaps = np.count_nonzero(self.piv != np.arange(self.piv.shape[0]))
+        return int((-1)**swaps*np.prod(np.sign(np.diag(self.lu))))
+
+
+def _factorize_dense_lu(A, used_cols, border):
+    """Dense LU factorization of LAPACK ``getrf`` of the reduced matrix
+    ``A``, sparse, bordered first by the constraints of the
+    :class:`_Border` ``border``, see :func:`._factorize`"""
+    m = border.kept.shape[0]
+    lu = _DenseLU(np.asarray(A.toarray(), dtype=np.float64, order='F'))
+
+    def solve_kT(b, d=None):
+        x = np.zeros(b.shape[0], dtype=np.result_type(b, np.float64))
+        bu = np.concatenate((border(d, np.float64),
+                             np.asarray(b[used_cols], dtype=np.float64)))
+        x[used_cols] = lu.solve(bu)[m:]
+        return x
+
+    solve_kT.smallest_eigvals = lambda k, s=None: _smallest_eigvals(
+        lu, m, k, None if s is None else np.asarray(s)[used_cols])
+    solve_kT.linear_solver = 'dense_lu'
+    solve_kT.det_sign = lu.det_sign()*(-1)**m
+    solve_kT.num_negative_eigvals = None
+    solve_kT.num_perturbed_pivots = None
+    solve_kT.num_constraints = m
 
     return solve_kT
 
