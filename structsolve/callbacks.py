@@ -88,7 +88,18 @@ def converged(an):
     ``an.cs`` and ``an.increments``, once per converged increment, before
     ``an.stop_criterion`` and before the next increment, and never for an
     increment that is rejected, e.g. by the checks of the inertia or of the
-    branch switching, or cut.
+    branch switching, or cut. Nothing is called when ``an.on_converged`` is
+    ``None`` or when ``an`` has no such attribute, and what the callable
+    returns is ignored.
+
+    Parameters
+    ----------
+    an : :class:`.Analysis`
+        Analysis object of the running non-linear analysis, with the new
+        converged state in ``an.cs[-1]`` and its load factor,
+        dimensionless, in ``an.increments[-1]``. Its attribute
+        ``on_converged`` is ``None`` (default of :class:`.Analysis`) or a
+        callable that takes the analysis object as its only argument.
 
     Notes
     -----
