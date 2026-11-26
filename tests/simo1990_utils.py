@@ -12,7 +12,7 @@ an ``L/10 x 15 deg`` section is modelled, with symmetry conditions on the
 interior edges and a simple support on the loaded edge, such that the
 diamond mode of 5 axial half-waves and 12 circumferential waves is the
 lowest one. The section is a single :class:`panels.shell.Shell` of the
-model ``'cylshell_clpt_donnell'`` (panels 0.15.0) with Bardell's functions.
+model ``'cylshell_clpt_donnell'`` of panels with Bardell's functions.
 The values read from Fig. 6.3.4 (``FIG_*``) are the solid lines of Simo, Fox
 and Rifai (1990) and the markers of the 9-ANS elements of Stanley (1985).
 
@@ -20,9 +20,9 @@ Neither panels nor structsolve takes a geometric imperfection, which is
 added here exactly for the Donnell kinematics with the Ritz vector ``c0`` of
 the imperfection, see :class:`ImperfectShell`.
 
-panels (which requires structsolve>=0.10.0) is not a dependency of
-structsolve. Run the command line with structsolve and panels 0.15.0
-importable, and oneMKL for 'pardiso', from the root of the repository::
+panels is not a dependency of structsolve. Run the command line with
+structsolve and panels importable, and oneMKL for 'pardiso', from the root
+of the repository::
 
     PYTHONPATH=".;<panels>" python tests/simo1990_utils.py verify
     PYTHONPATH=... python tests/simo1990_utils.py lb 12 12

@@ -535,7 +535,11 @@ class Analysis(object):
             When ``NLgeom=True`` and the ``NL_method`` attribute is not
             ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'``,
             ``'displacement_control'`` or
-            ``'generalized_displacement_control'``.
+            ``'generalized_displacement_control'``, or when ``NLgeom=True``
+            with the ``inertia`` attribute ``True`` and the
+            ``linear_solver`` attribute ``'pardiso_lu'``, which gives
+            neither the number of negative eigenvalues nor the sign of the
+            determinant.
 
         Notes
         -----

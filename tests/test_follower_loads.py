@@ -112,7 +112,8 @@ def test_accepts_kwarg():
             pass
     assert callbacks.accepts_kwarg(f, 'inc')
     assert not callbacks.accepts_kwarg(f, 'c_cte')
-    # **kwargs does not count, such that old callables are never surprised
+    # **kwargs does not count, such that callables that do not declare the
+    # keyword are never surprised
     assert not callbacks.accepts_kwarg(g, 'inc')
     assert callbacks.accepts_kwarg(A().m, 'inc')
     assert not callbacks.accepts_kwarg(len, 'inc')

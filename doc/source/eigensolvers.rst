@@ -117,7 +117,7 @@ larger than ``arpackutils.PARDISO_ACCURACY_RTOL`` and, for the counts, no
 pivot remains perturbed; SuperLU factorizes that matrix otherwise, see
 :func:`.arpackutils.pardiso_solve` and
 :func:`.linear_buckling._negative_pivots`. The solvers of unsymmetric
-matrices and the dense fallbacks are unchanged.
+matrices and the dense fallbacks do not use PARDISO.
 
 
 Intel MKL and ARPACK

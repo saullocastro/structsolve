@@ -589,7 +589,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None,
     fallback directly, with the phase 12 and the same check, or SuperLU
     directly. The default factorizations without perturbed pivots are
     not checked, at no cost. The tangent stiffness matrices of a Ritz model of a cylinder
-    (panels 0.15.0, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
+    (panels, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
     of freedom, a dense matrix) and dense random indefinite matrices of
     114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
     default parameters (MKL 2026.1, ``iparm(10) = 8``,
@@ -1071,7 +1071,31 @@ def _lu_residual(solve, A, m):
     r"""Relative residual `\|\boldsymbol{A} \boldsymbol{x} -
     \boldsymbol{b}\|/\|\boldsymbol{b}\|` of the solution ``solve(b)`` of
     the reduced matrix ``A`` for a fixed random `\boldsymbol{b}` with a null
-    border of ``m`` constraints"""
+    border of ``m`` constraints
+
+    Notes
+    -----
+    The computed solution `\tilde{\boldsymbol{x}}` solves exactly the system
+    of a perturbed right-hand side,
+
+    .. math::
+
+        \boldsymbol{A} \tilde{\boldsymbol{x}} = \boldsymbol{b} +
+        \boldsymbol{r}, \qquad \eta = \frac{\|\boldsymbol{r}\|_2}
+        {\|\boldsymbol{b}\|_2}
+
+    such that the relative residual `\eta` is the relative size of the
+    perturbation of `\boldsymbol{b}` for which `\tilde{\boldsymbol{x}}` is
+    exact. It is compared with ``PARDISO_LU_RTOL`` to tell a factorization
+    whose perturbed pivots made it that of another matrix, see the
+    residuals reported in the Notes of :func:`._factorize`.
+    `\boldsymbol{b}` has normally distributed terms from a fixed seed, the
+    same at every call, such that the check is repeatable, and null terms
+    on the border, as the right-hand sides with null values of the
+    constraints. It is a check with one right-hand side only: every
+    solution is checked as well, see :func:`._factorize_pardiso_lu`.
+
+    """
     b = np.random.RandomState(42).standard_normal(A.shape[0])
     b[:m] = 0.
     return np.linalg.norm(A @ solve(b) - b)/np.linalg.norm(b)
@@ -1087,6 +1111,30 @@ def _pardiso_lu_factorize(A, cache, iparm):
 
     Returns the solver and the function that frees its memory, or returns it
     to ``cache``; raises a :class:`RuntimeError` when PARDISO fails.
+
+    Notes
+    -----
+    PARDISO works in phases: the analysis (reordering and symbolic
+    factorization, phase 11), which for ``mtype=11`` also computes the
+    matching and the scaling from the values of the matrix, see
+    :func:`._factorize`, and the numerical factorization (phase 22); the
+    phase 12 does both. Without ``cache``, or for the first matrix of a
+    pattern, a new solver does the phase 12. With ``cache``, a solver
+    whose factorization is no longer used is kept with its analysis while
+    the pattern does not change, and the next matrix of the pattern is
+    factorized by the phase 22 alone, with the permutations and the scaling
+    of that analysis.
+
+    The analysis depends on the parameters with which it was made, hence
+    the solvers are kept under the key ``(11, 'default')`` or ``(11,
+    'fallback')``, distinct from each other and from the key of the
+    symmetric indefinite factorizations of ``'pardiso'``: a phase 22 never
+    uses the analysis of other parameters. The parameters are set only for
+    a phase 12, a solver that keeps its analysis keeping also its
+    parameters: ``iparm``, those that PARDISO filled in the default
+    factorization of the pattern, with ``iparm(1) = 1``, which tells PARDISO
+    to use them instead of its defaults, changed by
+    ``PARDISO_LU_FALLBACK_IPARM``.
 
     """
     key = (11, 'default' if iparm is None else 'fallback')
@@ -1112,10 +1160,47 @@ def _pardiso_lu_factorize(A, cache, iparm):
 
 
 def _factorize_pardiso_lu(A, used_cols, border, cache=None, silent=True):
-    """Unsymmetric LU factorization of PARDISO of the reduced matrix ``A``,
+    r"""Unsymmetric LU factorization of PARDISO of the reduced matrix ``A``,
     CSR, bordered first by the constraints of the :class:`_Border`
     ``border``, see :func:`._factorize`; ``None`` when SuperLU is to be used
-    instead"""
+    instead
+
+    Notes
+    -----
+    The factorization is accepted, replaced or abandoned by the relative
+    residual `\eta` of :func:`_lu_residual`, in this order:
+
+    1. the matrix is factorized with the default parameters of PARDISO for
+       ``mtype=11``. Without perturbed pivots, ``iparm(14) = 0``, the
+       factorization is accepted without the check; with perturbed pivots,
+       it is accepted when `\eta \le` ``PARDISO_LU_RTOL``;
+    2. otherwise all the memory of that solver is freed and the matrix is
+       factorized again with the parameters of
+       ``PARDISO_LU_FALLBACK_IPARM``, accepted when `\eta \le`
+       ``PARDISO_LU_RTOL``, with or without perturbed pivots;
+    3. otherwise ``None`` is returned, for :func:`._factorize` to use
+       SuperLU.
+
+    With ``cache``, the outcome is stored with the generation of the
+    pattern, and the next matrices of the same pattern start at the step 2,
+    still checked at every factorization, or return ``None`` directly.
+
+    The ``solve_kT`` returned solves the bordered system of
+    :func:`._factorize`, of unknowns `\{\boldsymbol{\mu}, \boldsymbol{x}_u\}`
+    and right-hand side `\boldsymbol{b}_u = \{\boldsymbol{d},
+    \boldsymbol{b}\}` on the degrees of freedom ``used_cols``, and returns
+    `\boldsymbol{x}`, null at the other degrees of freedom. Every solution
+    is checked by its own relative residual, of the whole bordered system,
+    which must not exceed ``PARDISO_LU_RTOL``, a null right-hand side
+    giving the null solution without the check.
+    When the check fails, also with a residual that is not a number,
+    `\boldsymbol{A}` is factorized by SuperLU, which solves that right-hand
+    side and those of the next calls, and ``solve_kT.linear_solver``
+    becomes ``'splu'``. An accepted factorization is thus never trusted
+    for a solution that it does not satisfy, which covers the
+    factorizations of the step 1 accepted without the check.
+
+    """
     m = border.kept.shape[0]
     load_mkl()
     if not A.has_sorted_indices:
@@ -1221,16 +1306,58 @@ class _DenseLU(object):
         return x
 
     def det_sign(self):
-        """Sign of the determinant: the parity of the row interchanges
-        times the signs of the diagonal of `\\boldsymbol{U}`"""
+        r"""Sign of the determinant: the parity of the row interchanges
+        times the signs of the diagonal of `\boldsymbol{U}`
+
+        Notes
+        -----
+        With `\boldsymbol{P} \boldsymbol{A} = \boldsymbol{L}
+        \boldsymbol{U}`, `\boldsymbol{L}` of unit diagonal and
+        `\boldsymbol{P}` the product of the row interchanges of the partial
+        pivoting,
+
+        .. math::
+
+            \det \boldsymbol{A} = (-1)^s \prod_i u_{ii}
+
+        with `s` the number of row interchanges, the steps `i` of the
+        elimination whose pivot row ``piv[i]``, returned by ``getrf``, is
+        not `i`, each a transposition of determinant `-1`.
+
+        """
         swaps = np.count_nonzero(self.piv != np.arange(self.piv.shape[0]))
         return int((-1)**swaps*np.prod(np.sign(np.diag(self.lu))))
 
 
 def _factorize_dense_lu(A, used_cols, border):
-    """Dense LU factorization of LAPACK ``getrf`` of the reduced matrix
+    r"""Dense LU factorization of LAPACK ``getrf`` of the reduced matrix
     ``A``, sparse, bordered first by the constraints of the
-    :class:`_Border` ``border``, see :func:`._factorize`"""
+    :class:`_Border` ``border``, see :func:`._factorize`
+
+    Notes
+    -----
+    ``A`` is the matrix of the bordered system of :func:`._factorize`, the
+    ``m`` rows and columns of the constraints first, converted to a dense
+    array and factorized as `\boldsymbol{P} \boldsymbol{A} = \boldsymbol{L}
+    \boldsymbol{U}` by :class:`_DenseLU`, which raises a
+    :class:`RuntimeError` for a null pivot. ``solve_kT`` solves
+
+    .. math::
+
+        \boldsymbol{A} \begin{Bmatrix} \boldsymbol{\mu} \\ \boldsymbol{x}_u
+        \end{Bmatrix} = \begin{Bmatrix} \boldsymbol{d} \\ \boldsymbol{b}_u
+        \end{Bmatrix}
+
+    on the degrees of freedom ``used_cols``, by the forward and backward
+    substitutions of ``getrs``, and returns `\boldsymbol{x}`, null at the
+    other degrees of freedom, without the Lagrange multipliers
+    `\boldsymbol{\mu}`. The sign of the determinant of
+    :meth:`_DenseLU.det_sign` is multiplied by `(-1)^m`, which gives the
+    sign on the space of the constraints, see the Notes of
+    :func:`._factorize`. No residual is checked, the partial pivoting of
+    ``getrf`` perturbing no pivot.
+
+    """
     m = border.kept.shape[0]
     lu = _DenseLU(np.asarray(A.toarray(), dtype=np.float64, order='F'))
 
