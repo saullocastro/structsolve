@@ -41,8 +41,7 @@ the algorithms. All of them remove the null rows and columns first, see
 The choice changes the speed, not the result: the solutions agree to the
 round-off, such that an analysis takes the same increments and Newton-Raphson
 iterations with any of them, unless a matrix is so ill-conditioned that the
-round-off matters. The default, ``'splu'``, reproduces the results of the
-previous versions bit for bit.
+round-off matters.
 
 
 Choosing a solver for speed

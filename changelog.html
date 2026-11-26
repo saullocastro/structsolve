@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; structsolve 0.13.0 documentation</title>
+    <title>Changelog &#8212; structsolve 0.13.1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=1019fba8"></script>
+    <script src="_static/documentation_options.js?v=b4617fb1"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -49,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.0" />
+  <meta name="docsearch:version" content="0.13.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.1 documentation</p>
   
 </a></div>
     
@@ -645,7 +645,7 @@
 <a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
 
-<span class="gu">## 0.13.0 (2026-11-25)</span>
+<span class="gu">## 0.13.1 (2026-11-26)</span>
 
 <span class="gu">### Added</span>
 
@@ -690,6 +690,31 @@
   its pool are tagged by the matrix type and parameters of their analysis.
   The default <span class="sb">`linear_solver='splu'`</span> gives the results of 0.12.0 bit for
   bit.
+
+<span class="gu">### Documentation</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`callbacks.converged`</span> has its <span class="sb">`Parameters`</span>, and <span class="sb">`Analysis.static`</span> lists
+  in <span class="sb">`Raises`</span> the <span class="sb">`ValueError`</span> of <span class="sb">`inertia=True`</span> with
+  <span class="sb">`linear_solver='pardiso_lu'`</span>.
+<span class="k">-</span><span class="w"> </span>The private functions of the LU factorizations in <span class="sb">`structsolve/static.py`</span>
+  (<span class="sb">`_lu_residual`</span>, <span class="sb">`_pardiso_lu_factorize`</span>, <span class="sb">`_factorize_pardiso_lu`</span>,
+  <span class="sb">`_DenseLU.det_sign`</span>, <span class="sb">`_factorize_dense_lu`</span>) have their theory in <span class="sb">`Notes`</span>.
+<span class="k">-</span><span class="w"> </span>Docstrings, comments, pages and notebooks state the present behaviour,
+  without the version of structsolve or of panels and without what
+  previous versions did; <span class="sb">`notebooks/simo1990_cylinder_postbuckling.ipynb`</span>
+  no longer prints the version of panels.
+
+<span class="gu">### Tests</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`tests/test_on_converged.py`</span>: the softening spring is followed beyond
+  its peak. New <span class="sb">`test_softening_path_displacement_control`</span>: the load
+  factors and the damage of every increment are on the exact path, through
+  the peak and the softening. New
+  <span class="sb">`test_damage_updated_during_the_iterations_is_not_exact`</span>: with the Riks
+  method the path is exact when the damage is updated by <span class="sb">`on_converged`</span>,
+  and leaves the exact path when the damage is updated at every iteration.
+  The source of each reference value is in the <span class="sb">`Notes`</span> of the tests, as
+  in <span class="sb">`tests/test_freq.py`</span> for <span class="sb">`BETA_L_FREE_FREE`</span>.
 
 <span class="gu">## 0.12.0 (2026-11-23)</span>
 

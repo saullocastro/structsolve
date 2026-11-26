@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990) &#8212; structsolve 0.13.0 documentation</title>
+    <title>Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990) &#8212; structsolve 0.13.1 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=1019fba8"></script>
+    <script src="../_static/documentation_options.js?v=b4617fb1"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -53,7 +53,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.0" />
+  <meta name="docsearch:version" content="0.13.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.1 documentation</p>
   
 </a></div>
     
@@ -657,10 +657,10 @@
 <li><p>Fig. 6.3.4 (c): the same with the average axial deflection;</p></li>
 <li><p>Fig. 6.3.4 (d): the perfect cylinder, traced by branch switching (<code class="docutils literal notranslate"><span class="pre">Analysis.branch_switching</span></code> with <code class="docutils literal notranslate"><span class="pre">inertia</span> <span class="pre">=</span> <span class="pre">True</span></code>), with <code class="docutils literal notranslate"><span class="pre">linear_solver</span> <span class="pre">=</span> <span class="pre">'pardiso'</span></code> and <code class="docutils literal notranslate"><span class="pre">'splu'</span></code>.</p></li>
 </ul>
-<p>The loads are normalized by the linear buckling load. The values of the figure were read on the page rendered at 300 dpi with a grid drawn over the axes, with a precision of about <span class="math notranslate nohighlight">\(\pm 0.0003\)</span> in the deflection and <span class="math notranslate nohighlight">\(\pm 0.01\)</span> in the load; they are in <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>, with the model. The model is a shell of <code class="docutils literal notranslate"><span class="pre">`panels</span></code> &lt;<a class="github reference external" href="https://github.com/saullocastro/panels">saullocastro/panels</a>&gt;`__ 0.15.0, which is not a dependency of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>: run the notebook from this folder with <code class="docutils literal notranslate"><span class="pre">panels</span></code> and
-oneMKL (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">mkl</span></code>, for <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code>) installed. The analyses run again at each execution, in about 4 min on one thread (<code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS=1</span></code>). The convergence in the Ritz terms (<span class="math notranslate nohighlight">\(8 \times 8\)</span> to <span class="math notranslate nohighlight">\(14 \times 14\)</span>) is in <a class="reference internal" href="ex_cylinder_postbuckling.html"><span class="doc">Post-buckling of an axially compressed cylinder</span></a>, computed with the command line of <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/test_simo1990_cylinder.py</span></code> checks the model of the imperfection and, with
-<span class="math notranslate nohighlight">\(5 \times 5\)</span> terms, the path of the 50 % imperfection through its limit load and the branch switching of the perfect cylinder with both linear solvers; the comparison with Fig. 6.3.4 is made here.</p>
-<div class="nbinput docutils container">
+<p>The loads are normalized by the linear buckling load. The values of the figure were read on the page rendered at 300 dpi with a grid drawn over the axes, with a precision of about <span class="math notranslate nohighlight">\(\pm 0.0003\)</span> in the deflection and <span class="math notranslate nohighlight">\(\pm 0.01\)</span> in the load; they are in <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>, with the model. The model is a shell of <code class="docutils literal notranslate"><span class="pre">`panels</span></code> &lt;<a class="github reference external" href="https://github.com/saullocastro/panels">saullocastro/panels</a>&gt;`__, which is not a dependency of <code class="docutils literal notranslate"><span class="pre">structsolve</span></code>: run the notebook from this folder with <code class="docutils literal notranslate"><span class="pre">panels</span></code> and oneMKL
+(<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">mkl</span></code>, for <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code>) installed. The analyses run again at each execution, in about 4 min on one thread (<code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS=1</span></code>). The convergence in the Ritz terms (<span class="math notranslate nohighlight">\(8 \times 8\)</span> to <span class="math notranslate nohighlight">\(14 \times 14\)</span>) is in <a class="reference internal" href="ex_cylinder_postbuckling.html"><span class="doc">Post-buckling of an axially compressed cylinder</span></a>, computed with the command line of <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code>; <code class="docutils literal notranslate"><span class="pre">tests/test_simo1990_cylinder.py</span></code> checks the model of the imperfection and, with <span class="math notranslate nohighlight">\(5 \times 5\)</span>
+terms, the path of the 50 % imperfection through its limit load and the branch switching of the perfect cylinder with both linear solvers; the comparison with Fig. 6.3.4 is made here.</p>
+<div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
@@ -678,8 +678,6 @@ oneMKL (<code class="docutils literal notranslate"><span class="pre">pip</span> 
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'..'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">))</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">simo1990_utils</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">su</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s1">'panels'</span><span class="p">,</span> <span class="n">panels</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
-
 
 <span class="k">def</span><span class="w"> </span><span class="nf">markdown_table</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">rows</span><span class="p">):</span>
     <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'| '</span> <span class="o">+</span> <span class="s1">' | '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)</span> <span class="o">+</span> <span class="s1">' |'</span><span class="p">,</span> <span class="s1">'|'</span> <span class="o">+</span> <span class="s1">'---|'</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">)]</span>
@@ -687,14 +685,6 @@ oneMKL (<code class="docutils literal notranslate"><span class="pre">pip</span> 
     <span class="k">return</span> <span class="n">Markdown</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span>
 </pre></div>
 </div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-panels 0.15.0
-</pre></div></div>
 </div>
 <section id="The-model">
 <h2>The model<a class="headerlink" href="#The-model" title="Link to this heading">#</a></h2>

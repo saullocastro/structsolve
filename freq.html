@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.13.0 documentation</title>
+    <title>Frequency analysis (structsolve.freq) &#8212; structsolve 0.13.1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=1019fba8"></script>
+    <script src="_static/documentation_options.js?v=b4617fb1"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.0" />
+  <meta name="docsearch:version" content="0.13.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.1 documentation</p>
   
 </a></div>
     
@@ -902,7 +902,8 @@ eigenvalues of PARDISO is exact also when SuperLU would need a row
 interchange. As in <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a>, SuperLU is used instead for a matrix
 whose factorization by PARDISO is inaccurate or, for the count, keeps
 perturbed pivots. The general solver of unsymmetric matrices,
-<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>, and the dense solvers are unchanged.</p>
+<code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigs()</span></code>, and the dense solvers do not use
+PARDISO.</p>
 <p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.sparse.linalg.eigsh()</span></code> uses ARPACK’s symmetric drivers, which
 return wrong eigenpairs when linked against Intel MKL 2024.2.0 to
 2025.0.0 and <code class="docutils literal notranslate"><span class="pre">ncv</span> <span class="pre">&gt;</span> <span class="pre">32</span></code>, see <a class="reference internal" href="linear_buckling.html#structsolve.lb" title="structsolve.lb"><code class="xref py py-func docutils literal notranslate"><span class="pre">lb()</span></code></a> and

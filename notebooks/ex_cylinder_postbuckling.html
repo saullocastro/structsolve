@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Post-buckling of an axially compressed cylinder &#8212; structsolve 0.13.0 documentation</title>
+    <title>Post-buckling of an axially compressed cylinder &#8212; structsolve 0.13.1 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=1019fba8"></script>
+    <script src="../_static/documentation_options.js?v=b4617fb1"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -53,7 +53,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.0" />
+  <meta name="docsearch:version" content="0.13.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.1 documentation</p>
   
 </a></div>
     
@@ -646,7 +646,7 @@
   <section id="Post-buckling-of-an-axially-compressed-cylinder">
 <h1>Post-buckling of an axially compressed cylinder<a class="headerlink" href="#Post-buckling-of-an-axially-compressed-cylinder" title="Link to this heading">#</a></h1>
 <p>The Riks method of structsolve traces the post-buckling path of a thin cylinder under axial compression, deep into the post-buckled regime, for the benchmark of Simo, Fox and Rifai (1990) [1], Section 6.3.4, “Post-buckling analysis of a simply-supported cylinder; effect of initial imperfections”, pp. 54-57, Fig. 6.3.4 on p. 56, after Stanley (1985) [2]: radius <span class="math notranslate nohighlight">\(R = 36\)</span>, length <span class="math notranslate nohighlight">\(L = 100\)</span>, thickness <span class="math notranslate nohighlight">\(t = 0.125\)</span>, <span class="math notranslate nohighlight">\(E = 10^7\)</span>, <span class="math notranslate nohighlight">\(\nu = 0.3\)</span>, in consistent units.</p>
-<p>The model and the analyses are in <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code> of the repository, which needs <a class="reference external" href="https://github.com/saullocastro/panels">panels</a> 0.15.0 (which requires structsolve 0.10.0 or later, and is not a dependency of structsolve):</p>
+<p>The model and the analyses are in <code class="docutils literal notranslate"><span class="pre">tests/simo1990_utils.py</span></code> of the repository, which needs <a class="reference external" href="https://github.com/saullocastro/panels">panels</a> (which is not a dependency of structsolve):</p>
 <ul>
 <li><p>the notebook <a class="reference internal" href="simo1990_cylinder_postbuckling.html"><span class="doc">Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)</span></a>, stored with its outputs, runs the checks of the imperfection, the 10 % and 50 % imperfections and the perfect cylinder with <code class="docutils literal notranslate"><span class="pre">linear_solver</span> <span class="pre">=</span> <span class="pre">'pardiso'</span></code> and <code class="docutils literal notranslate"><span class="pre">'splu'</span></code> with <span class="math notranslate nohighlight">\(m = n = 8\)</span> terms, compares them with the figure and discusses them, in about 3.5 min;</p></li>
 <li><p>the test <code class="docutils literal notranslate"><span class="pre">tests/test_simo1990_cylinder.py</span></code> checks the model of the imperfection and, with <span class="math notranslate nohighlight">\(m = n = 5\)</span> terms, the path of the 50 % imperfection through its limit load and the branch switching of the perfect cylinder with both linear solvers, in a few seconds; it is skipped where panels is not installed, and its <code class="docutils literal notranslate"><span class="pre">'pardiso'</span></code> case where oneMKL is not;</p></li>
@@ -665,8 +665,8 @@ PYTHONPATH=... python tests/simo1990_utils.py plot
 <p>These runs take hours on one thread and are not repeated in this notebook.</p>
 <section id="The-model">
 <h2>The model<a class="headerlink" href="#The-model" title="Link to this heading">#</a></h2>
-<p>As in [1] and [2], an <span class="math notranslate nohighlight">\(L/10 \times 15°\)</span> section is modelled, with symmetry conditions on the interior edges and a simple support on the loaded edge, such that the lowest buckling mode is the diamond mode of 5 axial half-waves and 12 circumferential waves: the section spans a quarter of an axial wave and half a circumferential wave. It is a single <code class="docutils literal notranslate"><span class="pre">panels.shell.Shell</span></code> of <a class="reference external" href="https://github.com/saullocastro/panels">panels</a> 0.15.0 with the Donnell kinematics,
-<code class="docutils literal notranslate"><span class="pre">model</span> <span class="pre">=</span> <span class="pre">'cylshell_clpt_donnell'</span></code>, <span class="math notranslate nohighlight">\(a = L/10 = 10\)</span> along the axis <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(b = R \pi/12 = 9.42\)</span> along the arc <span class="math notranslate nohighlight">\(y\)</span>, with the boundary conditions given by the flags of Bardell’s functions (<code class="docutils literal notranslate"><span class="pre">0</span></code> removes the value, <code class="docutils literal notranslate"><span class="pre">r</span></code> its normal derivative):</p>
+<p>As in [1] and [2], an <span class="math notranslate nohighlight">\(L/10 \times 15°\)</span> section is modelled, with symmetry conditions on the interior edges and a simple support on the loaded edge, such that the lowest buckling mode is the diamond mode of 5 axial half-waves and 12 circumferential waves: the section spans a quarter of an axial wave and half a circumferential wave. It is a single <code class="docutils literal notranslate"><span class="pre">panels.shell.Shell</span></code> of <a class="reference external" href="https://github.com/saullocastro/panels">panels</a> with the Donnell kinematics, <code class="docutils literal notranslate"><span class="pre">model</span> <span class="pre">=</span> <span class="pre">'cylshell_clpt_donnell'</span></code>,
+<span class="math notranslate nohighlight">\(a = L/10 = 10\)</span> along the axis <span class="math notranslate nohighlight">\(x\)</span> and <span class="math notranslate nohighlight">\(b = R \pi/12 = 9.42\)</span> along the arc <span class="math notranslate nohighlight">\(y\)</span>, with the boundary conditions given by the flags of Bardell’s functions (<code class="docutils literal notranslate"><span class="pre">0</span></code> removes the value, <code class="docutils literal notranslate"><span class="pre">r</span></code> its normal derivative):</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Edge</p></th>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.13.0 documentation</title>
+    <title>Configuration-dependent loads (structsolve.callbacks) &#8212; structsolve 0.13.1 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=1019fba8"></script>
+    <script src="_static/documentation_options.js?v=b4617fb1"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.0" />
+  <meta name="docsearch:version" content="0.13.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.0 documentation</p>
+    <p class="title logo__title">structsolve 0.13.1 documentation</p>
   
 </a></div>
     
@@ -884,7 +884,21 @@ work-conjugate to <span class="math notranslate nohighlight">\(\lambda\)</span>,
 <code class="docutils literal notranslate"><span class="pre">an.cs</span></code> and <code class="docutils literal notranslate"><span class="pre">an.increments</span></code>, once per converged increment, before
 <code class="docutils literal notranslate"><span class="pre">an.stop_criterion</span></code> and before the next increment, and never for an
 increment that is rejected, e.g. by the checks of the inertia or of the
-branch switching, or cut.</p>
+branch switching, or cut. Nothing is called when <code class="docutils literal notranslate"><span class="pre">an.on_converged</span></code> is
+<code class="docutils literal notranslate"><span class="pre">None</span></code> or when <code class="docutils literal notranslate"><span class="pre">an</span></code> has no such attribute, and what the callable
+returns is ignored.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>an</strong><span class="classifier"><a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a></span></dt><dd><p>Analysis object of the running non-linear analysis, with the new
+converged state in <code class="docutils literal notranslate"><span class="pre">an.cs[-1]</span></code> and its load factor,
+dimensionless, in <code class="docutils literal notranslate"><span class="pre">an.increments[-1]</span></code>. Its attribute
+<code class="docutils literal notranslate"><span class="pre">on_converged</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (default of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a>) or a
+callable that takes the analysis object as its only argument.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 <p class="rubric">Notes</p>
 <p>The callables of <a class="reference internal" href="analysis.html#structsolve.Analysis" title="structsolve.Analysis"><code class="xref py py-class docutils literal notranslate"><span class="pre">Analysis</span></code></a> must be functions of the
 configuration and of the load factor alone during the iterations of an
