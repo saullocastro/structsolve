@@ -60,7 +60,7 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.13.1 (2026-11-27)
+* version 0.13.1 (2026-11-26)
     - `Analysis.linear_solver='pardiso_lu'`: the unsymmetric LU factorization of MKL PARDISO with the analysis kept per sparsity pattern and every solution checked by its residual, with fallbacks to the improved two-level factorization of oneMKL and to SuperLU
     - `Analysis.linear_solver='dense_lu'`: the dense LU factorization of LAPACK, with the inertia from the pivots
     - Docstrings of `callbacks.converged` and of the LU factorizations completed; new tests of `Analysis.on_converged` with a softening spring, against its exact path
