@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.13.0 (2026-11-25)
+## 0.13.1 (2026-11-27)
 
 ### Added
 
@@ -45,6 +45,31 @@
   its pool are tagged by the matrix type and parameters of their analysis.
   The default `linear_solver='splu'` gives the results of 0.12.0 bit for
   bit.
+
+### Documentation
+
+- `callbacks.converged` has its `Parameters`, and `Analysis.static` lists
+  in `Raises` the `ValueError` of `inertia=True` with
+  `linear_solver='pardiso_lu'`.
+- The private functions of the LU factorizations in `structsolve/static.py`
+  (`_lu_residual`, `_pardiso_lu_factorize`, `_factorize_pardiso_lu`,
+  `_DenseLU.det_sign`, `_factorize_dense_lu`) have their theory in `Notes`.
+- Docstrings, comments, pages and notebooks state the present behaviour,
+  without the version of structsolve or of panels and without what
+  previous versions did; `notebooks/simo1990_cylinder_postbuckling.ipynb`
+  no longer prints the version of panels.
+
+### Tests
+
+- `tests/test_on_converged.py`: the softening spring is followed beyond
+  its peak. New `test_softening_path_displacement_control`: the load
+  factors and the damage of every increment are on the exact path, through
+  the peak and the softening. New
+  `test_damage_updated_during_the_iterations_is_not_exact`: with the Riks
+  method the path is exact when the damage is updated by `on_converged`,
+  and leaves the exact path when the damage is updated at every iteration.
+  The source of each reference value is in the `Notes` of the tests, as
+  in `tests/test_freq.py` for `BETA_L_FREE_FREE`.
 
 ## 0.12.0 (2026-11-23)
 

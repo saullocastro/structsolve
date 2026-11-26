@@ -45,7 +45,7 @@ collected after each call, so that the WebAssembly heap is not exhausted.
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.13.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.13.1). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -60,9 +60,10 @@ History
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
 
-* version 0.13.0 (2026-11-25)
+* version 0.13.1 (2026-11-27)
     - `Analysis.linear_solver='pardiso_lu'`: the unsymmetric LU factorization of MKL PARDISO with the analysis kept per sparsity pattern and every solution checked by its residual, with fallbacks to the improved two-level factorization of oneMKL and to SuperLU
     - `Analysis.linear_solver='dense_lu'`: the dense LU factorization of LAPACK, with the inertia from the pivots
+    - Docstrings of `callbacks.converged` and of the LU factorizations completed; new tests of `Analysis.on_converged` with a softening spring, against its exact path
 
 * version 0.12.0 (2026-11-23)
     - `Analysis.on_converged`: a callable called once after every converged increment of the non-linear analyses, never for a rejected or cut increment, to update the internal variables of path-dependent models, e.g. the damage of a cohesive zone
