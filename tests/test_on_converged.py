@@ -55,9 +55,21 @@ def _softening_spring():
     r"""One spring with irreversible secant softening, loaded by a force
     beyond its peak along a displacement-controlled path
 
-    `f(u) = k (1 - d) u` with `d = \max_{past} g(|u|)`, `g` growing from 0
-    at `u_0` to 0.5 at `2 u_0`. The internal variable `d` is a function of
-    the largest displacement of the converged states only.
+    The internal variable ``state['d']``, the damage, is a function of the
+    largest displacement of the converged states only, updated by the
+    ``on_converged`` returned. Returns ``state`` and the callables
+    ``calc_fext``, ``calc_fint``, ``calc_kC``, ``calc_kG`` and
+    ``on_converged`` of the analysis.
+
+    Notes
+    -----
+    The force of the spring is `f(u) = k (1 - d) u` with
+    `d = \max_{past} g(|u|)`, `g` growing linearly from 0 at `u_0` to 0.5
+    at `2 u_0`, with `k = 1` and `u_0 = 1`; the external force is the load
+    factor `\lambda`. During the iterations the damage is
+    `\max(d_{conv}, g(|u|))`, with `d_{conv}` that of the last converged
+    state.
+
     """
     k, u0 = 1., 1.
 
@@ -95,6 +107,19 @@ def _softening_spring():
 
 
 def test_history_updated_only_at_converged_states():
+    r"""The softening spring of :func:`_softening_spring`, loaded by the
+    Newton-Raphson method up to the onset of its damage with the internal
+    variable updated by ``on_converged``, ends without damage at the exact
+    displacement, within ``1e-8``
+
+    Notes
+    -----
+    With `d = 0` the spring is elastic, `u = \lambda/k`, up to the onset of
+    the damage at `u = u_0`, i.e. at the force `k u_0 = 1`, the load
+    factor `\lambda = 1` at which the analysis finishes: `u = 1` and
+    `d = g(u_0) = 0`.
+
+    """
     state, fext, fint, kC, kG, on_converged = _softening_spring()
     an = Analysis(fext, fint, kC, kG)
     an.NL_method = 'NR'
@@ -103,7 +128,6 @@ def test_history_updated_only_at_converged_states():
     an.final_load_factor = 1.
     an.on_converged = on_converged
     an.static(NLgeom=True, silent=True)
-    # below the peak force k*u0*(1 - 0) = 1 the spring is elastic, at the
-    # load factor 1 exactly at the onset: no damage, u = 1
+    # at the onset of the damage: no damage, u = 1
     assert state['d'] == 0.
     np.testing.assert_allclose(an.cs[-1], [1.], rtol=1e-8)

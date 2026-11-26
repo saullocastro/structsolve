@@ -466,7 +466,8 @@ def test_freq_check_backward_error():
     assert 'relative residual' in error and 'backward error' in error
 
 
-#: beta_n L of the free-free beam, Rao (2018), Fig. 8.15, p. 772
+#: beta_n L of the two lowest elastic modes of the free-free beam, whose
+#: source is given in the Notes of beam_free_free
 BETA_L_FREE_FREE = np.array([4.730041, 7.853205])
 
 
