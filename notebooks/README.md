@@ -8,8 +8,8 @@ differences. They are run from this folder and import the model helpers of
 `tests/` (`ritz.py`, `analytic_problems.py`, `simo1990_utils.py`).
 
 The validation against results of the literature uses structural models
-of [`panels`](https://github.com/saullocastro/panels), which requires
-`structsolve>=0.10.0` and is not a dependency of `structsolve`: install it
+of [`panels`](https://github.com/saullocastro/panels), which is not a
+dependency of `structsolve`: install it
 (`pip install panels`, or its repository built in place with
 `python setup.py build_ext --inplace` and on the `PYTHONPATH`) to run them,
 with oneMKL (`pip install mkl`) for `linear_solver='pardiso'`. Their model is

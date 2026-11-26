@@ -26,9 +26,8 @@ import pytest
 
 from structsolve.pardiso import available as pardiso_available
 
-# panels (which requires structsolve>=0.10.0) is not a dependency of
-# structsolve: these tests run where panels is installed, and are skipped
-# otherwise
+# panels is not a dependency of structsolve: these tests run where panels
+# is installed, and are skipped otherwise
 pytest.importorskip('panels')
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))

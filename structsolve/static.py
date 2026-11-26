@@ -589,7 +589,7 @@ def _factorize(kT, linear_solver='splu', constraints=None, cache=None,
     fallback directly, with the phase 12 and the same check, or SuperLU
     directly. The default factorizations without perturbed pivots are
     not checked, at no cost. The tangent stiffness matrices of a Ritz model of a cylinder
-    (panels 0.15.0, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
+    (panels, ``cylshell_clpt_donnell``, 8 x 8 terms, 114 degrees
     of freedom, a dense matrix) and dense random indefinite matrices of
     114 and 200 degrees of freedom had 18 to 40 perturbed pivots with the
     default parameters (MKL 2026.1, ``iparm(10) = 8``,

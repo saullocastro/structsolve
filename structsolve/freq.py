@@ -638,7 +638,8 @@ def freq(K, M, tol=0, sparse_solver=True,
     interchange. As in :func:`.lb`, SuperLU is used instead for a matrix
     whose factorization by PARDISO is inaccurate or, for the count, keeps
     perturbed pivots. The general solver of unsymmetric matrices,
-    :func:`scipy.sparse.linalg.eigs`, and the dense solvers are unchanged.
+    :func:`scipy.sparse.linalg.eigs`, and the dense solvers do not use
+    PARDISO.
 
     :func:`scipy.sparse.linalg.eigsh` uses ARPACK's symmetric drivers, which
     return wrong eigenpairs when linked against Intel MKL 2024.2.0 to

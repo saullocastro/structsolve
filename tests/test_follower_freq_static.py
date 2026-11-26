@@ -227,7 +227,7 @@ def test_analysis_linear_static_with_configuration_dependent_load():
     increments, cs = an.static(NLgeom=False, silent=True)
     ref = np.linalg.solve(pb.K0 - pb.Q, pb.F0)
     assert np.allclose(cs[0], ref, rtol=1e-9)
-    # without c the load is the reference one, as before
+    # without c the load is the reference one
     pb_old = linear_follower_problem(with_c=False)
     increments, cs = pb_old.analysis().static(NLgeom=False, silent=True)
     assert np.allclose(cs[0], np.linalg.solve(pb.K0, pb.F0))
