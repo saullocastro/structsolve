@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.13.1 documentation</title>
+    <title>Follower loads and unsymmetric matrices &#8212; structsolve 0.13.2 documentation</title>
   
   
   
@@ -38,7 +38,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=b4617fb1"></script>
+    <script src="../_static/documentation_options.js?v=8399f5db"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -53,7 +53,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.1" />
+  <meta name="docsearch:version" content="0.13.2" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -121,7 +121,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.1 documentation</p>
+    <p class="title logo__title">structsolve 0.13.2 documentation</p>
   
 </a></div>
     
@@ -1010,7 +1010,6 @@ arc_length_riks
   0.8000      2         2           2      2         1
   0.9000      2         2           2      2         1
   1.0000      2         2           2      2         1
-  1.0000      2         2           2      2         1
 
 arc_length_crisfield
   lambda  count  dense, 6  dense, all  exact  det sign
@@ -1024,10 +1023,9 @@ arc_length_crisfield
   0.8000      2         2           2      2         1
   0.9000      2         2           2      2         1
   1.0000      2         2           2      2         1
-  1.0000      2         2           2      2         1
 </pre></div></div>
 </div>
-<p>The count goes 0, 1, 2 and agrees with the dense count at every increment, whereas the sign of the determinant returns to +1 after the second crossing (the arc-length paths have a converged point at <span class="math notranslate nohighlight">\(\lambda = 1 - 10^{-16}\)</span>, printed as 1.0000, before the last one at exactly 1.0). The complex pair, whose real part is negative beyond <span class="math notranslate nohighlight">\(\lambda = 0.47\)</span>, is not counted:</p>
+<p>The count goes 0, 1, 2 and agrees with the dense count at every increment, whereas the sign of the determinant returns to +1 after the second crossing. The complex pair, whose real part is negative beyond <span class="math notranslate nohighlight">\(\lambda = 0.47\)</span>, is not counted:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
