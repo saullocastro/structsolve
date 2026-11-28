@@ -1,5 +1,77 @@
 # Changelog
 
+## 0.14.0 (2026-11-28)
+
+### Added
+
+- `Analysis.NL_method='stabilized_NR'`, the new module
+  `structsolve.stabilized_newton_raphson`: a load-controlled Newton-Raphson
+  solver that passes the load factors at which the plain iterations fail,
+  e.g. local folds and mode jumps of the postbuckling of stiffened panels,
+  where `NL_method='NR'` stops at `minInc` and the arc-length methods may
+  turn back along the fold. Each increment is solved in up to three
+  stages: the Newton-Raphson iterations from the extrapolated predictor;
+  if they fail, the iterations on the equilibrium with the viscous forces
+  `(mu/dlambda) D (c - c_n)` added, `D` the absolute values of the diagonal
+  of the linear stiffness matrix and the load factor the pseudo-time; if
+  these converge, the Newton-Raphson iterations without viscous forces
+  again, from the damped state, such that the accepted state is an
+  equilibrium to the tolerance of the convergence criteria. When the
+  correction fails the damped state is accepted with a warning; when the
+  damped iterations fail the increment is cut. All the options of
+  `NL_method='NR'` apply (convergence criteria, modified Newton-Raphson,
+  line search, every `linear_solver`, constraints and their values,
+  inertia, `on_converged`, `stop_criterion`, `final_load_factor`, restart).
+- `Analysis.stabilization_factor`, the dimensionless factor `mu` of the
+  viscous forces, default `1e-5`.
+- `Analysis.stabilization_max_iter` (default `25`) and
+  `Analysis.stabilization_divergence_factor` (default `1e3`): each stage
+  of `'stabilized_NR'` stops after that many corrections or when its
+  residual grows by that factor over its first value, without the
+  too-slow check of `'NR'`, which stops iterations that converge slowly
+  near a mode jump; new `newton_raphson._check_divergence_stabilized`.
+- `Analysis.stabilization_inc_growth` (default `1.5`) and
+  `Analysis.stabilization_inc_growth_max_iter` (default `6`): with
+  `'stabilized_NR'` the load increment grows by that factor after an
+  increment solved by the plain iterations within that many corrections,
+  also after a cut, and is kept otherwise.
+- `Analysis.stabilization_status`: for each accepted increment of
+  `'stabilized_NR'`, `'undamped'`, `'corrected'` (an equilibrium reached
+  from the damped state) or `'damped'` (only the damped iterations
+  converged: not an equilibrium); `Analysis.damped_residuals`: the relative
+  residual of the undamped equilibrium of the `'damped'` states, `None` for
+  the others. Both are empty for the other methods.
+- `newton_raphson._NR_iterations` accepts the coefficients of viscous forces,
+  `viscous`, the iteration control `control` and the dictionary `info`
+  of the number of iterations, used by the new solver; without them it
+  is unchanged.
+
+### Documentation
+
+- The theory of the stabilized solver in the `Notes` of
+  `stabilized_newton_raphson._solver_stabilized_NR`: the equations, the
+  algorithm, the meaning of the status, and what the scheme does not
+  guarantee (the equilibrium after a jump need not be the one of a dynamic
+  process, stability is not checked); a new API page and a section on folds
+  and mode jumps under load control in the page on convergence.
+- New notebook `notebooks/ex_stabilized_newton_raphson.ipynb`: the von Mises
+  truss loaded beyond its limit load, where Newton-Raphson stops at the
+  limit point and the stabilized solver reaches the closed-form equilibrium
+  on the inverted configuration, with a case of damped-only states.
+- The `Notes` of `Analysis` describe `convergence='relative'` without
+  naming earlier versions.
+
+### Tests
+
+- New `tests/test_stabilized_newton_raphson.py`: the same increments and
+  solutions as `NL_method='NR'` on a problem without instability; the limit
+  point of the von Mises truss passed where Newton-Raphson stops, every
+  accepted state an undamped equilibrium; the damped-only states and their
+  residual, also with the correction prevented; every linear solver; the
+  constraint values; the restart and `on_converged`; dense matrices; the
+  iteration control of the stages and the growth of the increments; the
+  validation of the `stabilization_*` options.
+
 ## 0.13.2 (2026-11-28)
 
 ### Added
