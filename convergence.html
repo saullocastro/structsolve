@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Convergence and troubleshooting of non-linear analyses &#8212; structsolve 0.13.2 documentation</title>
+    <title>Convergence and troubleshooting of non-linear analyses &#8212; structsolve 0.14.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=8399f5db"></script>
+    <script src="_static/documentation_options.js?v=9e420a66"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -52,7 +52,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.2" />
+  <meta name="docsearch:version" content="0.14.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -120,7 +120,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.2 documentation</p>
+    <p class="title logo__title">structsolve 0.14.0 documentation</p>
   
 </a></div>
     
@@ -235,6 +235,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_stabilized_newton_raphson.html">
+    Stabilized Newton-Raphson method past a limit point
   </a>
 </li>
 
@@ -478,6 +485,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_stabilized_newton_raphson.html">
+    Stabilized Newton-Raphson method past a limit point
   </a>
 </li>
 
@@ -731,6 +745,57 @@ to another branch of the equilibrium path, which a jump of the solution
 between increments reveals. The arc-length methods trace the path through
 the limit point.</p>
 </section>
+<section id="folds-and-mode-jumps-under-load-control">
+<h2>Folds and mode jumps under load control<a class="headerlink" href="#folds-and-mode-jumps-under-load-control" title="Link to this heading">#</a></h2>
+<p>In the postbuckling of stiffened panels the skin may change its buckle
+pattern between two load levels: the equilibrium path has a local fold, or
+the solution jumps to another pattern, and near the last converged state
+there is no equilibrium at a slightly larger load factor. The
+load-controlled Newton-Raphson method then fails at every increment, down
+to <code class="docutils literal notranslate"><span class="pre">minInc</span></code>, and stops; the arc-length methods follow the fold and may
+turn back along it instead of going past the jump.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Analysis.NL_method</span> <span class="pre">=</span> <span class="pre">'stabilized_NR'</span></code>, see
+<a class="reference internal" href="stabilized_newton_raphson.html#structsolve.stabilized_newton_raphson._solver_stabilized_NR" title="structsolve.stabilized_newton_raphson._solver_stabilized_NR"><code class="xref py py-func docutils literal notranslate"><span class="pre">stabilized_newton_raphson._solver_stabilized_NR()</span></code></a>, keeps the load
+control and solves an increment that fails with viscous forces in the
+pseudo-time of the load factor,</p>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{int}(\boldsymbol{c}) + \frac{\mu}{\Delta\lambda}
+\boldsymbol{D} (\boldsymbol{c} - \boldsymbol{c}_n) - \lambda_{n+1}
+\boldsymbol{F}_{ext} = \boldsymbol{0}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{D}\)</span> the absolute values of the diagonal of the linear
+stiffness matrix, the scaling of Crisfield’s criterion, and <span class="math notranslate nohighlight">\(\mu\)</span> =
+<code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_factor</span></code>. The damped state is not an equilibrium,
+so it is corrected by the Newton-Raphson iterations without viscous
+forces, which start from it. Each accepted state has a status in
+<code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_status</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">'undamped'</span></code>: the Newton-Raphson iterations converged, as with
+<code class="docutils literal notranslate"><span class="pre">NL_method</span> <span class="pre">=</span> <span class="pre">'NR'</span></code>;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'corrected'</span></code>: they converged from the damped state, an equilibrium to
+the tolerance of the convergence criteria;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">'damped'</span></code>: only the damped iterations converged; the state is not an
+equilibrium, and <code class="docutils literal notranslate"><span class="pre">Analysis.damped_residuals</span></code> gives its relative
+residual, the viscous forces measured by the convergence criterion.</p></li>
+</ul>
+<p>Near a mode jump the iterations may converge slowly, with a residual that
+stagnates for several iterations; the three stages therefore stop only
+after <code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_max_iter</span></code> corrections or when the residual
+grows by <code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_divergence_factor</span></code>, without the
+too-slow check of <code class="docutils literal notranslate"><span class="pre">NL_method</span> <span class="pre">=</span> <span class="pre">'NR'</span></code>, and the load increment grows by
+<code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_inc_growth</span></code> only after an increment that the
+plain iterations solved within a few corrections.</p>
+<p>The path is then a sequence of equilibria joined by jumps where the
+status is <code class="docutils literal notranslate"><span class="pre">'corrected'</span></code>, with possibly some <code class="docutils literal notranslate"><span class="pre">'damped'</span></code> states in
+between, whose stresses and displacements must not be read as those of an
+equilibrium. The method finds an equilibrium beyond the jump, not
+necessarily the one that a dynamic analysis would reach, and it does not
+check its stability; <code class="docutils literal notranslate"><span class="pre">Analysis.inertia</span></code> records the inertia of the
+tangent stiffness matrix at the accepted states. A larger <span class="math notranslate nohighlight">\(\mu\)</span>
+stabilizes more and moves the damped state less within one increment;
+which states are corrected, and the number of increments, depend on <span class="math notranslate nohighlight">\(\mu\)</span>
+and on the increments, and the default <span class="math notranslate nohighlight">\(\mu = 10^{-5}\)</span> may need to be
+changed for a given model.</p>
+</section>
 <section id="checking-the-tangent-stiffness-matrix">
 <h2>Checking the tangent stiffness matrix<a class="headerlink" href="#checking-the-tangent-stiffness-matrix" title="Link to this heading">#</a></h2>
 <p>The tangent stiffness matrix <code class="docutils literal notranslate"><span class="pre">calc_kC</span> <span class="pre">+</span> <span class="pre">calc_kG</span></code> must be the derivative
@@ -853,6 +918,37 @@ run stopped by <code class="docutils literal notranslate"><span class="pre">maxA
     <span class="n">wq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">q</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">])</span>
     <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">wq</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.5</span>
     <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">q</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The stabilized Newton-Raphson method where the plain one stops at the limit
+point:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">test_passes_limit_point_where_newton_raphson_stops</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">"""Beyond the limit load the plain solver stops at the limit point;</span>
+<span class="sd">    the stabilized solver reaches the load factor 1.0 through a corrected</span>
+<span class="sd">    state, every accepted state is an undamped equilibrium to the</span>
+<span class="sd">    tolerance, and the final state is the equilibrium on the inverted</span>
+<span class="sd">    configuration given by the arc-length method"""</span>
+    <span class="n">p0</span> <span class="o">=</span> <span class="n">truss_beyond_limit</span><span class="p">()</span>
+    <span class="n">p0</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">p0</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="o">/</span><span class="mf">1.3</span>
+
+    <span class="n">p</span> <span class="o">=</span> <span class="n">truss_beyond_limit</span><span class="p">(</span><span class="n">NL_method</span><span class="o">=</span><span class="s1">'stabilized_NR'</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">an</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">an</span>
+    <span class="k">assert</span> <span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="s1">'corrected'</span> <span class="ow">in</span> <span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span>
+    <span class="k">assert</span> <span class="s1">'damped'</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span>
+    <span class="k">for</span> <span class="n">lbd</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">zeta</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">lbd</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mf">1e-8</span>
+    <span class="c1"># the jump: the apex passes from before the limit point to the</span>
+    <span class="c1"># inverted configuration</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">1.</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">von_mises_truss</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">1.3</span><span class="p">)</span>
+    <span class="n">q</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">NL_method</span><span class="o">=</span><span class="s1">'arc_length_riks'</span><span class="p">,</span> <span class="n">initialInc</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+    <span class="n">q</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_allclose</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">q</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rtol</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Both criteria give the same increments and solutions when the forces and
@@ -1012,6 +1108,7 @@ freedom, and only it ignores the residual of a support:</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#convergence-criteria">Convergence criteria</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#increments-and-iterations">Increments and iterations</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#detecting-a-run-that-did-not-finish">Detecting a run that did not finish</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#folds-and-mode-jumps-under-load-control">Folds and mode jumps under load control</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-the-tangent-stiffness-matrix">Checking the tangent stiffness matrix</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#examples">Examples</a></li>
 </ul>

@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Stabilized Newton-Raphson method past a limit point &#8212; structsolve 0.14.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/nbsphinx-code-cells.css?v=2aa19091" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=9e420a66"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'notebooks/ex_stabilized_newton_raphson';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linear solvers of the non-linear analyses" href="ex_linear_solvers.html" />
+    <link rel="prev" title="Non-linear static analysis with the arc-length methods" href="ex_arc_length.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.14.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">structsolve 0.14.0 documentation</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Stabilized Newton-Raphson method past a limit point
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../conventions.html">
+    Notation and sign conventions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../boundary_conditions.html">
+    Boundary conditions and vector sizes
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../lb_prestress.html">
+    Linear buckling with a prestress
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigensolvers.html">
+    Eigenvalue solvers
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../eigen_accuracy.html">
+    Accuracy of the eigenvalue solutions
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../convergence.html">
+    Convergence and troubleshooting of non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../linear_solvers.html">
+    Linear solvers of the static analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../sparse_assembly.html">
+    Assembling matrices with sparseutils
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../pyodide.html">
+    Running in the browser (Pyodide)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_static.html">
+    Linear static analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_buckling.html">
+    Linear buckling analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_frequency.html">
+    Frequency analysis
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_newton_raphson.html">
+    Non-linear static analysis with the Newton-Raphson method
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_arc_length.html">
+    Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Stabilized Newton-Raphson method past a limit point
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_linear_solvers.html">
+    Linear solvers of the non-linear analyses
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_follower_loads.html">
+    Follower loads and unsymmetric matrices
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="ex_prescribed_displacements.html">
+    Prescribed displacements imposed exactly
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorial_von_mises_truss.html">
+    Tutorial: static, buckling, frequency and non-linear analyses of a von Mises truss
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="simo1990_cylinder_postbuckling.html">
+    Post-buckling of an axially compressed cylinder: Simo, Fox and Rifai (1990)
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../documentation_levels.html">
+    How the documentation is organised
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../changelog.html">
+    Changelog
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item pst-sidebar-collapse"><button type="button" id="pst-collapse-sidebar-button" aria-expanded="true" aria-controls="pst-primary-sidebar">
+  <svg class="pst-icon" role="img" aria-hidden="true" focusable="false" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+    <path fill="currentColor" d="M3 15.5C2.36232 15.5 1.74874 15.2564 1.28478 14.8189C0.820828 14.3815 0.541576 13.7832 0.504167 13.1467L0.5 13L0.5 3C0.499965 2.36232 0.743605 1.74874 1.18107 1.28478C1.61854 0.820828 2.21676 0.541576 2.85333 0.504167L3 0.5L13 0.5C13.6377 0.499965 14.2513 0.743605 14.7152 1.18107C15.1792 1.61854 15.4584 2.21676 15.4958 2.85333L15.5 3L15.5 13C15.5 13.6377 15.2564 14.2513 14.8189 14.7152C14.3815 15.1792 13.7832 15.4584 13.1467 15.4958L13 15.5L3 15.5ZM3 13.8333L10.5 13.8333L10.5 2.16667L3 2.16667C2.79589 2.16669 2.59889 2.24163 2.44636 2.37726C2.29383 2.5129 2.19638 2.69979 2.1725 2.9025L2.16667 3L2.16667 13C2.16669 13.2041 2.24163 13.4011 2.37726 13.5536C2.5129 13.7062 2.69979 13.8036 2.9025 13.8275L3 13.8333ZM6.65583 10.325L6.5775 10.2558L4.91083 8.58917C4.76735 8.44567 4.68116 8.25476 4.66843 8.05223C4.65569 7.84971 4.71729 7.6495 4.84167 7.48917L4.91083 7.41083L6.5775 5.74417C6.72747 5.59471 6.9287 5.50794 7.14032 5.50148C7.35194 5.49502 7.55809 5.56935 7.7169 5.70937C7.8757 5.8494 7.97525 6.04463 7.99533 6.25539C8.01541 6.46616 7.95451 6.67667 7.825 6.84417L7.75583 6.9225L6.67917 8L7.75583 9.0775C7.89931 9.22099 7.98551 9.41191 7.99824 9.61443C8.01097 9.81695 7.94938 10.0172 7.825 10.1775L7.75583 10.2558C7.61234 10.3993 7.42142 10.4855 7.2189 10.4982C7.01638 10.511 6.81617 10.4494 6.65583 10.325Z"/>
+  </svg>
+  <span class="pst-collapse-sidebar-label">Collapse Sidebar</span>
+  <span class="pst-expand-sidebar-label">Expand Sidebar</span>
+</button></div>
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Stabilized Newton-Raphson method past a limit point</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Stabilized-Newton-Raphson-method-past-a-limit-point">
+<h1>Stabilized Newton-Raphson method past a limit point<a class="headerlink" href="#Stabilized-Newton-Raphson-method-past-a-limit-point" title="Link to this heading">#</a></h1>
+<p>The load-controlled Newton-Raphson method fails where there is no equilibrium near the last converged state at a larger load factor: at a limit point, a local fold of the equilibrium path or a jump to another buckling pattern. <code class="docutils literal notranslate"><span class="pre">NL_method='stabilized_NR'</span></code>, described in <a class="reference internal" href="../stabilized_newton_raphson.html"><span class="doc">stabilized_newton_raphson._solver_stabilized_NR</span></a>, keeps the load control and solves each increment in up to three stages:</p>
+<ol class="arabic simple">
+<li><p>the Newton-Raphson iterations of <span class="math notranslate nohighlight">\(\boldsymbol{R} = \boldsymbol{F}_{int}(\boldsymbol{c}) - \lambda_{n+1} \boldsymbol{F}_{ext} = \boldsymbol{0}\)</span>;</p></li>
+<li><p>if they fail, the iterations of the equilibrium with viscous forces in the pseudo-time of the load factor,</p></li>
+</ol>
+<div class="math notranslate nohighlight">
+\[\boldsymbol{F}_{int}(\boldsymbol{c})
++ \frac{\mu}{\Delta\lambda} \boldsymbol{D} (\boldsymbol{c} - \boldsymbol{c}_n)
+- \lambda_{n+1} \boldsymbol{F}_{ext} = \boldsymbol{0}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\boldsymbol{D}\)</span> the absolute values of the diagonal of the linear stiffness matrix and <span class="math notranslate nohighlight">\(\mu\)</span> = <code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_factor</span></code>;</p>
+<ol class="arabic simple" start="3">
+<li><p>if these converge, the Newton-Raphson iterations of <span class="math notranslate nohighlight">\(\boldsymbol{R}\)</span> again, from the damped state.</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">Analysis.stabilization_status</span></code> records each accepted state as <code class="docutils literal notranslate"><span class="pre">'undamped'</span></code> (stage 1), <code class="docutils literal notranslate"><span class="pre">'corrected'</span></code> (stage 3), both equilibria to the tolerance, or <code class="docutils literal notranslate"><span class="pre">'damped'</span></code> (stage 3 failed), a state that is not an equilibrium, whose relative residual is in <code class="docutils literal notranslate"><span class="pre">Analysis.damped_residuals</span></code>.</p>
+<p>This notebook uses the von Mises truss of <code class="docutils literal notranslate"><span class="pre">tests/analytic_problems.py</span></code>, whose equilibrium path is known in closed form, loaded beyond its limit load.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="c1"># the helper functions of the tests are imported from the folder tests/</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'..'</span><span class="p">,</span> <span class="s1">'tests'</span><span class="p">))</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">structsolve.convergence</span><span class="w"> </span><span class="kn">import</span> <span class="n">crisfield_weights</span><span class="p">,</span> <span class="n">crisfield_zeta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">analytic_problems</span><span class="w"> </span><span class="kn">import</span> <span class="n">von_mises_truss</span>
+</pre></div>
+</div>
+</div>
+<section id="The-model-and-the-closed-form-references">
+<h2>The model and the closed-form references<a class="headerlink" href="#The-model-and-the-closed-form-references" title="Link to this heading">#</a></h2>
+<p>The apex deflection <span class="math notranslate nohighlight">\(w\)</span> (DOF 0) of the shallow truss has the internal force <span class="math notranslate nohighlight">\(f(w) = w^3 - 3 w^2 + 2 w\)</span>, and the truss is loaded through a spring of stiffness <span class="math notranslate nohighlight">\(k_s = 10\)</span> by the force <span class="math notranslate nohighlight">\(\lambda \alpha F_{lim}\)</span>, a multiple <span class="math notranslate nohighlight">\(\alpha\)</span> of the limit load <span class="math notranslate nohighlight">\(F_{lim} = 2/(3\sqrt{3})\)</span>, reached at <span class="math notranslate nohighlight">\(w_{lim} = 1 - 1/\sqrt{3}\)</span>. Along the equilibrium path <span class="math notranslate nohighlight">\(\lambda(w) = f(w)/(\alpha F_{lim})\)</span>: the load factor reaches its maximum <span class="math notranslate nohighlight">\(1/\alpha\)</span> at the limit point
+and, for <span class="math notranslate nohighlight">\(\alpha &gt; 1\)</span>, the only equilibrium at <span class="math notranslate nohighlight">\(\lambda = 1\)</span> is on the inverted configuration, the largest real root of <span class="math notranslate nohighlight">\(f(w) = \alpha F_{lim}\)</span>. Under load control the solution must jump from the limit point to the inverted configuration.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">F_LIM</span> <span class="o">=</span> <span class="mi">2</span><span class="o">/</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+<span class="n">W_LIM</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">w_final</span><span class="p">(</span><span class="n">frac</span><span class="p">):</span>
+    <span class="c1"># apex deflection at lambda = 1: the largest real root of the cubic</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roots</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="o">-</span><span class="n">frac</span><span class="o">*</span><span class="n">F_LIM</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">r</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">imag</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">zeta</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">lbd</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="c1"># Crisfield's relative residual of the undamped equilibrium</span>
+    <span class="n">fint</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">fint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">crisfield_zeta</span><span class="p">(</span><span class="n">fint</span> <span class="o">-</span> <span class="n">lbd</span><span class="o">*</span><span class="n">p</span><span class="o">.</span><span class="n">fext</span><span class="p">,</span> <span class="n">lbd</span><span class="o">*</span><span class="n">p</span><span class="o">.</span><span class="n">fext</span><span class="p">,</span> <span class="n">fint</span><span class="p">,</span>
+                          <span class="n">crisfield_weights</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kC</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">frac</span><span class="p">,</span> <span class="n">initialInc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">von_mises_truss</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">frac</span><span class="p">,</span> <span class="n">ks</span><span class="o">=</span><span class="mf">10.</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">initialInc</span><span class="o">=</span><span class="n">initialInc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">static</span><span class="p">(</span><span class="n">NLgeom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">p</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">print_states</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+    <span class="n">an</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">an</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">'inc'</span><span class="si">:</span><span class="s2">&gt;3</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'lambda'</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'w'</span><span class="si">:</span><span class="s2">&gt;8</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'status'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}</span><span class="s2">  </span><span class="si">{</span><span class="s1">'zeta'</span><span class="si">:</span><span class="s2">&gt;9</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">lbd</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">,</span>
+                                        <span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span><span class="p">)):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">3d</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">lbd</span><span class="si">:</span><span class="s1">8.5f</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">8.5f</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s1">&gt;9</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">zeta</span><span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">lbd</span><span class="p">,</span><span class="w"> </span><span class="n">c</span><span class="p">)</span><span class="si">:</span><span class="s1">9.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Newton-Raphson-stops-at-the-limit-point">
+<h2>Newton-Raphson stops at the limit point<a class="headerlink" href="#Newton-Raphson-stops-at-the-limit-point" title="Link to this heading">#</a></h2>
+<p>With <span class="math notranslate nohighlight">\(\alpha = 1.3\)</span> and load increments starting at 0.1, the plain method converges up to the limit point, <span class="math notranslate nohighlight">\(\lambda = 1/1.3 = 0.7692\)</span>, then cuts every increment down to <code class="docutils literal notranslate"><span class="pre">minInc</span></code> and stops:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frac</span> <span class="o">=</span> <span class="mf">1.3</span>
+<span class="n">nr</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">frac</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">NL_method</span><span class="o">=</span><span class="s1">'NR'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'NR: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">nr</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span><span class="si">}</span><span class="s1"> increments, last load factor '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">nr</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> (limit point </span><span class="si">{</span><span class="mi">1</span><span class="o">/</span><span class="n">frac</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">), '</span>
+      <span class="sa">f</span><span class="s1">'w = </span><span class="si">{</span><span class="n">nr</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> (w_lim = </span><span class="si">{</span><span class="n">W_LIM</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">), '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">nr</span><span class="o">.</span><span class="n">fint_calls</span><span class="p">)</span><span class="si">}</span><span class="s1"> evaluations of fint'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+NR: 12 increments, last load factor 0.76918 (limit point 0.76923), w = 0.41870 (w_lim = 0.42265), 152 evaluations of fint
+</pre></div></div>
+</div>
+</section>
+<section id="The-stabilized-method-passes-it">
+<h2>The stabilized method passes it<a class="headerlink" href="#The-stabilized-method-passes-it" title="Link to this heading">#</a></h2>
+<p>The same analysis with <code class="docutils literal notranslate"><span class="pre">NL_method='stabilized_NR'</span></code> and the default <span class="math notranslate nohighlight">\(\mu = 10^{-5}\)</span>: the increment that fails at stage 1 converges with the viscous forces and is corrected to the equilibrium on the inverted configuration, after which the plain iterations converge again up to <span class="math notranslate nohighlight">\(\lambda = 1\)</span>. Every accepted state satisfies the undamped equilibrium, <span class="math notranslate nohighlight">\(\zeta \le\)</span> <code class="docutils literal notranslate"><span class="pre">relTOL</span></code> <span class="math notranslate nohighlight">\(= 10^{-9}\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">st</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">frac</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">NL_method</span><span class="o">=</span><span class="s1">'stabilized_NR'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'stabilized_NR: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span><span class="si">}</span><span class="s1"> increments, '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">fint_calls</span><span class="p">)</span><span class="si">}</span><span class="s1"> evaluations of fint, '</span>
+      <span class="sa">f</span><span class="s1">'stabilization_factor = </span><span class="si">{</span><span class="n">st</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_factor</span><span class="si">:</span><span class="s1">g</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">print_states</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+<span class="n">w_ref</span> <span class="o">=</span> <span class="n">w_final</span><span class="p">(</span><span class="n">frac</span><span class="p">)</span>
+<span class="n">w</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">w at lambda = 1: computed </span><span class="si">{</span><span class="n">w</span><span class="si">:</span><span class="s1">.10f</span><span class="si">}</span><span class="s1">, closed form </span><span class="si">{</span><span class="n">w_ref</span><span class="si">:</span><span class="s1">.10f</span><span class="si">}</span><span class="s1">, '</span>
+      <span class="sa">f</span><span class="s1">'rel. diff. </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">w_ref</span><span class="p">)</span><span class="o">/</span><span class="n">w_ref</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+stabilized_NR: 6 increments, 113 evaluations of fint, stabilization_factor = 1e-05
+inc    lambda         w     status       zeta
+  0   0.10000   0.02603   undamped   1.37e-10
+  1   0.25000   0.06966   undamped   2.22e-16
+  2   0.47500   0.15155   undamped   4.64e-12
+  3   0.64375   0.24149   undamped   1.40e-15
+  4   0.89688   2.17549  corrected   7.57e-13
+  5   1.00000   2.19160   undamped   1.64e-15
+
+w at lambda = 1: computed 2.1916014756, closed form 2.1916014756, rel. diff. 4.05e-16
+</pre></div></div>
+</div>
+</section>
+<section id="Damped-only-states">
+<h2>Damped-only states<a class="headerlink" href="#Damped-only-states" title="Link to this heading">#</a></h2>
+<p>The result depends on the load, on <span class="math notranslate nohighlight">\(\mu\)</span> and on the increments. With <span class="math notranslate nohighlight">\(\alpha = 1.05\)</span>, load increments starting at 0.2 and the default <span class="math notranslate nohighlight">\(\mu\)</span>, the plain method stops at the limit point, <span class="math notranslate nohighlight">\(\lambda = 1/1.05 = 0.9524\)</span>, and the stabilized method passes it, but the correction fails at two increments after the limit point: their damped states are kept and flagged. Their residual is the viscous force,
+<span class="math notranslate nohighlight">\(\boldsymbol{R} = -(\mu/\Delta\lambda) \boldsymbol{D} (\boldsymbol{c} - \boldsymbol{c}_n)\)</span> to the tolerance, and <code class="docutils literal notranslate"><span class="pre">damped_residuals</span></code> gives its relative size, here 0.11 % and 0.31 %: these states are not equilibria, and they lie off the equilibrium path, beyond the limit load. From the last damped state the plain iterations of the next increment converge on the inverted configuration, and the analysis reaches its equilibrium at <span class="math notranslate nohighlight">\(\lambda = 1\)</span>:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">frac2</span> <span class="o">=</span> <span class="mf">1.05</span>
+<span class="n">dm</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">frac2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">NL_method</span><span class="o">=</span><span class="s1">'stabilized_NR'</span><span class="p">)</span>
+<span class="n">mu</span> <span class="o">=</span> <span class="n">dm</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_factor</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'stabilized_NR: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dm</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">)</span><span class="si">}</span><span class="s1"> increments, '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dm</span><span class="o">.</span><span class="n">fint_calls</span><span class="p">)</span><span class="si">}</span><span class="s1"> evaluations of fint'</span><span class="p">)</span>
+<span class="n">print_states</span><span class="p">(</span><span class="n">dm</span><span class="p">)</span>
+<span class="n">nr2</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">frac2</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">NL_method</span><span class="o">=</span><span class="s1">'NR'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'NR: last load factor </span><span class="si">{</span><span class="n">nr2</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">dm</span><span class="o">.</span><span class="n">kC</span><span class="p">))</span>
+<span class="n">an</span> <span class="o">=</span> <span class="n">dm</span><span class="o">.</span><span class="n">an</span>
+<span class="n">lbds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span> <span class="o">+</span> <span class="n">an</span><span class="o">.</span><span class="n">increments</span>
+<span class="n">cs</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span> <span class="o">+</span> <span class="n">an</span><span class="o">.</span><span class="n">cs</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s1">'damped'</span><span class="p">:</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">dm</span><span class="o">.</span><span class="n">fint</span><span class="p">(</span><span class="n">cs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">lbds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">dm</span><span class="o">.</span><span class="n">fext</span>
+        <span class="n">viscous</span> <span class="o">=</span> <span class="n">mu</span><span class="o">/</span><span class="p">(</span><span class="n">lbds</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">lbds</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">*</span><span class="n">D</span><span class="o">*</span><span class="p">(</span><span class="n">cs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">cs</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'inc </span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">2d</span><span class="si">}</span><span class="s1">: damped_residuals = </span><span class="si">{</span><span class="n">an</span><span class="o">.</span><span class="n">damped_residuals</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">.3e</span><span class="si">}</span><span class="s1">, '</span>
+              <span class="sa">f</span><span class="s1">'max|R + viscous force| / max|viscous force| = '</span>
+              <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">R</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">viscous</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">viscous</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">.1e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">w_ref2</span> <span class="o">=</span> <span class="n">w_final</span><span class="p">(</span><span class="n">frac2</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">w at lambda = 1: computed </span><span class="si">{</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.10f</span><span class="si">}</span><span class="s1">, closed form '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">w_ref2</span><span class="si">:</span><span class="s1">.10f</span><span class="si">}</span><span class="s1">, rel. diff. </span><span class="si">{</span><span class="nb">abs</span><span class="p">(</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">w_ref2</span><span class="p">)</span><span class="o">/</span><span class="n">w_ref2</span><span class="si">:</span><span class="s1">.2e</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+stabilized_NR: 14 increments, 377 evaluations of fint
+inc    lambda         w     status       zeta
+  0   0.20000   0.04317   undamped   9.30e-16
+  1   0.50000   0.12269   undamped   1.47e-12
+  2   0.95000   0.39924   undamped   1.84e-15
+  3   0.95313   0.40846     damped   1.14e-03
+  4   0.95625   0.43353     damped   3.08e-03
+  5   0.95781   2.15543   undamped   3.86e-13
+  6   0.95938   2.15564   undamped   7.21e-15
+  7   0.96094   2.15585   undamped   9.44e-14
+  8   0.96328   2.15617   undamped   3.13e-13
+  9   0.96680   2.15664   undamped   1.48e-12
+ 10   0.97207   2.15734   undamped   7.43e-12
+ 11   0.97998   2.15840   undamped   3.70e-11
+ 12   0.99185   2.15998   undamped   1.83e-10
+ 13   1.00000   2.16107   undamped   8.65e-11
+NR: last load factor 0.95230
+
+inc  3: damped_residuals = 1.142e-03, max|R + viscous force| / max|viscous force| = 1.0e-06
+inc  4: damped_residuals = 3.083e-03, max|R + viscous force| / max|viscous force| = 8.8e-09
+
+w at lambda = 1: computed 2.1610686292, closed form 2.1610686292, rel. diff. 5.82e-12
+</pre></div></div>
+</div>
+</section>
+<section id="The-paths">
+<h2>The paths<a class="headerlink" href="#The-paths" title="Link to this heading">#</a></h2>
+<p>The closed-form equilibrium path <span class="math notranslate nohighlight">\(\lambda(w)\)</span>, with the states of the plain and of the stabilized method. The stabilized states jump at the limit load from the softening branch to the inverted configuration; the damped-only states lie off the equilibrium path.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">ws</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">2.4</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+<span class="n">markers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'undamped'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'o'</span><span class="p">,</span> <span class="s1">'C0'</span><span class="p">),</span> <span class="s1">'corrected'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'s'</span><span class="p">,</span> <span class="s1">'C3'</span><span class="p">),</span>
+           <span class="s1">'damped'</span><span class="p">:</span> <span class="p">(</span><span class="s1">'x'</span><span class="p">,</span> <span class="s1">'k'</span><span class="p">)}</span>
+<span class="k">for</span> <span class="n">ax</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">title</span> <span class="ow">in</span> <span class="p">((</span><span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frac</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'$\alpha = 1.3$'</span><span class="p">),</span>
+                        <span class="p">(</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">frac2</span><span class="p">,</span> <span class="n">dm</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'$\alpha = 1.05$'</span><span class="p">)):</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ws</span><span class="p">,</span> <span class="p">(</span><span class="n">ws</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">ws</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ws</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">f</span><span class="o">*</span><span class="n">F_LIM</span><span class="p">),</span> <span class="s1">'C7-'</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s1">'closed form'</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span> <span class="ow">in</span> <span class="n">markers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="p">[(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">l</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">si</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">,</span>
+                                             <span class="n">p</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span><span class="p">)</span>
+               <span class="k">if</span> <span class="n">si</span> <span class="o">==</span> <span class="n">s</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">pts</span><span class="p">:</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pts</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">s</span><span class="p">,</span> <span class="n">mfc</span><span class="o">=</span><span class="s1">'none'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'apex deflection $w$'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">1.2</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">nr</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">],</span> <span class="n">nr</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="s1">'.'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'C1'</span><span class="p">,</span>
+             <span class="n">label</span><span class="o">=</span><span class="s1">'NR'</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'load factor $\lambda$'</span><span class="p">)</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/notebooks_ex_stabilized_newton_raphson_11_0.png" src="../_images/notebooks_ex_stabilized_newton_raphson_11_0.png" />
+</div>
+</div>
+</section>
+<section id="Stability-of-the-accepted-states">
+<h2>Stability of the accepted states<a class="headerlink" href="#Stability-of-the-accepted-states" title="Link to this heading">#</a></h2>
+<p>The scheme finds an equilibrium beyond the jump, not necessarily the one a dynamic process reaches, and it does not check its stability. With <code class="docutils literal notranslate"><span class="pre">inertia=True</span></code> the sign of the determinant of the tangent stiffness matrix is recorded at every accepted state. It is <span class="math notranslate nohighlight">\(+1\)</span> at every state here, which a stable state requires; an even number of negative eigenvalues gives the same sign, and their count requires <code class="docutils literal notranslate"><span class="pre">linear_solver='pardiso'</span></code> or <code class="docutils literal notranslate"><span class="pre">inertia_num_eigvals</span></code>.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">si</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">frac</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">NL_method</span><span class="o">=</span><span class="s1">'stabilized_NR'</span><span class="p">,</span> <span class="n">inertia</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">lbd</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">si</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">increments</span><span class="p">,</span> <span class="n">si</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">cs</span><span class="p">,</span>
+                        <span class="n">si</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">stabilization_status</span><span class="p">,</span> <span class="n">si</span><span class="o">.</span><span class="n">an</span><span class="o">.</span><span class="n">det_signs</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'lambda </span><span class="si">{</span><span class="n">lbd</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">, w </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">8.5f</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">s</span><span class="si">:</span><span class="s1">&gt;9</span><span class="si">}</span><span class="s1">, det sign </span><span class="si">{</span><span class="n">d</span><span class="si">:</span><span class="s1">+d</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+lambda 0.10000, w  0.02603,  undamped, det sign +1
+lambda 0.25000, w  0.06966,  undamped, det sign +1
+lambda 0.47500, w  0.15155,  undamped, det sign +1
+lambda 0.64375, w  0.24149,  undamped, det sign +1
+lambda 0.89688, w  2.17549, corrected, det sign +1
+lambda 1.00000, w  2.19160,  undamped, det sign +1
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ex_arc_length.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Non-linear static analysis with the arc-length methods</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ex_linear_solvers.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Linear solvers of the non-linear analyses</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-model-and-the-closed-form-references">The model and the closed-form references</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Newton-Raphson-stops-at-the-limit-point">Newton-Raphson stops at the limit point</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-stabilized-method-passes-it">The stabilized method passes it</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Damped-only-states">Damped-only states</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#The-paths">The paths</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Stability-of-the-accepted-states">Stability of the accepted states</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  <div class="tocsection sourcelink">
+    <a href="../_sources/notebooks/ex_stabilized_newton_raphson.nblink.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2012-2026, Saullo G. P. Castro.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

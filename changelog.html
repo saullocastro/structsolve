@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Changelog &#8212; structsolve 0.13.2 documentation</title>
+    <title>Changelog &#8212; structsolve 0.14.0 documentation</title>
   
   
   
@@ -37,7 +37,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=8399f5db"></script>
+    <script src="_static/documentation_options.js?v=9e420a66"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
@@ -49,7 +49,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.13.2" />
+  <meta name="docsearch:version" content="0.14.0" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -117,7 +117,7 @@
   
   
   
-    <p class="title logo__title">structsolve 0.13.2 documentation</p>
+    <p class="title logo__title">structsolve 0.14.0 documentation</p>
   
 </a></div>
     
@@ -232,6 +232,13 @@
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_arc_length.html">
     Non-linear static analysis with the arc-length methods
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="notebooks/ex_stabilized_newton_raphson.html">
+    Stabilized Newton-Raphson method past a limit point
   </a>
 </li>
 
@@ -480,6 +487,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="notebooks/ex_stabilized_newton_raphson.html">
+    Stabilized Newton-Raphson method past a limit point
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="notebooks/ex_linear_solvers.html">
     Linear solvers of the non-linear analyses
   </a>
@@ -644,6 +658,78 @@
 <p>The changes of each version, from the file <code class="docutils literal notranslate"><span class="pre">CHANGELOG.md</span></code> of the
 <a class="reference external" href="https://github.com/saullocastro/structsolve/blob/main/CHANGELOG.md">repository</a>:</p>
 <div class="highlight-markdown notranslate"><div class="highlight"><pre><span></span><span class="gh"># Changelog</span>
+
+<span class="gu">## 0.14.0 (2026-11-28)</span>
+
+<span class="gu">### Added</span>
+
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.NL_method='stabilized_NR'`</span>, the new module
+  <span class="sb">`structsolve.stabilized_newton_raphson`</span>: a load-controlled Newton-Raphson
+  solver that passes the load factors at which the plain iterations fail,
+  e.g. local folds and mode jumps of the postbuckling of stiffened panels,
+  where <span class="sb">`NL_method='NR'`</span> stops at <span class="sb">`minInc`</span> and the arc-length methods may
+  turn back along the fold. Each increment is solved in up to three
+  stages: the Newton-Raphson iterations from the extrapolated predictor;
+  if they fail, the iterations on the equilibrium with the viscous forces
+  <span class="sb">`(mu/dlambda) D (c - c_n)`</span> added, <span class="sb">`D`</span> the absolute values of the diagonal
+  of the linear stiffness matrix and the load factor the pseudo-time; if
+  these converge, the Newton-Raphson iterations without viscous forces
+  again, from the damped state, such that the accepted state is an
+  equilibrium to the tolerance of the convergence criteria. When the
+  correction fails the damped state is accepted with a warning; when the
+  damped iterations fail the increment is cut. All the options of
+  <span class="sb">`NL_method='NR'`</span> apply (convergence criteria, modified Newton-Raphson,
+  line search, every <span class="sb">`linear_solver`</span>, constraints and their values,
+  inertia, <span class="sb">`on_converged`</span>, <span class="sb">`stop_criterion`</span>, <span class="sb">`final_load_factor`</span>, restart).
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.stabilization_factor`</span>, the dimensionless factor <span class="sb">`mu`</span> of the
+  viscous forces, default <span class="sb">`1e-5`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.stabilization_max_iter`</span> (default <span class="sb">`25`</span>) and
+  <span class="sb">`Analysis.stabilization_divergence_factor`</span> (default <span class="sb">`1e3`</span>): each stage
+  of <span class="sb">`'stabilized_NR'`</span> stops after that many corrections or when its
+  residual grows by that factor over its first value, without the
+  too-slow check of <span class="sb">`'NR'`</span>, which stops iterations that converge slowly
+  near a mode jump; new <span class="sb">`newton_raphson._check_divergence_stabilized`</span>.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.stabilization_inc_growth`</span> (default <span class="sb">`1.5`</span>) and
+  <span class="sb">`Analysis.stabilization_inc_growth_max_iter`</span> (default <span class="sb">`6`</span>): with
+  <span class="sb">`'stabilized_NR'`</span> the load increment grows by that factor after an
+  increment solved by the plain iterations within that many corrections,
+  also after a cut, and is kept otherwise.
+<span class="k">-</span><span class="w"> </span><span class="sb">`Analysis.stabilization_status`</span>: for each accepted increment of
+  <span class="sb">`'stabilized_NR'`</span>, <span class="sb">`'undamped'`</span>, <span class="sb">`'corrected'`</span> (an equilibrium reached
+  from the damped state) or <span class="sb">`'damped'`</span> (only the damped iterations
+  converged: not an equilibrium); <span class="sb">`Analysis.damped_residuals`</span>: the relative
+  residual of the undamped equilibrium of the <span class="sb">`'damped'`</span> states, <span class="sb">`None`</span> for
+  the others. Both are empty for the other methods.
+<span class="k">-</span><span class="w"> </span><span class="sb">`newton_raphson._NR_iterations`</span> accepts the coefficients of viscous forces,
+  <span class="sb">`viscous`</span>, the iteration control <span class="sb">`control`</span> and the dictionary <span class="sb">`info`</span>
+  of the number of iterations, used by the new solver; without them it
+  is unchanged.
+
+<span class="gu">### Documentation</span>
+
+<span class="k">-</span><span class="w"> </span>The theory of the stabilized solver in the <span class="sb">`Notes`</span> of
+  <span class="sb">`stabilized_newton_raphson._solver_stabilized_NR`</span>: the equations, the
+  algorithm, the meaning of the status, and what the scheme does not
+  guarantee (the equilibrium after a jump need not be the one of a dynamic
+  process, stability is not checked); a new API page and a section on folds
+  and mode jumps under load control in the page on convergence.
+<span class="k">-</span><span class="w"> </span>New notebook <span class="sb">`notebooks/ex_stabilized_newton_raphson.ipynb`</span>: the von Mises
+  truss loaded beyond its limit load, where Newton-Raphson stops at the
+  limit point and the stabilized solver reaches the closed-form equilibrium
+  on the inverted configuration, with a case of damped-only states.
+<span class="k">-</span><span class="w"> </span>The <span class="sb">`Notes`</span> of <span class="sb">`Analysis`</span> describe <span class="sb">`convergence='relative'`</span> without
+  naming earlier versions.
+
+<span class="gu">### Tests</span>
+
+<span class="k">-</span><span class="w"> </span>New <span class="sb">`tests/test_stabilized_newton_raphson.py`</span>: the same increments and
+  solutions as <span class="sb">`NL_method='NR'`</span> on a problem without instability; the limit
+  point of the von Mises truss passed where Newton-Raphson stops, every
+  accepted state an undamped equilibrium; the damped-only states and their
+  residual, also with the correction prevented; every linear solver; the
+  constraint values; the restart and <span class="sb">`on_converged`</span>; dense matrices; the
+  iteration control of the stages and the growth of the increments; the
+  validation of the <span class="sb">`stabilization_*`</span> options.
 
 <span class="gu">## 0.13.2 (2026-11-28)</span>
 
