@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.13.1 (2026-11-26)
+## 0.13.2 (2026-11-28)
 
 ### Added
 
@@ -58,6 +58,10 @@
   without the version of structsolve or of panels and without what
   previous versions did; `notebooks/simo1990_cylinder_postbuckling.ipynb`
   no longer prints the version of panels.
+- `notebooks/ex_follower_loads.ipynb` is stored with the outputs of the
+  present version: the arc-length paths of the inertia example end once at
+  the final load factor, without the duplicated end point of the previous
+  outputs, and the text no longer describes that point.
 
 ### Tests
 
