@@ -47,7 +47,7 @@ collected after each call, so that the WebAssembly heap is not exhausted.
 Citing this library
 ===================
 
-Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.13.2). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
+Saullo G. P. Castro (2026). Structural analysis solvers tailored for semi-analytical models (Version 0.14.0). Zenodo. DOI: https://doi.org/10.5281/zenodo.2581212.
 
 
 Documentation
@@ -61,6 +61,10 @@ History
 =======
 
 See [CHANGELOG.md](CHANGELOG.md) for the details of each version.
+
+* version 0.14.0 (2026-11-28)
+    - `Analysis.NL_method='stabilized_NR'`: load-controlled Newton-Raphson that passes the increments where the plain iterations fail, e.g. local folds and mode jumps of postbuckled stiffened panels, with viscous forces in the pseudo-time of the load factor (`Analysis.stabilization_factor`) and a correction of the damped state to the undamped equilibrium; the status of each accepted state (`'undamped'`, `'corrected'`, or `'damped'`, not an equilibrium) in `Analysis.stabilization_status` and the residual of the damped-only states in `Analysis.damped_residuals`
+    - New notebook `ex_stabilized_newton_raphson`, new tests `tests/test_stabilized_newton_raphson.py`
 
 * version 0.13.2 (2026-11-28)
     - `Analysis.linear_solver='pardiso_lu'`: the unsymmetric LU factorization of MKL PARDISO with the analysis kept per sparsity pattern and every solution checked by its residual, with fallbacks to the improved two-level factorization of oneMKL and to SuperLU
