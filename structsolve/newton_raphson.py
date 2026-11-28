@@ -382,6 +382,66 @@ def _check_divergence(an, Rnorm, Rnorms, iteration, silent=False, Rrel=None):
     return False
 
 
+def _check_divergence_stabilized(Rnorm, Rnorms, iteration, control,
+                                 silent=False):
+    r"""Check if the iterations of a stage of
+    ``NL_method='stabilized_NR'`` must be stopped without convergence
+
+    Used instead of :func:`._check_divergence` by the three stages of an
+    increment of ``NL_method='stabilized_NR'``, see
+    :func:`._solver_NR` and :func:`._stabilized_iterations`. The iterations
+    are stopped when the residual is not finite, when ``max_iter``
+    corrections were performed, or when the residual norm is larger than
+    ``divergence_factor`` times the residual norm of the first iteration,
+    at any iteration; there is no too-slow check.
+
+    Parameters
+    ----------
+    Rnorm : float
+        Norm of the residual at the current iteration, the norm of the
+        convergence criterion, see :func:`._check_convergence`.
+    Rnorms : list
+        Norms of the residual at the previous iterations of the stage, the
+        current norm is appended to it.
+    iteration : int
+        Current iteration, starting at 1.
+    control : tuple
+        ``(max_iter, divergence_factor)``, ``an.stabilization_max_iter``
+        and ``an.stabilization_divergence_factor``.
+    silent : bool, optional
+        A boolean to tell whether the log messages should be printed.
+
+    Returns
+    -------
+    stop : bool
+        Whether the iterations must be stopped.
+
+    Notes
+    -----
+    With `r_i` the residual norm at the iteration `i` of the stage, `r_1`
+    being the residual of its starting point, `N` = ``max_iter`` and `f` =
+    ``divergence_factor``, the iterations are stopped at the iteration `j`
+    when `r_j` is not finite, when `j > N`, or when `r_j > f r_1`. Unlike
+    :func:`._check_divergence`, the divergence check is not delayed and no
+    iteration is stopped for a residual that stagnates, which happens over
+    several iterations before the convergence near a mode jump.
+
+    """
+    max_iter, factor = control
+    if not np.isfinite(Rnorm):
+        warn('Diverged - residual is not finite', level=2, silent=silent)
+        return True
+    if iteration > max_iter:
+        warn('Maximum number of iterations achieved!', level=2, silent=silent)
+        return True
+    Rnorms.append(Rnorm)
+    if Rnorm > factor*Rnorms[0]:
+        warn('Diverged - residual increased %1.0e times since the start of '
+             'the stage' % factor, level=2, silent=silent)
+        return True
+    return False
+
+
 def _converged_state(an, c, lbd, silent=False):
     r"""Factorization of the tangent stiffness matrix at a converged state,
     recording its inertia
@@ -638,7 +698,7 @@ def _stop(an, silent=False):
 
 def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                    lbd_dependent=False, q=None, w=None, K0_abs=None,
-                   proj=None, viscous=None):
+                   proj=None, viscous=None, control=None, info=None):
     r"""Newton-Raphson iterations at a fixed load factor
 
     Corrects the predictor ``dc`` at the load factor ``total`` until the
@@ -700,6 +760,13 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
         in units of force per unit of each degree of freedom, such that
         ``viscous*dc`` is added to the internal force vector. Default is
         ``None``, without viscous forces.
+    control : tuple or None, optional
+        ``(max_iter, divergence_factor)``: the iterations are stopped by
+        :func:`._check_divergence_stabilized` instead of
+        :func:`._check_divergence`. Default is ``None``.
+    info : dict or None, optional
+        When given, ``info['iterations']`` is set to the number of
+        residual evaluations of the iterations, the last one included.
 
     Returns
     -------
@@ -838,10 +905,16 @@ def _NR_iterations(an, c, dc, total, fext, kT0=None, silent=False,
                 fext_total, q_ref=q_ref, w=w, Kc_abs=K0_abs @ np.abs(c + dc),
                 full_output=True)
         _log_iteration(an, iteration, R, Rrel, silent, roundoff=roundoff)
+        if info is not None:
+            info['iterations'] = iteration
         if conv:
             return True, dc, q
-        if _check_divergence(an, Rnorm, Rnorms, iteration, silent=silent,
-                             Rrel=Rrel):
+        if control is None:
+            if _check_divergence(an, Rnorm, Rnorms, iteration,
+                                 silent=silent, Rrel=Rrel):
+                return False, dc, q
+        elif _check_divergence_stabilized(Rnorm, Rnorms, iteration,
+                                          control, silent=silent):
             return False, dc, q
 
         # the factorization of the tangent stiffness matrix is reused while
@@ -913,9 +986,51 @@ def _stabilization_factor(an):
     return float(mu)
 
 
+def _stabilization_control(an):
+    r"""The iteration control of the damped and correction stages and the
+    increment growth of ``NL_method='stabilized_NR'``, validated
+
+    Returns
+    -------
+    control : tuple
+        ``(an.stabilization_max_iter, an.stabilization_divergence_factor)``,
+        see :func:`._check_divergence_stabilized`.
+    growth : tuple
+        ``(an.stabilization_inc_growth,
+        an.stabilization_inc_growth_max_iter)``.
+
+    Raises
+    ------
+    ValueError
+        When ``stabilization_max_iter`` or
+        ``stabilization_inc_growth_max_iter`` is not a positive integer,
+        or when ``stabilization_divergence_factor`` or
+        ``stabilization_inc_growth`` is not a finite number larger than or
+        equal to 1.
+
+    """
+    out = []
+    for name in ('stabilization_max_iter',
+                 'stabilization_inc_growth_max_iter'):
+        v = getattr(an, name)
+        if (isinstance(v, bool) or not np.isscalar(v) or not np.isfinite(v)
+                or int(v) != v or v < 1):
+            raise ValueError('Analysis.%s must be a positive integer' % name)
+        out.append(int(v))
+    for name in ('stabilization_divergence_factor',
+                 'stabilization_inc_growth'):
+        v = getattr(an, name)
+        if (isinstance(v, bool) or not np.isscalar(v) or not np.isfinite(v)
+                or v < 1):
+            raise ValueError('Analysis.%s must be a finite number larger '
+                             'than or equal to 1' % name)
+        out.append(float(v))
+    return (out[0], out[2]), (out[3], out[1])
+
+
 def _stabilized_iterations(an, c, dc, total, viscous, fext, silent=False,
                            lbd_dependent=False, q=None, w=None, K0_abs=None,
-                           proj=None):
+                           proj=None, control=None):
     r"""Stabilized iterations of a step at which Newton-Raphson failed,
     followed by the correction to the undamped equilibrium
 
@@ -945,6 +1060,10 @@ def _stabilized_iterations(an, c, dc, total, viscous, fext, silent=False,
         A boolean to tell whether the log messages should be printed.
     lbd_dependent, q, w, K0_abs, proj : optional
         As in :func:`._NR_iterations`.
+    control : tuple or None, optional
+        ``(max_iter, divergence_factor)`` of both stages, see
+        :func:`._check_divergence_stabilized`; ``None`` uses
+        :func:`._check_divergence`.
 
     Returns
     -------
@@ -988,7 +1107,7 @@ def _stabilized_iterations(an, c, dc, total, viscous, fext, silent=False,
 
     """
     kw = dict(silent=silent, lbd_dependent=lbd_dependent, w=w,
-              K0_abs=K0_abs, proj=proj)
+              K0_abs=K0_abs, proj=proj, control=control)
     msg('Newton-Raphson did not converge at load factor %1.5f: stabilized '
         'iterations' % total, level=2, silent=silent)
     converged, dc_d, q_d = _NR_iterations(an, c, dc, total, fext, q=q,
@@ -1066,7 +1185,9 @@ def _solver_NR(an, silent=False, initialInc=None, stabilized=False):
         stabilized iterations of :func:`._stabilized_iterations` before its
         load increment is cut, with the status of every accepted state
         appended to ``an.stabilization_status`` and
-        ``an.damped_residuals``. Default is ``False``.
+        ``an.damped_residuals``; all the iterations then use the control
+        of :func:`._check_divergence_stabilized` and the increment grows as
+        given by :func:`._stabilization_control`. Default is ``False``.
 
     Raises
     ------
@@ -1166,8 +1287,10 @@ def _solver_NR(an, silent=False, initialInc=None, stabilized=False):
     if target is None:
         raise ValueError("Analysis.final_load_factor = None is not valid "
                          "with NL_method=%r" % method)
+    control = None
     if stabilized:
         mu = _stabilization_factor(an)
+        control, (growth, growth_max_iter) = _stabilization_control(an)
     inc = min(initialInc, target)
     min_last_inc = max(an.minInc, 1.e-12)
     max_jump = _check_max_inertia_jump(an)
@@ -1223,9 +1346,11 @@ def _solver_NR(an, silent=False, initialInc=None, stabilized=False):
         kT0 = None
         if an.modified_NR and step_num == 1 and not an.kT_initial_state:
             kT0 = kC0
+        info = {}
         converged, dc, q_new = _NR_iterations(an, c, dc, total, fext,
                 kT0=kT0, silent=silent, lbd_dependent=lbd_dependent, q=q,
-                w=w, K0_abs=K0_abs, proj=proj)
+                w=w, K0_abs=K0_abs, proj=proj, info=info,
+                control=control)
         status, damped_residual = 'undamped', None
         if not converged and stabilized:
             # the stabilized iterations start from the last converged
@@ -1235,7 +1360,8 @@ def _solver_NR(an, silent=False, initialInc=None, stabilized=False):
                 _stabilized_iterations(an, c, dc0, total, (mu/inc)*D, fext,
                                        silent=silent,
                                        lbd_dependent=lbd_dependent, q=q,
-                                       w=w, K0_abs=K0_abs, proj=proj)
+                                       w=w, K0_abs=K0_abs, proj=proj,
+                                       control=control)
 
         solve_new = None
         if converged and an.inertia:
@@ -1266,9 +1392,14 @@ def _solver_NR(an, silent=False, initialInc=None, stabilized=False):
                 solve_last = solve_new
             dc_last = dc
             inc_last = inc
-            # the increment grows only after a plain Newton-Raphson step
-            if not step_cut and status == 'undamped':
-                inc = min(INC_GROWTH_FACTOR*inc, an.maxInc)
+            if not stabilized:
+                if not step_cut:
+                    inc = min(INC_GROWTH_FACTOR*inc, an.maxInc)
+            # stabilized: the increment grows only after a plain step with
+            # few corrections, also after a cut, and is kept otherwise
+            elif (status == 'undamped'
+                    and info['iterations'] - 1 <= growth_max_iter):
+                inc = min(growth*inc, an.maxInc)
             step_cut = False
             step_num += 1
             an.path_state = dict(method=method, c=c.copy(), lbd=total_last,

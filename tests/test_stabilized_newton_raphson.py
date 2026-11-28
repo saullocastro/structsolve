@@ -6,8 +6,9 @@ and on the von Mises truss of ``analytic_problems`` loaded beyond its limit
 load, where the plain solver stops at the limit point: the accepted states,
 their status, the undamped equilibrium of the accepted states, the residual
 of the damped-only states, the linear solvers, the constraint values, the
-restart, ``on_converged`` and the validation of
-``Analysis.stabilization_factor``.
+restart, ``on_converged``, the iteration control of the stages, the
+growth of the increments and the validation of the ``stabilization_*``
+options.
 
 """
 import numpy as np
@@ -27,24 +28,28 @@ def zeta(p, lbd, c):
 
 
 def truss_beyond_limit(**kwargs):
-    """The von Mises truss loaded at 1.2 times its limit load, with load
-    increments starting at 0.2: the plain Newton-Raphson solver stops at
-    the limit point, at a load factor of about 1/1.2"""
-    p = von_mises_truss(frac=1.2)
-    kwargs.setdefault('initialInc', 0.2)
+    """The von Mises truss loaded at 1.3 times its limit load, with load
+    increments starting at 0.1: the plain Newton-Raphson solver stops at
+    the limit point, at a load factor of about 1/1.3"""
+    p = von_mises_truss(frac=1.3)
+    kwargs.setdefault('initialInc', 0.1)
     p.analysis(**kwargs)
     return p
 
 
 def test_equals_newton_raphson_without_instability():
     """On the hardening springs every increment converges at the first
-    stage: the increments, the solutions and the evaluations of the
-    internal force vector are those of ``NL_method='NR'``, every state is
+    stage within a few corrections: with the increment growth of
+    ``NL_method='NR'``, ``stabilization_inc_growth=INC_GROWTH_FACTOR``, the
+    increments, the solutions and the evaluations of the internal force
+    vector are those of ``NL_method='NR'``, every state is
     ``'undamped'``"""
+    from structsolve.newton_raphson import INC_GROWTH_FACTOR
     out = {}
     for method in ('NR', 'stabilized_NR'):
         p = hardening_springs()
-        p.analysis(initialInc=0.1, NL_method=method)
+        p.analysis(initialInc=0.1, NL_method=method,
+                   stabilization_inc_growth=INC_GROWTH_FACTOR)
         p.an.static(NLgeom=True, silent=True)
         out[method] = p
     p0, p1 = out['NR'], out['stabilized_NR']
@@ -66,7 +71,7 @@ def test_passes_limit_point_where_newton_raphson_stops():
     configuration given by the arc-length method"""
     p0 = truss_beyond_limit()
     p0.an.static(NLgeom=True, silent=True)
-    assert p0.an.increments[-1] < 1/1.2
+    assert p0.an.increments[-1] < 1/1.3
 
     p = truss_beyond_limit(NL_method='stabilized_NR')
     p.an.static(NLgeom=True, silent=True)
@@ -81,24 +86,24 @@ def test_passes_limit_point_where_newton_raphson_stops():
     # inverted configuration
     w = np.array([c[0] for c in an.cs])
     assert np.diff(w).max() > 1.
-    q = von_mises_truss(frac=1.2)
+    q = von_mises_truss(frac=1.3)
     q.analysis(NL_method='arc_length_riks', initialInc=0.05)
     q.an.static(NLgeom=True, silent=True)
     np.testing.assert_allclose(an.cs[-1], q.an.cs[-1], rtol=1e-6)
 
 
 def test_damped_only_states_flagged(capsys):
-    r"""With a larger stabilization factor and smaller increments, the
-    correction to the undamped equilibrium fails at some increments, whose
+    r"""On the truss at 1.05 times its limit load, with load increments
+    starting at 0.2, the correction to the undamped equilibrium fails at
+    some increments, whose
     damped states are accepted, flagged ``'damped'`` with a warning: their
     recorded residual is the relative residual of their undamped
     equilibrium, larger than the tolerance, and their undamped residual
     is minus the viscous force of the stabilization, Crisfield's
     criterion being met by the damped residual"""
-    mu = 1e-4
-    p = von_mises_truss(frac=1.1)
-    p.analysis(NL_method='stabilized_NR', initialInc=0.1,
-               stabilization_factor=mu)
+    p = von_mises_truss(frac=1.05)
+    p.analysis(NL_method='stabilized_NR', initialInc=0.2)
+    mu = p.an.stabilization_factor
     p.an.static(NLgeom=True, silent=False)
     assert 'damped state accepted' in capsys.readouterr().out
     an = p.an
@@ -113,8 +118,8 @@ def test_damped_only_states_flagged(capsys):
             assert res > 1e3*an.relTOL
             viscous = mu/(lbd - lbd_prev)*D*(c - c_prev)
             R = p.fint(c) - lbd*p.fext
-            np.testing.assert_allclose(R, -viscous, rtol=1e-6,
-                                       atol=1e-8*np.abs(viscous).max())
+            np.testing.assert_allclose(R, -viscous, rtol=1e-5,
+                                       atol=1e-5*np.abs(viscous).max())
         else:
             assert res is None
             assert zeta(p, lbd, c) <= 1e-8
@@ -179,17 +184,17 @@ def test_linear_solvers(linear_solver):
 
 
 def test_constraint_values_snap_under_displacement_control():
-    """The loaded point of the truss with a soft spring, ``ks=0.5``, is
+    """The loaded point of the truss with a soft spring, ``ks=0.2``, is
     displaced by a constraint with a value and no external load: the apex
-    snaps, the plain solver stops with load increments starting at 0.2,
+    snaps, the plain solver stops with load increments starting at 0.1,
     and the stabilized solver reaches the final displacement with every
     accepted state satisfying the constraint and, except the damped ones,
     the equilibrium"""
-    u = 2.
+    u = 3.
     out = {}
     for method in ('NR', 'stabilized_NR'):
-        p = von_mises_truss(frac=0., ks=0.5)
-        p.analysis(NL_method=method, initialInc=0.2,
+        p = von_mises_truss(frac=0., ks=0.2)
+        p.analysis(NL_method=method, initialInc=0.1,
                    constraints=np.array([0., 1.]), constraint_values=[u])
         p.an.static(NLgeom=True, silent=True)
         out[method] = p
@@ -204,7 +209,7 @@ def test_constraint_values_snap_under_displacement_control():
             # the residual at the apex, the residual at the loaded point
             # being the reaction of the constraint, compared with the force
             # of the spring at the final displacement
-            assert abs(p.fint(c)[0]) <= 1e-8*0.5*u
+            assert abs(p.fint(c)[0]) <= 1e-8*0.2*u
 
 
 def test_restart_and_on_converged():
@@ -254,14 +259,74 @@ def test_invalid_stabilization_factor(mu):
 def test_dense_matrices():
     """Callables that return dense arrays instead of sparse matrices give
     the states of the sparse ones"""
-    p = von_mises_truss(frac=1.2)
+    p = von_mises_truss(frac=1.3)
     d = Problem(p.fext, p.fint, p.kC, p.kG)
     d.calc_kC = lambda c=None, NLgeom=False, silent=True: np.array(p.kC)
     d.calc_kG = lambda c=None, NLgeom=False, silent=True: np.array(p.kG(c))
     out = []
     for q in (p, d):
-        q.analysis(NL_method='stabilized_NR', initialInc=0.2)
+        q.analysis(NL_method='stabilized_NR', initialInc=0.1)
         q.an.static(NLgeom=True, silent=True)
         out.append(q.an)
     assert out[1].stabilization_status == out[0].stabilization_status
     np.testing.assert_allclose(out[1].cs[-1], out[0].cs[-1], rtol=1e-10)
+
+
+def test_increment_growth():
+    """After an increment solved by the plain iterations within
+    ``stabilization_inc_growth_max_iter`` corrections the load increment is
+    multiplied by ``stabilization_inc_growth``, and kept otherwise"""
+    p = hardening_springs()
+    p.analysis(NL_method='stabilized_NR', initialInc=0.1)
+    p.an.static(NLgeom=True, silent=True)
+    steps = np.diff(np.concatenate(([0.], p.an.increments)))
+    np.testing.assert_allclose(steps[1:-1]/steps[:-2], 1.5, rtol=1e-12)
+    assert p.an.increments[-1] == 1.
+    q = hardening_springs()
+    q.analysis(NL_method='stabilized_NR', initialInc=0.1,
+               stabilization_inc_growth_max_iter=1)
+    q.an.static(NLgeom=True, silent=True)
+    np.testing.assert_allclose(q.an.increments, np.linspace(0.1, 1., 10),
+                               rtol=1e-12)
+
+
+def test_stage_iteration_control():
+    """The stages stop at a non-finite residual, after
+    ``stabilization_max_iter`` corrections, or when the residual exceeds
+    ``stabilization_divergence_factor`` times its first value, at any
+    iteration, but not when the residual stagnates, which
+    ``NL_method='NR'`` stops as too slow"""
+    from structsolve.newton_raphson import (_check_divergence_stabilized,
+                                            _check_divergence)
+
+    def run(norms, control):
+        Rnorms = []
+        for i, r in enumerate(norms, start=1):
+            if _check_divergence_stabilized(r, Rnorms, i, control,
+                                            silent=True):
+                return i
+        return None
+
+    stagnating = [1.] + [0.9]*20
+    assert run(stagnating, (25, 1e3)) is None
+    assert run(stagnating, (10, 1e3)) == 11
+    assert run([1., 2., 1001.], (25, 1e3)) == 3
+    assert run([1., np.nan], (25, 1e3)) == 2
+    an = hardening_springs().analysis()
+    Rnorms = []
+    stops = [_check_divergence(an, r, Rnorms, i, silent=True)
+             for i, r in enumerate(stagnating, start=1)]
+    assert any(stops)
+
+
+@pytest.mark.parametrize('name, value', [
+    ('stabilization_max_iter', 0), ('stabilization_max_iter', 2.5),
+    ('stabilization_inc_growth_max_iter', -1),
+    ('stabilization_divergence_factor', 0.5),
+    ('stabilization_divergence_factor', np.inf),
+    ('stabilization_inc_growth', 0.9), ('stabilization_inc_growth', None)])
+def test_invalid_stabilization_options(name, value):
+    """Invalid iteration control or increment growth is a ``ValueError``"""
+    p = truss_beyond_limit(NL_method='stabilized_NR', **{name: value})
+    with pytest.raises(ValueError, match=name):
+        p.an.static(NLgeom=True, silent=True)

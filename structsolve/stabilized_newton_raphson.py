@@ -37,11 +37,18 @@ def _solver_stabilized_NR(an, silent=False):
     with the relative residual of its undamped equilibrium in
     ``an.damped_residuals`` and a warning. When stage 2 fails, the load
     increment is multiplied by ``INC_CUT_FACTOR`` and the increment starts
-    again at stage 1. The load increment grows by ``INC_GROWTH_FACTOR``
-    only after an ``'undamped'`` state reached without a cut, and is kept
-    after the other states.
+    again at stage 1. The load increment is multiplied by
+    ``an.stabilization_inc_growth``, limited by ``an.maxInc``, after an
+    ``'undamped'`` state reached with at most
+    ``an.stabilization_inc_growth_max_iter`` corrections, also after a
+    cut, and is kept after the other states.
 
-    The viscous forces are scaled by ``an.stabilization_factor``. All the
+    The viscous forces are scaled by ``an.stabilization_factor``. Each
+    stage stops after ``an.stabilization_max_iter`` corrections or when its
+    residual grows by ``an.stabilization_divergence_factor``, see
+    :func:`.newton_raphson._check_divergence_stabilized`, instead of the
+    checks of ``NL_method='NR'`` (``an.maxNumIter``, ``an.too_slow_TOL``,
+    ``an.early_divergence``). All the
     other options of ``NL_method='NR'`` apply to the three stages: the
     convergence criteria, the full or modified Newton-Raphson method, the
     line search, ``an.linear_solver``, the constraints and their values,
@@ -62,7 +69,8 @@ def _solver_stabilized_NR(an, silent=False):
     ------
     ValueError
         When ``an.stabilization_factor`` is not a positive finite number,
-        when ``an.final_load_factor`` is ``None``, or for the invalid
+        when the other ``an.stabilization_*`` options are not valid, see
+        :func:`.newton_raphson._stabilization_control`, when ``an.final_load_factor`` is ``None``, or for the invalid
         options of :func:`.newton_raphson._solver_NR`.
 
     Notes
@@ -117,6 +125,28 @@ def _solver_stabilized_NR(an, silent=False):
     is not an equilibrium: its relative residual in ``an.damped_residuals``
     measures how far it is from one, and stresses or displacements of such
     a state must not be read as those of an equilibrium.
+
+    Near a mode jump the iterations of each stage may converge slowly, with
+    a residual that does not decrease for several iterations. The stages
+    therefore stop only after `N` = ``an.stabilization_max_iter``
+    corrections, or at the iteration `j` where `r_j >` `f r_1`, `f` =
+    ``an.stabilization_divergence_factor``, `r_j` the residual norm of the
+    convergence criterion, without the too-slow check of
+    ``NL_method='NR'``, which would stop iterations that converge, turn
+    stage 1 into a stabilized increment, and stage 3 into a damped-only
+    state. With `\Delta\lambda_n` the last increment and `k` the number of
+    corrections of an ``'undamped'`` increment, the next increment is
+
+    .. math::
+
+        \Delta\lambda_{n+1} = \begin{cases} \min(g \Delta\lambda_n,
+        \Delta\lambda_{max}) & k \le k_g \\ \Delta\lambda_n &
+        \text{otherwise} \end{cases}
+
+    with `g` = ``an.stabilization_inc_growth``, `k_g` =
+    ``an.stabilization_inc_growth_max_iter`` and `\Delta\lambda_{max}` =
+    ``an.maxInc``, and `\Delta\lambda_{n+1} = \Delta\lambda_n` after a
+    ``'corrected'`` or ``'damped'`` increment.
 
     The scheme does not guarantee:
 

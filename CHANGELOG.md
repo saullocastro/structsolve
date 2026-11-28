@@ -24,6 +24,17 @@
   inertia, `on_converged`, `stop_criterion`, `final_load_factor`, restart).
 - `Analysis.stabilization_factor`, the dimensionless factor `mu` of the
   viscous forces, default `1e-5`.
+- `Analysis.stabilization_max_iter` (default `25`) and
+  `Analysis.stabilization_divergence_factor` (default `1e3`): each stage
+  of `'stabilized_NR'` stops after that many corrections or when its
+  residual grows by that factor over its first value, without the
+  too-slow check of `'NR'`, which stops iterations that converge slowly
+  near a mode jump; new `newton_raphson._check_divergence_stabilized`.
+- `Analysis.stabilization_inc_growth` (default `1.5`) and
+  `Analysis.stabilization_inc_growth_max_iter` (default `6`): with
+  `'stabilized_NR'` the load increment grows by that factor after an
+  increment solved by the plain iterations within that many corrections,
+  also after a cut, and is kept otherwise.
 - `Analysis.stabilization_status`: for each accepted increment of
   `'stabilized_NR'`, `'undamped'`, `'corrected'` (an equilibrium reached
   from the damped state) or `'damped'` (only the damped iterations
@@ -31,7 +42,9 @@
   residual of the undamped equilibrium of the `'damped'` states, `None` for
   the others. Both are empty for the other methods.
 - `newton_raphson._NR_iterations` accepts the coefficients of viscous forces,
-  `viscous`, used by the new solver.
+  `viscous`, the iteration control `control` and the dictionary `info`
+  of the number of iterations, used by the new solver; without them it
+  is unchanged.
 
 ### Documentation
 
@@ -56,7 +69,8 @@
   accepted state an undamped equilibrium; the damped-only states and their
   residual, also with the correction prevented; every linear solver; the
   constraint values; the restart and `on_converged`; dense matrices; the
-  validation of `Analysis.stabilization_factor`.
+  iteration control of the stages and the growth of the increments; the
+  validation of the `stabilization_*` options.
 
 ## 0.13.2 (2026-11-28)
 

@@ -235,6 +235,46 @@ class Analysis(object):
                                   ``None``
     ============================  =============================================
 
+    =====================================  ====================================
+    Stabilized Newton-Raphson              Description
+    =====================================  ====================================
+    ``stabilization_max_iter``             ``int``, with
+                                           ``NL_method='stabilized_NR'``:
+                                           maximum number of corrections of
+                                           each of the three stages of an
+                                           increment, which use this limit
+                                           and
+                                           ``stabilization_divergence_factor``
+                                           instead of ``maxNumIter``,
+                                           ``too_slow_TOL`` and the delayed
+                                           divergence check, see
+                                           :func:`.newton_raphson._check_divergence_stabilized`.
+                                           Default is ``25``
+    ``stabilization_divergence_factor``    ``float``, with
+                                           ``NL_method='stabilized_NR'``: a
+                                           stage is stopped when its residual norm
+                                           becomes larger than this factor
+                                           times that of its first
+                                           iteration. Default is ``1.e3``
+    ``stabilization_inc_growth``           ``float``, with
+                                           ``NL_method='stabilized_NR'``:
+                                           factor of the load increment after
+                                           an increment solved by the plain
+                                           Newton-Raphson iterations with at
+                                           most
+                                           ``stabilization_inc_growth_max_iter``
+                                           corrections, also after a cut,
+                                           limited by ``maxInc``; the
+                                           increment is kept after the other
+                                           increments, and
+                                           ``INC_GROWTH_FACTOR`` of
+                                           :mod:`.newton_raphson` is not
+                                           used. Default is ``1.5``
+    ``stabilization_inc_growth_max_iter``  ``int``, see
+                                           ``stabilization_inc_growth``.
+                                           Default is ``6``
+    =====================================  ====================================
+
     ================   =================================================
     Incrementation     Description
     ================   =================================================
@@ -458,6 +498,8 @@ class Analysis(object):
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
             'stabilization_factor', 'stabilization_status',
+            'stabilization_max_iter', 'stabilization_divergence_factor',
+            'stabilization_inc_growth', 'stabilization_inc_growth_max_iter',
             'damped_residuals',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
@@ -494,6 +536,10 @@ class Analysis(object):
         self.compute_every_n = 6
         self.kT_initial_state = True
         self.stabilization_factor = 1.e-5
+        self.stabilization_max_iter = 25
+        self.stabilization_divergence_factor = 1.e3
+        self.stabilization_inc_growth = 1.5
+        self.stabilization_inc_growth_max_iter = 6
         # incrementation
         self.initialInc = 0.1
         self.minInc = 1.e-4

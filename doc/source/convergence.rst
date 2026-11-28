@@ -137,6 +137,14 @@ forces, which start from it. Each accepted state has a status in
   equilibrium, and ``Analysis.damped_residuals`` gives its relative
   residual, the viscous forces measured by the convergence criterion.
 
+Near a mode jump the iterations may converge slowly, with a residual that
+stagnates for several iterations; the three stages therefore stop only
+after ``Analysis.stabilization_max_iter`` corrections or when the residual
+grows by ``Analysis.stabilization_divergence_factor``, without the
+too-slow check of ``NL_method = 'NR'``, and the load increment grows by
+``Analysis.stabilization_inc_growth`` only after an increment that the
+plain iterations solved within a few corrections.
+
 The path is then a sequence of equilibria joined by jumps where the
 status is ``'corrected'``, with possibly some ``'damped'`` states in
 between, whose stresses and displacements must not be read as those of an
