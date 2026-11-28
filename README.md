@@ -16,6 +16,8 @@ Structural analysis solvers tailored for semi-analytical models
   last resort, also in the browser (Pyodide) and with the Intel MKL versions
   that break ARPACK
 - Nonlinear statics using Newton-Raphson 
+- Nonlinear statics using a stabilized Newton-Raphson method that passes
+  local folds and mode jumps under load control
 - Nonlinear statics using the Arc-Length method
 - Support for unsymmetric problems, such as those involving follower forces
 - Load vectors that depend on the load factor, e.g. prescribed displacements

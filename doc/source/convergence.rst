@@ -100,6 +100,56 @@ between increments reveals. The arc-length methods trace the path through
 the limit point.
 
 
+Folds and mode jumps under load control
+---------------------------------------
+
+In the postbuckling of stiffened panels the skin may change its buckle
+pattern between two load levels: the equilibrium path has a local fold, or
+the solution jumps to another pattern, and near the last converged state
+there is no equilibrium at a slightly larger load factor. The
+load-controlled Newton-Raphson method then fails at every increment, down
+to ``minInc``, and stops; the arc-length methods follow the fold and may
+turn back along it instead of going past the jump.
+
+``Analysis.NL_method = 'stabilized_NR'``, see
+:func:`.stabilized_newton_raphson._solver_stabilized_NR`, keeps the load
+control and solves an increment that fails with viscous forces in the
+pseudo-time of the load factor,
+
+.. math::
+
+    \boldsymbol{F}_{int}(\boldsymbol{c}) + \frac{\mu}{\Delta\lambda}
+    \boldsymbol{D} (\boldsymbol{c} - \boldsymbol{c}_n) - \lambda_{n+1}
+    \boldsymbol{F}_{ext} = \boldsymbol{0}
+
+with `\boldsymbol{D}` the absolute values of the diagonal of the linear
+stiffness matrix, the scaling of Crisfield's criterion, and `\mu` =
+``Analysis.stabilization_factor``. The damped state is not an equilibrium,
+so it is corrected by the Newton-Raphson iterations without viscous
+forces, which start from it. Each accepted state has a status in
+``Analysis.stabilization_status``:
+
+- ``'undamped'``: the Newton-Raphson iterations converged, as with
+  ``NL_method = 'NR'``;
+- ``'corrected'``: they converged from the damped state, an equilibrium to
+  the tolerance of the convergence criteria;
+- ``'damped'``: only the damped iterations converged; the state is not an
+  equilibrium, and ``Analysis.damped_residuals`` gives its relative
+  residual, the viscous forces measured by the convergence criterion.
+
+The path is then a sequence of equilibria joined by jumps where the
+status is ``'corrected'``, with possibly some ``'damped'`` states in
+between, whose stresses and displacements must not be read as those of an
+equilibrium. The method finds an equilibrium beyond the jump, not
+necessarily the one that a dynamic analysis would reach, and it does not
+check its stability; ``Analysis.inertia`` records the inertia of the
+tangent stiffness matrix at the accepted states. A larger `\mu`
+stabilizes more and moves the damped state less within one increment;
+which states are corrected, and the number of increments, depend on `\mu`
+and on the increments, and the default `\mu = 10^{-5}` may need to be
+changed for a given model.
+
+
 Checking the tangent stiffness matrix
 -------------------------------------
 
@@ -148,6 +198,12 @@ Load control beyond a limit point:
 
 .. literalinclude:: ../../tests/test_newton_raphson.py
     :pyobject: test_nr_jumps_over_limit_point
+
+The stabilized Newton-Raphson method where the plain one stops at the limit
+point:
+
+.. literalinclude:: ../../tests/test_stabilized_newton_raphson.py
+    :pyobject: test_passes_limit_point_where_newton_raphson_stops
 
 Both criteria give the same increments and solutions when the forces and
 the displacements of a model are scaled:

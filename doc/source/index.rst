@@ -24,6 +24,9 @@ can run:
       line-search
     - the arc-length methods of Riks and Crisfield, able to trace limit points,
       snap-through and snap-back
+    - the stabilized Newton-Raphson method, which passes local folds and
+      mode jumps under load control with viscous stabilization and a
+      correction to the undamped equilibrium, see :doc:`convergence`
 
 * Configuration-dependent loads, e.g. follower pressures, in the linear and
   non-linear static analyses, see :mod:`.callbacks`, and unsymmetric matrices
@@ -71,6 +74,7 @@ User guide
     notebooks/ex_frequency.nblink
     notebooks/ex_newton_raphson.nblink
     notebooks/ex_arc_length.nblink
+    notebooks/ex_stabilized_newton_raphson.nblink
     notebooks/ex_linear_solvers.nblink
     notebooks/ex_cylinder_postbuckling.nblink
     notebooks/ex_follower_loads.nblink

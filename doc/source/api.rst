@@ -15,6 +15,7 @@ The main classes and functions are available directly from the
     linear_buckling.rst
     freq.rst
     newton_raphson.rst
+    stabilized_newton_raphson.rst
     arc_length.rst
     convergence_api.rst
     callbacks.rst
