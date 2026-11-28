@@ -45,6 +45,8 @@
   truss loaded beyond its limit load, where Newton-Raphson stops at the
   limit point and the stabilized solver reaches the closed-form equilibrium
   on the inverted configuration, with a case of damped-only states.
+- The `Notes` of `Analysis` describe `convergence='relative'` without
+  naming earlier versions.
 
 ### Tests
 

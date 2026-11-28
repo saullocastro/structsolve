@@ -393,8 +393,8 @@ class Analysis(object):
     criterion, the residual and the reference force vectors scaled with the diagonal of the linear stiffness matrix
     ``calc_kC()`` over the free degrees of freedom, such that it does not
     depend on the units of each degree of freedom, e.g. translations and
-    rotations, see :mod:`.convergence`; ``convergence = 'relative'`` keeps
-    the Euclidean norm of the versions up to 0.8.0.
+    rotations, see :mod:`.convergence`; ``convergence = 'relative'`` uses
+    the Euclidean norm of the residual instead.
 
     The line-search tries the full step first and only reduces it when it
     fails a sufficient-decrease test on the norm of the residual of the
