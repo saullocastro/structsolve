@@ -3,7 +3,9 @@
 The class :class:`Analysis` receives the callables that compute the force
 vectors and the stiffness matrices of a model and runs a linear static
 analysis, or a non-linear static analysis with the Newton-Raphson solver of
-:mod:`.newton_raphson` or the arc-length solvers of :mod:`.arc_length`. The
+:mod:`.newton_raphson`, its stabilized variant of
+:mod:`.stabilized_newton_raphson`, or the arc-length solvers of
+:mod:`.arc_length`. The
 optional keyword arguments of the callables are described in
 :mod:`.callbacks`.
 
@@ -19,6 +21,7 @@ from .newton_raphson import (_check_convergence, _weights, _abs_matrix,
                              _constraint_matrix, _constraint_values,
                              _residual_projector)
 from .newton_raphson import _solver_NR
+from .stabilized_newton_raphson import _solver_stabilized_NR
 from .arc_length_riks import _solver_arc_length_riks
 from .arc_length_crisfield import _solver_arc_length_crisfield
 from .displacement_control import _solver_displacement_control
@@ -49,7 +52,11 @@ class Analysis(object):
     ``NL_method``                 ``str``, ``'NR'`` (default) for the
                                   Newton-Raphson method, see
                                   :func:`.newton_raphson._solver_NR`, or
-                                  ``'arc_length_riks'`` and
+                                  ``'stabilized_NR'`` for the Newton-Raphson
+                                  method with viscous stabilization of the
+                                  increments where it fails, see
+                                  :func:`.stabilized_newton_raphson._solver_stabilized_NR`,
+                                  or ``'arc_length_riks'`` and
                                   ``'arc_length_crisfield'`` for the arc-length
                                   methods, or ``'displacement_control'`` for
                                   the indirect displacement control, or
@@ -118,6 +125,16 @@ class Analysis(object):
                                   when initial imperfections take place.
                                   Otherwise the linear constitutive stiffness
                                   matrix is used. Default is ``True``
+    ``stabilization_factor``      ``float``, dimensionless, with
+                                  ``NL_method='stabilized_NR'``: the factor
+                                  `\mu` of the viscous forces, the damping
+                                  matrix being `\mu` times the absolute
+                                  values of the diagonal of the linear
+                                  stiffness matrix ``calc_kC()``, per unit
+                                  of load factor, the pseudo-time; larger
+                                  values stabilize more and move the damped
+                                  states less within one increment.
+                                  Default is ``1.e-5``
     ``linear_solver``             ``str``, factorization of the tangent
                                   stiffness matrix of the non-linear solvers,
                                   ``'splu'`` (default), the sparse LU of
@@ -335,6 +352,20 @@ class Analysis(object):
         With ``branch_switching``, the indices in ``increments`` of the
         converged increments from which the path was switched to a
         bifurcated branch.
+    stabilization_status : list
+        With ``NL_method='stabilized_NR'``, for each accepted increment,
+        ``'undamped'`` when the Newton-Raphson iterations converged,
+        ``'corrected'`` when they converged from the state of the
+        stabilized iterations, both being an equilibrium to the tolerance
+        of the convergence criteria, or ``'damped'`` when only the
+        stabilized iterations converged, a state that is not an
+        equilibrium. Empty otherwise.
+    damped_residuals : list
+        With ``NL_method='stabilized_NR'``, for each accepted increment,
+        the relative residual of the equilibrium without viscous forces of
+        a ``'damped'`` state, Crisfield's `\zeta` or the relative residual
+        of ``convergence='relative'``, dimensionless, ``None`` for the
+        other states. Empty otherwise.
     path_state : dict or None
         After each converged increment of a non-linear analysis, the state
         from which it can be continued, see ``restart_state``: the solution,
@@ -426,6 +457,8 @@ class Analysis(object):
             'branch_switching', 'max_inertia_jump', 'inertia_num_eigvals',
             'restart_state', 'path_state', 'branch_points',
             'num_negative_eigvals', 'det_signs', 'num_perturbed_pivots',
+            'stabilization_factor', 'stabilization_status',
+            'damped_residuals',
             'modified_NR', 'compute_every_n',
             'kT_initial_state', 'initialInc', 'minInc', 'maxInc',
             'maxArcLength', 'convergence', 'absTOL', 'relTOL', 'maxNumIter',
@@ -460,6 +493,7 @@ class Analysis(object):
         self.modified_NR = False
         self.compute_every_n = 6
         self.kT_initial_state = True
+        self.stabilization_factor = 1.e-5
         # incrementation
         self.initialInc = 0.1
         self.minInc = 1.e-4
@@ -485,6 +519,8 @@ class Analysis(object):
         self.det_signs = None
         self.num_perturbed_pivots = None
         self.branch_points = None
+        self.stabilization_status = None
+        self.damped_residuals = None
         self.path_state = None
 
         # flag telling the last analysis
@@ -533,13 +569,15 @@ class Analysis(object):
         ------
         ValueError
             When ``NLgeom=True`` and the ``NL_method`` attribute is not
-            ``'NR'``, ``'arc_length_riks'``, ``'arc_length_crisfield'``,
+            ``'NR'``, ``'stabilized_NR'``, ``'arc_length_riks'``,
+            ``'arc_length_crisfield'``,
             ``'displacement_control'`` or
             ``'generalized_displacement_control'``, or when ``NLgeom=True``
             with the ``inertia`` attribute ``True`` and the
             ``linear_solver`` attribute ``'pardiso_lu'``, which gives
             neither the number of negative eigenvalues nor the sign of the
-            determinant.
+            determinant, or when ``NL_method='stabilized_NR'`` with a
+            ``stabilization_factor`` that is not a positive finite number.
 
         Notes
         -----
@@ -595,6 +633,8 @@ class Analysis(object):
         self.det_signs = []
         self.num_perturbed_pivots = []
         self.branch_points = []
+        self.stabilization_status = []
+        self.damped_residuals = []
         self.path_state = None
 
         if NLgeom:
@@ -602,6 +642,7 @@ class Analysis(object):
             msg('Started Non-Linear Static Analysis', silent=silent)
             solvers = {
                 'NR': _solver_NR,
+                'stabilized_NR': _solver_stabilized_NR,
                 'arc_length_riks': _solver_arc_length_riks,
                 'arc_length_crisfield': _solver_arc_length_crisfield,
                 'displacement_control': _solver_displacement_control,
